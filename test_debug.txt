@@ -1,0 +1,1197 @@
+PASS src/__tests__/integration/Debug.test.tsx (6.677 s)
+FAIL src/__tests__/security/Security.test.tsx (10.877 s)
+  ÔùÅ Security Tests ÔÇ║ redirects unauthenticated user from protected route
+
+    TypeError: require(...).useRouter.mockReturnValue is not a function
+
+      28 |     beforeEach(() => {
+      29 |         jest.clearAllMocks()
+    > 30 |         require('next/navigation').useRouter.mockReturnValue({ push: mockPush, back: jest.fn() })
+         |                                              ^
+      31 |     })
+      32 |
+      33 |     it('redirects unauthenticated user from protected route', async () => {
+
+      at Object.mockReturnValue (src/__tests__/security/Security.test.tsx:30:46)
+
+  ÔùÅ Security Tests ÔÇ║ renders for authenticated user
+
+    TypeError: require(...).useRouter.mockReturnValue is not a function
+
+      28 |     beforeEach(() => {
+      29 |         jest.clearAllMocks()
+    > 30 |         require('next/navigation').useRouter.mockReturnValue({ push: mockPush, back: jest.fn() })
+         |                                              ^
+      31 |     })
+      32 |
+      33 |     it('redirects unauthenticated user from protected route', async () => {
+
+      at Object.mockReturnValue (src/__tests__/security/Security.test.tsx:30:46)
+
+  ÔùÅ Security Tests ÔÇ║ sanitizes user input (XSS check by React default)
+
+    TypeError: require(...).useRouter.mockReturnValue is not a function
+
+      28 |     beforeEach(() => {
+      29 |         jest.clearAllMocks()
+    > 30 |         require('next/navigation').useRouter.mockReturnValue({ push: mockPush, back: jest.fn() })
+         |                                              ^
+      31 |     })
+      32 |
+      33 |     it('redirects unauthenticated user from protected route', async () => {
+
+      at Object.mockReturnValue (src/__tests__/security/Security.test.tsx:30:46)
+
+FAIL src/__tests__/integration/EditProfile.test.tsx (11.29 s)
+  ÔùÅ EditProfileForm Incremental ÔÇ║ loads user data into form fields
+
+    TestingLibraryElementError: Unable to find an element with the display value: Test.
+
+    Ignored nodes: comments, script, style
+    <body>
+      <div>
+        <div
+          class="min-h-screen bg-gray-50 pt-24 pb-12"
+        >
+          <div
+            class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8"
+          >
+            <div
+              class="mb-6"
+            >
+              <button
+                class="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Voltar
+              </button>
+            </div>
+            <div
+              class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+            >
+              <div
+                class="p-8"
+              >
+                <h1
+                  class="text-2xl font-bold text-gray-900 mb-2"
+                >
+                  Completar Cadastro
+                </h1>
+                <p
+                  class="text-gray-500 mb-8"
+                >
+                  Precisamos de alguns dados adicionais para finalizar seu perfil.
+                </p>
+                <form
+                  class="space-y-6"
+                >
+                  <div
+                    class="grid grid-cols-1 md:grid-cols-2 gap-6"
+                  >
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Nome
+                      </label>
+                      <input
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-500 cursor-not-allowed"
+                        disabled=""
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Email
+                      </label>
+                      <input
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-500 cursor-not-allowed"
+                        disabled=""
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                  </div>
+                  <div
+                    class="border-t border-gray-100 my-6"
+                  />
+                  <h2
+                    class="text-lg font-semibold text-gray-900 flex items-center gap-2"
+                  >
+                    Contato
+                  </h2>
+                  <div>
+                    <label
+                      class="block text-sm font-medium text-gray-700 mb-1.5"
+                    >
+                      Telefone Celular
+                    </label>
+                    <input
+                      class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                      name="phone"
+                      placeholder="(00) 00000-0000"
+                      type="tel"
+                      value=""
+                    />
+                  </div>
+                  <div
+                    class="border-t border-gray-100 my-6"
+                  />
+                  <h2
+                    class="text-lg font-semibold text-gray-900 flex items-center gap-2"
+                  >
+                    Endere├ºo
+                  </h2>
+                  <div
+                    class="grid grid-cols-1 md:grid-cols-2 gap-6"
+                  >
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        CEP
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="cep"
+                        placeholder="00000-000"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Estado
+                      </label>
+                      <select
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all appearance-none"
+                        name="state"
+                      >
+                        <option
+                          value=""
+                        >
+                          Selecione...
+                        </option>
+                        <option
+                          value="AC"
+                        >
+                          AC
+                        </option>
+                        <option
+                          value="AL"
+                        >
+                          AL
+                        </option>
+                        <option
+                          value="AP"
+                        >
+                          AP
+                        </option>
+                        <option
+                          value="AM"
+                        >
+                          AM
+                        </option>
+                        <option
+                          value="BA"
+                        >
+                          BA
+                        </option>
+                        <option
+                          value="CE"
+                        >
+                          CE
+                        </option>
+                        <option
+                          value="DF"
+                        >
+                          DF
+                        </option>
+                        <option
+                          value="ES"
+                        >
+                          ES
+                        </option>
+                        <option
+                          value="GO"
+                        >
+                          GO
+                        </option>
+                        <option
+                          value="MA"
+                        >
+                          MA
+                        </option>
+                        <option
+                          value="MT"
+                        >
+                          MT
+                        </option>
+                        <option
+                          value="MS"
+                        >
+                          MS
+                        </option>
+                        <option
+                          value="MG"
+                        >
+                          MG
+                        </option>
+                        <option
+                          value="PA"
+                        >
+                          PA
+                        </option>
+                        <option
+                          value="PB"
+                        >
+                          PB
+                        </option>
+                        <option
+                          value="PR"
+                        >
+                          PR
+                        </option>
+                        <option
+                          value="PE"
+                        >
+                          PE
+                        </option>
+                        <option
+                          value="PI"
+                        >
+                          PI
+                        </option>
+                        <option
+                          value="RJ"
+                        >
+                          RJ
+                        </option>
+                        <option
+                          value="RN"
+                        >
+                          RN
+                        </option>
+                        <option
+                          value="RS"
+                        >
+                          RS
+                        </option>
+                        <option
+                          value="RO"
+                        >
+                          RO
+                        </option>
+                        <option
+                          value="RR"
+                        >
+                          RR
+                        </option>
+                        <option
+                          value="SC"
+                        >
+                          SC
+                        </option>
+                        <option
+                          value="SP"
+                        >
+                          SP
+                        </option>
+                        <option
+                          value="SE"
+                        >
+                          SE
+                        </option>
+                        <option
+                          value="TO"
+                        >
+                          TO
+                        </option>
+                      </select>
+                    </div>
+                    <div
+                      class="md:col-span-2"
+                    >
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Cidade
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="city"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div
+                      class="md:col-span-2"
+                    >
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Logradouro
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="street"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        N├║mero
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="number"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Complemento
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="complement"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div
+                      class="md:col-span-2"
+                    >
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Bairro
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="bairro"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                  </div>
+                  <div
+                    class="pt-4"
+                  >
+                    <button
+                      class="w-full flex items-center justify-center gap-2 bg-primary-900 hover:bg-primary-800 text-white font-semibold py-3.5 px-6 rounded-xl transition-all shadow-lg shadow-primary-900/20 disabled:opacity-70 disabled:cursor-not-allowed"
+                      type="submit"
+                    >
+                      Salvar Altera├º├Áes
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </body>
+
+      38 |     it('loads user data into form fields', async () => {
+      39 |         render(<EditProfileForm />)
+    > 40 |         expect(screen.getByDisplayValue('Test')).toBeInTheDocument()
+         |                       ^
+      41 |     })
+      42 |
+      43 |     it('validates required fields', async () => {
+
+      at Object.getElementError (node_modules/@testing-library/dom/dist/config.js:37:19)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+      at node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+      at node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+      at Object.getByDisplayValue (src/__tests__/integration/EditProfile.test.tsx:40:23)
+
+  ÔùÅ EditProfileForm Incremental ÔÇ║ submits form with updated data
+
+    TestingLibraryElementError: Found a label with the text of: /Cidade/i, however no form control was found associated to that label. Make sure you're using the "for" attribute or "aria-labelledby" attribute correctly.
+
+    Ignored nodes: comments, script, style
+    <body>
+      <div>
+        <div
+          class="min-h-screen bg-gray-50 pt-24 pb-12"
+        >
+          <div
+            class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8"
+          >
+            <div
+              class="mb-6"
+            >
+              <button
+                class="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Voltar
+              </button>
+            </div>
+            <div
+              class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+            >
+              <div
+                class="p-8"
+              >
+                <h1
+                  class="text-2xl font-bold text-gray-900 mb-2"
+                >
+                  Completar Cadastro
+                </h1>
+                <p
+                  class="text-gray-500 mb-8"
+                >
+                  Precisamos de alguns dados adicionais para finalizar seu perfil.
+                </p>
+                <form
+                  class="space-y-6"
+                >
+                  <div
+                    class="grid grid-cols-1 md:grid-cols-2 gap-6"
+                  >
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Nome
+                      </label>
+                      <input
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-500 cursor-not-allowed"
+                        disabled=""
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Email
+                      </label>
+                      <input
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-500 cursor-not-allowed"
+                        disabled=""
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                  </div>
+                  <div
+                    class="border-t border-gray-100 my-6"
+                  />
+                  <h2
+                    class="text-lg font-semibold text-gray-900 flex items-center gap-2"
+                  >
+                    Contato
+                  </h2>
+                  <div>
+                    <label
+                      class="block text-sm font-medium text-gray-700 mb-1.5"
+                    >
+                      Telefone Celular
+                    </label>
+                    <input
+                      class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                      name="phone"
+                      placeholder="(00) 00000-0000"
+                      type="tel"
+                      value=""
+                    />
+                  </div>
+                  <div
+                    class="border-t border-gray-100 my-6"
+                  />
+                  <h2
+                    class="text-lg font-semibold text-gray-900 flex items-center gap-2"
+                  >
+                    Endere├ºo
+                  </h2>
+                  <div
+                    class="grid grid-cols-1 md:grid-cols-2 gap-6"
+                  >
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        CEP
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="cep"
+                        placeholder="00000-000"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Estado
+                      </label>
+                      <select
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all appearance-none"
+                        name="state"
+                      >
+                        <option
+                          value=""
+                        >
+                          Selecione...
+                        </option>
+                        <option
+                          value="AC"
+                        >
+                          AC
+                        </option>
+                        <option
+                          value="AL"
+                        >
+                          AL
+                        </option>
+                        <option
+                          value="AP"
+                        >
+                          AP
+                        </option>
+                        <option
+                          value="AM"
+                        >
+                          AM
+                        </option>
+                        <option
+                          value="BA"
+                        >
+                          BA
+                        </option>
+                        <option
+                          value="CE"
+                        >
+                          CE
+                        </option>
+                        <option
+                          value="DF"
+                        >
+                          DF
+                        </option>
+                        <option
+                          value="ES"
+                        >
+                          ES
+                        </option>
+                        <option
+                          value="GO"
+                        >
+                          GO
+                        </option>
+                        <option
+                          value="MA"
+                        >
+                          MA
+                        </option>
+                        <option
+                          value="MT"
+                        >
+                          MT
+                        </option>
+                        <option
+                          value="MS"
+                        >
+                          MS
+                        </option>
+                        <option
+                          value="MG"
+                        >
+                          MG
+                        </option>
+                        <option
+                          value="PA"
+                        >
+                          PA
+                        </option>
+                        <option
+                          value="PB"
+                        >
+                          PB
+                        </option>
+                        <option
+                          value="PR"
+                        >
+                          PR
+                        </option>
+                        <option
+                          value="PE"
+                        >
+                          PE
+                        </option>
+                        <option
+                          value="PI"
+                        >
+                          PI
+                        </option>
+                        <option
+                          value="RJ"
+                        >
+                          RJ
+                        </option>
+                        <option
+                          value="RN"
+                        >
+                          RN
+                        </option>
+                        <option
+                          value="RS"
+                        >
+                          RS
+                        </option>
+                        <option
+                          value="RO"
+                        >
+                          RO
+                        </option>
+                        <option
+                          value="RR"
+                        >
+                          RR
+                        </option>
+                        <option
+                          value="SC"
+                        >
+                          SC
+                        </option>
+                        <option
+                          value="SP"
+                        >
+                          SP
+                        </option>
+                        <option
+                          value="SE"
+                        >
+                          SE
+                        </option>
+                        <option
+                          value="TO"
+                        >
+                          TO
+                        </option>
+                      </select>
+                    </div>
+                    <div
+                      class="md:col-span-2"
+                    >
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Cidade
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="city"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div
+                      class="md:col-span-2"
+                    >
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Logradouro
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="street"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        N├║mero
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="number"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Complemento
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="complement"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div
+                      class="md:col-span-2"
+                    >
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Bairro
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="bairro"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                  </div>
+                  <div
+                    class="pt-4"
+                  >
+                    <button
+                      class="w-full flex items-center justify-center gap-2 bg-primary-900 hover:bg-primary-800 text-white font-semibold py-3.5 px-6 rounded-xl transition-all shadow-lg shadow-primary-900/20 disabled:opacity-70 disabled:cursor-not-allowed"
+                      type="submit"
+                    >
+                      Salvar Altera├º├Áes
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </body>
+
+      64 |
+      65 |         // Change city
+    > 66 |         fireEvent.change(screen.getByLabelText(/Cidade/i), { target: { value: 'New City' } })
+         |                                 ^
+      67 |
+      68 |         fireEvent.click(screen.getByText('Salvar Altera├º├Áes'))
+      69 |
+
+      at Object.getElementError (node_modules/@testing-library/dom/dist/config.js:37:19)
+      at getAllByLabelText (node_modules/@testing-library/dom/dist/queries/label-text.js:108:40)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+      at node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+      at Object.getByLabelText (src/__tests__/integration/EditProfile.test.tsx:66:33)
+
+FAIL src/__tests__/integration/DraftRecovery.test.tsx (13.666 s)
+  ÔùÅ Draft Recovery Integration ÔÇ║ hydrates form from localStorage draft
+
+    Unable to find an element with the display value: Draft User.
+
+    Ignored nodes: comments, script, style
+    <body>
+      <div>
+        <div
+          class="min-h-screen bg-gray-50 pt-16 lg:pt-20"
+        >
+          <div
+            class="flex min-h-[calc(100vh-4rem)] lg:min-h-[calc(100vh-5rem)] items-center justify-center px-4 sm:px-6 lg:px-8 py-12"
+          >
+            <div
+              class="w-full max-w-md"
+            >
+              <a
+                class="flex items-center justify-center mb-8"
+                href="/"
+              >
+                <img
+                  alt="Encontre Aqui Im├│veis"
+                  class="h-20"
+                  data-nimg="1"
+                  decoding="async"
+                  height="80"
+                  loading="lazy"
+                  src="/logo2.svg"
+                  style="color: transparent; width: auto;"
+                  width="280"
+                />
+              </a>
+              <div
+                class="flex items-center justify-center gap-2 mb-6"
+              >
+                <div
+                  class="w-3 h-3 rounded-full transition-colors bg-accent-500"
+                />
+                <div
+                  class="w-8 h-0.5 bg-gray-300"
+                />
+                <div
+                  class="w-3 h-3 rounded-full transition-colors bg-gray-300"
+                />
+              </div>
+              <div
+                class="text-center mb-6"
+              >
+                <h1
+                  class="text-2xl font-bold text-gray-900 mb-2"
+                >
+                  Crie sua conta
+                </h1>
+                <p
+                  class="text-gray-500"
+                >
+                  Escolha seu perfil e preencha seus dados.
+                </p>
+              </div>
+              <div
+                class="space-y-4"
+              >
+                <div
+                  class="flex gap-2 p-1 bg-gray-100 rounded-xl"
+                >
+                  <button
+                    class="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all bg-white text-gray-900 shadow-sm"
+                    type="button"
+                  >
+                    Sou Cliente
+                  </button>
+                  <button
+                    class="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all text-gray-500 hover:text-gray-700"
+                    type="button"
+                  >
+                    Sou Corretor
+                  </button>
+                </div>
+                <div>
+                  <label
+                    class="block text-sm font-medium text-gray-700 mb-1.5"
+                    for="name"
+                  >
+                    Nome completo
+                  </label>
+                  <div
+                    class="relative"
+                  >
+                    <input
+                      class="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                      id="name"
+                      placeholder="Seu nome"
+                      type="text"
+                      value=""
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label
+                    class="block text-sm font-medium text-gray-700 mb-1.5"
+                    for="email"
+                  >
+                    Email
+                  </label>
+                  <div
+                    class="relative"
+                  >
+                    <input
+                      class="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                      id="email"
+                      placeholder="seu@email.com"
+                      type="email"
+                      value="draft@example.com"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label
+                    class="block text-sm font-medium text-gray-700 mb-1.5"
+                    for="password"
+                  >
+                    Senha
+                  </label>
+                  <div
+                    class="relative"
+                  >
+                    <input
+                      class="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-12 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                      id="password"
+                      placeholder="M├¡nimo 6 caracteres"
+                      type="password"
+                      value=""
+                    />
+                    <button
+                      class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      type="button"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label
+                    class="block text-sm font-medium text-gray-700 mb-1.5"
+                    for="phone"
+                  >
+                    Telefone
+                  </label>
+                  <div
+                    class="relative"
+                  >
+                    <input
+                      class="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                      id="phone"
+                      placeholder="(64) 99999-9999"
+                      type="tel"
+                      value=""
+                    />
+                  </div>
+                </div>
+                <button
+                  class="w-full flex items-center justify-center gap-2 py-4 mt-2 bg-accent-500 hover:bg-accent-600 disabled:bg-accent-400 text-primary-900 font-semibold rounded-xl shadow-lg shadow-accent-500/25 transition-all"
+                  type="button"
+                >
+                  Continuar
+                </button>
+                <p
+                  class="text-xs text-center text-gray-500 mt-2"
+                >
+                  Voc├¬ receber├í um email para validar seu cadastro.
+                </p>
+              </div>
+              <p
+                class="mt-8 text-center text-gray-600"
+              >
+                J├í tem uma conta?
+                 
+                <a
+                  class="text-accent-600 hover:text-accent-700 font-semibold"
+                  href="/login"
+                >
+                  Fazer login
+                </a>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </body>
+
+      77 |
+      78 |         // Wait for hydration
+    > 79 |         await waitFor(() => {
+         |                      ^
+      80 |             expect(screen.getByDisplayValue('Draft User')).toBeInTheDocument()
+      81 |             expect(screen.getByDisplayValue('draft@example.com')).toBeInTheDocument()
+      82 |             expect(screen.getByDisplayValue('(11) 98888-8888')).toBeInTheDocument()
+
+      at waitForWrapper (node_modules/@testing-library/dom/dist/wait-for.js:163:27)
+      at Object.<anonymous> (src/__tests__/integration/DraftRecovery.test.tsx:79:22)
+
+  ÔùÅ Draft Recovery Integration ÔÇ║ starts empty if no draft exists
+
+    Unable to find an element with the placeholder text of: /Nome completo/i
+
+    Ignored nodes: comments, script, style
+    <body>
+      <div>
+        <div
+          class="min-h-screen bg-gray-50 pt-16 lg:pt-20"
+        >
+          <div
+            class="flex min-h-[calc(100vh-4rem)] lg:min-h-[calc(100vh-5rem)] items-center justify-center px-4 sm:px-6 lg:px-8 py-12"
+          >
+            <div
+              class="w-full max-w-md"
+            >
+              <a
+                class="flex items-center justify-center mb-8"
+                href="/"
+              >
+                <img
+                  alt="Encontre Aqui Im├│veis"
+                  class="h-20"
+                  data-nimg="1"
+                  decoding="async"
+                  height="80"
+                  loading="lazy"
+                  src="/logo2.svg"
+                  style="color: transparent; width: auto;"
+                  width="280"
+                />
+              </a>
+              <div
+                class="flex items-center justify-center gap-2 mb-6"
+              >
+                <div
+                  class="w-3 h-3 rounded-full transition-colors bg-accent-500"
+                />
+                <div
+                  class="w-8 h-0.5 bg-gray-300"
+                />
+                <div
+                  class="w-3 h-3 rounded-full transition-colors bg-gray-300"
+                />
+              </div>
+              <div
+                class="text-center mb-6"
+              >
+                <h1
+                  class="text-2xl font-bold text-gray-900 mb-2"
+                >
+                  Crie sua conta
+                </h1>
+                <p
+                  class="text-gray-500"
+                >
+                  Escolha seu perfil e preencha seus dados.
+                </p>
+              </div>
+              <div
+                class="space-y-4"
+              >
+                <div
+                  class="flex gap-2 p-1 bg-gray-100 rounded-xl"
+                >
+                  <button
+                    class="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all bg-white text-gray-900 shadow-sm"
+                    type="button"
+                  >
+                    Sou Cliente
+                  </button>
+                  <button
+                    class="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all text-gray-500 hover:text-gray-700"
+                    type="button"
+                  >
+                    Sou Corretor
+                  </button>
+                </div>
+                <div>
+                  <label
+                    class="block text-sm font-medium text-gray-700 mb-1.5"
+                    for="name"
+                  >
+                    Nome completo
+                  </label>
+                  <div
+                    class="relative"
+                  >
+                    <input
+                      class="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                      id="name"
+                      placeholder="Seu nome"
+                      type="text"
+                      value=""
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label
+                    class="block text-sm font-medium text-gray-700 mb-1.5"
+                    for="email"
+                  >
+                    Email
+                  </label>
+                  <div
+                    class="relative"
+                  >
+                    <input
+                      class="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                      id="email"
+                      placeholder="seu@email.com"
+                      type="email"
+                      value=""
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label
+                    class="block text-sm font-medium text-gray-700 mb-1.5"
+                    for="password"
+                  >
+                    Senha
+                  </label>
+                  <div
+                    class="relative"
+                  >
+                    <input
+                      class="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-12 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                      id="password"
+                      placeholder="M├¡nimo 6 caracteres"
+                      type="password"
+                      value=""
+                    />
+                    <button
+                      class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      type="button"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label
+                    class="block text-sm font-medium text-gray-700 mb-1.5"
+                    for="phone"
+                  >
+                    Telefone
+                  </label>
+                  <div
+                    class="relative"
+                  >
+                    <input
+                      class="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                      id="phone"
+                      placeholder="(64) 99999-9999"
+                      type="tel"
+                      value=""
+                    />
+                  </div>
+                </div>
+                <button
+                  class="w-full flex items-center justify-center gap-2 py-4 mt-2 bg-accent-500 hover:bg-accent-600 disabled:bg-accent-400 text-primary-900 font-semibold rounded-xl shadow-lg shadow-accent-500/25 transition-all"
+                  type="button"
+                >
+                  Continuar
+                </button>
+                <p
+                  class="text-xs text-center text-gray-500 mt-2"
+                >
+                  Voc├¬ receber├í um email para validar seu cadastro.
+                </p>
+              </div>
+              <p
+                class="mt-8 text-center text-gray-600"
+              >
+                J├í tem uma conta?
+                 
+                <a
+                  class="text-accent-600 hover:text-accent-700 font-semibold"
+                  href="/login"
+                >
+                  Fazer login
+                </a>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </body>
+
+      91 |         )
+      92 |
+    > 93 |         await waitFor(() => {
+         |                      ^
+      94 |             const nameInput = screen.getByPlaceholderText(/Nome completo/i) as HTMLInputElement
+      95 |             expect(nameInput.value).toBe('')
+      96 |         })
+
+      at waitForWrapper (node_modules/@testing-library/dom/dist/wait-for.js:163:27)
+      at Object.<anonymous> (src/__tests__/integration/DraftRecovery.test.tsx:93:22)
+
+Test Suites: 3 failed, 1 passed, 4 total
+Tests:       7 failed, 3 passed, 10 total
+Snapshots:   0 total
+Time:        29.039 s, estimated 40 s
+Ran all test suites matching src/__tests__/integration|src/__tests__/security.

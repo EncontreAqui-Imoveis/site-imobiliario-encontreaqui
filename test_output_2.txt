@@ -1,0 +1,12 @@
+FAIL src/__tests__/integration/EditProfileValues.test.tsx
+  ÔùÅ Test suite failed to run
+
+    ENOENT: no such file or directory, open 'D:\site-imobiliario\src\__tests__\integration\EditProfileValues.test.tsx'
+
+      at Runtime.readFileBuffer (node_modules/jest-runtime/build/index.js:1921:21)
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        73.21 s
+Ran all test suites matching src/__tests__/integration/EditProfileValues.test.tsx.
