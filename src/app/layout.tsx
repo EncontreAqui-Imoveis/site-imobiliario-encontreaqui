@@ -11,9 +11,9 @@ export const metadata: Metadata = {
     description: 'Encontre casas, apartamentos e terrenos em Rio Verde, GO. Compre ou alugue com segurança e sem burocracia.',
     keywords: 'imóveis, casas, apartamentos, terrenos, Rio Verde, Goiás, venda, aluguel',
     icons: {
-        icon: '/icone_app.png',
-        shortcut: '/icone_app.png',
-        apple: '/icone_app.png',
+        icon: '/logo_circular.png',
+        shortcut: '/logo_circular.png',
+        apple: '/logo_circular.png',
     },
     openGraph: {
         title: 'Encontre Aqui Imóveis | Imóveis em Rio Verde',
