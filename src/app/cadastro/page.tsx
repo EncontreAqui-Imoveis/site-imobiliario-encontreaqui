@@ -55,6 +55,7 @@ export default function RegisterPage() {
     const [showPassword, setShowPassword] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState('')
+    const [noNumber, setNoNumber] = useState(false)
 
     const [formData, setFormData] = useState<FormData>({
         name: '',
@@ -136,7 +137,7 @@ export default function RegisterPage() {
             return false
         }
 
-        if (!formData.number.trim()) {
+        if (!noNumber && !formData.number.trim()) {
             setError('Número é obrigatório.')
             return false
         }
@@ -222,8 +223,9 @@ export default function RegisterPage() {
         try {
             // Check if it's a Google Registration flow
             if (draft?.googleData) {
-                // 1. Create account using Google Token + Role
-                const loginResult = await authApi.googleAuth(draft.googleData.idToken, userType)
+                // 1. Create account using Google Token WITHOUT role first
+                // Pass undefined for profileType to avoid backend "Data truncated" error on status column
+                const loginResult = await authApi.googleAuth(draft.googleData.idToken)
 
                 if (loginResult.error) {
                     throw new Error(typeof loginResult.error === 'string' ? loginResult.error : 'Erro ao criar conta com Google')
@@ -232,14 +234,14 @@ export default function RegisterPage() {
                 const token = loginResult.data.token
 
                 // We need to temporarily set the session to make authenticated requests
-                // But updateProfile in api.ts reads from localStorage, so let's set it
                 localStorage.setItem('token', token)
 
-                // 2. Hydrate Profile with full data
+                // 2. Hydrate Profile with full data AND Role
                 const profileData = {
+                    role: userType, // Set role here
                     phone: `+55${onlyDigits(formData.phone)}`,
                     street: formData.street,
-                    number: formData.number,
+                    number: noNumber ? '0' : formData.number,
                     complement: formData.complement,
                     bairro: formData.bairro,
                     city: formData.city,
@@ -251,18 +253,14 @@ export default function RegisterPage() {
                 const updateResult = await authApi.updateProfile(profileData)
 
                 if (updateResult.error) {
-                    // If update fails, user is created but incomplete. 
-                    // They will be redirected to profile edit anyway on future logins,
-                    // but let's try to show error.
                     console.error('Update profile error:', updateResult.error)
                 }
 
                 // 3. Clear draft and Redirect
-                // clearDraft() // context method needed
                 localStorage.removeItem('registration_draft')
 
-                // Redirect to success or home
-                router.push('/cadastro/sucesso')
+                // Redirect to Phone Verification
+                router.push('/cadastro/verificar-telefone')
                 return
             }
 
@@ -275,7 +273,7 @@ export default function RegisterPage() {
                 phone: `+55${onlyDigits(formData.phone)}`,
                 creci: userType === 'broker' ? formData.creci.trim() : '',
                 street: formData.street.trim(),
-                number: formData.number.trim(),
+                number: noNumber ? '0' : formData.number.trim(),
                 complement: formData.complement.trim(),
                 bairro: formData.bairro.trim(),
                 cep: onlyDigits(formData.cep),
@@ -590,16 +588,31 @@ export default function RegisterPage() {
                             {/* Number + Complement */}
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label htmlFor="number" className="block text-sm font-medium text-gray-700 mb-1.5">
-                                        Número
-                                    </label>
+                                    <div className="flex justify-between items-center mb-1.5">
+                                        <label htmlFor="number" className="block text-sm font-medium text-gray-700">
+                                            Número
+                                        </label>
+                                        <label className="flex items-center gap-1.5 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={noNumber}
+                                                onChange={(e) => {
+                                                    setNoNumber(e.target.checked)
+                                                    if (e.target.checked) updateField('number', '')
+                                                }}
+                                                className="w-3.5 h-3.5 rounded border-gray-300 text-accent-500 focus:ring-accent-500"
+                                            />
+                                            <span className="text-xs text-gray-500">Sem número</span>
+                                        </label>
+                                    </div>
                                     <input
                                         id="number"
                                         type="text"
                                         value={formData.number}
                                         onChange={(e) => updateField('number', e.target.value.replace(/\D/g, ''))}
                                         placeholder="123"
-                                        className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                        disabled={noNumber}
+                                        className={`w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${noNumber ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                                     />
                                 </div>
                                 <div>
