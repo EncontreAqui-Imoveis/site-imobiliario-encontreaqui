@@ -1,0 +1,173 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Font Variables */
+:root {
+  --font-dm-sans: 'DM Sans', system-ui, sans-serif;
+  --font-hk-grotesk: 'HK Grotesk', 'DM Sans', system-ui, sans-serif;
+
+  /* Encontre Aqui Imóveis - Brand Colors */
+  --color-primary: #0d5051;
+  --color-primary-light: #339697;
+  --color-accent: #ffca45;
+  --color-accent-light: #ffe57f;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-dm-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #fafafa;
+  color: #262626;
+}
+
+/* Headings with Display Font */
+h1,
+h2,
+h3 {
+  font-family: var(--font-dm-sans);
+  font-weight: 700;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #0d5051;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #093b3c;
+}
+
+/* Selection Color */
+::selection {
+  background-color: #ffca45;
+  color: #0d5051;
+}
+
+/* Hide scrollbar for carousels */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@layer components {
+
+  /* Gradient backgrounds with new brand colors */
+  .gradient-primary {
+    @apply bg-gradient-to-br from-primary-500 to-primary-700;
+  }
+
+  .gradient-accent {
+    @apply bg-gradient-to-br from-accent-400 to-accent-600;
+  }
+
+  .gradient-hero {
+    background: linear-gradient(135deg, #0d5051 0%, #093b3c 50%, #052526 100%);
+  }
+
+  .gradient-hero-gold {
+    background: linear-gradient(135deg, #0d5051 0%, #0b4647 100%);
+  }
+
+  /* Card hover effect */
+  .card-hover {
+    @apply transition-all duration-300 hover:-translate-y-1;
+  }
+
+  /* Gold accent button */
+  .btn-accent {
+    @apply bg-accent-500 hover:bg-accent-600 text-primary-900 font-semibold shadow-lg shadow-accent-500/25 hover:shadow-accent-500/40 transition-all duration-200;
+  }
+
+  /* Teal primary button */
+  .btn-primary {
+    @apply bg-primary-500 hover:bg-primary-600 text-white font-semibold shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 transition-all duration-200;
+  }
+
+  /* Gold badge */
+  .badge-gold {
+    @apply bg-accent-500 text-primary-900 font-semibold px-3 py-1 rounded-full text-sm;
+  }
+
+  /* Teal badge */
+  .badge-teal {
+    @apply bg-primary-500 text-white font-semibold px-3 py-1 rounded-full text-sm;
+  }
+}
+
+@layer utilities {
+
+  /* Text gradient with brand colors */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-500 to-accent-500;
+  }
+
+  /* Gold underline accent */
+  .underline-accent {
+    text-decoration: underline;
+    text-decoration-color: #ffca45;
+    text-underline-offset: 4px;
+    text-decoration-thickness: 3px;
+  }
+
+  /* Animations */
+  .animate-fadeIn {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .animate-slideUp {
+    animation: slideUp 0.5s ease-out forwards;
+  }
+
+  /* Glass effect */
+  .glass {
+    @apply bg-white/80 backdrop-blur-md;
+  }
+
+  .glass-dark {
+    @apply bg-primary-900/80 backdrop-blur-md;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

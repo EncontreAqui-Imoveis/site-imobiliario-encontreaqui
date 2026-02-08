@@ -1,0 +1,19 @@
+Favoritos	✅ FavoritesScreen	❌ Falta página /favoritos
+Perfil do usuário	✅ ProfileScreen	❌ Falta página /perfil
+Meus imóveis	✅ MyPropertiesScreen	❌ Falta painel do usuário
+Adicionar imóvel	✅ AddPropertyScreen (wizard com 6 passos)	❌ Falta formulário /anuncie
+Editar imóvel	✅ EditPropertyScreen	❌ Falta edição
+Notificações	✅ NotificationsScreen	❌ Falta sistema de notificações
+🟡 Importante
+Funcionalidade	App Mobile	Site Web
+Filtros avançados	✅ FilterSheet (modal bottom)	⚠️ Sidebar básica
+Verificação de conta	✅ VerificationScreen	❌ Falta
+Upgrade para corretor	✅ BrokerUpgradeCreciScreen	❌ Falta
+Recuperar senha	✅ Fluxo completo	❌ Falta página
+Termos de uso	✅ TermsScreen	❌ Falta página /termos
+Configurações	✅ SettingsScreen	❌ Falta
+🟢 Nice to Have
+Onboarding para novos usuários
+Relatórios de visualização (corretores)
+Galeria fullscreen com swipe
+Verificação por telefone/email

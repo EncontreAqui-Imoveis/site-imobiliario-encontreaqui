@@ -1,0 +1,1509 @@
+FAIL src/__tests__/integration/EditProfile.test.tsx (11.008 s)
+  EditProfileForm Integration
+    ├ù loads user data into form fields (1113 ms)
+    ├ù validates required fields (1029 ms)
+    ├ù submits form with updated data (1028 ms)
+    ├ù handles API errors (1076 ms)
+
+  ÔùÅ EditProfileForm Integration ÔÇ║ loads user data into form fields
+
+    Unable to find an element with the display value: Test User.
+
+    Ignored nodes: comments, script, style
+    <body>
+      <div>
+        <div
+          class="min-h-screen bg-gray-50 pt-24 pb-12"
+        >
+          <div
+            class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8"
+          >
+            <div
+              class="mb-6"
+            >
+              <button
+                class="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Voltar
+              </button>
+            </div>
+            <div
+              class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+            >
+              <div
+                class="p-8"
+              >
+                <h1
+                  class="text-2xl font-bold text-gray-900 mb-2"
+                >
+                  Completar Cadastro
+                </h1>
+                <p
+                  class="text-gray-500 mb-8"
+                >
+                  Precisamos de alguns dados adicionais para finalizar seu perfil.
+                </p>
+                <form
+                  class="space-y-6"
+                >
+                  <div
+                    class="grid grid-cols-1 md:grid-cols-2 gap-6"
+                  >
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Nome
+                      </label>
+                      <input
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-500 cursor-not-allowed"
+                        disabled=""
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Email
+                      </label>
+                      <input
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-500 cursor-not-allowed"
+                        disabled=""
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                  </div>
+                  <div
+                    class="border-t border-gray-100 my-6"
+                  />
+                  <h2
+                    class="text-lg font-semibold text-gray-900 flex items-center gap-2"
+                  >
+                    Contato
+                  </h2>
+                  <div>
+                    <label
+                      class="block text-sm font-medium text-gray-700 mb-1.5"
+                    >
+                      Telefone Celular
+                    </label>
+                    <input
+                      class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                      name="phone"
+                      placeholder="(00) 00000-0000"
+                      type="tel"
+                      value=""
+                    />
+                  </div>
+                  <div
+                    class="border-t border-gray-100 my-6"
+                  />
+                  <h2
+                    class="text-lg font-semibold text-gray-900 flex items-center gap-2"
+                  >
+                    Endere├ºo
+                  </h2>
+                  <div
+                    class="grid grid-cols-1 md:grid-cols-2 gap-6"
+                  >
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        CEP
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="cep"
+                        placeholder="00000-000"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Estado
+                      </label>
+                      <select
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all appearance-none"
+                        name="state"
+                      >
+                        <option
+                          value=""
+                        >
+                          Selecione...
+                        </option>
+                        <option
+                          value="AC"
+                        >
+                          AC
+                        </option>
+                        <option
+                          value="AL"
+                        >
+                          AL
+                        </option>
+                        <option
+                          value="AP"
+                        >
+                          AP
+                        </option>
+                        <option
+                          value="AM"
+                        >
+                          AM
+                        </option>
+                        <option
+                          value="BA"
+                        >
+                          BA
+                        </option>
+                        <option
+                          value="CE"
+                        >
+                          CE
+                        </option>
+                        <option
+                          value="DF"
+                        >
+                          DF
+                        </option>
+                        <option
+                          value="ES"
+                        >
+                          ES
+                        </option>
+                        <option
+                          value="GO"
+                        >
+                          GO
+                        </option>
+                        <option
+                          value="MA"
+                        >
+                          MA
+                        </option>
+                        <option
+                          value="MT"
+                        >
+                          MT
+                        </option>
+                        <option
+                          value="MS"
+                        >
+                          MS
+                        </option>
+                        <option
+                          value="MG"
+                        >
+                          MG
+                        </option>
+                        <option
+                          value="PA"
+                        >
+                          PA
+                        </option>
+                        <option
+                          value="PB"
+                        >
+                          PB
+                        </option>
+                        <option
+                          value="PR"
+                        >
+                          PR
+                        </option>
+                        <option
+                          value="PE"
+                        >
+                          PE
+                        </option>
+                        <option
+                          value="PI"
+                        >
+                          PI
+                        </option>
+                        <option
+                          value="RJ"
+                        >
+                          RJ
+                        </option>
+                        <option
+                          value="RN"
+                        >
+                          RN
+                        </option>
+                        <option
+                          value="RS"
+                        >
+                          RS
+                        </option>
+                        <option
+                          value="RO"
+                        >
+                          RO
+                        </option>
+                        <option
+                          value="RR"
+                        >
+                          RR
+                        </option>
+                        <option
+                          value="SC"
+                        >
+                          SC
+                        </option>
+                        <option
+                          value="SP"
+                        >
+                          SP
+                        </option>
+                        <option
+                          value="SE"
+                        >
+                          SE
+                        </option>
+                        <option
+                          value="TO"
+                        >
+                          TO
+                        </option>
+                      </select>
+                    </div>
+                    <div
+                      class="md:col-span-2"
+                    >
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Cidade
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="city"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div
+                      class="md:col-span-2"
+                    >
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Logradouro
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="street"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        N├║mero
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="number"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Complemento
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="complement"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div
+                      class="md:col-span-2"
+                    >
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Bairro
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="bairro"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                  </div>
+                  <div
+                    class="pt-4"
+                  >
+                    <button
+                      class="w-full flex items-center justify-center gap-2 bg-primary-900 hover:bg-primary-800 text-white font-semibold py-3.5 px-6 rounded-xl transition-all shadow-lg shadow-primary-900/20 disabled:opacity-70 disabled:cursor-not-allowed"
+                      type="submit"
+                    >
+                      Salvar Altera├º├Áes
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </body>
+
+      66 |         render(<EditProfileForm />)
+      67 |
+    > 68 |         await waitFor(() => {
+         |                      ^
+      69 |             expect(screen.getByDisplayValue('Test User')).toBeInTheDocument()
+      70 |             expect(screen.getByDisplayValue('(11) 99999-9999')).toBeInTheDocument()
+      71 |         })
+
+      at waitForWrapper (node_modules/@testing-library/dom/dist/wait-for.js:163:27)
+      at Object.<anonymous> (src/__tests__/integration/EditProfile.test.tsx:68:22)
+
+  ÔùÅ EditProfileForm Integration ÔÇ║ validates required fields
+
+    Unable to find an element with the display value: (11) 99999-9999.
+
+    Ignored nodes: comments, script, style
+    <body>
+      <div>
+        <div
+          class="min-h-screen bg-gray-50 pt-24 pb-12"
+        >
+          <div
+            class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8"
+          >
+            <div
+              class="mb-6"
+            >
+              <button
+                class="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Voltar
+              </button>
+            </div>
+            <div
+              class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+            >
+              <div
+                class="p-8"
+              >
+                <h1
+                  class="text-2xl font-bold text-gray-900 mb-2"
+                >
+                  Completar Cadastro
+                </h1>
+                <p
+                  class="text-gray-500 mb-8"
+                >
+                  Precisamos de alguns dados adicionais para finalizar seu perfil.
+                </p>
+                <form
+                  class="space-y-6"
+                >
+                  <div
+                    class="grid grid-cols-1 md:grid-cols-2 gap-6"
+                  >
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Nome
+                      </label>
+                      <input
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-500 cursor-not-allowed"
+                        disabled=""
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Email
+                      </label>
+                      <input
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-500 cursor-not-allowed"
+                        disabled=""
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                  </div>
+                  <div
+                    class="border-t border-gray-100 my-6"
+                  />
+                  <h2
+                    class="text-lg font-semibold text-gray-900 flex items-center gap-2"
+                  >
+                    Contato
+                  </h2>
+                  <div>
+                    <label
+                      class="block text-sm font-medium text-gray-700 mb-1.5"
+                    >
+                      Telefone Celular
+                    </label>
+                    <input
+                      class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                      name="phone"
+                      placeholder="(00) 00000-0000"
+                      type="tel"
+                      value=""
+                    />
+                  </div>
+                  <div
+                    class="border-t border-gray-100 my-6"
+                  />
+                  <h2
+                    class="text-lg font-semibold text-gray-900 flex items-center gap-2"
+                  >
+                    Endere├ºo
+                  </h2>
+                  <div
+                    class="grid grid-cols-1 md:grid-cols-2 gap-6"
+                  >
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        CEP
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="cep"
+                        placeholder="00000-000"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Estado
+                      </label>
+                      <select
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all appearance-none"
+                        name="state"
+                      >
+                        <option
+                          value=""
+                        >
+                          Selecione...
+                        </option>
+                        <option
+                          value="AC"
+                        >
+                          AC
+                        </option>
+                        <option
+                          value="AL"
+                        >
+                          AL
+                        </option>
+                        <option
+                          value="AP"
+                        >
+                          AP
+                        </option>
+                        <option
+                          value="AM"
+                        >
+                          AM
+                        </option>
+                        <option
+                          value="BA"
+                        >
+                          BA
+                        </option>
+                        <option
+                          value="CE"
+                        >
+                          CE
+                        </option>
+                        <option
+                          value="DF"
+                        >
+                          DF
+                        </option>
+                        <option
+                          value="ES"
+                        >
+                          ES
+                        </option>
+                        <option
+                          value="GO"
+                        >
+                          GO
+                        </option>
+                        <option
+                          value="MA"
+                        >
+                          MA
+                        </option>
+                        <option
+                          value="MT"
+                        >
+                          MT
+                        </option>
+                        <option
+                          value="MS"
+                        >
+                          MS
+                        </option>
+                        <option
+                          value="MG"
+                        >
+                          MG
+                        </option>
+                        <option
+                          value="PA"
+                        >
+                          PA
+                        </option>
+                        <option
+                          value="PB"
+                        >
+                          PB
+                        </option>
+                        <option
+                          value="PR"
+                        >
+                          PR
+                        </option>
+                        <option
+                          value="PE"
+                        >
+                          PE
+                        </option>
+                        <option
+                          value="PI"
+                        >
+                          PI
+                        </option>
+                        <option
+                          value="RJ"
+                        >
+                          RJ
+                        </option>
+                        <option
+                          value="RN"
+                        >
+                          RN
+                        </option>
+                        <option
+                          value="RS"
+                        >
+                          RS
+                        </option>
+                        <option
+                          value="RO"
+                        >
+                          RO
+                        </option>
+                        <option
+                          value="RR"
+                        >
+                          RR
+                        </option>
+                        <option
+                          value="SC"
+                        >
+                          SC
+                        </option>
+                        <option
+                          value="SP"
+                        >
+                          SP
+                        </option>
+                        <option
+                          value="SE"
+                        >
+                          SE
+                        </option>
+                        <option
+                          value="TO"
+                        >
+                          TO
+                        </option>
+                      </select>
+                    </div>
+                    <div
+                      class="md:col-span-2"
+                    >
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Cidade
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="city"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div
+                      class="md:col-span-2"
+                    >
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Logradouro
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="street"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        N├║mero
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="number"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Complemento
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="complement"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div
+                      class="md:col-span-2"
+                    >
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Bairro
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="bairro"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                  </div>
+                  <div
+                    class="pt-4"
+                  >
+                    <button
+                      class="w-full flex items-center justify-center gap-2 bg-primary-900 hover:bg-primary-800 text-white font-semibold py-3.5 px-6 rounded-xl transition-all shadow-lg shadow-primary-900/20 disabled:opacity-70 disabled:cursor-not-allowed"
+                      type="submit"
+                    >
+                      Salvar Altera├º├Áes
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </body>
+
+      76 |
+      77 |         // Clear phone
+    > 78 |         const phoneInput = await screen.findByDisplayValue('(11) 99999-9999')
+         |                                         ^
+      79 |         fireEvent.change(phoneInput, { target: { value: '' } })
+      80 |
+      81 |         // Submit
+
+      at waitForWrapper (node_modules/@testing-library/dom/dist/wait-for.js:163:27)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+      at Object.findByDisplayValue (src/__tests__/integration/EditProfile.test.tsx:78:41)
+
+  ÔùÅ EditProfileForm Integration ÔÇ║ submits form with updated data
+
+    Unable to find an element with the display value: Test User.
+
+    Ignored nodes: comments, script, style
+    <body>
+      <div>
+        <div
+          class="min-h-screen bg-gray-50 pt-24 pb-12"
+        >
+          <div
+            class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8"
+          >
+            <div
+              class="mb-6"
+            >
+              <button
+                class="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Voltar
+              </button>
+            </div>
+            <div
+              class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+            >
+              <div
+                class="p-8"
+              >
+                <h1
+                  class="text-2xl font-bold text-gray-900 mb-2"
+                >
+                  Completar Cadastro
+                </h1>
+                <p
+                  class="text-gray-500 mb-8"
+                >
+                  Precisamos de alguns dados adicionais para finalizar seu perfil.
+                </p>
+                <form
+                  class="space-y-6"
+                >
+                  <div
+                    class="grid grid-cols-1 md:grid-cols-2 gap-6"
+                  >
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Nome
+                      </label>
+                      <input
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-500 cursor-not-allowed"
+                        disabled=""
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Email
+                      </label>
+                      <input
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-500 cursor-not-allowed"
+                        disabled=""
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                  </div>
+                  <div
+                    class="border-t border-gray-100 my-6"
+                  />
+                  <h2
+                    class="text-lg font-semibold text-gray-900 flex items-center gap-2"
+                  >
+                    Contato
+                  </h2>
+                  <div>
+                    <label
+                      class="block text-sm font-medium text-gray-700 mb-1.5"
+                    >
+                      Telefone Celular
+                    </label>
+                    <input
+                      class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                      name="phone"
+                      placeholder="(00) 00000-0000"
+                      type="tel"
+                      value=""
+                    />
+                  </div>
+                  <div
+                    class="border-t border-gray-100 my-6"
+                  />
+                  <h2
+                    class="text-lg font-semibold text-gray-900 flex items-center gap-2"
+                  >
+                    Endere├ºo
+                  </h2>
+                  <div
+                    class="grid grid-cols-1 md:grid-cols-2 gap-6"
+                  >
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        CEP
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="cep"
+                        placeholder="00000-000"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Estado
+                      </label>
+                      <select
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all appearance-none"
+                        name="state"
+                      >
+                        <option
+                          value=""
+                        >
+                          Selecione...
+                        </option>
+                        <option
+                          value="AC"
+                        >
+                          AC
+                        </option>
+                        <option
+                          value="AL"
+                        >
+                          AL
+                        </option>
+                        <option
+                          value="AP"
+                        >
+                          AP
+                        </option>
+                        <option
+                          value="AM"
+                        >
+                          AM
+                        </option>
+                        <option
+                          value="BA"
+                        >
+                          BA
+                        </option>
+                        <option
+                          value="CE"
+                        >
+                          CE
+                        </option>
+                        <option
+                          value="DF"
+                        >
+                          DF
+                        </option>
+                        <option
+                          value="ES"
+                        >
+                          ES
+                        </option>
+                        <option
+                          value="GO"
+                        >
+                          GO
+                        </option>
+                        <option
+                          value="MA"
+                        >
+                          MA
+                        </option>
+                        <option
+                          value="MT"
+                        >
+                          MT
+                        </option>
+                        <option
+                          value="MS"
+                        >
+                          MS
+                        </option>
+                        <option
+                          value="MG"
+                        >
+                          MG
+                        </option>
+                        <option
+                          value="PA"
+                        >
+                          PA
+                        </option>
+                        <option
+                          value="PB"
+                        >
+                          PB
+                        </option>
+                        <option
+                          value="PR"
+                        >
+                          PR
+                        </option>
+                        <option
+                          value="PE"
+                        >
+                          PE
+                        </option>
+                        <option
+                          value="PI"
+                        >
+                          PI
+                        </option>
+                        <option
+                          value="RJ"
+                        >
+                          RJ
+                        </option>
+                        <option
+                          value="RN"
+                        >
+                          RN
+                        </option>
+                        <option
+                          value="RS"
+                        >
+                          RS
+                        </option>
+                        <option
+                          value="RO"
+                        >
+                          RO
+                        </option>
+                        <option
+                          value="RR"
+                        >
+                          RR
+                        </option>
+                        <option
+                          value="SC"
+                        >
+                          SC
+                        </option>
+                        <option
+                          value="SP"
+                        >
+                          SP
+                        </option>
+                        <option
+                          value="SE"
+                        >
+                          SE
+                        </option>
+                        <option
+                          value="TO"
+                        >
+                          TO
+                        </option>
+                      </select>
+                    </div>
+                    <div
+                      class="md:col-span-2"
+                    >
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Cidade
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="city"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div
+                      class="md:col-span-2"
+                    >
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Logradouro
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="street"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        N├║mero
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="number"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Complemento
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="complement"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div
+                      class="md:col-span-2"
+                    >
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Bairro
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="bairro"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                  </div>
+                  <div
+                    class="pt-4"
+                  >
+                    <button
+                      class="w-full flex items-center justify-center gap-2 bg-primary-900 hover:bg-primary-800 text-white font-semibold py-3.5 px-6 rounded-xl transition-all shadow-lg shadow-primary-900/20 disabled:opacity-70 disabled:cursor-not-allowed"
+                      type="submit"
+                    >
+                      Salvar Altera├º├Áes
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </body>
+
+      93 |
+      94 |         // Wait for load
+    > 95 |         await screen.findByDisplayValue('Test User')
+         |                      ^
+      96 |
+      97 |         // Fill address (simplified)
+      98 |         fireEvent.change(screen.getByLabelText(/CEP/i), { target: { value: '01001-000' } })
+
+      at waitForWrapper (node_modules/@testing-library/dom/dist/wait-for.js:163:27)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+      at Object.findByDisplayValue (src/__tests__/integration/EditProfile.test.tsx:95:22)
+
+  ÔùÅ EditProfileForm Integration ÔÇ║ handles API errors
+
+    Unable to find an element with the text: /Erro simulado/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+    Ignored nodes: comments, script, style
+    <body>
+      <div>
+        <div
+          class="min-h-screen bg-gray-50 pt-24 pb-12"
+        >
+          <div
+            class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8"
+          >
+            <div
+              class="mb-6"
+            >
+              <button
+                class="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Voltar
+              </button>
+            </div>
+            <div
+              class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+            >
+              <div
+                class="p-8"
+              >
+                <h1
+                  class="text-2xl font-bold text-gray-900 mb-2"
+                >
+                  Completar Cadastro
+                </h1>
+                <p
+                  class="text-gray-500 mb-8"
+                >
+                  Precisamos de alguns dados adicionais para finalizar seu perfil.
+                </p>
+                <div
+                  class="mb-6 p-4 bg-red-50 text-red-700 rounded-xl text-sm border border-red-100 flex items-center"
+                >
+                  <span
+                    class="mr-2"
+                  >
+                    ÔÜá´©Å
+                  </span>
+                   
+                  Telefone v├ílido ├® obrigat├│rio
+                </div>
+                <form
+                  class="space-y-6"
+                >
+                  <div
+                    class="grid grid-cols-1 md:grid-cols-2 gap-6"
+                  >
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Nome
+                      </label>
+                      <input
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-500 cursor-not-allowed"
+                        disabled=""
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Email
+                      </label>
+                      <input
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-500 cursor-not-allowed"
+                        disabled=""
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                  </div>
+                  <div
+                    class="border-t border-gray-100 my-6"
+                  />
+                  <h2
+                    class="text-lg font-semibold text-gray-900 flex items-center gap-2"
+                  >
+                    Contato
+                  </h2>
+                  <div>
+                    <label
+                      class="block text-sm font-medium text-gray-700 mb-1.5"
+                    >
+                      Telefone Celular
+                    </label>
+                    <input
+                      class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                      name="phone"
+                      placeholder="(00) 00000-0000"
+                      type="tel"
+                      value=""
+                    />
+                  </div>
+                  <div
+                    class="border-t border-gray-100 my-6"
+                  />
+                  <h2
+                    class="text-lg font-semibold text-gray-900 flex items-center gap-2"
+                  >
+                    Endere├ºo
+                  </h2>
+                  <div
+                    class="grid grid-cols-1 md:grid-cols-2 gap-6"
+                  >
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        CEP
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="cep"
+                        placeholder="00000-000"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Estado
+                      </label>
+                      <select
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all appearance-none"
+                        name="state"
+                      >
+                        <option
+                          value=""
+                        >
+                          Selecione...
+                        </option>
+                        <option
+                          value="AC"
+                        >
+                          AC
+                        </option>
+                        <option
+                          value="AL"
+                        >
+                          AL
+                        </option>
+                        <option
+                          value="AP"
+                        >
+                          AP
+                        </option>
+                        <option
+                          value="AM"
+                        >
+                          AM
+                        </option>
+                        <option
+                          value="BA"
+                        >
+                          BA
+                        </option>
+                        <option
+                          value="CE"
+                        >
+                          CE
+                        </option>
+                        <option
+                          value="DF"
+                        >
+                          DF
+                        </option>
+                        <option
+                          value="ES"
+                        >
+                          ES
+                        </option>
+                        <option
+                          value="GO"
+                        >
+                          GO
+                        </option>
+                        <option
+                          value="MA"
+                        >
+                          MA
+                        </option>
+                        <option
+                          value="MT"
+                        >
+                          MT
+                        </option>
+                        <option
+                          value="MS"
+                        >
+                          MS
+                        </option>
+                        <option
+                          value="MG"
+                        >
+                          MG
+                        </option>
+                        <option
+                          value="PA"
+                        >
+                          PA
+                        </option>
+                        <option
+                          value="PB"
+                        >
+                          PB
+                        </option>
+                        <option
+                          value="PR"
+                        >
+                          PR
+                        </option>
+                        <option
+                          value="PE"
+                        >
+                          PE
+                        </option>
+                        <option
+                          value="PI"
+                        >
+                          PI
+                        </option>
+                        <option
+                          value="RJ"
+                        >
+                          RJ
+                        </option>
+                        <option
+                          value="RN"
+                        >
+                          RN
+                        </option>
+                        <option
+                          value="RS"
+                        >
+                          RS
+                        </option>
+                        <option
+                          value="RO"
+                        >
+                          RO
+                        </option>
+                        <option
+                          value="RR"
+                        >
+                          RR
+                        </option>
+                        <option
+                          value="SC"
+                        >
+                          SC
+                        </option>
+                        <option
+                          value="SP"
+                        >
+                          SP
+                        </option>
+                        <option
+                          value="SE"
+                        >
+                          SE
+                        </option>
+                        <option
+                          value="TO"
+                        >
+                          TO
+                        </option>
+                      </select>
+                    </div>
+                    <div
+                      class="md:col-span-2"
+                    >
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Cidade
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="city"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div
+                      class="md:col-span-2"
+                    >
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Logradouro
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="street"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        N├║mero
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="number"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Complemento
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="complement"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                    <div
+                      class="md:col-span-2"
+                    >
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Bairro
+                      </label>
+                      <input
+                        class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                        name="bairro"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                  </div>
+                  <div
+                    class="pt-4"
+                  >
+                    <button
+                      class="w-full flex items-center justify-center gap-2 bg-primary-900 hover:bg-primary-800 text-white font-semibold py-3.5 px-6 rounded-xl transition-all shadow-lg shadow-primary-900/20 disabled:opacity-70 disabled:cursor-not-allowed"
+                      type="submit"
+                    >
+                      Salvar Altera├º├Áes
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </body>
+
+      122 |         fireEvent.click(submitBtn)
+      123 |
+    > 124 |         await waitFor(() => {
+          |                      ^
+      125 |             expect(screen.getByText(/Erro simulado/i)).toBeInTheDocument()
+      126 |         })
+      127 |     })
+
+      at waitForWrapper (node_modules/@testing-library/dom/dist/wait-for.js:163:27)
+      at Object.<anonymous> (src/__tests__/integration/EditProfile.test.tsx:124:22)
+
+Test Suites: 1 failed, 1 total
+Tests:       4 failed, 4 total
+Snapshots:   0 total
+Time:        18.146 s
+Ran all test suites matching src/__tests__/integration/EditProfile.test.tsx.
