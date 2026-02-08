@@ -6,11 +6,13 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { Mail, Lock, Eye, EyeOff, ArrowRight, User, Briefcase } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useRegistration } from '@/contexts/RegistrationContext'
 
 function LoginForm() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const { login, loginWithGoogle, isAuthenticated, isLoading: authLoading } = useAuth()
+    const { saveDraft, updateStep } = useRegistration()
 
     const [showPassword, setShowPassword] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
@@ -63,6 +65,35 @@ function LoginForm() {
 
         try {
             const result = await loginWithGoogle(profileType)
+
+            if (result.needsRegistration && result.pending) {
+                // New user - redirect to full registration flow
+                saveDraft({
+                    googleData: {
+                        uid: result.pending.uid!,
+                        email: result.pending.email,
+                        displayName: result.pending.name,
+                        photoURL: result.pending.photoURL || null,
+                        idToken: result.pending.idToken!,
+                    },
+                    authData: {
+                        name: result.pending.name,
+                        email: result.pending.email,
+                        password: '', // Password not needed for Google Auth
+                        phone: '',
+                        street: '',
+                        number: '',
+                        complement: '',
+                        bairro: '',
+                        city: '',
+                        state: '',
+                        cep: '',
+                        creci: '',
+                    }
+                })
+                router.push('/cadastro?mode=google')
+                return
+            }
 
             if (result.requiresProfileChoice && result.pending) {
                 // New user - needs to choose profile type
