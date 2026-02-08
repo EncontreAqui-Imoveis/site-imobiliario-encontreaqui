@@ -31,6 +31,13 @@ export interface RegistrationDraft {
     step: RegistrationStep
     userType: UserType
     authData: RegistrationAuthData
+    googleData?: {
+        uid: string
+        email: string
+        displayName: string
+        photoURL: string | null
+        idToken: string
+    }
     updatedAt: string
 }
 

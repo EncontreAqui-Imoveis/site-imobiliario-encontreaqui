@@ -24,7 +24,14 @@ interface User {
 interface GoogleAuthResult {
     success: boolean
     requiresProfileChoice?: boolean
-    pending?: { email: string; name: string }
+    needsRegistration?: boolean
+    pending?: {
+        email: string
+        name: string
+        uid?: string
+        photoURL?: string | null
+        idToken?: string
+    }
     needsCompletion?: boolean
     requiresDocuments?: boolean
 }
@@ -145,19 +152,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return { success: false }
             }
 
-            // Step 2: Send token to backend
+            // Step 2: Check if email exists in our backend
+            const { user: firebaseUser } = await import('firebase/auth').then(mod => {
+                const auth = mod.getAuth()
+                return { user: auth.currentUser }
+            })
+
+            if (!firebaseUser?.email) {
+                throw new Error('Email não fornecido pelo Google')
+            }
+
+            const emailStatus = await authApi.checkEmailStatus(firebaseUser.email)
+
+            if (emailStatus.error) {
+                throw new Error('Erro ao verificar status do email')
+            }
+
+            // If user does not exist, return pending state for registration
+            // We do NOT call googleAuth here anymore for new users
+            if (!emailStatus.data?.exists) {
+                return {
+                    success: false,
+                    needsRegistration: true,
+                    pending: {
+                        email: firebaseUser.email,
+                        name: firebaseUser.displayName || '',
+                        uid: firebaseUser.uid,
+                        photoURL: firebaseUser.photoURL,
+                        idToken
+                    }
+                }
+            }
+
+            // Step 3: User exists, proceed with backend login
             const response = await authApi.googleAuth(idToken, profileType)
 
             if (response.error) {
                 throw new Error(typeof response.error === 'string' ? response.error : 'Erro ao fazer login com Google')
             }
 
-            // Check if backend needs profile choice (new user without profileType)
+            // Check if backend needs profile choice (should rarely happen with new flow, but keeping for safety)
             if (response.data?.requiresProfileChoice) {
                 return {
                     success: false,
                     requiresProfileChoice: true,
-                    pending: response.data.pending,
+                    pending: {
+                        email: firebaseUser.email,
+                        name: firebaseUser.displayName || ''
+                    },
                 }
             }
 

@@ -90,9 +90,11 @@ export default function RegisterPage() {
             return false
         }
 
-        if (formData.password.length < 6) {
-            setError('Senha deve ter no mínimo 6 caracteres.')
-            return false
+        if (!draft?.googleData) {
+            if (formData.password.length < 6) {
+                setError('Senha deve ter no mínimo 6 caracteres.')
+                return false
+            }
         }
 
         const phoneDigits = onlyDigits(formData.phone)
@@ -109,15 +111,17 @@ export default function RegisterPage() {
             }
         }
 
-        // Check if email already exists
-        try {
-            const result = await authApi.checkEmailStatus(formData.email)
-            if (result.data?.exists) {
-                setError('Este email já está cadastrado. Faça login.')
-                return false
+        // Check if email already exists (Only for standard registration)
+        if (!draft?.googleData) {
+            try {
+                const result = await authApi.checkEmailStatus(formData.email)
+                if (result.data?.exists) {
+                    setError('Este email já está cadastrado. Faça login.')
+                    return false
+                }
+            } catch {
+                // Continue if check fails
             }
-        } catch {
-            // Continue if check fails
         }
 
         return true
@@ -216,6 +220,53 @@ export default function RegisterPage() {
         setError('')
 
         try {
+            // Check if it's a Google Registration flow
+            if (draft?.googleData) {
+                // 1. Create account using Google Token + Role
+                const loginResult = await authApi.googleAuth(draft.googleData.idToken, userType)
+
+                if (loginResult.error) {
+                    throw new Error(typeof loginResult.error === 'string' ? loginResult.error : 'Erro ao criar conta com Google')
+                }
+
+                const token = loginResult.data.token
+
+                // We need to temporarily set the session to make authenticated requests
+                // But updateProfile in api.ts reads from localStorage, so let's set it
+                localStorage.setItem('token', token)
+
+                // 2. Hydrate Profile with full data
+                const profileData = {
+                    phone: `+55${onlyDigits(formData.phone)}`,
+                    street: formData.street,
+                    number: formData.number,
+                    complement: formData.complement,
+                    bairro: formData.bairro,
+                    city: formData.city,
+                    state: formData.state,
+                    cep: onlyDigits(formData.cep),
+                    creci: userType === 'broker' ? formData.creci : undefined
+                }
+
+                const updateResult = await authApi.updateProfile(profileData)
+
+                if (updateResult.error) {
+                    // If update fails, user is created but incomplete. 
+                    // They will be redirected to profile edit anyway on future logins,
+                    // but let's try to show error.
+                    console.error('Update profile error:', updateResult.error)
+                }
+
+                // 3. Clear draft and Redirect
+                // clearDraft() // context method needed
+                localStorage.removeItem('registration_draft')
+
+                // Redirect to success or home
+                router.push('/cadastro/sucesso')
+                return
+            }
+
+            // Normal Registration Flow (Email/Password)
             // Save to registration draft context
             const authData = {
                 name: formData.name.trim(),
@@ -299,12 +350,26 @@ export default function RegisterPage() {
 
                     {/* Header */}
                     <div className="text-center mb-6">
+                        {draft?.googleData?.photoURL && (
+                            <div className="flex justify-center mb-4">
+                                <Image
+                                    src={draft.googleData.photoURL}
+                                    alt="Sua foto"
+                                    width={80}
+                                    height={80}
+                                    className="rounded-full border-4 border-white shadow-md"
+                                />
+                            </div>
+                        )}
+
                         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                            {step === 'personal' ? 'Crie sua conta' : 'Seu endereço'}
+                            {step === 'personal'
+                                ? (draft?.googleData ? `Olá, ${draft.googleData.displayName.split(' ')[0]}!` : 'Crie sua conta')
+                                : 'Seu endereço'}
                         </h1>
                         <p className="text-gray-500">
                             {step === 'personal'
-                                ? 'Escolha seu perfil e preencha seus dados.'
+                                ? (draft?.googleData ? 'Confirme seus dados para finalizar o cadastro.' : 'Escolha seu perfil e preencha seus dados.')
                                 : 'Preencha seu endereço para finalizar.'}
                         </p>
                     </div>
@@ -358,7 +423,8 @@ export default function RegisterPage() {
                                         value={formData.name}
                                         onChange={(e) => updateField('name', e.target.value)}
                                         placeholder="Seu nome"
-                                        className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                        disabled={!!draft?.googleData}
+                                        className={`w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${draft?.googleData ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : ''}`}
                                     />
                                 </div>
                             </div>
@@ -376,35 +442,38 @@ export default function RegisterPage() {
                                         value={formData.email}
                                         onChange={(e) => updateField('email', e.target.value)}
                                         placeholder="seu@email.com"
-                                        className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                        disabled={!!draft?.googleData}
+                                        className={`w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${draft?.googleData ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : ''}`}
                                     />
                                 </div>
                             </div>
 
-                            {/* Password */}
-                            <div>
-                                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
-                                    Senha
-                                </label>
-                                <div className="relative">
-                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                    <input
-                                        id="password"
-                                        type={showPassword ? 'text' : 'password'}
-                                        value={formData.password}
-                                        onChange={(e) => updateField('password', e.target.value)}
-                                        placeholder="Mínimo 6 caracteres"
-                                        className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-12 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                                    >
-                                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                    </button>
+                            {/* Password - Hide for Google Users */}
+                            {!draft?.googleData && (
+                                <div>
+                                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
+                                        Senha
+                                    </label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                        <input
+                                            id="password"
+                                            type={showPassword ? 'text' : 'password'}
+                                            value={formData.password}
+                                            onChange={(e) => updateField('password', e.target.value)}
+                                            placeholder="Mínimo 6 caracteres"
+                                            className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-12 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                        >
+                                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             {/* Phone */}
                             <div>
@@ -465,7 +534,20 @@ export default function RegisterPage() {
                             </button>
 
                             <p className="text-xs text-center text-gray-500 mt-2">
-                                Você receberá um email para validar seu cadastro.
+                                {draft?.googleData ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            localStorage.removeItem('registration_draft')
+                                            router.push('/login')
+                                        }}
+                                        className="text-red-500 hover:text-red-700 underline"
+                                    >
+                                        Cancelar e usar outra conta
+                                    </button>
+                                ) : (
+                                    'Você receberá um email para validar seu cadastro.'
+                                )}
                             </p>
                         </div>
                     ) : (
