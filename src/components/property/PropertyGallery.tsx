@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight, X, Maximize2, Play } from 'lucide-react'
+import { ChevronLeft, ChevronRight, X, Maximize2, Play, Grid } from 'lucide-react'
 
 interface PropertyGalleryProps {
     images: string[]
@@ -11,256 +11,233 @@ interface PropertyGalleryProps {
 }
 
 export default function PropertyGallery({ images, title, videoUrl }: PropertyGalleryProps) {
-    const [currentIndex, setCurrentIndex] = useState(0)
-    const [isFullscreen, setIsFullscreen] = useState(false)
+    const [isOpen, setIsOpen] = useState(false)
+    const [photoIndex, setPhotoIndex] = useState(0)
     const [showVideo, setShowVideo] = useState(false)
 
-    const hasMultipleImages = images.length > 1
+    // Ensure we have valid images
+    const validImages = images?.filter(Boolean) || []
 
-    const goToPrevious = () => {
-        setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))
-    }
-
-    const goToNext = () => {
-        setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))
-    }
-
-    if (!images.length) {
+    if (validImages.length === 0) {
         return (
-            <div className="aspect-video bg-gray-100 flex items-center justify-center">
-                <span className="text-gray-400">Sem imagens disponíveis</span>
+            <div className="bg-gray-100 aspect-[16/9] lg:aspect-[21/9] flex items-center justify-center rounded-xl overflow-hidden">
+                <div className="flex flex-col items-center text-gray-400">
+                    <Grid className="w-12 h-12 mb-2" />
+                    <span className="font-medium">Sem fotos disponíveis</span>
+                </div>
             </div>
         )
     }
 
+    const openLightbox = (index: number) => {
+        setPhotoIndex(index)
+        setIsOpen(true)
+    }
+
+    const nextPhoto = () => {
+        setPhotoIndex((prev) => (prev + 1) % validImages.length)
+    }
+
+    const prevPhoto = () => {
+        setPhotoIndex((prev) => (prev - 1 + validImages.length) % validImages.length)
+    }
+
     return (
-        <>
-            {/* Main Gallery - Full width with image filling */}
-            <div className="relative bg-gray-900 overflow-hidden">
-                <div className="relative w-full h-[50vh] md:h-[60vh] lg:h-[70vh]">
-                    {/* Blurred Background for Fill Effect */}
-                    <div className="absolute inset-0">
-                        <Image
-                            src={images[currentIndex]}
-                            alt="Background"
-                            fill
-                            sizes="100vw"
-                            className="object-cover blur-3xl opacity-50 scale-110"
-                            priority
-                        />
-                    </div>
-
-                    {/* Main Image - Contained */}
+        <div className="relative">
+            {/* Desktop Bento Grid */}
+            <div className="hidden lg:grid grid-cols-4 grid-rows-2 gap-2 h-[500px] rounded-2xl overflow-hidden">
+                {/* Main Image (Left, spans 2 rows, 2 cols) */}
+                <div
+                    className="col-span-2 row-span-2 relative cursor-pointer group"
+                    onClick={() => openLightbox(0)}
+                >
                     <Image
-                        src={images[currentIndex]}
-                        alt={`${title} - Imagem ${currentIndex + 1}`}
+                        src={validImages[0]}
+                        alt={`${title} - Principal`}
                         fill
-                        sizes="100vw"
-                        className="object-contain z-10"
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
                         priority
+                        sizes="(max-width: 1280px) 50vw, 33vw"
                     />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                </div>
 
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
+                {/* Secondary Images (Right, 2x2) */}
+                {validImages.slice(1, 5).map((img, idx) => (
+                    <div
+                        key={idx}
+                        className="relative cursor-pointer group overflow-hidden"
+                        onClick={() => openLightbox(idx + 1)}
+                    >
+                        <Image
+                            src={img}
+                            alt={`${title} - ${idx + 2}`}
+                            fill
+                            className="object-cover transition-transform duration-700 group-hover:scale-105"
+                            sizes="25vw"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
 
-                    {/* Navigation Arrows */}
-                    {hasMultipleImages && (
-                        <>
-                            <button
-                                onClick={goToPrevious}
-                                className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all z-20"
-                                aria-label="Imagem anterior"
-                            >
-                                <ChevronLeft className="w-6 h-6 text-gray-800" />
-                            </button>
-                            <button
-                                onClick={goToNext}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all z-20"
-                                aria-label="Próxima imagem"
-                            >
-                                <ChevronRight className="w-6 h-6 text-gray-800" />
-                            </button>
-                        </>
-                    )}
-
-                    {/* Counter & Actions - Positioned at bottom */}
-                    <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between z-20">
-                        {/* Counter */}
-                        <div className="px-4 py-2 bg-black/60 backdrop-blur-sm rounded-lg text-white text-sm font-medium">
-                            {currentIndex + 1} / {images.length}
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-2">
-                            {videoUrl && (
-                                <button
-                                    onClick={() => setShowVideo(true)}
-                                    className="flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white rounded-lg text-gray-800 font-medium transition-all"
-                                >
-                                    <Play className="w-4 h-4" />
-                                    Ver vídeo
-                                </button>
-                            )}
-                            <button
-                                onClick={() => setIsFullscreen(true)}
-                                className="w-10 h-10 bg-white/90 hover:bg-white rounded-lg flex items-center justify-center transition-all"
-                                aria-label="Tela cheia"
-                            >
-                                <Maximize2 className="w-5 h-5 text-gray-800" />
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Thumbnails Overlay - Inside image at bottom */}
-                    {hasMultipleImages && (
-                        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20">
-                            <div className="flex gap-2 p-2 bg-black/40 backdrop-blur-sm rounded-xl">
-                                {images.slice(0, 6).map((image, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => setCurrentIndex(idx)}
-                                        className={`relative flex-shrink-0 w-16 h-12 rounded-lg overflow-hidden transition-all ${idx === currentIndex
-                                            ? 'ring-2 ring-white shadow-lg scale-105'
-                                            : 'opacity-70 hover:opacity-100'
-                                            }`}
-                                    >
-                                        <Image
-                                            src={image}
-                                            alt={`Thumbnail ${idx + 1}`}
-                                            fill
-                                            sizes="64px"
-                                            className="object-cover"
-                                        />
-                                    </button>
-                                ))}
-                                {images.length > 6 && (
-                                    <button
-                                        onClick={() => setIsFullscreen(true)}
-                                        className="flex-shrink-0 w-16 h-12 rounded-lg bg-black/50 text-white text-sm font-medium flex items-center justify-center hover:bg-black/70 transition-all"
-                                    >
-                                        +{images.length - 6}
-                                    </button>
-                                )}
+                        {/* Overlay for "Show More" on the last grid item if there are more images */}
+                        {idx === 3 && validImages.length > 5 && (
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center group-hover:bg-black/60 transition-colors">
+                                <span className="text-white font-bold text-lg flex items-center gap-2">
+                                    <Grid className="w-5 h-5" />
+                                    +{validImages.length - 5}
+                                </span>
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
+                ))}
+
+                {/* Fallback if less than 5 images, fill empty slots with placeholders or adjust grid dynamically? 
+                    For simplicity, we assume placeholders if needed or just let them be empty div if really few images. 
+                    Better approach: specific layouts for 1, 2, 3, 4 images. 
+                    For now, focusing on the 5+ case as it's the premium standard.
+                */}
+            </div>
+
+            {/* Mobile/Tablet Carousel */}
+            <div className="lg:hidden relative h-[40vh] bg-gray-900 group">
+                <Image
+                    src={validImages[photoIndex]}
+                    alt={`${title} - ${photoIndex + 1}`}
+                    fill
+                    className="object-contain"
+                    priority
+                />
+
+                <div className="absolute inset-0 flex items-center justify-between p-2">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); prevPhoto(); }}
+                        className="p-2 rounded-full bg-black/20 text-white hover:bg-black/40 backdrop-blur-sm transition-colors"
+                        aria-label="Foto anterior"
+                    >
+                        <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); nextPhoto(); }}
+                        className="p-2 rounded-full bg-black/20 text-white hover:bg-black/40 backdrop-blur-sm transition-colors"
+                        aria-label="Próxima foto"
+                    >
+                        <ChevronRight className="w-6 h-6" />
+                    </button>
+                </div>
+
+                <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-lg text-white text-xs font-semibold">
+                    {photoIndex + 1} / {validImages.length}
                 </div>
             </div>
 
-            {/* Fullscreen Modal */}
-            {isFullscreen && (
-                <div
-                    className="fixed inset-0 z-50 bg-black flex items-center justify-center"
-                    onClick={(e) => {
-                        if (e.target === e.currentTarget) {
-                            setIsFullscreen(false)
-                        }
-                    }}
-                >
-                    <button
-                        onClick={() => setIsFullscreen(false)}
-                        className="absolute top-4 right-4 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-all z-10"
-                        aria-label="Fechar"
-                    >
-                        <X className="w-6 h-6 text-white" />
-                    </button>
+            {/* "Show All" Button (Desktop) */}
+            <button
+                onClick={() => setIsOpen(true)}
+                className="hidden lg:flex absolute bottom-4 right-4 items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-lg text-gray-900 font-semibold hover:bg-gray-50 transition-transform active:scale-95"
+            >
+                <Grid className="w-4 h-4" />
+                Ver todas as fotos ({validImages.length})
+            </button>
 
-                    <div
-                        className="relative w-full h-full flex items-center justify-center p-4"
-                        onClick={(e) => {
-                            if (e.target === e.currentTarget) {
-                                setIsFullscreen(false)
-                            }
-                        }}
-                    >
-                        <Image
-                            src={images[currentIndex]}
-                            alt={`${title} - Imagem ${currentIndex + 1}`}
-                            fill
-                            sizes="100vw"
-                            className="object-contain"
-                        />
+            {/* Lightbox Modal */}
+            {isOpen && (
+                <div className="fixed inset-0 z-50 bg-black flex flex-col">
+                    {/* Toolbar */}
+                    <div className="flex items-center justify-between p-4 text-white z-50 bg-gradient-to-b from-black/80 to-transparent">
+                        <span className="font-medium text-lg">{photoIndex + 1} / {validImages.length}</span>
+                        <div className="flex items-center gap-4">
+                            {videoUrl && (
+                                <button
+                                    onClick={() => setShowVideo(true)}
+                                    className="flex items-center gap-2 hover:text-primary-400 transition-colors"
+                                >
+                                    <Play className="w-5 h-5" />
+                                    Vídeo
+                                </button>
+                            )}
+                            <button
+                                onClick={() => setIsOpen(false)}
+                                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                                aria-label="Fechar galeria"
+                            >
+                                <X className="w-8 h-8" />
+                            </button>
+                        </div>
                     </div>
 
-                    {hasMultipleImages && (
-                        <>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); goToPrevious(); }}
-                                className="absolute left-4 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-all"
-                                aria-label="Imagem anterior"
-                            >
-                                <ChevronLeft className="w-8 h-8 text-white" />
-                            </button>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); goToNext(); }}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-all"
-                                aria-label="Próxima imagem"
-                            >
-                                <ChevronRight className="w-8 h-8 text-white" />
-                            </button>
-                        </>
-                    )}
+                    {/* Main View */}
+                    <div className="flex-1 relative flex items-center justify-center p-4">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); prevPhoto(); }}
+                            className="absolute left-4 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10"
+                            aria-label="Foto anterior"
+                        >
+                            <ChevronLeft className="w-8 h-8" />
+                        </button>
 
-                    {/* Fullscreen Thumbnails */}
-                    {hasMultipleImages && (
-                        <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
-                            <div className="flex gap-2 p-2 bg-white/10 backdrop-blur-sm rounded-xl">
-                                {images.map((image, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
-                                        className={`relative flex-shrink-0 w-16 h-12 rounded-lg overflow-hidden transition-all ${idx === currentIndex
-                                            ? 'ring-2 ring-white'
-                                            : 'opacity-60 hover:opacity-100'
-                                            }`}
-                                    >
-                                        <Image
-                                            src={image}
-                                            alt={`Thumbnail ${idx + 1}`}
-                                            fill
-                                            sizes="64px"
-                                            className="object-cover"
-                                        />
-                                    </button>
-                                ))}
-                            </div>
+                        <div className="relative w-full h-full max-w-7xl mx-auto">
+                            <Image
+                                src={validImages[photoIndex]}
+                                alt="Fullscreen view"
+                                fill
+                                className="object-contain"
+                                quality={100}
+                                priority
+                            />
                         </div>
-                    )}
 
-                    {/* Fullscreen Counter */}
-                    <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-white/10 rounded-lg text-white text-sm">
-                        {currentIndex + 1} / {images.length}
+                        <button
+                            onClick={(e) => { e.stopPropagation(); nextPhoto(); }}
+                            className="absolute right-4 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10"
+                            aria-label="Próxima foto"
+                        >
+                            <ChevronRight className="w-8 h-8" />
+                        </button>
+                    </div>
+
+                    {/* Thumbnails Strip */}
+                    <div className="h-24 bg-black/90 p-4 flex items-center gap-2 overflow-x-auto">
+                        {validImages.map((img, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => setPhotoIndex(idx)}
+                                className={`relative w-20 h-16 flex-shrink-0 rounded-md overflow-hidden transition-all ${idx === photoIndex ? 'ring-2 ring-primary-500 opacity-100' : 'opacity-50 hover:opacity-80'
+                                    }`}
+                            >
+                                <Image
+                                    src={img}
+                                    alt={`Thumbnail ${idx}`}
+                                    fill
+                                    className="object-cover"
+                                />
+                            </button>
+                        ))}
                     </div>
                 </div>
             )}
 
             {/* Video Modal */}
             {showVideo && videoUrl && (
-                <div
-                    className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
-                    onClick={(e) => {
-                        if (e.target === e.currentTarget) {
-                            setShowVideo(false)
-                        }
-                    }}
-                >
+                <div className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4">
                     <button
                         onClick={() => setShowVideo(false)}
-                        className="absolute top-4 right-4 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-all z-10"
+                        className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
                         aria-label="Fechar vídeo"
                     >
-                        <X className="w-6 h-6 text-white" />
+                        <X className="w-6 h-6" />
                     </button>
-
-                    <video
-                        src={videoUrl}
-                        controls
-                        autoPlay
-                        className="max-w-full max-h-full rounded-lg"
-                        onClick={(e) => e.stopPropagation()}
-                    />
+                    <div className="w-full max-w-5xl aspect-video rounded-2xl overflow-hidden bg-black shadow-2xl">
+                        <video
+                            controls
+                            autoPlay
+                            className="w-full h-full"
+                            poster={validImages[0]}
+                        >
+                            <source src={videoUrl} type="video/mp4" />
+                            Seu navegador não suporta vídeos.
+                        </video>
+                    </div>
                 </div>
             )}
-        </>
+        </div>
     )
 }
