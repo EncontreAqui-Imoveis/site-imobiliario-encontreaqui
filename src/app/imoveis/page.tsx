@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 import { Home, ChevronRight } from 'lucide-react'
 import PropertyCard from '@/components/property/PropertyCard'
+import PropertyGrid from '@/components/property/PropertyGrid'
 import SearchFilters from '@/components/search/SearchFilters'
 import { Property } from '@/types/property'
 
@@ -64,22 +65,7 @@ async function fetchProperties(params: Record<string, string | undefined>): Prom
 }
 
 // Loading component
-function PropertiesLoading() {
-    return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-                <div key={i} className="bg-white rounded-2xl overflow-hidden animate-pulse">
-                    <div className="aspect-[4/3] bg-gray-200" />
-                    <div className="p-5 space-y-3">
-                        <div className="h-4 bg-gray-200 rounded w-2/3" />
-                        <div className="h-6 bg-gray-200 rounded" />
-                        <div className="h-4 bg-gray-200 rounded w-1/2" />
-                    </div>
-                </div>
-            ))}
-        </div>
-    )
-}
+
 
 export default async function PropertiesPage({
     searchParams,
@@ -124,32 +110,8 @@ export default async function PropertiesPage({
 
                     {/* Results */}
                     <main className="flex-1">
-                        <Suspense fallback={<PropertiesLoading />}>
-                            {properties.length > 0 ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                                    {properties.map((property: Property) => (
-                                        <PropertyCard key={property.id} property={property} />
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="text-center py-16">
-                                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <Home className="w-10 h-10 text-gray-400" />
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                        Nenhum imóvel encontrado
-                                    </h3>
-                                    <p className="text-gray-500 mb-6">
-                                        Tente ajustar os filtros para ver mais resultados.
-                                    </p>
-                                    <Link
-                                        href="/imoveis"
-                                        className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl transition-all"
-                                    >
-                                        Limpar filtros
-                                    </Link>
-                                </div>
-                            )}
+                        <Suspense fallback={<PropertyGrid properties={[]} isLoading={true} />}>
+                            <PropertyGrid properties={properties} />
                         </Suspense>
                     </main>
                 </div>

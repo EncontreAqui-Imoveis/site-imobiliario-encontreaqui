@@ -1,1 +1,207 @@
-{"version":3,"caseSensitive":false,"basePath":"","rewrites":{"beforeFiles":[],"afterFiles":[],"fallback":[]},"redirects":[{"source":"/:path+/","destination":"/:path+","permanent":true,"internal":true,"regex":"^(?:\\/((?:[^\\/]+?)(?:\\/(?:[^\\/]+?))*))\\/$"}],"headers":[{"source":"/:path*","headers":[{"key":"Cross-Origin-Opener-Policy","value":"same-origin-allow-popups"}],"regex":"^(?:\\/((?:[^\\/]+?)(?:\\/(?:[^\\/]+?))*))?(?:\\/)?$"}]}
+{
+  "version": 3,
+  "pages404": true,
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/:path*",
+      "headers": [
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin-allow-popups"
+        }
+      ],
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))?(?:/)?$"
+    }
+  ],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/imoveis/[id]",
+      "regex": "^/imoveis/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/imoveis/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/meus-imoveis/[id]/editar",
+      "regex": "^/meus\\-imoveis/([^/]+?)/editar(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/meus\\-imoveis/(?<nxtPid>[^/]+?)/editar(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/anuncie",
+      "regex": "^/anuncie(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/anuncie(?:/)?$"
+    },
+    {
+      "page": "/cadastro",
+      "regex": "^/cadastro(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/cadastro(?:/)?$"
+    },
+    {
+      "page": "/cadastro/concluido",
+      "regex": "^/cadastro/concluido(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/cadastro/concluido(?:/)?$"
+    },
+    {
+      "page": "/cadastro/verificar-creci",
+      "regex": "^/cadastro/verificar\\-creci(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/cadastro/verificar\\-creci(?:/)?$"
+    },
+    {
+      "page": "/cadastro/verificar-email",
+      "regex": "^/cadastro/verificar\\-email(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/cadastro/verificar\\-email(?:/)?$"
+    },
+    {
+      "page": "/cadastro/verificar-telefone",
+      "regex": "^/cadastro/verificar\\-telefone(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/cadastro/verificar\\-telefone(?:/)?$"
+    },
+    {
+      "page": "/contato",
+      "regex": "^/contato(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/contato(?:/)?$"
+    },
+    {
+      "page": "/favoritos",
+      "regex": "^/favoritos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/favoritos(?:/)?$"
+    },
+    {
+      "page": "/imoveis",
+      "regex": "^/imoveis(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/imoveis(?:/)?$"
+    },
+    {
+      "page": "/login",
+      "regex": "^/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/login(?:/)?$"
+    },
+    {
+      "page": "/meus-imoveis",
+      "regex": "^/meus\\-imoveis(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/meus\\-imoveis(?:/)?$"
+    },
+    {
+      "page": "/notificacoes",
+      "regex": "^/notificacoes(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/notificacoes(?:/)?$"
+    },
+    {
+      "page": "/perfil",
+      "regex": "^/perfil(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/perfil(?:/)?$"
+    },
+    {
+      "page": "/perfil/editar",
+      "regex": "^/perfil/editar(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/perfil/editar(?:/)?$"
+    },
+    {
+      "page": "/perfil/evoluir-corretor",
+      "regex": "^/perfil/evoluir\\-corretor(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/perfil/evoluir\\-corretor(?:/)?$"
+    },
+    {
+      "page": "/perfil/verificar-documentos",
+      "regex": "^/perfil/verificar\\-documentos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/perfil/verificar\\-documentos(?:/)?$"
+    },
+    {
+      "page": "/recuperar-senha",
+      "regex": "^/recuperar\\-senha(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/recuperar\\-senha(?:/)?$"
+    },
+    {
+      "page": "/relatorios",
+      "regex": "^/relatorios(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/relatorios(?:/)?$"
+    },
+    {
+      "page": "/sobre",
+      "regex": "^/sobre(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/sobre(?:/)?$"
+    },
+    {
+      "page": "/termos",
+      "regex": "^/termos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/termos(?:/)?$"
+    },
+    {
+      "page": "/verificacao",
+      "regex": "^/verificacao(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/verificacao(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSuffix": ".prefetch.rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments"
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}
