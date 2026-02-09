@@ -11,7 +11,7 @@ import { useRegistration } from '@/contexts/RegistrationContext'
 function LoginForm() {
     const router = useRouter()
     const searchParams = useSearchParams()
-    const { login, loginWithGoogle, isAuthenticated, isLoading: authLoading } = useAuth()
+    const { login, loginWithGoogle, isAuthenticated, isLoading: authLoading, setSession } = useAuth()
     const { saveDraft, updateStep } = useRegistration()
 
     const [showPassword, setShowPassword] = useState(false)
@@ -25,7 +25,8 @@ function LoginForm() {
 
     // Profile choice state for new Google users
     const [showProfileChoice, setShowProfileChoice] = useState(false)
-    const [pendingGoogleUser, setPendingGoogleUser] = useState<{ email: string; name: string } | null>(null)
+    const [showProfileChoice, setShowProfileChoice] = useState(false)
+    const [pendingGoogleUser, setPendingGoogleUser] = useState<{ email: string; name: string; idToken?: string } | null>(null)
 
     const redirectUrl = searchParams.get('redirect') || '/'
 
@@ -130,7 +131,43 @@ function LoginForm() {
 
     const handleProfileChoice = async (profileType: 'client' | 'broker') => {
         setShowProfileChoice(false)
-        await handleGoogleLogin(profileType)
+
+        // If we have a pending ID token, use it directly to avoid re-opening Google Popup
+        if (pendingGoogleUser?.idToken) {
+            setIsGoogleLoading(true)
+            try {
+                // Call API directly with stored token
+                const response = await authApi.googleAuth(pendingGoogleUser.idToken, profileType)
+
+                if (response.error) {
+                    throw new Error(typeof response.error === 'string' ? response.error : 'Erro ao fazer login com Google')
+                }
+
+                const { user, token, needsCompletion, requiresDocuments } = response.data
+
+                // Set session in context
+                setSession(user, token)
+
+                // Handle redirects
+                if (requiresDocuments) {
+                    router.push('/verificacao')
+                } else if (needsCompletion) {
+                    router.push('/perfil/editar')
+                } else {
+                    router.push(redirectUrl)
+                }
+
+            } catch (err: any) {
+                console.error('Profile choice error:', err)
+                setError('Erro ao concluir login. Tente novamente.')
+                setPendingGoogleUser(null)
+            } finally {
+                setIsGoogleLoading(false)
+            }
+        } else {
+            // Fallback to old behavior if no token (shouldn't happen)
+            await handleGoogleLogin(profileType)
+        }
     }
 
     // Profile Choice Modal
