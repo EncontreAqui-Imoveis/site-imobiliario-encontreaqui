@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { Mail, Lock, Eye, EyeOff, ArrowRight, User, Briefcase } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRegistration } from '@/contexts/RegistrationContext'
+import { authApi } from '@/lib/api'
 
 function LoginForm() {
     const router = useRouter()
@@ -24,7 +25,6 @@ function LoginForm() {
     })
 
     // Profile choice state for new Google users
-    const [showProfileChoice, setShowProfileChoice] = useState(false)
     const [showProfileChoice, setShowProfileChoice] = useState(false)
     const [pendingGoogleUser, setPendingGoogleUser] = useState<{ email: string; name: string; idToken?: string } | null>(null)
 
