@@ -256,8 +256,31 @@ export default function RegisterPage() {
                     console.error('Update profile error:', updateResult.error)
                 }
 
-                // 3. Clear draft and Redirect
-                localStorage.removeItem('registration_draft')
+                // 3. Update Checkpoint and Redirect to Phone Verification
+                // We must NOT clear draft yet, as verification pages depend on it.
+                // We need to save the phone number in the draft so the next page can use it.
+                saveDraft({
+                    step: 'phone_pending',
+                    userType: userType,
+                    authData: {
+                        ...draft.authData, // keep existing google data if any
+                        phone: `+55${onlyDigits(formData.phone)}`,
+                        name: formData.name,
+                        email: formData.email,
+                        // Add address data just in case
+                        street: formData.street,
+                        number: noNumber ? '0' : formData.number,
+                        complement: formData.complement,
+                        bairro: formData.bairro,
+                        city: formData.city,
+                        state: formData.state,
+                        cep: onlyDigits(formData.cep),
+                        creci: userType === 'broker' ? formData.creci : '',
+                        // Password is not needed for google auth
+                        password: ''
+                    },
+                    googleData: draft.googleData
+                })
 
                 // Redirect to Phone Verification
                 router.push('/cadastro/verificar-telefone')
