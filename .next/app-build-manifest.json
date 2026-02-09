@@ -7,6 +7,13 @@
       "static/chunks/main-app-f6881715d6145b96.js",
       "static/chunks/app/_not-found/page-da8c9177ebfe851f.js"
     ],
+    "/api/upload/route": [
+      "static/chunks/webpack-2d471fc704247627.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-ebd51be49873d76c.js",
+      "static/chunks/main-app-f6881715d6145b96.js",
+      "static/chunks/app/api/upload/route-da8c9177ebfe851f.js"
+    ],
     "/not-found": [
       "static/chunks/webpack-2d471fc704247627.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
@@ -28,22 +35,6 @@
       "static/chunks/380-aa7484eb85747ad3.js",
       "static/chunks/app/layout-43624e2c5912a204.js"
     ],
-    "/api/upload/route": [
-      "static/chunks/webpack-2d471fc704247627.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-ebd51be49873d76c.js",
-      "static/chunks/main-app-f6881715d6145b96.js",
-      "static/chunks/app/api/upload/route-da8c9177ebfe851f.js"
-    ],
-    "/cadastro/concluido/page": [
-      "static/chunks/webpack-2d471fc704247627.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-ebd51be49873d76c.js",
-      "static/chunks/main-app-f6881715d6145b96.js",
-      "static/chunks/619-ba102abea3e3d0e4.js",
-      "static/chunks/239-bc3dda4cb9fc15de.js",
-      "static/chunks/app/cadastro/concluido/page-936ebe9641e84e4c.js"
-    ],
     "/anuncie/page": [
       "static/chunks/webpack-2d471fc704247627.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
@@ -54,6 +45,15 @@
       "static/chunks/697-c0b2e368d64c3bb2.js",
       "static/chunks/380-aa7484eb85747ad3.js",
       "static/chunks/app/anuncie/page-62192be515b49d8b.js"
+    ],
+    "/cadastro/concluido/page": [
+      "static/chunks/webpack-2d471fc704247627.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-ebd51be49873d76c.js",
+      "static/chunks/main-app-f6881715d6145b96.js",
+      "static/chunks/619-ba102abea3e3d0e4.js",
+      "static/chunks/239-bc3dda4cb9fc15de.js",
+      "static/chunks/app/cadastro/concluido/page-936ebe9641e84e4c.js"
     ],
     "/cadastro/verificar-creci/page": [
       "static/chunks/webpack-2d471fc704247627.js",
@@ -66,6 +66,17 @@
       "static/chunks/239-bc3dda4cb9fc15de.js",
       "static/chunks/380-aa7484eb85747ad3.js",
       "static/chunks/app/cadastro/verificar-creci/page-de9e728ec93ad717.js"
+    ],
+    "/favoritos/page": [
+      "static/chunks/webpack-2d471fc704247627.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-ebd51be49873d76c.js",
+      "static/chunks/main-app-f6881715d6145b96.js",
+      "static/chunks/5b86099a-922d14a5c27a5e6b.js",
+      "static/chunks/619-ba102abea3e3d0e4.js",
+      "static/chunks/697-c0b2e368d64c3bb2.js",
+      "static/chunks/380-aa7484eb85747ad3.js",
+      "static/chunks/app/favoritos/page-7863d0324786cb26.js"
     ],
     "/cadastro/page": [
       "static/chunks/webpack-2d471fc704247627.js",
@@ -88,35 +99,6 @@
       "static/chunks/380-aa7484eb85747ad3.js",
       "static/chunks/app/cadastro/verificar-telefone/page-a066ec05e099d8d3.js"
     ],
-    "/cadastro/verificar-email/page": [
-      "static/chunks/webpack-2d471fc704247627.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-ebd51be49873d76c.js",
-      "static/chunks/main-app-f6881715d6145b96.js",
-      "static/chunks/5b86099a-922d14a5c27a5e6b.js",
-      "static/chunks/619-ba102abea3e3d0e4.js",
-      "static/chunks/697-c0b2e368d64c3bb2.js",
-      "static/chunks/239-bc3dda4cb9fc15de.js",
-      "static/chunks/app/cadastro/verificar-email/page-b9790aa1bfd3a0e2.js"
-    ],
-    "/favoritos/page": [
-      "static/chunks/webpack-2d471fc704247627.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-ebd51be49873d76c.js",
-      "static/chunks/main-app-f6881715d6145b96.js",
-      "static/chunks/5b86099a-922d14a5c27a5e6b.js",
-      "static/chunks/619-ba102abea3e3d0e4.js",
-      "static/chunks/697-c0b2e368d64c3bb2.js",
-      "static/chunks/380-aa7484eb85747ad3.js",
-      "static/chunks/app/favoritos/page-7863d0324786cb26.js"
-    ],
-    "/contato/page": [
-      "static/chunks/webpack-2d471fc704247627.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-ebd51be49873d76c.js",
-      "static/chunks/main-app-f6881715d6145b96.js",
-      "static/chunks/app/contato/page-72616dec567f9709.js"
-    ],
     "/imoveis/[id]/page": [
       "static/chunks/webpack-2d471fc704247627.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
@@ -128,9 +110,9 @@
       "static/chunks/239-bc3dda4cb9fc15de.js",
       "static/chunks/600-15dcdac7a63c1805.js",
       "static/chunks/380-aa7484eb85747ad3.js",
-      "static/chunks/app/imoveis/[id]/page-1c81ed2001d41193.js"
+      "static/chunks/app/imoveis/[id]/page-e6b79266cdda50eb.js"
     ],
-    "/imoveis/page": [
+    "/cadastro/verificar-email/page": [
       "static/chunks/webpack-2d471fc704247627.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
       "static/chunks/255-ebd51be49873d76c.js",
@@ -139,8 +121,7 @@
       "static/chunks/619-ba102abea3e3d0e4.js",
       "static/chunks/697-c0b2e368d64c3bb2.js",
       "static/chunks/239-bc3dda4cb9fc15de.js",
-      "static/chunks/380-aa7484eb85747ad3.js",
-      "static/chunks/app/imoveis/page-982c9fa9d2900d0f.js"
+      "static/chunks/app/cadastro/verificar-email/page-b9790aa1bfd3a0e2.js"
     ],
     "/login/page": [
       "static/chunks/webpack-2d471fc704247627.js",
@@ -154,18 +135,14 @@
       "static/chunks/380-aa7484eb85747ad3.js",
       "static/chunks/app/login/page-a70e185fbc5febaf.js"
     ],
-    "/meus-imoveis/page": [
+    "/contato/page": [
       "static/chunks/webpack-2d471fc704247627.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
       "static/chunks/255-ebd51be49873d76c.js",
       "static/chunks/main-app-f6881715d6145b96.js",
-      "static/chunks/5b86099a-922d14a5c27a5e6b.js",
-      "static/chunks/619-ba102abea3e3d0e4.js",
-      "static/chunks/697-c0b2e368d64c3bb2.js",
-      "static/chunks/380-aa7484eb85747ad3.js",
-      "static/chunks/app/meus-imoveis/page-0ae82f26d4aeef72.js"
+      "static/chunks/app/contato/page-72616dec567f9709.js"
     ],
-    "/meus-imoveis/[id]/editar/page": [
+    "/imoveis/page": [
       "static/chunks/webpack-2d471fc704247627.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
       "static/chunks/255-ebd51be49873d76c.js",
@@ -173,8 +150,9 @@
       "static/chunks/5b86099a-922d14a5c27a5e6b.js",
       "static/chunks/619-ba102abea3e3d0e4.js",
       "static/chunks/697-c0b2e368d64c3bb2.js",
+      "static/chunks/239-bc3dda4cb9fc15de.js",
       "static/chunks/380-aa7484eb85747ad3.js",
-      "static/chunks/app/meus-imoveis/[id]/editar/page-9bd89244a43472cc.js"
+      "static/chunks/app/imoveis/page-982c9fa9d2900d0f.js"
     ],
     "/notificacoes/page": [
       "static/chunks/webpack-2d471fc704247627.js",
@@ -199,6 +177,17 @@
       "static/chunks/106-42632c164efbb01e.js",
       "static/chunks/380-aa7484eb85747ad3.js",
       "static/chunks/app/page-ada7376c0c70e8ab.js"
+    ],
+    "/meus-imoveis/[id]/editar/page": [
+      "static/chunks/webpack-2d471fc704247627.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-ebd51be49873d76c.js",
+      "static/chunks/main-app-f6881715d6145b96.js",
+      "static/chunks/5b86099a-922d14a5c27a5e6b.js",
+      "static/chunks/619-ba102abea3e3d0e4.js",
+      "static/chunks/697-c0b2e368d64c3bb2.js",
+      "static/chunks/380-aa7484eb85747ad3.js",
+      "static/chunks/app/meus-imoveis/[id]/editar/page-9bd89244a43472cc.js"
     ],
     "/perfil/evoluir-corretor/page": [
       "static/chunks/webpack-2d471fc704247627.js",
@@ -235,6 +224,14 @@
       "static/chunks/380-aa7484eb85747ad3.js",
       "static/chunks/app/perfil/verificar-documentos/page-20eaa3a15837fc01.js"
     ],
+    "/sobre/page": [
+      "static/chunks/webpack-2d471fc704247627.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-ebd51be49873d76c.js",
+      "static/chunks/main-app-f6881715d6145b96.js",
+      "static/chunks/619-ba102abea3e3d0e4.js",
+      "static/chunks/app/sobre/page-3fda664c24de3c4a.js"
+    ],
     "/recuperar-senha/page": [
       "static/chunks/webpack-2d471fc704247627.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
@@ -243,24 +240,6 @@
       "static/chunks/619-ba102abea3e3d0e4.js",
       "static/chunks/239-bc3dda4cb9fc15de.js",
       "static/chunks/app/recuperar-senha/page-ea2bd08a76dff60a.js"
-    ],
-    "/relatorios/page": [
-      "static/chunks/webpack-2d471fc704247627.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-ebd51be49873d76c.js",
-      "static/chunks/main-app-f6881715d6145b96.js",
-      "static/chunks/5b86099a-922d14a5c27a5e6b.js",
-      "static/chunks/697-c0b2e368d64c3bb2.js",
-      "static/chunks/380-aa7484eb85747ad3.js",
-      "static/chunks/app/relatorios/page-1ff7f4adf879c25f.js"
-    ],
-    "/sobre/page": [
-      "static/chunks/webpack-2d471fc704247627.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-ebd51be49873d76c.js",
-      "static/chunks/main-app-f6881715d6145b96.js",
-      "static/chunks/619-ba102abea3e3d0e4.js",
-      "static/chunks/app/sobre/page-3fda664c24de3c4a.js"
     ],
     "/verificacao/page": [
       "static/chunks/webpack-2d471fc704247627.js",
@@ -272,6 +251,27 @@
       "static/chunks/697-c0b2e368d64c3bb2.js",
       "static/chunks/380-aa7484eb85747ad3.js",
       "static/chunks/app/verificacao/page-9b57e78effb51be5.js"
+    ],
+    "/relatorios/page": [
+      "static/chunks/webpack-2d471fc704247627.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-ebd51be49873d76c.js",
+      "static/chunks/main-app-f6881715d6145b96.js",
+      "static/chunks/5b86099a-922d14a5c27a5e6b.js",
+      "static/chunks/697-c0b2e368d64c3bb2.js",
+      "static/chunks/380-aa7484eb85747ad3.js",
+      "static/chunks/app/relatorios/page-1ff7f4adf879c25f.js"
+    ],
+    "/meus-imoveis/page": [
+      "static/chunks/webpack-2d471fc704247627.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-ebd51be49873d76c.js",
+      "static/chunks/main-app-f6881715d6145b96.js",
+      "static/chunks/5b86099a-922d14a5c27a5e6b.js",
+      "static/chunks/619-ba102abea3e3d0e4.js",
+      "static/chunks/697-c0b2e368d64c3bb2.js",
+      "static/chunks/380-aa7484eb85747ad3.js",
+      "static/chunks/app/meus-imoveis/page-0ae82f26d4aeef72.js"
     ],
     "/perfil/editar/page": [
       "static/chunks/webpack-2d471fc704247627.js",
