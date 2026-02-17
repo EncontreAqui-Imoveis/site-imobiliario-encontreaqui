@@ -282,7 +282,7 @@ export default function EditProfilePage() {
                                     />
                                 </div>
                                 <div className="md:col-span-2">
-                                    <label htmlFor="street" className="block text-sm font-medium text-gray-700 mb-1.5">Logradouro</label>
+                                    <label htmlFor="street" className="block text-sm font-medium text-gray-700 mb-1.5">Rua</label>
                                     <input
                                         id="street"
                                         type="text"
