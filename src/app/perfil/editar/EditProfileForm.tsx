@@ -113,13 +113,6 @@ export default function EditProfilePage() {
                 creci: user?.role === 'broker' ? formData.creci : undefined
             }
 
-            // Using direct API call if AuthContext doesn't expose updateProfile fully yet, 
-            // but assuming context refreshes user state. 
-            // Wait, useAuth from context might not have updateProfile exposed yet.
-            // Checking AuthContext... it has updateProfile in API but maybe not in context interface?
-            // Let's use api directly and then reload user? 
-            // Better: update api.ts to include updateProfile (it does) and then reload session.
-
             // Use context method which updates local state
             const result = await updateProfile(profileData)
 
@@ -127,9 +120,6 @@ export default function EditProfilePage() {
                 throw new Error(result.error || 'Erro ao atualizar perfil')
             }
 
-            // Redirect based on completion
-            // If user needed to verify phone and now it is set, maybe go there?
-            // For now, simpler redirect.
             if (profileData.phone && user?.phone !== profileData.phone) {
                 router.push('/cadastro/verificar-telefone')
             } else {

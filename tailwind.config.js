@@ -15,7 +15,7 @@ module.exports = {
                     200: '#99cbcb',
                     300: '#66b0b1',
                     400: '#339697',
-                    500: '#0d5051', // Main teal color
+                    500: '#0d5051', 
                     600: '#0b4647',
                     700: '#093b3c',
                     800: '#073031',
@@ -27,13 +27,13 @@ module.exports = {
                     200: '#ffeca3',
                     300: '#ffe57f',
                     400: '#ffdb5c',
-                    500: '#ffca45', // Main gold color
+                    500: '#ffca45', 
                     600: '#e6b63e',
                     700: '#cc9f37',
                     800: '#b38930',
                     900: '#997329',
                 },
-                // Neutral grays
+ 
                 gray: {
                     50: '#fafafa',
                     100: '#f5f5f5',

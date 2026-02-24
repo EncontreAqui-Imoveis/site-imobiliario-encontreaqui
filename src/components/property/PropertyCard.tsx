@@ -3,10 +3,9 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { Heart, Bed, Bath, Car, Maximize, MapPin, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Bed, Bath, Car, Maximize, MapPin, ChevronLeft, ChevronRight, Smartphone } from 'lucide-react'
 import { Property, formatPrice } from '@/types/property'
-import { useAuth } from '@/contexts/AuthContext'
+import { buildAppDeepLink } from '@/lib/appLinks'
 
 interface PropertyCardProps {
     property: Property
@@ -14,30 +13,14 @@ interface PropertyCardProps {
 }
 
 export default function PropertyCard({ property, variant = 'default' }: PropertyCardProps) {
-    const router = useRouter()
-    const { isAuthenticated, isFavorite, toggleFavorite } = useAuth()
     const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
     const images = property.images?.length ? property.images : ['/placeholder-property.jpg']
     const hasMultipleImages = images.length > 1
     const isFeatured = variant === 'featured'
-    const isPropertyFavorite = isFavorite(property.id)
-
     const purposeBadge = property.purpose.toLowerCase().includes('alug')
         ? { label: 'Aluguel', className: 'badge-gold' }
         : { label: 'Venda', className: 'badge-teal' }
-
-    const handleFavoriteClick = (e: React.MouseEvent) => {
-        e.preventDefault()
-        e.stopPropagation()
-
-        if (!isAuthenticated) {
-            router.push(`/login?redirect=/imoveis/${property.id}`)
-            return
-        }
-
-        toggleFavorite(property.id)
-    }
 
     const goToPrevious = (e: React.MouseEvent) => {
         e.preventDefault()
@@ -49,6 +32,12 @@ export default function PropertyCard({ property, variant = 'default' }: Property
         e.preventDefault()
         e.stopPropagation()
         setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))
+    }
+
+    const openInApp = (e: React.MouseEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        window.location.href = buildAppDeepLink(property.id)
     }
 
     return (
@@ -113,22 +102,6 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                     {property.type}
                 </div>
 
-                {/* Favorite Button */}
-                <button
-                    onClick={handleFavoriteClick}
-                    className={`absolute bottom-4 right-4 w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 z-20 ${isPropertyFavorite
-                        ? 'bg-red-500 scale-100'
-                        : 'bg-white/20 backdrop-blur-md hover:bg-white scale-90 group-hover:scale-100'
-                        }`}
-                    aria-label={isPropertyFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-                >
-                    <Heart
-                        className={`w-5 h-5 transition-colors duration-300 ${isPropertyFavorite
-                            ? 'text-white fill-white'
-                            : 'text-white group-hover:text-red-500'
-                            }`}
-                    />
-                </button>
             </div>
 
             {/* Content */}
@@ -190,9 +163,13 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                         </p>
                     </div>
 
-                    <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-primary-50 group-hover:text-primary-600 transition-colors">
-                        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-primary-600" />
-                    </div>
+                    <button
+                        onClick={openInApp}
+                        className="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-primary-50 text-primary-700 text-xs font-semibold hover:bg-primary-100 transition-colors"
+                    >
+                        <Smartphone className="w-3.5 h-3.5" />
+                        Ver no App
+                    </button>
                 </div>
             </div>
         </Link>

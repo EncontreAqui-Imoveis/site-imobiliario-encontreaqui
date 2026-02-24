@@ -37,7 +37,7 @@ describe('SearchFilters', () => {
     it('renders filter sections', () => {
         render(<SearchFilters />)
         // Desktop Header
-        expect(screen.getByText('Filtros')).toBeInTheDocument()
+        expect(screen.getAllByText('Filtros')[0]).toBeInTheDocument()
 
         // Sections
         expect(screen.getByText('Localização')).toBeInTheDocument()

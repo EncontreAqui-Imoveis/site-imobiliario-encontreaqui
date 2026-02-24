@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
-import { Search, Home, MapPin, ChevronDown } from 'lucide-react'
+import { Search, Home, MapPin, ChevronDown, Smartphone, Download } from 'lucide-react'
+import { buildAppDeepLink, getStoreUrlClient } from '@/lib/appLinks'
 
 const propertyTypes = [
     { value: '', label: 'Todos os tipos' },
@@ -25,6 +25,11 @@ export default function HeroSection() {
     const [type, setType] = useState('')
     const [purpose, setPurpose] = useState('')
     const [city, setCity] = useState('')
+    const [storeUrl, setStoreUrl] = useState('https://play.google.com/store')
+
+    useEffect(() => {
+        setStoreUrl(getStoreUrlClient())
+    }, [])
 
     const handleSearch = () => {
         const params = new URLSearchParams()
@@ -132,6 +137,25 @@ export default function HeroSection() {
                                 </button>
                             </div>
                         </div>
+                    </div>
+
+                    <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
+                        <a
+                            href={buildAppDeepLink()}
+                            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/30 text-white font-semibold transition-colors"
+                        >
+                            <Smartphone className="w-4 h-4" />
+                            Abrir no App
+                        </a>
+                        <a
+                            href={storeUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-accent-500 hover:bg-accent-600 text-primary-900 font-semibold transition-colors"
+                        >
+                            <Download className="w-4 h-4" />
+                            Baixar App
+                        </a>
                     </div>
                 </div>
             </div>

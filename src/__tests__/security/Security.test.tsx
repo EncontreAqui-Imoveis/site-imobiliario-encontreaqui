@@ -5,11 +5,14 @@ import { useAuth } from '@/contexts/AuthContext'
 // Mock dependencies
 // Mock dependencies
 const mockPush = jest.fn()
+const mockBack = jest.fn()
+const routerMock = {
+    push: mockPush,
+    back: mockBack,
+}
+
 jest.mock('next/navigation', () => ({
-    useRouter: jest.fn(() => ({
-        push: mockPush,
-        back: jest.fn(),
-    })),
+    useRouter: jest.fn(() => routerMock),
 }))
 
 jest.mock('lucide-react', () => ({
@@ -28,15 +31,10 @@ jest.mock('@/contexts/AuthContext', () => ({
 }))
 
 describe('Security Tests', () => {
-    const mockPush = jest.fn()
-
     beforeEach(() => {
         jest.clearAllMocks()
         const useRouter = require('next/navigation').useRouter
-        useRouter.mockImplementation(() => ({
-            push: mockPush,
-            back: jest.fn()
-        }))
+        useRouter.mockReturnValue(routerMock)
     })
 
     it('redirects unauthenticated user from protected route', async () => {

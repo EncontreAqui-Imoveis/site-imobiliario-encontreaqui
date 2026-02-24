@@ -1,32 +1,24 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { formatPrice, Property } from '@/types/property'
-import { Phone, MessageCircle, Info, ShieldCheck } from 'lucide-react'
+import { Info, ShieldCheck, Smartphone, Download } from 'lucide-react'
+import { APP_LINKS, buildAppDeepLink, getStoreUrlClient } from '@/lib/appLinks'
 
 interface PropertySidebarProps {
     property: Property
 }
 
 export default function PropertySidebar({ property }: PropertySidebarProps) {
-    const handleWhatsApp = () => {
-        const phone = property.brokerPhone?.replace(/\D/g, '') || ''
-        if (!phone) {
-            alert('Contato do corretor não disponível')
-            return
-        }
-        let formattedPhone = phone
-        if (!formattedPhone.startsWith('55')) {
-            formattedPhone = '55' + formattedPhone
-        }
-        const message = encodeURIComponent(`Olá! Tenho interesse no imóvel "${property.title}" (Cód: ${property.code || 'N/A'}).`)
-        window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank')
-    }
+    const [storeUrl, setStoreUrl] = useState(APP_LINKS.fallbackStore)
+
+    useEffect(() => {
+        setStoreUrl(getStoreUrlClient())
+    }, [])
 
     return (
         <aside className="lg:col-span-1">
             <div className="sticky top-24 space-y-6">
-
-                {/* Price Card */}
                 <div className="bg-white rounded-2xl p-6 shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden">
                     <div className="space-y-4">
                         <div className="space-y-1">
@@ -56,7 +48,6 @@ export default function PropertySidebar({ property }: PropertySidebarProps) {
 
                         <hr className="border-gray-100" />
 
-                        {/* Broker Info */}
                         <div className="flex flex-col gap-4">
                             <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center text-primary-700 font-bold text-lg shadow-inner">
@@ -74,37 +65,35 @@ export default function PropertySidebar({ property }: PropertySidebarProps) {
                             </div>
                         </div>
 
-                        {/* Actions */}
                         <div className="space-y-3 pt-2">
-                            <button
-                                onClick={handleWhatsApp}
-                                className="w-full relative overflow-hidden group flex items-center justify-center gap-2 py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-green-500/30 active:scale-[0.98]"
+                            <a
+                                href={buildAppDeepLink(property.id)}
+                                className="w-full relative overflow-hidden group flex items-center justify-center gap-2 py-4 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-primary-500/30 active:scale-[0.98]"
                             >
                                 <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                                <MessageCircle className="w-5 h-5" />
-                                Conversar no WhatsApp
-                            </button>
+                                <Smartphone className="w-5 h-5" />
+                                Abrir este imóvel no App
+                            </a>
 
-                            {property.brokerPhone && (
-                                <a
-                                    href={`tel:${property.brokerPhone}`}
-                                    className="w-full flex items-center justify-center gap-2 py-4 bg-white border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-bold rounded-xl transition-all"
-                                >
-                                    <Phone className="w-5 h-5" />
-                                    Ligar Agora
-                                </a>
-                            )}
+                            <a
+                                href={storeUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full flex items-center justify-center gap-2 py-4 bg-white border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-bold rounded-xl transition-all"
+                            >
+                                <Download className="w-5 h-5" />
+                                Baixar App
+                            </a>
                         </div>
                     </div>
                 </div>
 
-                {/* Important Info Card */}
                 <div className="bg-primary-50 rounded-2xl p-6 border border-primary-100">
                     <div className="flex items-start gap-3">
                         <Info className="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" />
                         <p className="text-sm text-primary-900 leading-relaxed">
-                            <span className="font-bold block mb-1">Ficou interessado?</span>
-                            Agende uma visita com o corretor responsável para conhecer todos os detalhes deste imóvel pessoalmente.
+                            <span className="font-bold block mb-1">Próximo passo no app</span>
+                            Favoritar, proposta e negociação são realizadas diretamente no aplicativo.
                         </p>
                     </div>
                     {property.code && (

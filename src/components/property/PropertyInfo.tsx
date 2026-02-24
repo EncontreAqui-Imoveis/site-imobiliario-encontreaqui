@@ -4,9 +4,8 @@ import { formatPrice, Property } from '@/types/property'
 import {
     MapPin, Bed, Bath, Car, Maximize,
     Wifi, Waves, Sun, Cpu, Wind, Sofa, Building2,
-    Calendar, Hash, Map, Share2, Heart, CheckCircle, XCircle
+    Calendar, Hash, Share2, CheckCircle
 } from 'lucide-react'
-import { useState } from 'react'
 
 interface PropertyInfoProps {
     property: Property
@@ -31,7 +30,6 @@ function formatDate(date?: string): string {
 }
 
 export default function PropertyInfo({ property }: PropertyInfoProps) {
-    const [isFavorite, setIsFavorite] = useState(false)
     const statusInfo = statusColors[property.status?.toLowerCase()] || statusColors.pending
 
     // Build comfort amenities
@@ -96,14 +94,6 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                             aria-label="Compartilhar imóvel"
                         >
                             <Share2 className="w-5 h-5" />
-                        </button>
-                        <button
-                            onClick={() => setIsFavorite(!isFavorite)}
-                            className={`p-2 rounded-full transition-colors ${isFavorite ? 'text-red-500 bg-red-50' : 'text-gray-400 hover:text-red-500 hover:bg-gray-100'}`}
-                            title="Favoritar"
-                            aria-label={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-                        >
-                            <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
                         </button>
                     </div>
                 </div>
