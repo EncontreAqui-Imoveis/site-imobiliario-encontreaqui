@@ -21,7 +21,7 @@ jest.mock('lucide-react', () => ({
 
 jest.mock('next/image', () => ({
     __esModule: true,
-    default: (props: any) => <img {...props} />,
+    default: ({ fill, ...props }: any) => <img {...props} data-fill={fill ? 'true' : undefined} />,
 }))
 
 const mockProperty: Property = {
@@ -86,4 +86,4 @@ describe('PropertyCard', () => {
         render(<PropertyCard property={mockProperty} />)
         expect(screen.getByRole('button', { name: /ver no app/i })).toBeInTheDocument()
     })
-}
+})

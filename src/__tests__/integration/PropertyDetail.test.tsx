@@ -17,7 +17,7 @@ jest.mock('next/link', () => {
 
 jest.mock('next/image', () => ({
     __esModule: true,
-    default: (props: any) => <img {...props} />,
+    default: ({ fill, ...props }: any) => <img {...props} data-fill={fill ? 'true' : undefined} />,
 }))
 
 jest.mock('lucide-react', () => ({
@@ -107,7 +107,10 @@ describe('PropertyDetailClient', () => {
                 writeText: jest.fn(),
             },
         })
-        global.fetch = jest.fn()
+        global.fetch = jest.fn().mockResolvedValue({
+            ok: false,
+            json: async () => ({}),
+        })
         window.fetch = global.fetch
     })
 
