@@ -59,7 +59,7 @@ export default function HeroSection() {
                     {/* Title */}
                     <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6 animate-fadeIn">
                         Encontre os imóveis mais desejados de{' '}
-                        <span className="text-accent-400">Rio Verde</span>
+                        <span className="text-accent-400">Brasil</span>
                     </h1>
 
                     {/* Subtitle */}
@@ -120,7 +120,7 @@ export default function HeroSection() {
                                         type="text"
                                         value={city}
                                         onChange={(e) => setCity(e.target.value)}
-                                        placeholder="Rio Verde"
+                                        placeholder="Brasil"
                                         className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                     />
                                 </div>

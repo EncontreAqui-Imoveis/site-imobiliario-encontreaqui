@@ -100,7 +100,7 @@ export default function ContactPage() {
                                 </div>
                                 <div>
                                     <div className="font-semibold text-gray-900">Localização</div>
-                                    <div className="text-gray-600">Rio Verde, GO</div>
+                                    <div className="text-gray-600">Brasil</div>
                                 </div>
                             </div>
                         </div>

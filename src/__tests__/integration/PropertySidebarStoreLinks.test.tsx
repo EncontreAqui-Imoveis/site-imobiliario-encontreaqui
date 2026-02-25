@@ -20,7 +20,7 @@ const property: Property = {
     price: 350000,
     priceSale: 350000,
     address: 'Rua Teste',
-    city: 'Rio Verde',
+    city: 'Brasil',
     state: 'GO',
     images: ['https://cdn/imovel.jpg'],
     createdAt: '2026-02-01T00:00:00.000Z',

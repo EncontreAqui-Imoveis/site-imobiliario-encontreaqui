@@ -41,7 +41,7 @@ const createProperty = (id: number): Property => ({
     purpose: 'Venda',
     price: 100000,
     address: 'Rua',
-    city: 'Rio Verde',
+    city: 'Brasil',
     state: 'GO',
     images: ['https://cdn/imovel.jpg'],
     createdAt: '2026-02-01T00:00:00.000Z',

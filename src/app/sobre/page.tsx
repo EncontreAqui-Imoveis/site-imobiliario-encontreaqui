@@ -43,7 +43,7 @@ export default function AboutPage() {
                         </h1>
                         <p className="text-xl text-white/80 leading-relaxed">
                             Uma imobiliária comprometida com a missão de oferecer um serviço imobiliário
-                            confiável e transparente em Rio Verde e região.
+                            confiável e transparente no Brasil.
                         </p>
                     </div>
                 </div>
