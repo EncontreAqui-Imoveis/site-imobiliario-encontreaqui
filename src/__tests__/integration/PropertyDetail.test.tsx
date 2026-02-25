@@ -1,7 +1,6 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import PropertyDetailClient from '@/components/property/PropertyDetailClient'
 import { Property } from '@/types/property'
-import { useAuth } from '@/contexts/AuthContext'
 
 // Mocks
 jest.mock('next/navigation', () => ({
@@ -40,10 +39,6 @@ jest.mock('lucide-react', () => ({
     MessageCircle: () => <div data-testid="icon-message" />,
     ArrowRight: () => <div data-testid="icon-arrow-right" />,
     XCircle: () => <div data-testid="icon-x-circle" />,
-}))
-
-jest.mock('@/contexts/AuthContext', () => ({
-    useAuth: jest.fn(),
 }))
 
 jest.mock('@/components/property/PropertyCard', () => {
@@ -99,9 +94,6 @@ const mockProperty: Property = {
 
 describe('PropertyDetailClient', () => {
     beforeEach(() => {
-        (useAuth as jest.Mock).mockReturnValue({
-            isAuthenticated: false,
-        })
         Object.assign(navigator, {
             clipboard: {
                 writeText: jest.fn(),
@@ -154,10 +146,5 @@ describe('PropertyDetailClient', () => {
             expect(screen.getByText('Similar House 1')).toBeInTheDocument()
         })
 
-        // Similar properties section should appear
-        // Note: Similar properties are rendered using PropertyCard. 
-        // We aren't mocking PropertyCard here so it might render fully or we should mock it.
-        // If we don't mock it, it will try to access contexts. PropertyCard uses useAuth and useRouter.
-        // We mocked those, so it should be fine.
     })
 })

@@ -59,9 +59,8 @@ export default function TermsPage() {
                         </p>
                         <ul className="list-disc list-inside text-gray-600 space-y-2 ml-4">
                             <li>Listagem e busca de imóveis para venda e aluguel</li>
-                            <li>Contato entre interessados e anunciantes</li>
-                            <li>Ferramentas para corretores e proprietários anunciarem imóveis</li>
-                            <li>Funcionalidades de favoritos e alertas</li>
+                            <li>Páginas de detalhe para consulta pública do imóvel</li>
+                            <li>Redirecionamento para o aplicativo oficial da imobiliária</li>
                         </ul>
                     </section>
 
@@ -144,9 +143,8 @@ export default function TermsPage() {
                     <section>
                         <h2 className="text-xl font-bold text-gray-900 mb-4">8. Contato</h2>
                         <p className="text-gray-600 leading-relaxed">
-                            Para dúvidas sobre estes termos, entre em contato conosco através da
-                            página de <Link href="/contato" className="text-primary-600 hover:underline">Contato</Link> ou
-                            pelo e-mail: <a href="mailto:contato@encontreaquiimoveis.com.br" className="text-primary-600 hover:underline">contato@encontreaquiimoveis.com.br</a>
+                            Para dúvidas sobre estes termos, entre em contato pelo e-mail:{' '}
+                            <a href="mailto:contato@encontreaquiimoveis.com.br" className="text-primary-600 hover:underline">contato@encontreaquiimoveis.com.br</a>
                         </p>
                     </section>
 

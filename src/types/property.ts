@@ -49,17 +49,6 @@ export interface ImageFile {
     preview: string
 }
 
-export interface PropertyFilters {
-    type?: string
-    purpose?: string
-    city?: string
-    bairro?: string
-    minPrice?: number
-    maxPrice?: number
-    bedrooms?: number
-    search?: string
-}
-
 export function formatPrice(value: number): string {
     return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
@@ -67,21 +56,4 @@ export function formatPrice(value: number): string {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
     }).format(value)
-}
-
-export function getPurposeLabel(purpose: string): string {
-    if (purpose.toLowerCase().includes('alug')) return 'Aluguel'
-    if (purpose.toLowerCase().includes('vend')) return 'Venda'
-    return purpose
-}
-
-export function getTypeIcon(type: string): string {
-    switch (type) {
-        case 'Casa': return '🏠'
-        case 'Apartamento': return '🏢'
-        case 'Terreno': return '📐'
-        case 'Propriedade Rural': return '🌾'
-        case 'Propriedade Comercial': return '🏪'
-        default: return '🏠'
-    }
 }
