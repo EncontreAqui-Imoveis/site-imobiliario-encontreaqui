@@ -1,0 +1,217 @@
+import { Property } from '@/types/property'
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://backend-production-6acc.up.railway.app'
+
+function toNumber(value: unknown): number | undefined {
+    if (value === null || value === undefined || value === '') return undefined
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : undefined
+}
+
+function toStringOrUndefined(value: unknown): string | undefined {
+    if (value === null || value === undefined) return undefined
+    const normalized = String(value).trim()
+    return normalized.length > 0 ? normalized : undefined
+}
+
+function toBoolean(value: unknown): boolean | undefined {
+    if (value === null || value === undefined) return undefined
+    if (typeof value === 'boolean') return value
+    if (typeof value === 'number') return value === 1
+    const normalized = String(value).trim().toLowerCase()
+    if (normalized === '1' || normalized === 'true' || normalized === 'yes') return true
+    if (normalized === '0' || normalized === 'false' || normalized === 'no') return false
+    return undefined
+}
+
+function toImageUrlList(raw: unknown): string[] {
+    if (!raw) return []
+
+    if (Array.isArray(raw)) {
+        return raw
+            .map((item) => {
+                if (typeof item === 'string') return item.trim()
+                if (item && typeof item === 'object') {
+                    const candidate = (item as Record<string, unknown>).image_url ?? (item as Record<string, unknown>).url
+                    return candidate ? String(candidate).trim() : ''
+                }
+                return ''
+            })
+            .filter(Boolean)
+    }
+
+    if (typeof raw === 'string') {
+        return raw
+            .split(',')
+            .map((entry) => entry.trim())
+            .filter(Boolean)
+    }
+
+    return []
+}
+
+function normalizeStatus(rawStatus: unknown): Property['status'] {
+    const normalized = String(rawStatus ?? 'approved').trim().toLowerCase()
+    if (normalized === 'approved') return 'approved'
+    if (normalized === 'sold') return 'sold'
+    if (normalized === 'rented') return 'rented'
+    if (normalized === 'rejected') return 'rejected'
+    return 'pending_approval'
+}
+
+function normalizeType(rawType: unknown): Property['type'] {
+    const normalized = String(rawType ?? 'Casa').trim()
+    if (
+        normalized === 'Casa' ||
+        normalized === 'Apartamento' ||
+        normalized === 'Terreno' ||
+        normalized === 'Propriedade Rural' ||
+        normalized === 'Propriedade Comercial'
+    ) {
+        return normalized
+    }
+    return 'Casa'
+}
+
+function normalizePurpose(rawPurpose: unknown): Property['purpose'] {
+    const normalized = String(rawPurpose ?? 'Venda').trim()
+    if (normalized === 'Venda' || normalized === 'Aluguel' || normalized === 'Venda e Aluguel') {
+        return normalized
+    }
+    return 'Venda'
+}
+
+export function normalizeProperty(raw: unknown): Property | null {
+    if (!raw || typeof raw !== 'object') return null
+
+    const item = raw as Record<string, unknown>
+    const id = toNumber(item.id)
+    if (!id) return null
+
+    const createdAt =
+        toStringOrUndefined(item.createdAt) ??
+        toStringOrUndefined(item.created_at) ??
+        new Date().toISOString()
+
+    const imagesFromImages = toImageUrlList(item.images)
+    const imagesFromPropertyImages = toImageUrlList(item.property_images)
+    const imagesFromImageUrls = toImageUrlList(item.image_urls)
+    const images =
+        imagesFromImages.length > 0
+            ? imagesFromImages
+            : imagesFromPropertyImages.length > 0
+                ? imagesFromPropertyImages
+                : imagesFromImageUrls
+
+    return {
+        id,
+        title: toStringOrUndefined(item.title) ?? `Imóvel #${id}`,
+        description: toStringOrUndefined(item.description) ?? '',
+        type: normalizeType(item.type),
+        status: normalizeStatus(item.status),
+        purpose: normalizePurpose(item.purpose),
+        price: toNumber(item.price) ?? 0,
+        priceSale: toNumber(item.priceSale ?? item.price_sale ?? item.sale_value),
+        priceRent: toNumber(item.priceRent ?? item.price_rent),
+        address: toStringOrUndefined(item.address) ?? '',
+        city: toStringOrUndefined(item.city) ?? '',
+        state: toStringOrUndefined(item.state) ?? '',
+        bairro: toStringOrUndefined(item.bairro),
+        cep: toStringOrUndefined(item.cep),
+        bedrooms: toNumber(item.bedrooms ?? item.quartos),
+        bathrooms: toNumber(item.bathrooms ?? item.banheiros),
+        areaConstruida: toNumber(item.areaConstruida ?? item.area_construida),
+        areaTerreno: toNumber(item.areaTerreno ?? item.area_terreno),
+        garageSpots: toNumber(item.garageSpots ?? item.garage_spots),
+        hasWifi: toBoolean(item.hasWifi ?? item.has_wifi),
+        temPiscina: toBoolean(item.temPiscina ?? item.tem_piscina),
+        temEnergiaSolar: toBoolean(item.temEnergiaSolar ?? item.tem_energia_solar),
+        temAutomacao: toBoolean(item.temAutomacao ?? item.tem_automacao),
+        temArCondicionado: toBoolean(item.temArCondicionado ?? item.tem_ar_condicionado),
+        ehMobiliada: toBoolean(item.ehMobiliada ?? item.eh_mobiliada),
+        valorCondominio: toNumber(item.valorCondominio ?? item.valor_condominio),
+        valorIptu: toNumber(item.valorIptu ?? item.valor_iptu),
+        images: images.length > 0 ? images : ['/placeholder-property.jpg'],
+        videoUrl: toStringOrUndefined(item.videoUrl ?? item.video_url),
+        brokerId: toNumber(item.brokerId ?? item.broker_id),
+        brokerName: toStringOrUndefined(item.brokerName ?? item.broker_name),
+        brokerPhone: toStringOrUndefined(item.brokerPhone ?? item.broker_phone),
+        brokerEmail: toStringOrUndefined(item.brokerEmail ?? item.broker_email),
+        createdAt,
+        code: toStringOrUndefined(item.code),
+        latitude: toNumber(item.latitude),
+        longitude: toNumber(item.longitude),
+        numero: toStringOrUndefined(item.numero),
+        quadra: toStringOrUndefined(item.quadra),
+        lote: toStringOrUndefined(item.lote),
+        complemento: toStringOrUndefined(item.complemento),
+        tipoLote: toStringOrUndefined(item.tipoLote ?? item.tipo_lote),
+    }
+}
+
+function unwrapPropertyArray(payload: unknown): unknown[] {
+    if (Array.isArray(payload)) return payload
+    if (payload && typeof payload === 'object') {
+        const obj = payload as Record<string, unknown>
+        if (Array.isArray(obj.data)) return obj.data
+        if (Array.isArray(obj.properties)) return obj.properties
+    }
+    return []
+}
+
+async function fetchProperties(params: URLSearchParams): Promise<Property[]> {
+    try {
+        const response = await fetch(`${API_BASE_URL}/properties?${params.toString()}`, {
+            next: { revalidate: 60 },
+        })
+
+        if (!response.ok) {
+            return []
+        }
+
+        const payload = await response.json()
+        return unwrapPropertyArray(payload)
+            .map((item) => normalizeProperty(item))
+            .filter((item): item is Property => item !== null)
+    } catch (error) {
+        console.error('Error fetching properties list:', error)
+        return []
+    }
+}
+
+export async function fetchFeaturedProperties(limit = 6): Promise<Property[]> {
+    const params = new URLSearchParams()
+    params.set('status', 'approved')
+    params.set('limit', String(limit))
+    params.set('sort', 'created_at:desc')
+
+    const properties = await fetchProperties(params)
+    return properties.slice(0, limit)
+}
+
+export async function fetchRecentProperties(limit = 8): Promise<Property[]> {
+    const params = new URLSearchParams()
+    params.set('status', 'approved')
+    params.set('limit', String(limit))
+    params.set('sort', 'created_at:desc')
+
+    const properties = await fetchProperties(params)
+    return properties.slice(0, limit)
+}
+
+export async function fetchPropertyById(id: string | number): Promise<Property | null> {
+    try {
+        const response = await fetch(`${API_BASE_URL}/properties/${id}`, {
+            cache: 'no-store',
+        })
+
+        if (!response.ok) return null
+
+        const payload = await response.json()
+        const raw = payload?.data ?? payload
+        return normalizeProperty(raw)
+    } catch (error) {
+        console.error('Error fetching property details:', error)
+        return null
+    }
+}

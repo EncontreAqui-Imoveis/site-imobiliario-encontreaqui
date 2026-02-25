@@ -2,12 +2,13 @@ import HeroSection from '@/components/home/HeroSection'
 import FeaturedCarousel from '@/components/home/FeaturedCarousel'
 import RecentProperties from '@/components/home/RecentProperties'
 import AboutSection from '@/components/home/AboutSection'
-import { getMockFeaturedProperties, getMockRecentProperties } from '@/lib/mockData'
+import { fetchFeaturedProperties, fetchRecentProperties } from '@/lib/propertiesApi'
 
-export default function HomePage() {
-    // Using mock data for demo - replace with API calls when backend is connected
-    const featuredProperties = getMockFeaturedProperties()
-    const recentProperties = getMockRecentProperties()
+export default async function HomePage() {
+    const [featuredProperties, recentProperties] = await Promise.all([
+        fetchFeaturedProperties(6),
+        fetchRecentProperties(8),
+    ])
 
     return (
         <>

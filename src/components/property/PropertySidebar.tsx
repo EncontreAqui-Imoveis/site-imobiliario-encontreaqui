@@ -1,21 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { formatPrice, Property } from '@/types/property'
 import { Info, ShieldCheck, Smartphone, Download } from 'lucide-react'
-import { APP_LINKS, buildAppDeepLink, getStoreUrlClient } from '@/lib/appLinks'
+import { APP_LINKS, buildAppDeepLink } from '@/lib/appLinks'
 
 interface PropertySidebarProps {
     property: Property
 }
 
 export default function PropertySidebar({ property }: PropertySidebarProps) {
-    const [storeUrl, setStoreUrl] = useState(APP_LINKS.fallbackStore)
-
-    useEffect(() => {
-        setStoreUrl(getStoreUrlClient())
-    }, [])
-
     return (
         <aside className="lg:col-span-1">
             <div className="sticky top-24 space-y-6">
@@ -76,13 +69,23 @@ export default function PropertySidebar({ property }: PropertySidebarProps) {
                             </a>
 
                             <a
-                                href={storeUrl}
+                                href={APP_LINKS.androidStore}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="w-full flex items-center justify-center gap-2 py-4 bg-white border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-bold rounded-xl transition-all"
                             >
                                 <Download className="w-5 h-5" />
-                                Baixar App
+                                Baixar no Android
+                            </a>
+
+                            <a
+                                href={APP_LINKS.iosStore}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full flex items-center justify-center gap-2 py-4 bg-white border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-bold rounded-xl transition-all"
+                            >
+                                <Download className="w-5 h-5" />
+                                Baixar no iOS
                             </a>
                         </div>
                     </div>
