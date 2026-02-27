@@ -54,19 +54,29 @@ async function request<T = unknown>(path: string, options: RequestOptions = {}):
 
     const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`
 
+    // Normaliza headers para um objeto Headers, para manipular Content-Type com segurança.
+    const baseHeaders = new Headers(headers ?? undefined)
+
+    if (body instanceof FormData) {
+        // Bug 1: garantir que NENHUM Content-Type (inclusive customizado) seja enviado com FormData,
+        // para o browser definir o boundary corretamente.
+        baseHeaders.delete('Content-Type')
+    } else {
+        // Bug 2: só definir application/json se o usuário NÃO tiver definido Content-Type.
+        if (!baseHeaders.has('Content-Type')) {
+            baseHeaders.set('Content-Type', 'application/json')
+        }
+    }
+
     const init: RequestInit = {
         method,
-        headers: {
-            'Content-Type': body instanceof FormData ? undefined : 'application/json',
-            ...(headers || {}),
-        },
+        headers: baseHeaders,
         credentials: includeCredentials ? 'include' : 'same-origin',
     }
 
     if (body !== undefined) {
         if (body instanceof FormData) {
             // Quando é FormData, deixamos o browser definir o boundary do multipart.
-            delete (init.headers as Record<string, string | undefined>)['Content-Type']
             init.body = body
         } else {
             init.body = JSON.stringify(body)
