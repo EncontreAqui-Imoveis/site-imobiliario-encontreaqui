@@ -2,14 +2,13 @@ import { notFound } from 'next/navigation'
 import { fetchPropertyById } from '@/lib/propertiesApi'
 import { ProposalWizard } from '@/components/proposals/ProposalWizard'
 
-interface Props {
-    params: {
-        propertyId: string
-    }
-}
-
-export default async function NovaPropostaPage({ params }: Props) {
-    const property = await fetchPropertyById(params.propertyId)
+export default async function NovaPropostaPage({
+    params,
+}: {
+    params: Promise<{ propertyId: string }>
+}) {
+    const { propertyId } = await params
+    const property = await fetchPropertyById(propertyId)
 
     if (!property) {
         notFound()
