@@ -1,0 +1,36 @@
+ID,Feature,Endpoints,Regra,StatusMobile,StatusWebAtual,Gap,Prioridade
+BF-001,Login/Cadastro com sessão válida,"POST /auth/login; POST /auth/register; POST /auth/google","Sessão autenticada + perfil incompleto",Implementado e testado,"Parcial (páginas sem paridade contratual)",Implementar fluxo web completo com guards,P0
+BF-002,Guardas por papel,"middlewares auth/isAdmin/isBroker/isClient",Sem BFLA,Implementado e testado,Não validado,Replicar guardas e rotas privadas,P0
+BF-003,Revogação de sessão admin,"POST /admin/logout + token_version",Token roubado deve ser invalidável,Implementado e testado,Não aplicado no cliente web,Consumir logout e tratar 401 revogado,P0
+BF-004,CSP e hardening,"helmet.contentSecurityPolicy",Mitigar XSS,Implementado no backend,Parcial,Validar CSP efetiva em produção,P0
+BF-005,Gerar proposta,"POST /negotiations/proposal",Cria PROPOSAL_SENT + PDF,Implementado e testado,Não implementado,Portar wizard proposta,P1
+BF-006,Matemática pagamento,"POST /negotiations/proposal",Soma pagamento == valor imóvel,Implementado e testado,Não implementado,Portar validação no web,P0
+BF-007,Antiadulteração valor,"POST /negotiations/proposal",Ignora value/price adulterado,Implementado e testado,Não implementado,UI readonly + tratamento erro,P0
+BF-008,Validade proposta 10 dias,"POST /negotiations/proposal",proposal_validity_date +10 dias,Implementado e testado,Não implementado,Exibir e validar prazo,P1
+BF-009,Upload proposta assinada,"POST /negotiations/:id/proposals/signed",Vai para análise/documentação,Implementado e testado,Não implementado,Tela upload proposta assinada,P1
+BF-010,Aprovação proposta admin,"PUT /admin/negotiations/:id/approve",IN_NEGOTIATION + imóvel negociação + contrato auto,Implementado e testado,Não implementado,Painel web admin com ação,P0
+BF-011,Rejeição proposta com motivo,"PUT /admin/negotiations/:id/reject",Sem motivo => 400,Implementado e testado,Não implementado,Form com observação obrigatória,P0
+BF-012,Idempotência aprovação,"PUT /admin/negotiations/:id/approve",Sem duplicar contrato,Implementado e testado,Não implementado,UX resiliente double-click,P1
+BF-013,Lista contratos por usuário,GET /contracts/me,Visão limitada por usuário,Implementado e testado,Não implementado,Criar módulo Meus Contratos,P1
+BF-014,Detalhe contrato,GET /contracts/:id,Exibe infos + docs filtrados,Implementado e testado,Não implementado,Criar tela detalhe contrato,P1
+BF-015,Aprovação granular seller/buyer,"PUT /admin/contracts/:id/evaluate-side",Só IN_DRAFT quando ambos aprovados,Implementado e testado,Não implementado,Subaba admin granular,P0
+BF-016,Upload minuta,"POST /admin/contracts/:id/draft",IN_DRAFT -> AWAITING_SIGNATURES,Implementado e testado,Não implementado,Upload admin minuta,P0
+BF-017,Guarda avanço assinatura,"PUT /admin/contracts/:id/transition",Bloqueia sem contrato_minuta,Implementado e testado,Não implementado,Bloquear botão avançar,P0
+BF-018,Bloqueio rollback finalized,"PUT /admin/contracts/:id/transition",FINALIZED não retrocede,Implementado e testado,Não implementado,Remover ação indevida + tratar erro,P0
+BF-019,Upload docs assinados,"POST /admin/contracts/:id/signed-docs",Marca pronto para finalização,Implementado e testado,Não implementado,Subaba assinaturas,P1
+BF-020,Lock edição por aprovação,"PUT /contracts/:id/data",Lado aprovado não edita,Implementado e testado,Não implementado,Bloqueio de formulário por lado,P0
+BF-021,Lock remoção por aprovação,"DELETE /contracts/:id/documents/:documentId",Lado aprovado não remove,Implementado e testado,Não implementado,Botão remover condicionado ao estado,P0
+BF-022,Metadata side no upload,"POST /contracts/:id/documents",Persistir side + originalFileName,Implementado e testado,Não implementado,Upload com side explícito,P1
+BF-023,BOLA/IDOR download docs,"GET /negotiations/:id/documents/:documentId/download",Não participante => 403,Implementado e testado,Não implementado,Consumir endpoint com UX segura 403,P0
+BF-024,Regra docs Venda x Aluguel,Regra domínio requiredContractDocumentTypes,Aluguel exige renda e exclui certidões,Implementado e testado,Não implementado,Portar matriz documental,P1
+BF-025,Regra docs por lado,side=seller/buyer + locks,Checklist por lado independente,Implementado no mobile/backend,Parcial,Implementar seções/validações por lado,P1
+BF-026,Finalização com evidências,"POST /admin/contracts/:id/finalize",Exige contrato assinado + comprovante,Implementado e testado,Não implementado,Bloquear finalizar sem evidências,P0
+BF-027,Integridade financeira,"POST /admin/contracts/:id/finalize",splits >=0 e soma <= valorVenda,Implementado e testado,Não implementado,Validação matemática no form,P0
+BF-028,Efeito finalização no ativo,"POST /admin/contracts/:id/finalize",Negociação e imóvel em SOLD/RENTED,Implementado e testado,Não implementado,Refletir status e visibilidade,P0
+BF-029,VGV mensal,GET /admin/commissions,Resumo mensal por split,Implementado e testado,Não implementado,Dashboard financeiro,P1
+BF-030,Home com dados reais,"GET /properties; GET /properties/featured",Dados reais na home,Implementado e testado no site,Implementado,Sem gap crítico,P2
+BF-031,Lista com filtros,GET /properties,Filtros e busca,Implementado e testado no site,Implementado,Refino UX/paridade,P2
+BF-032,Detalhe + links app stores,GET /properties/:id,"Abrir no app + Android/iOS",Implementado e testado no site,Implementado,Sem gap crítico,P2
+BF-033,Exposição pública correta,"GET /public/properties",Vendidos/alugados fora da vitrine,Implementado no backend,Parcial,Validar fonte pública e filtros no site,P0
+BF-034,Observabilidade sem vazamento,N/A,Erros com rastreio sem PII,Parcial,Não validado,Sentry + redaction,P1
+BF-035,LGPD front-end,N/A,Minimização e proteção de PII,Parcial,Não validado,Revisão de storage/logs/máscaras,P0

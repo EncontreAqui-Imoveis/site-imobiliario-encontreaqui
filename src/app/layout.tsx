@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
+import { UserProvider } from '@/contexts/UserContext'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,11 +30,13 @@ export default function RootLayout({
     return (
         <html lang="pt-BR" data-scroll-behavior="smooth">
             <body className="min-h-screen flex flex-col">
-                <Header />
-                <main className="flex-1">
-                    {children}
-                </main>
-                <Footer />
+                <UserProvider>
+                    <Header />
+                    <main className="flex-1">
+                        {children}
+                    </main>
+                    <Footer />
+                </UserProvider>
             </body>
         </html>
     )
