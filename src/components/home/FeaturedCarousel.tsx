@@ -14,7 +14,7 @@ interface FeaturedCarouselProps {
 
 export default function FeaturedCarousel({
     properties,
-    title = 'Destaques especiais'
+    title = 'Imóveis em destaque'
 }: FeaturedCarouselProps) {
     const [emblaRef, emblaApi] = useEmblaCarousel(
         {
@@ -105,12 +105,14 @@ export default function FeaturedCarousel({
                         <button
                             key={idx}
                             onClick={() => emblaApi?.scrollTo(idx)}
-                            className={`w-2.5 h-2.5 rounded-full transition-all ${idx === selectedIndex
-                                    ? 'bg-primary-600 w-8'
-                                    : 'bg-gray-300 hover:bg-gray-400'
-                                }`}
+                            className={`p-1.5 rounded-full transition-all`}
                             aria-label={`Ir para slide ${idx + 1}`}
-                        />
+                        >
+                            <span className={`block rounded-full transition-all ${idx === selectedIndex
+                                ? 'bg-primary-600 w-8 h-2.5'
+                                : 'bg-gray-300 hover:bg-gray-400 w-2.5 h-2.5'
+                                }`} />
+                        </button>
                     ))}
                 </div>
             </div>

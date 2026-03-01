@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Bed, Bath, Car, Maximize, MapPin, ChevronLeft, ChevronRight, Smartphone } from 'lucide-react'
+import { Bed, Bath, Car, Maximize, MapPin, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Property, formatPrice } from '@/types/property'
-import { buildAppDeepLink } from '@/lib/appLinks'
+import FavoriteButton from '@/components/property/FavoriteButton'
 
 interface PropertyCardProps {
     property: Property
@@ -34,12 +34,6 @@ export default function PropertyCard({ property, variant = 'default' }: Property
         setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))
     }
 
-    const openInApp = (e: React.MouseEvent) => {
-        e.preventDefault()
-        e.stopPropagation()
-        window.location.href = buildAppDeepLink(property.id)
-    }
-
     return (
         <Link
             href={`/imoveis/${property.id}`}
@@ -64,14 +58,14 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                     <>
                         <button
                             onClick={goToPrevious}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 hover:scale-110"
+                            className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-30 group-hover:opacity-100 focus:opacity-100 transition-all duration-300 z-10 hover:scale-110"
                             aria-label="Imagem anterior"
                         >
                             <ChevronLeft className="w-5 h-5 drop-shadow-md" />
                         </button>
                         <button
                             onClick={goToNext}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 hover:scale-110"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-30 group-hover:opacity-100 focus:opacity-100 transition-all duration-300 z-10 hover:scale-110"
                             aria-label="Próxima imagem"
                         >
                             <ChevronRight className="w-5 h-5 drop-shadow-md" />
@@ -163,13 +157,7 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                         </p>
                     </div>
 
-                    <button
-                        onClick={openInApp}
-                        className="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-primary-50 text-primary-700 text-xs font-semibold hover:bg-primary-100 transition-colors"
-                    >
-                        <Smartphone className="w-3.5 h-3.5" />
-                        Ver no App
-                    </button>
+                    <FavoriteButton propertyId={property.id} size="sm" />
                 </div>
             </div>
         </Link>

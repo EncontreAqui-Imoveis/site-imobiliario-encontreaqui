@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, Home, MapPin, ChevronDown, Smartphone, Download } from 'lucide-react'
-import { buildAppDeepLink, getStoreUrlClient } from '@/lib/appLinks'
+import { Search, Home, MapPin, ChevronDown, Loader2 } from 'lucide-react'
 
 const propertyTypes = [
     { value: '', label: 'Todos os tipos' },
@@ -25,13 +24,10 @@ export default function HeroSection() {
     const [type, setType] = useState('')
     const [purpose, setPurpose] = useState('')
     const [city, setCity] = useState('')
-    const [storeUrl, setStoreUrl] = useState('https://play.google.com/store')
-
-    useEffect(() => {
-        setStoreUrl(getStoreUrlClient())
-    }, [])
+    const [isSearching, setIsSearching] = useState(false)
 
     const handleSearch = () => {
+        setIsSearching(true)
         const params = new URLSearchParams()
         if (type) params.set('type', type)
         if (purpose) params.set('purpose', purpose)
@@ -80,6 +76,7 @@ export default function HeroSection() {
                                     <select
                                         value={purpose}
                                         onChange={(e) => setPurpose(e.target.value)}
+                                        aria-label="Finalidade do imóvel"
                                         className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 pr-10 text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                     >
                                         {purposes.map((p) => (
@@ -99,6 +96,7 @@ export default function HeroSection() {
                                     <select
                                         value={type}
                                         onChange={(e) => setType(e.target.value)}
+                                        aria-label="Tipo de imóvel"
                                         className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 pr-10 text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                     >
                                         {propertyTypes.map((t) => (
@@ -120,7 +118,7 @@ export default function HeroSection() {
                                         type="text"
                                         value={city}
                                         onChange={(e) => setCity(e.target.value)}
-                                        placeholder="Brasil"
+                                        placeholder="Ex: São Paulo"
                                         className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                     />
                                 </div>
@@ -130,32 +128,18 @@ export default function HeroSection() {
                             <div className="flex items-end">
                                 <button
                                     onClick={handleSearch}
-                                    className="w-full bg-accent-500 hover:bg-accent-600 text-primary-900 font-semibold py-3 px-6 rounded-xl shadow-lg shadow-accent-500/25 hover:shadow-accent-500/40 transition-all duration-200 flex items-center justify-center gap-2"
+                                    disabled={isSearching}
+                                    className="w-full bg-accent-500 hover:bg-accent-600 disabled:opacity-70 text-primary-900 font-semibold py-3 px-6 rounded-xl shadow-lg shadow-accent-500/25 hover:shadow-accent-500/40 transition-all duration-200 flex items-center justify-center gap-2"
                                 >
-                                    <Search className="w-5 h-5" />
-                                    <span>Buscar</span>
+                                    {isSearching ? (
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                    ) : (
+                                        <Search className="w-5 h-5" />
+                                    )}
+                                    <span>{isSearching ? 'Buscando...' : 'Buscar'}</span>
                                 </button>
                             </div>
                         </div>
-                    </div>
-
-                    <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
-                        <a
-                            href={buildAppDeepLink()}
-                            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/30 text-white font-semibold transition-colors"
-                        >
-                            <Smartphone className="w-4 h-4" />
-                            Abrir no App
-                        </a>
-                        <a
-                            href={storeUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-accent-500 hover:bg-accent-600 text-primary-900 font-semibold transition-colors"
-                        >
-                            <Download className="w-4 h-4" />
-                            Baixar App
-                        </a>
                     </div>
                 </div>
             </div>

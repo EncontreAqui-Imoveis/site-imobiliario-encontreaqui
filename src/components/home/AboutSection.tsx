@@ -1,5 +1,5 @@
-import { Building2, Shield, Clock, Award, Smartphone, Download } from 'lucide-react'
-import { buildAppDeepLink, APP_LINKS } from '@/lib/appLinks'
+import { Building2, Shield, Clock, Award } from 'lucide-react'
+import Link from 'next/link'
 
 const features = [
     {
@@ -60,26 +60,14 @@ export default function AboutSection() {
                     })}
                 </div>
 
-                {/* CTA */}
                 <div className="mt-12 lg:mt-16 text-center">
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                        <a
-                            href={buildAppDeepLink()}
-                            className="inline-flex items-center gap-2 px-8 py-4 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl shadow-lg shadow-primary-500/25 transition-all duration-200"
-                        >
-                            <Smartphone className="w-5 h-5" />
-                            Abrir no App
-                        </a>
-                        <a
-                            href={APP_LINKS.androidStore}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 px-8 py-4 bg-accent-500 hover:bg-accent-600 text-primary-900 font-semibold rounded-xl shadow-lg shadow-accent-500/25 transition-all duration-200"
-                        >
-                            <Download className="w-5 h-5" />
-                            Baixar App
-                        </a>
-                    </div>
+                    <Link
+                        href="/imoveis"
+                        className="inline-flex items-center gap-2 px-8 py-4 bg-accent-500 hover:bg-accent-600 text-primary-900 font-semibold rounded-xl shadow-lg shadow-accent-500/25 transition-all duration-200"
+                    >
+                        <Building2 className="w-5 h-5" />
+                        Explorar imóveis
+                    </Link>
                 </div>
             </div>
         </section>
