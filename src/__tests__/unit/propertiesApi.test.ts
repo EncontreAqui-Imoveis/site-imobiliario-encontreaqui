@@ -140,7 +140,7 @@ describe('propertiesApi', () => {
 
         const result = await fetchPropertyById('44')
         expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining('/properties/44'),
+            expect.stringContaining('/public/properties/44'),
             expect.objectContaining({ cache: 'no-store' })
         )
         expect(result?.title).toBe('Imóvel 44')

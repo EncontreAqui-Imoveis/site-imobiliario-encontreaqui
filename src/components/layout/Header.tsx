@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { Menu, X, Home, Building2, Search, Smartphone } from 'lucide-react'
+import {
+    Menu, X, Home, Building2, Search, Smartphone
+} from 'lucide-react'
 import { buildAppDeepLink, getStoreUrlClient } from '@/lib/appLinks'
 
 const navLinks = [
@@ -16,6 +18,7 @@ export default function Header() {
     const router = useRouter()
     const pathname = usePathname()
     const searchParams = useSearchParams()
+
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
     const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
@@ -58,6 +61,7 @@ export default function Header() {
     const textColor = isHomepage && !isScrolled ? 'text-white' : 'text-gray-600'
     const logoFilter = isHomepage && !isScrolled ? 'brightness-0 invert' : ''
     const openInAppUrl = buildAppDeepLink()
+    const webCatalogOnly = true
 
     return (
         <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${headerBg} ${!isHomepage || isScrolled ? 'border-b border-gray-100' : ''}`}>
@@ -83,8 +87,8 @@ export default function Header() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Buscar..."
                                 className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-accent-500 ${isHomepage && !isScrolled
-                                        ? 'bg-white/10 border-white/20 text-white placeholder-white/60 focus:bg-white/20'
-                                        : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'
+                                    ? 'bg-white/10 border-white/20 text-white placeholder-white/60 focus:bg-white/20'
+                                    : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'
                                     }`}
                             />
                         </div>
@@ -104,19 +108,13 @@ export default function Header() {
 
                     <div className="hidden lg:flex items-center gap-3 flex-shrink-0">
                         <a
-                            href={openInAppUrl}
-                            className={`px-4 py-2.5 ${textColor} hover:text-primary-500 font-medium rounded-lg transition-all flex items-center gap-2`}
-                        >
-                            <Smartphone className="w-4 h-4" />
-                            Abrir no App
-                        </a>
-                        <a
-                            href={storeUrl}
+                            href={webCatalogOnly ? storeUrl : openInAppUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="px-5 py-2.5 bg-accent-500 hover:bg-accent-600 text-primary-900 font-semibold rounded-xl shadow-lg shadow-accent-500/25 hover:shadow-accent-500/40 transition-all duration-200"
+                            className={`px-3 py-2.5 ${textColor} hover:text-primary-500 font-medium rounded-lg transition-all flex items-center gap-1.5 text-sm`}
                         >
-                            Baixar App
+                            <Smartphone className="w-4 h-4" />
+                            {webCatalogOnly ? 'Baixar App' : 'Abrir no App'}
                         </a>
                     </div>
 
@@ -163,20 +161,14 @@ export default function Header() {
                             <div className="my-2 border-t border-gray-100" />
 
                             <a
-                                href={openInAppUrl}
-                                onClick={() => setIsMenuOpen(false)}
-                                className="mx-4 px-4 py-3 border border-primary-200 text-primary-700 font-semibold text-center rounded-xl"
-                            >
-                                Abrir no App
-                            </a>
-                            <a
-                                href={storeUrl}
+                                href={webCatalogOnly ? storeUrl : openInAppUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={() => setIsMenuOpen(false)}
-                                className="mt-2 mx-4 px-4 py-3 bg-accent-500 text-primary-900 font-semibold text-center rounded-xl shadow-lg"
+                                className="mt-2 mx-4 px-4 py-3 border border-gray-200 text-gray-600 font-medium text-center rounded-xl flex items-center justify-center gap-2"
                             >
-                                Baixar App
+                                <Smartphone className="w-4 h-4" />
+                                {webCatalogOnly ? 'Baixar App' : 'Abrir no App'}
                             </a>
                         </nav>
                     </div>

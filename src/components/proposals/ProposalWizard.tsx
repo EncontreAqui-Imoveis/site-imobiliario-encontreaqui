@@ -7,6 +7,7 @@ import type { PaymentDetails } from '@/lib/api/negotiations'
 import { createProposal } from '@/lib/api/negotiations'
 import type { ApiError } from '@/lib/api/client'
 import { useRouter } from 'next/navigation'
+import { maskCpf } from '@/lib/privacy'
 
 interface ProposalWizardProps {
     property: Property
@@ -19,6 +20,17 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
     const [step, setStep] = useState<Step>(1)
     const [clientName, setClientName] = useState('')
     const [clientCpf, setClientCpf] = useState('')
+
+    const formatCpf = (val: string) => {
+        const digits = val.replace(/\D/g, '').slice(0, 11)
+        if (digits.length <= 3) return digits
+        if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`
+        if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`
+        return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`
+    }
+
+    const validUntil = new Date()
+    validUntil.setDate(validUntil.getDate() + 10)
     const [payment, setPayment] = useState<PaymentDetails>({
         dinheiro: 0,
         financiamento: 0,
@@ -65,7 +77,7 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
             const response = await createProposal({
                 propertyId: property.id,
                 clientName: clientName.trim() || undefined,
-                clientCpf: clientCpf.trim() || undefined,
+                clientCpf: clientCpf.replace(/\D/g, '').trim() || undefined,
                 payment,
             })
 
@@ -141,9 +153,10 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
                             <input
                                 type="text"
                                 value={clientCpf}
-                                onChange={(e) => setClientCpf(e.target.value)}
+                                onChange={(e) => setClientCpf(formatCpf(e.target.value))}
                                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                placeholder="Somente números"
+                                placeholder="000.000.000-00"
+                                maxLength={14}
                             />
                         </div>
                     </div>
@@ -212,7 +225,7 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
                         </p>
                         <p>
                             <span className="font-medium text-slate-700">Cliente:</span>{' '}
-                            {clientName || '—'} {clientCpf && `(${clientCpf})`}
+                            {clientName || '—'} {clientCpf && `(${maskCpf(clientCpf)})`}
                         </p>
                         <p>
                             <span className="font-medium text-slate-700">Pagamento:</span>{' '}
@@ -221,6 +234,10 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
                         <p>
                             <span className="font-medium text-slate-700">Total:</span>{' '}
                             {formatPrice(paymentTotal)}
+                        </p>
+                        <p>
+                            <span className="font-medium text-slate-700">Validade:</span>{' '}
+                            10 dias (até {validUntil.toLocaleDateString('pt-BR')})
                         </p>
                     </div>
                 </section>

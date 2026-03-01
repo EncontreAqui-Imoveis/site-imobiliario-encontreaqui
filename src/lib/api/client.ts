@@ -105,6 +105,17 @@ async function request<T = unknown>(path: string, options: RequestOptions = {}):
     if (!response.ok && !skipThrowOnError) {
         const payload = (data || {}) as ApiErrorPayload
         const message = payload.message || `Erro na API (${response.status})`
+
+        // Auto-logout on 401 (expired session) — skip for auth endpoints and session-check
+        if (response.status === 401 && typeof window !== 'undefined' && !path.startsWith('/auth/') && path !== '/me') {
+            const currentPath = window.location.pathname + window.location.search
+            // SAST-4: Validate path starts with / to prevent open redirect
+            const safePath = currentPath.startsWith('/') ? currentPath : '/'
+            window.location.href = `/auth/login?next=${encodeURIComponent(safePath)}&expired=1`
+            // Return a never-resolving promise to prevent further execution
+            return new Promise<T>(() => { })
+        }
+
         throw new ApiError(response.status, message, payload)
     }
 

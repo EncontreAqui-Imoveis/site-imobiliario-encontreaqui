@@ -1,18 +1,100 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
+import { requestBrokerUpgrade, uploadBrokerDocuments } from '@/lib/api/broker'
+import type { ApiError } from '@/lib/api/client'
+import { validateDocumentFile } from '@/lib/sanitize'
+import { BadgeCheck, Upload, Camera, CreditCard, AlertCircle, CheckCircle, Clock } from 'lucide-react'
+
+type Step = 'creci' | 'documents' | 'waiting'
 
 export default function BrokerOnboardingPage() {
     const router = useRouter()
-    const { session, loading } = useUser()
+    const { session, loading, refresh } = useUser()
+
+    const [step, setStep] = useState<Step>('creci')
+    const [creci, setCreci] = useState('')
+    const [creciFront, setCreciFront] = useState<File | null>(null)
+    const [creciBack, setCreciBack] = useState<File | null>(null)
+    const [selfie, setSelfie] = useState<File | null>(null)
+    const [submitting, setSubmitting] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+
+    const creciFrontRef = useRef<HTMLInputElement>(null)
+    const creciBackRef = useRef<HTMLInputElement>(null)
+    const selfieRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
         if (!loading && !session) {
             router.replace('/auth/login?next=/onboarding/broker')
         }
     }, [loading, session, router])
+
+    useEffect(() => {
+        if (session?.isBroker) {
+            const brokerStatus = session.broker?.status
+            if (brokerStatus === 'approved') {
+                router.replace('/meus-imoveis')
+            } else if (brokerStatus === 'pending_verification') {
+                setStep('waiting')
+            }
+        }
+    }, [session, router])
+
+    const handleUpgradeRequest = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!creci.trim()) {
+            setError('Informe seu número CRECI.')
+            return
+        }
+        setSubmitting(true)
+        setError(null)
+        try {
+            await requestBrokerUpgrade({ creci: creci.trim() })
+            await refresh()
+            setStep('documents')
+        } catch (err) {
+            const apiErr = err as ApiError
+            setError(apiErr?.message || 'Erro ao solicitar upgrade. Tente novamente.')
+        } finally {
+            setSubmitting(false)
+        }
+    }
+
+    const handleDocumentsUpload = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!creciFront || !creciBack || !selfie) {
+            setError('Todos os 3 documentos são obrigatórios.')
+            return
+        }
+        // SAST-8: Validate file type and size before uploading
+        for (const [file, label] of [[creciFront, 'CRECI Frente'], [creciBack, 'CRECI Verso'], [selfie, 'Selfie']] as [File, string][]) {
+            const validation = validateDocumentFile(file)
+            if (!validation.valid) {
+                setError(`${label}: ${validation.error}`)
+                return
+            }
+        }
+        setSubmitting(true)
+        setError(null)
+        try {
+            await uploadBrokerDocuments({
+                creciFront,
+                creciBack,
+                selfie,
+            })
+            await refresh()
+            setStep('waiting')
+        } catch (err) {
+            const apiErr = err as ApiError
+            setError(apiErr?.message || 'Erro ao enviar documentos.')
+        } finally {
+            setSubmitting(false)
+        }
+    }
 
     if (loading || !session) {
         return (
@@ -22,39 +104,185 @@ export default function BrokerOnboardingPage() {
         )
     }
 
-    const brokerStatus = session.broker?.status ?? 'pending_verification'
+    const brokerStatus = session.broker?.status
 
     return (
-        <div className="min-h-[70vh] flex items-center justify-center px-4 py-12 bg-slate-50">
-            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-8 space-y-6">
-                <div className="space-y-2">
-                    <h1 className="text-2xl font-bold text-slate-900">
-                        Onboarding de Corretor
-                    </h1>
-                    <p className="text-sm text-slate-600">
-                        Aqui vamos espelhar o fluxo do app mobile para validar seu CRECI e documentos.
-                    </p>
-                </div>
+        <div className="min-h-[70vh] flex items-center justify-center px-4 py-12 bg-gradient-to-b from-slate-50 to-slate-100">
+            <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-8 space-y-6">
+                {/* Status Badge */}
+                {brokerStatus && (
+                    <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium ${brokerStatus === 'approved'
+                        ? 'bg-green-50 text-green-700'
+                        : brokerStatus === 'rejected'
+                            ? 'bg-red-50 text-red-700'
+                            : 'bg-amber-50 text-amber-700'
+                        }`}>
+                        {brokerStatus === 'approved' && <CheckCircle className="w-4 h-4" />}
+                        {brokerStatus === 'rejected' && <AlertCircle className="w-4 h-4" />}
+                        {brokerStatus === 'pending_verification' && <Clock className="w-4 h-4" />}
+                        {brokerStatus === 'approved' ? 'Corretor Aprovado' :
+                            brokerStatus === 'rejected' ? 'Documentação Rejeitada — Reenvie' :
+                                'Pendente de Verificação'}
+                    </div>
+                )}
 
-                <p className="text-sm text-slate-600">
-                    Status atual do corretor:&nbsp;
-                    <span className="font-semibold">
-                        {brokerStatus === 'approved'
-                            ? 'Aprovado'
-                            : brokerStatus === 'rejected'
-                                ? 'Rejeitado'
-                                : 'Pendente de verificação'}
-                    </span>
-                </p>
+                {/* Step: CRECI */}
+                {step === 'creci' && !session.isBroker && (
+                    <>
+                        <div className="space-y-2 text-center">
+                            <div className="w-14 h-14 mx-auto bg-primary-50 rounded-full flex items-center justify-center">
+                                <BadgeCheck className="w-7 h-7 text-primary-600" />
+                            </div>
+                            <h1 className="text-2xl font-bold text-slate-900">
+                                Quero ser Corretor
+                            </h1>
+                            <p className="text-sm text-slate-600">
+                                Informe seu CRECI para iniciar o processo de verificação como corretor.
+                            </p>
+                        </div>
 
-                {/* Placeholder: formulários de CRECI e upload de documentos para alimentar `brokers` e `broker_documents`. */}
-                <p className="text-sm text-slate-500">
-                    Nesta tela vamos adicionar formulário de CRECI, seleção de imobiliária (quando aplicável) e upload
-                    de frente/verso do CRECI e selfie, integrando diretamente com os endpoints de backend que alimentam
-                    as tabelas <code>brokers</code> e <code>broker_documents</code>.
-                </p>
+                        <form onSubmit={handleUpgradeRequest} className="space-y-5">
+                            <div className="space-y-1.5">
+                                <label htmlFor="creci" className="block text-sm font-medium text-slate-700">
+                                    Número CRECI
+                                </label>
+                                <input
+                                    id="creci"
+                                    type="text"
+                                    required
+                                    value={creci}
+                                    onChange={(e) => setCreci(e.target.value)}
+                                    className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                    placeholder="Ex: 12345-F"
+                                />
+                            </div>
+
+                            {error && (
+                                <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+                                    {error}
+                                </p>
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={submitting}
+                                className="w-full inline-flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 disabled:bg-primary-300 text-white text-sm font-semibold px-4 py-2.5 shadow-md shadow-primary-500/20 transition-colors"
+                            >
+                                {submitting ? 'Solicitando...' : 'Solicitar upgrade para corretor'}
+                            </button>
+                        </form>
+                    </>
+                )}
+
+                {/* Step: Documents */}
+                {(step === 'documents' || brokerStatus === 'rejected') && (
+                    <>
+                        <div className="space-y-2 text-center">
+                            <h1 className="text-2xl font-bold text-slate-900">
+                                Enviar documentos
+                            </h1>
+                            <p className="text-sm text-slate-600">
+                                Envie as fotos do seu CRECI (frente e verso) e uma selfie para validação.
+                            </p>
+                        </div>
+
+                        <form onSubmit={handleDocumentsUpload} className="space-y-4">
+                            {/* CRECI Front */}
+                            <div
+                                onClick={() => creciFrontRef.current?.click()}
+                                className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center cursor-pointer hover:border-primary-400 hover:bg-primary-50/30 transition-colors"
+                            >
+                                <CreditCard className="w-8 h-8 mx-auto text-slate-400 mb-2" />
+                                <p className="text-sm font-medium text-slate-700">
+                                    {creciFront ? creciFront.name : 'CRECI — Frente'}
+                                </p>
+                                <p className="text-xs text-slate-400 mt-1">Clique para selecionar</p>
+                                <input
+                                    ref={creciFrontRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => setCreciFront(e.target.files?.[0] || null)}
+                                />
+                            </div>
+
+                            {/* CRECI Back */}
+                            <div
+                                onClick={() => creciBackRef.current?.click()}
+                                className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center cursor-pointer hover:border-primary-400 hover:bg-primary-50/30 transition-colors"
+                            >
+                                <Upload className="w-8 h-8 mx-auto text-slate-400 mb-2" />
+                                <p className="text-sm font-medium text-slate-700">
+                                    {creciBack ? creciBack.name : 'CRECI — Verso'}
+                                </p>
+                                <p className="text-xs text-slate-400 mt-1">Clique para selecionar</p>
+                                <input
+                                    ref={creciBackRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => setCreciBack(e.target.files?.[0] || null)}
+                                />
+                            </div>
+
+                            {/* Selfie */}
+                            <div
+                                onClick={() => selfieRef.current?.click()}
+                                className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center cursor-pointer hover:border-primary-400 hover:bg-primary-50/30 transition-colors"
+                            >
+                                <Camera className="w-8 h-8 mx-auto text-slate-400 mb-2" />
+                                <p className="text-sm font-medium text-slate-700">
+                                    {selfie ? selfie.name : 'Selfie'}
+                                </p>
+                                <p className="text-xs text-slate-400 mt-1">Clique para selecionar</p>
+                                <input
+                                    ref={selfieRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => setSelfie(e.target.files?.[0] || null)}
+                                />
+                            </div>
+
+                            {error && (
+                                <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+                                    {error}
+                                </p>
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={submitting || !creciFront || !creciBack || !selfie}
+                                className="w-full inline-flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 disabled:bg-primary-300 text-white text-sm font-semibold px-4 py-2.5 shadow-md shadow-primary-500/20 transition-colors"
+                            >
+                                {submitting ? 'Enviando...' : 'Enviar documentos'}
+                            </button>
+                        </form>
+                    </>
+                )}
+
+                {/* Step: Waiting */}
+                {step === 'waiting' && brokerStatus === 'pending_verification' && (
+                    <div className="text-center space-y-4 py-6">
+                        <div className="w-16 h-16 mx-auto bg-amber-50 rounded-full flex items-center justify-center">
+                            <Clock className="w-8 h-8 text-amber-500" />
+                        </div>
+                        <h1 className="text-2xl font-bold text-slate-900">
+                            Documentos enviados!
+                        </h1>
+                        <p className="text-sm text-slate-600 max-w-sm mx-auto">
+                            Seus documentos estão sendo analisados pela equipe. Você será notificado
+                            quando a verificação for concluída.
+                        </p>
+                        <Link
+                            href="/imoveis"
+                            className="inline-flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold px-6 py-2.5 shadow-md shadow-primary-500/20 transition-colors"
+                        >
+                            Explorar imóveis
+                        </Link>
+                    </div>
+                )}
             </div>
         </div>
     )
 }
-

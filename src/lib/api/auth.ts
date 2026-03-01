@@ -21,6 +21,11 @@ export interface RegisterPayload {
     phone?: string
     city?: string
     state?: string
+    street?: string
+    number?: string
+    complement?: string
+    bairro?: string
+    cep?: string
 }
 
 export async function fetchCurrentSession(): Promise<UserSession | null> {
@@ -40,6 +45,26 @@ export async function login(payload: LoginPayload): Promise<UserSession> {
 
 export async function register(payload: RegisterPayload): Promise<UserSession> {
     return apiClient.post<UserSession>('/auth/register', payload)
+}
+
+export async function loginWithGoogle(idToken: string): Promise<UserSession> {
+    return apiClient.post<UserSession>('/auth/google', { idToken })
+}
+
+export async function requestPasswordReset(email: string): Promise<void> {
+    await apiClient.post('/auth/password-reset/request', { email })
+}
+
+export async function requestOtp(email: string): Promise<void> {
+    await apiClient.post('/auth/otp/request', { email })
+}
+
+export async function verifyOtp(email: string, code: string): Promise<void> {
+    await apiClient.post('/auth/otp/verify', { email, code })
+}
+
+export async function checkEmail(email: string): Promise<{ exists: boolean }> {
+    return apiClient.get<{ exists: boolean }>(`/auth/check-email?email=${encodeURIComponent(email)}`)
 }
 
 export async function logout(): Promise<void> {

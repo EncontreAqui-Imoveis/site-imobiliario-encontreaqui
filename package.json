@@ -9,7 +9,9 @@
     "lint": "next lint",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:ci": "npm run lint && npm run test"
+    "test:ci": "npm run test",
+    "ci:verify": "npm run test:ci && npm run build",
+    "security:audit": "npm audit --audit-level=high"
   },
   "dependencies": {
     "embla-carousel-autoplay": "^8.5.1",

@@ -9,6 +9,8 @@ const createJestConfig = nextJest({
 const customJestConfig = {
     setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
     testEnvironment: 'jest-environment-jsdom',
+    // Limit parallel workers to prevent ENOMEM on machines with limited RAM
+    maxWorkers: '50%',
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
         '^firebase/auth$': '<rootDir>/__mocks__/firebase/auth.js',

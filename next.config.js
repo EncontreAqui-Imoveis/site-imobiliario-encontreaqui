@@ -27,18 +27,32 @@ const nextConfig = {
                         value: 'same-origin-allow-popups',
                     },
                     {
+                        key: 'X-Frame-Options',
+                        value: 'SAMEORIGIN',
+                    },
+                    {
+                        key: 'X-Content-Type-Options',
+                        value: 'nosniff',
+                    },
+                    {
+                        key: 'Referrer-Policy',
+                        value: 'strict-origin-when-cross-origin',
+                    },
+                    {
+                        key: 'Permissions-Policy',
+                        value: 'camera=(), microphone=(), geolocation=(self)',
+                    },
+                    {
                         key: 'Content-Security-Policy',
                         value: [
                             "default-src 'self'",
-                            // Next injeta scripts inline; em dev também pode exigir eval (HMR).
-                            `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
-                            // Google Fonts CSS (fonts.googleapis.com) é carregado como stylesheet externo.
+                            `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://apis.google.com https://www.gstatic.com`,
                             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-                            "img-src 'self' https://res.cloudinary.com data:",
-                            `connect-src 'self' ${apiUrl}`,
-                            // Google Fonts binários vêm de fonts.gstatic.com.
+                            "img-src 'self' https://res.cloudinary.com https://lh3.googleusercontent.com data: blob:",
+                            `connect-src 'self' ${apiUrl} https://viacep.com.br https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com`,
                             "font-src 'self' data: https://fonts.gstatic.com",
-                            'frame-ancestors \'self\'',
+                            "frame-src https://accounts.google.com https://*.firebaseapp.com",
+                            "frame-ancestors 'self'",
                         ].join('; '),
                     },
                 ],

@@ -201,7 +201,7 @@ export async function fetchRecentProperties(limit = 8): Promise<Property[]> {
 
 export async function fetchPropertyById(id: string | number): Promise<Property | null> {
     try {
-        const response = await fetch(`${API_BASE_URL}/properties/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/public/properties/${id}`, {
             cache: 'no-store',
         })
 

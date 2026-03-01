@@ -2,3 +2,7 @@ node_modules/
 .next/
 .env
 .env*
+out/
+.env.*
+bfg-1.15.0.jar
+docs/

@@ -9,6 +9,9 @@ interface UserContextValue {
     session: UserSession | null
     loading: boolean
     error: string | null
+    isAuthenticated: boolean
+    isBroker: boolean
+    isProfileComplete: boolean
     refresh: () => Promise<void>
     logout: () => Promise<void>
 }
@@ -27,7 +30,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             const data = await fetchCurrentSession()
             setSession(data)
         } catch (err) {
-            console.error('Erro ao carregar sessão do usuário', err)
+            console.error('Erro ao carregar sessão do usuário')
             setError('Não foi possível carregar sua sessão.')
         } finally {
             setLoading(false)
@@ -47,6 +50,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
         session,
         loading,
         error,
+        isAuthenticated: !!session,
+        isBroker: !!session?.isBroker && session?.broker?.status === 'approved',
+        isProfileComplete: session?.profileStatus === 'complete',
         refresh: loadSession,
         logout: handleLogout,
     }
@@ -61,4 +67,3 @@ export function useUser() {
     }
     return ctx
 }
-

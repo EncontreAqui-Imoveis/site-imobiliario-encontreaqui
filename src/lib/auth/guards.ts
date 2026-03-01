@@ -14,13 +14,34 @@ export async function requireAuth() {
 }
 
 /**
- * Guard de papel (cliente/corretor) server-side.
+ * Guard de papel corretor server-side.
+ * Redireciona para onboarding se não for broker aprovado.
  */
 export async function requireBroker() {
     const session = await requireAuth()
     if (!session.isBroker || session.broker?.status !== 'approved') {
         redirect('/onboarding/broker')
     }
+    return session
+}
+
+/**
+ * Guard que exige perfil completo.
+ * Redireciona para onboarding se dados essenciais estiverem faltando.
+ */
+export async function requireProfileComplete() {
+    const session = await requireAuth()
+    if (session.profileStatus === 'incomplete') {
+        redirect('/onboarding')
+    }
+    return session
+}
+
+/**
+ * Guard de papel cliente (qualquer autenticado que não precisa ser broker).
+ */
+export async function requireClient() {
+    const session = await requireAuth()
     return session
 }
 
