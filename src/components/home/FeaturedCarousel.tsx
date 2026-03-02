@@ -48,7 +48,16 @@ export default function FeaturedCarousel({
         }
     }, [emblaApi, onSelect])
 
-    if (!properties.length) return null
+    if (!properties.length) {
+        return (
+            <section className="py-16 lg:py-24 bg-gray-50">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">{title}</h2>
+                    <p className="text-gray-400">Nenhum imóvel em destaque no momento. Volte em breve!</p>
+                </div>
+            </section>
+        )
+    }
 
     return (
         <section className="py-16 lg:py-24 bg-gray-50">

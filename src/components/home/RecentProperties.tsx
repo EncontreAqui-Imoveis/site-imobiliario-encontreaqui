@@ -14,7 +14,16 @@ export default function RecentProperties({
     title = 'Imóveis recentes',
     showViewAll = true
 }: RecentPropertiesProps) {
-    if (!properties.length) return null
+    if (!properties.length) {
+        return (
+            <section className="py-16 lg:py-24">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">{title}</h2>
+                    <p className="text-gray-400">Nenhum imóvel recente encontrado. Novos imóveis são adicionados diariamente.</p>
+                </div>
+            </section>
+        )
+    }
 
     return (
         <section className="py-16 lg:py-24">

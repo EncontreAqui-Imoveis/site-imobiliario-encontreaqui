@@ -8,6 +8,12 @@ jest.mock('next/link', () => {
     }
 })
 
+jest.mock('@/components/property/FavoriteButton', () => {
+    return ({ propertyId }: { propertyId: number }) => (
+        <button data-testid="favorite-button" aria-label={`Favoritar imóvel ${propertyId}`}>♡</button>
+    )
+})
+
 jest.mock('lucide-react', () => ({
     Bed: () => <div data-testid="bed-icon" />,
     Bath: () => <div data-testid="bath-icon" />,
@@ -16,7 +22,6 @@ jest.mock('lucide-react', () => ({
     MapPin: () => <div data-testid="map-pin-icon" />,
     ChevronLeft: () => <div data-testid="chevron-left" />,
     ChevronRight: () => <div data-testid="chevron-right" />,
-    Smartphone: () => <div data-testid="smartphone-icon" />,
 }))
 
 jest.mock('next/image', () => ({
@@ -82,8 +87,8 @@ describe('PropertyCard', () => {
         expect(img).toHaveAttribute('src', '/img1.jpg')
     })
 
-    it('shows "Ver no App" action', () => {
+    it('shows favorite button', () => {
         render(<PropertyCard property={mockProperty} />)
-        expect(screen.getByRole('button', { name: /ver no app/i })).toBeInTheDocument()
+        expect(screen.getByTestId('favorite-button')).toBeInTheDocument()
     })
 })
