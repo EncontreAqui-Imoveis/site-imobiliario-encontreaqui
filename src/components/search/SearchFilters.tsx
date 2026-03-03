@@ -36,12 +36,6 @@ const bathroomOptions = [
     { value: '4', label: '4+' },
 ]
 
-const lotTypeOptions = [
-    { value: '', label: 'Todos' },
-    { value: 'meio', label: 'Meio de quadra' },
-    { value: 'inteiro', label: 'Esquina' },
-]
-
 const amenityOptions = [
     { key: 'has_wifi', label: 'Wi-Fi' },
     { key: 'tem_piscina', label: 'Piscina' },
@@ -49,15 +43,6 @@ const amenityOptions = [
     { key: 'tem_automacao', label: 'Automação' },
     { key: 'tem_ar_condicionado', label: 'Ar-Condicionado' },
     { key: 'eh_mobiliada', label: 'Mobiliada' },
-]
-
-const sortOptions = [
-    { value: '', label: 'Padrão' },
-    { value: 'created_at:desc', label: 'Mais recentes' },
-    { value: 'created_at:asc', label: 'Mais antigos' },
-    { value: 'price:asc', label: 'Menor preço' },
-    { value: 'price:desc', label: 'Maior preço' },
-    { value: 'title:asc', label: 'A-Z' },
 ]
 
 export default function SearchFilters() {

@@ -1,19 +1,43 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { formatPrice, Property } from '@/types/property'
-import { Info, ShieldCheck, Smartphone, Download } from 'lucide-react'
-import { APP_LINKS, buildAppDeepLink } from '@/lib/appLinks'
+import { Info, ShieldCheck, Smartphone, MessageCircle, FileText, Phone } from 'lucide-react'
+import { buildAppDeepLink, getStoreUrlClient } from '@/lib/appLinks'
+import { useUser } from '@/contexts/UserContext'
+import FavoriteButton from '@/components/property/FavoriteButton'
+import Link from 'next/link'
 
 interface PropertySidebarProps {
     property: Property
 }
 
 export default function PropertySidebar({ property }: PropertySidebarProps) {
+    const { isAuthenticated } = useUser()
+    const [storeUrl, setStoreUrl] = useState('https://play.google.com/store')
+
+    useEffect(() => {
+        setStoreUrl(getStoreUrlClient())
+    }, [])
+
+    const whatsappMessage = encodeURIComponent(
+        `Olá! Vi o imóvel "${property.title}" (Cód: ${property.code || property.id}) no Encontre Aqui Imóveis e gostaria de mais informações.`
+    )
+    const whatsappLink = property.brokerPhone
+        ? `https://wa.me/55${property.brokerPhone.replace(/\D/g, '')}?text=${whatsappMessage}`
+        : null
+    const phoneLink = property.brokerPhone
+        ? `tel:+55${property.brokerPhone.replace(/\D/g, '')}`
+        : null
+    const deepLink = buildAppDeepLink(property.id)
+
     return (
-        <aside className="lg:col-span-1">
+        <aside className="lg:col-span-1" aria-label="Resumo e ações do imóvel">
             <div className="sticky top-24 space-y-6">
+                {/* Price Card */}
                 <div className="bg-white rounded-2xl p-6 shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden">
                     <div className="space-y-4">
+                        {/* Price */}
                         <div className="space-y-1">
                             <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Valor do Imóvel</p>
                             {property.priceSale && property.priceSale > 0 && (
@@ -41,62 +65,95 @@ export default function PropertySidebar({ property }: PropertySidebarProps) {
 
                         <hr className="border-gray-100" />
 
-                        <div className="flex flex-col gap-4">
-                            <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center text-primary-700 font-bold text-lg shadow-inner">
-                                    {property.brokerName ? property.brokerName.charAt(0).toUpperCase() : 'C'}
-                                </div>
-                                <div>
-                                    <p className="font-bold text-gray-900 leading-tight">
-                                        {property.brokerName || 'Corretor'}
-                                    </p>
-                                    <div className="flex items-center gap-1 text-xs text-primary-600 font-medium">
-                                        <ShieldCheck className="w-3 h-3" />
-                                        <span>Corretor Credenciado</span>
-                                    </div>
+                        {/* Broker Info */}
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center text-primary-700 font-bold text-lg shadow-inner">
+                                {property.brokerName ? property.brokerName.charAt(0).toUpperCase() : 'C'}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="font-bold text-gray-900 leading-tight truncate">
+                                    {property.brokerName || 'Corretor'}
+                                </p>
+                                <div className="flex items-center gap-1 text-xs text-primary-600 font-medium">
+                                    <ShieldCheck className="w-3 h-3" />
+                                    <span>Corretor Credenciado</span>
                                 </div>
                             </div>
+                            <FavoriteButton propertyId={property.id} size="md" />
                         </div>
 
+                        {/* Action Buttons */}
                         <div className="space-y-3 pt-2">
+                            {/* WhatsApp CTA — Primary */}
+                            {whatsappLink && (
+                                <a
+                                    href={whatsappLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label={`Falar pelo WhatsApp sobre ${property.title}`}
+                                    className="w-full flex items-center justify-center gap-2 py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-green-600/30 active:scale-[0.98]"
+                                >
+                                    <MessageCircle className="w-5 h-5" />
+                                    Falar pelo WhatsApp
+                                </a>
+                            )}
+
+                            {/* Phone CTA */}
+                            {phoneLink && !whatsappLink && (
+                                <a
+                                    href={phoneLink}
+                                    aria-label={`Ligar para o corretor responsável por ${property.title}`}
+                                    className="w-full flex items-center justify-center gap-2 py-4 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-primary-500/30 active:scale-[0.98]"
+                                >
+                                    <Phone className="w-5 h-5" />
+                                    Ligar para o Corretor
+                                </a>
+                            )}
+
+                            {/* Proposal CTA — Secondary */}
+                            {isAuthenticated ? (
+                                <Link
+                                    href={`/propostas/nova?propertyId=${property.id}`}
+                                    aria-label={`Fazer proposta para ${property.title}`}
+                                    className="w-full flex items-center justify-center gap-2 py-4 bg-accent-500 hover:bg-accent-600 text-primary-900 font-bold rounded-xl transition-all shadow-lg shadow-accent-500/25 active:scale-[0.98]"
+                                >
+                                    <FileText className="w-5 h-5" />
+                                    Fazer Proposta
+                                </Link>
+                            ) : (
+                                <Link
+                                    href="/auth/login"
+                                    aria-label={`Entrar para fazer proposta para ${property.title}`}
+                                    className="w-full flex items-center justify-center gap-2 py-4 bg-accent-500 hover:bg-accent-600 text-primary-900 font-bold rounded-xl transition-all shadow-lg shadow-accent-500/25 active:scale-[0.98]"
+                                >
+                                    <FileText className="w-5 h-5" />
+                                    Entrar para fazer Proposta
+                                </Link>
+                            )}
+
+                        <section aria-label="Ações do aplicativo" className="space-y-3">
+                            {/* Deep Link — Tertiary */}
                             <a
-                                href={buildAppDeepLink(property.id)}
-                                className="w-full relative overflow-hidden group flex items-center justify-center gap-2 py-4 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-primary-500/30 active:scale-[0.98]"
+                                href={deepLink}
+                                aria-label={`Ver ${property.title} no aplicativo`}
+                                className="w-full relative overflow-hidden group flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-primary-200 hover:border-primary-300 hover:bg-primary-50 text-primary-700 font-bold rounded-xl transition-all"
                             >
-                                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-primary-100/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                                 <Smartphone className="w-5 h-5" />
-                                Abrir este imóvel no App
+                                Ver no Aplicativo
                             </a>
-
-                            <a
-                                href={APP_LINKS.androidStore}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-full flex items-center justify-center gap-2 py-4 bg-white border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-bold rounded-xl transition-all"
-                            >
-                                <Download className="w-5 h-5" />
-                                Baixar no Android
-                            </a>
-
-                            <a
-                                href={APP_LINKS.iosStore}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-full flex items-center justify-center gap-2 py-4 bg-white border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-bold rounded-xl transition-all"
-                            >
-                                <Download className="w-5 h-5" />
-                                Baixar no iOS
-                            </a>
-                        </div>
+                        </section>
                     </div>
                 </div>
+                </div>
 
+                {/* Info Box */}
                 <div className="bg-primary-50 rounded-2xl p-6 border border-primary-100">
                     <div className="flex items-start gap-3">
                         <Info className="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" />
                         <p className="text-sm text-primary-900 leading-relaxed">
-                            <span className="font-bold block mb-1">Próximo passo no app</span>
-                            Favoritar, proposta e negociação são realizadas diretamente no aplicativo.
+                            <span className="font-bold block mb-1">Negocie com segurança</span>
+                            Converse com o corretor, faça propostas e acompanhe todo o processo diretamente no Encontre Aqui.
                         </p>
                     </div>
                     {property.code && (
@@ -107,6 +164,20 @@ export default function PropertySidebar({ property }: PropertySidebarProps) {
                             </span>
                         </div>
                     )}
+                </div>
+
+                {/* App Download — Subtle */}
+                <div className="text-center" role="region" aria-label="Download do aplicativo">
+                    <a
+                        href={storeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Baixar o aplicativo Encontre Aqui Imóveis"
+                        className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                        <Smartphone className="w-3.5 h-3.5" />
+                        Baixar o app para acompanhar propostas e favoritos
+                    </a>
                 </div>
             </div>
         </aside>

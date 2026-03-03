@@ -29,7 +29,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         try {
             const data = await fetchCurrentSession()
             setSession(data)
-        } catch (err) {
+        } catch {
             console.error('Erro ao carregar sessão do usuário')
             setError('Não foi possível carregar sua sessão.')
         } finally {

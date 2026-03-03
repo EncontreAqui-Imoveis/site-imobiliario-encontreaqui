@@ -3,10 +3,11 @@ import { ApiError } from '@/lib/api/client'
 // We test the ApiError class directly and mock fetch for request behavior
 describe('ApiError', () => {
     it('stores status, message, and payload', () => {
-        const err = new ApiError(400, 'Bad Request', { code: 'INVALID' })
+        const err = new ApiError(400, 'Bad Request', { code: 'INVALID' }, 'req-1')
         expect(err.status).toBe(400)
         expect(err.message).toBe('Bad Request')
         expect(err.payload?.code).toBe('INVALID')
+        expect(err.requestId).toBe('req-1')
         expect(err.name).toBe('ApiError')
     })
 
@@ -18,9 +19,18 @@ describe('ApiError', () => {
 
 // Mock fetch for apiClient tests
 const mockFetch = jest.fn()
+const sentryCaptureMock = jest.fn()
 beforeEach(() => {
     global.fetch = mockFetch
+    ; (globalThis as typeof globalThis & { Sentry?: { captureException: typeof sentryCaptureMock } }).Sentry = {
+        captureException: sentryCaptureMock,
+    }
     mockFetch.mockReset()
+    sentryCaptureMock.mockReset()
+})
+
+afterEach(() => {
+    delete (globalThis as typeof globalThis & { Sentry?: unknown }).Sentry
 })
 
 describe('apiClient request behavior', () => {
@@ -80,11 +90,41 @@ describe('apiClient request behavior', () => {
         mockFetch.mockResolvedValueOnce({
             ok: false,
             status: 400,
-            headers: new Headers({ 'Content-Type': 'application/json' }),
+            headers: new Headers({ 'Content-Type': 'application/json', 'x-request-id': 'req-header-400' }),
             json: () => Promise.resolve({ message: 'Bad input' }),
         })
 
-        await expect(apiClient.post('/test', {})).rejects.toThrow('Bad input')
+        await expect(apiClient.post('/test', {})).rejects.toMatchObject({
+            message: 'Bad input',
+            requestId: 'req-header-400',
+        })
+        expect(sentryCaptureMock).toHaveBeenCalledTimes(1)
+        expect(sentryCaptureMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                message: 'Bad input',
+                requestId: 'req-header-400',
+            }),
+            expect.objectContaining({
+                tags: expect.objectContaining({
+                    module: 'api-client',
+                    requestId: 'req-header-400',
+                }),
+            })
+        )
+    })
+
+    it('falls back to requestId from payload when header is absent', async () => {
+        mockFetch.mockResolvedValueOnce({
+            ok: false,
+            status: 422,
+            headers: new Headers({ 'Content-Type': 'application/json' }),
+            json: () => Promise.resolve({ message: 'Payload inválido', requestId: 'req-body-422' }),
+        })
+
+        await expect(apiClient.post('/test', {})).rejects.toMatchObject({
+            message: 'Payload inválido',
+            requestId: 'req-body-422',
+        })
     })
 
     it('does not throw when skipThrowOnError is true', async () => {

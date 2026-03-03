@@ -27,6 +27,15 @@ export interface CommissionSummary {
     status: 'PENDING' | 'PAID' | 'CANCELLED'
     negotiationId: string
     propertyTitle?: string
+    dealType?: string
+    salePrice?: number
+    commissionRate?: number
+    commissionCycles?: number
+    commissionAmountTotal?: number
+    recurrenceInterval?: string
+    condominioValue?: number
+    saleDate?: string
+    isRecurring?: boolean
 }
 
 export async function getMyCommissions(): Promise<CommissionSummary[]> {
@@ -39,6 +48,7 @@ export interface PerformanceReport {
     totalCommissionEarned: number
     totalPropertiesListed: number
     activeNegotiations: number
+    statusBreakdown?: Record<string, number>
     monthlyBreakdown: Array<{
         month: string
         sales: number

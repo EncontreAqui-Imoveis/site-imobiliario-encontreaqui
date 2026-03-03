@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
-import { User, Edit, BadgeCheck, Building2, LogOut, Briefcase, BarChart3, Loader2 } from 'lucide-react'
+import { Edit, BadgeCheck, Building2, LogOut, Briefcase, BarChart3, Loader2, Bell, Settings } from 'lucide-react'
 
 export default function PerfilPage() {
     const router = useRouter()
@@ -132,6 +132,19 @@ export default function PerfilPage() {
                 )}
 
                 <Link
+                    href="/notificacoes"
+                    className="flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors"
+                >
+                    <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
+                        <Bell className="w-5 h-5 text-amber-600" />
+                    </div>
+                    <div>
+                        <p className="text-sm font-semibold text-slate-900">Notificações</p>
+                        <p className="text-xs text-slate-500">Propostas, contratos e novidades</p>
+                    </div>
+                </Link>
+
+                <Link
                     href="/contratos"
                     className="flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors"
                 >
@@ -141,6 +154,19 @@ export default function PerfilPage() {
                     <div>
                         <p className="text-sm font-semibold text-slate-900">Contratos</p>
                         <p className="text-xs text-slate-500">Acompanhe seus contratos ativos</p>
+                    </div>
+                </Link>
+
+                <Link
+                    href="/configuracoes"
+                    className="flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors"
+                >
+                    <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
+                        <Settings className="w-5 h-5 text-slate-600" />
+                    </div>
+                    <div>
+                        <p className="text-sm font-semibold text-slate-900">Configurações</p>
+                        <p className="text-xs text-slate-500">Preferências e ajustes</p>
                     </div>
                 </Link>
 

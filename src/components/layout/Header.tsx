@@ -9,7 +9,7 @@ import {
     User, LogOut, Heart, FileText, BarChart3,
     Settings, Bell, PlusCircle, ChevronDown
 } from 'lucide-react'
-import { buildAppDeepLink, getStoreUrlClient } from '@/lib/appLinks'
+import { getStoreUrlClient } from '@/lib/appLinks'
 import { useUser } from '@/contexts/UserContext'
 
 const navLinks = [

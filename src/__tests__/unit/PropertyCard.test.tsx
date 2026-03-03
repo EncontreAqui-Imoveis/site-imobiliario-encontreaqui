@@ -1,17 +1,24 @@
+import React, { type ComponentPropsWithoutRef, type ReactNode } from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import PropertyCard from '@/components/property/PropertyCard'
 import { Property } from '@/types/property'
 
 jest.mock('next/link', () => {
-    return ({ children, href }: { children: React.ReactNode; href: string }) => {
+    function MockNextLink({ children, href }: { children: ReactNode; href: string }) {
         return <a href={href}>{children}</a>
     }
+    MockNextLink.displayName = 'MockNextLink'
+    return MockNextLink
 })
 
 jest.mock('@/components/property/FavoriteButton', () => {
-    return ({ propertyId }: { propertyId: number }) => (
+    function MockFavoriteButton({ propertyId }: { propertyId: number }) {
+        return (
         <button data-testid="favorite-button" aria-label={`Favoritar imóvel ${propertyId}`}>♡</button>
-    )
+        )
+    }
+    MockFavoriteButton.displayName = 'MockFavoriteButton'
+    return MockFavoriteButton
 })
 
 jest.mock('lucide-react', () => ({
@@ -26,7 +33,16 @@ jest.mock('lucide-react', () => ({
 
 jest.mock('next/image', () => ({
     __esModule: true,
-    default: ({ fill, ...props }: any) => <img {...props} data-fill={fill ? 'true' : undefined} />,
+    default: function MockNextImage({
+        fill,
+        ...props
+    }: ComponentPropsWithoutRef<'img'> & { fill?: boolean }) {
+        return React.createElement('img', {
+            ...props,
+            alt: props.alt ?? '',
+            'data-fill': fill ? 'true' : undefined,
+        })
+    },
 }))
 
 const mockProperty: Property = {

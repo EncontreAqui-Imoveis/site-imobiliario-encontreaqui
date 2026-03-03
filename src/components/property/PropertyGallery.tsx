@@ -2,15 +2,17 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight, X, Maximize2, Play, Grid } from 'lucide-react'
+import { ChevronLeft, ChevronRight, X, Play, Grid } from 'lucide-react'
+import FavoriteButton from '@/components/property/FavoriteButton'
 
 interface PropertyGalleryProps {
     images: string[]
     title: string
     videoUrl?: string
+    propertyId?: number
 }
 
-export default function PropertyGallery({ images, title, videoUrl }: PropertyGalleryProps) {
+export default function PropertyGallery({ images, title, videoUrl, propertyId }: PropertyGalleryProps) {
     const [isOpen, setIsOpen] = useState(false)
     const [photoIndex, setPhotoIndex] = useState(0)
     const [showVideo, setShowVideo] = useState(false)
@@ -60,6 +62,11 @@ export default function PropertyGallery({ images, title, videoUrl }: PropertyGal
                         sizes="(max-width: 1280px) 50vw, 33vw"
                     />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                    {propertyId && (
+                        <div className="absolute top-4 right-4 z-10">
+                            <FavoriteButton propertyId={propertyId} size="md" />
+                        </div>
+                    )}
                 </div>
 
                 {/* Secondary Images (Right, 2x2) */}
@@ -127,6 +134,11 @@ export default function PropertyGallery({ images, title, videoUrl }: PropertyGal
                 <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-lg text-white text-xs font-semibold">
                     {photoIndex + 1} / {validImages.length}
                 </div>
+                {propertyId && (
+                    <div className="absolute top-4 right-4 z-10">
+                        <FavoriteButton propertyId={propertyId} size="md" />
+                    </div>
+                )}
             </div>
 
             {/* "Show All" Button (Desktop) */}

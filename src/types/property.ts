@@ -42,6 +42,17 @@ export interface Property {
     lote?: string
     complemento?: string
     tipoLote?: string
+    // Agency (imobiliária)
+    agencyName?: string
+    agencyAddress?: string
+    agencyPhone?: string
+    agencyEmail?: string
+    agencyWebsite?: string
+    // Promotional pricing
+    promotionPrice?: number
+    promotionalRentPrice?: number
+    promotionStart?: string
+    promotionEnd?: string
 }
 
 export interface ImageFile {
@@ -56,4 +67,36 @@ export function formatPrice(value: number): string {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
     }).format(value)
+}
+
+/** Check if a promotion time window is currently active */
+export function isPromotionActive(start?: string, end?: string): boolean {
+    const now = new Date()
+    if (start) {
+        const s = new Date(start)
+        if (!isNaN(s.getTime()) && now < s) return false
+    }
+    if (end) {
+        const e = new Date(end)
+        if (!isNaN(e.getTime()) && now > e) return false
+    }
+    return true
+}
+
+/** Resolve the effective promotional sale price (null if not active or not set) */
+export function getPromoSalePrice(property: Property): number | null {
+    if (!isPromotionActive(property.promotionStart, property.promotionEnd)) return null
+    const base = property.priceSale ?? property.price
+    const promo = property.promotionPrice
+    if (promo && promo > 0 && promo < base) return promo
+    return null
+}
+
+/** Resolve the effective promotional rent price (null if not active or not set) */
+export function getPromoRentPrice(property: Property): number | null {
+    if (!isPromotionActive(property.promotionStart, property.promotionEnd)) return null
+    const base = property.priceRent ?? property.price
+    const promo = property.promotionalRentPrice
+    if (promo && promo > 0 && promo < base) return promo
+    return null
 }

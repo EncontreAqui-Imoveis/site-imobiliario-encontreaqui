@@ -8,6 +8,11 @@ import {
 describe('propertiesApi', () => {
     beforeEach(() => {
         jest.clearAllMocks()
+        jest.spyOn(console, 'error').mockImplementation(() => undefined)
+    })
+
+    afterEach(() => {
+        jest.restoreAllMocks()
     })
 
     it('normalizes snake_case payload into Property shape', () => {
@@ -113,9 +118,24 @@ describe('propertiesApi', () => {
     })
 
     it('returns empty array when listing endpoint fails', async () => {
-        ; (global.fetch as jest.Mock).mockResolvedValue({ ok: false })
+        ; (global.fetch as jest.Mock).mockResolvedValue({
+            ok: false,
+            status: 503,
+            headers: new Headers({
+                'Content-Type': 'application/json',
+                'x-request-id': 'req-public-503',
+            }),
+            json: async () => ({
+                message: 'Serviço indisponível',
+            }),
+        })
         await expect(fetchFeaturedProperties()).resolves.toEqual([])
         await expect(fetchRecentProperties()).resolves.toEqual([])
+        expect(console.error).toHaveBeenCalledWith('Error fetching properties list:', {
+            status: 503,
+            requestId: 'req-public-503',
+            message: 'Serviço indisponível',
+        })
     })
 
     it('fetches property by id and unwraps data field', async () => {
@@ -144,5 +164,42 @@ describe('propertiesApi', () => {
             expect.objectContaining({ cache: 'no-store' })
         )
         expect(result?.title).toBe('Imóvel 44')
+    })
+
+    it('consumes public detail payload when the backend returns the property object directly', async () => {
+        ; (global.fetch as jest.Mock).mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                id: 55,
+                title: 'Imóvel 55',
+                type: 'Casa',
+                status: 'approved',
+                purpose: 'Venda e Aluguel',
+                price: 500000,
+                price_sale: 500000,
+                price_rent: 3200,
+                address: 'Rua E',
+                city: 'Brasil',
+                state: 'GO',
+                bairro: 'Centro',
+                broker_name: 'Corretor Público',
+                broker_phone: '64988887777',
+                images: ['https://cdn/55-a.jpg', 'https://cdn/55-b.jpg'],
+                created_at: '2026-01-01T00:00:00.000Z',
+            }),
+        })
+
+        const result = await fetchPropertyById(55)
+
+        expect(result).not.toBeNull()
+        expect(result?.id).toBe(55)
+        expect(result?.priceSale).toBe(500000)
+        expect(result?.priceRent).toBe(3200)
+        expect(result?.brokerName).toBe('Corretor Público')
+        expect(result?.brokerPhone).toBe('64988887777')
+        expect(result?.images).toEqual([
+            'https://cdn/55-a.jpg',
+            'https://cdn/55-b.jpg',
+        ])
     })
 })

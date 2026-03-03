@@ -1,3 +1,4 @@
+import React, { type ComponentPropsWithoutRef, type ReactNode } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import PropertyDetailClient from '@/components/property/PropertyDetailClient'
 import { Property } from '@/types/property'
@@ -9,53 +10,52 @@ jest.mock('next/navigation', () => ({
 }))
 
 jest.mock('next/link', () => {
-    return ({ children, href }: { children: React.ReactNode; href: string }) => {
+    function MockNextLink({ children, href }: { children: ReactNode; href: string }) {
         return <a href={href}>{children}</a>
     }
+    MockNextLink.displayName = 'MockNextLink'
+    return MockNextLink
 })
 
 jest.mock('next/image', () => ({
     __esModule: true,
-    default: ({ fill, ...props }: any) => <img {...props} data-fill={fill ? 'true' : undefined} />,
+    default: function MockNextImage({
+        fill,
+        ...props
+    }: ComponentPropsWithoutRef<'img'> & { fill?: boolean }) {
+        return React.createElement('img', {
+            ...props,
+            alt: props.alt ?? '',
+            'data-fill': fill ? 'true' : undefined,
+        })
+    },
 }))
 
-jest.mock('lucide-react', () => ({
-    Home: () => <div data-testid="icon-home" />,
-    ChevronRight: () => <div data-testid="icon-chevron-right" />,
-    MapPin: () => <div data-testid="icon-map-pin" />,
-    Bed: () => <div data-testid="icon-bed" />,
-    Bath: () => <div data-testid="icon-bath" />,
-    Car: () => <div data-testid="icon-car" />,
-    Maximize: () => <div data-testid="icon-maximize" />,
-    Waves: () => <div data-testid="icon-waves" />,
-    Building2: () => <div data-testid="icon-building" />,
-    Phone: () => <div data-testid="icon-phone" />,
-    Share2: () => <div data-testid="icon-share" />,
-    Heart: () => <div data-testid="icon-heart" />,
-    CheckCircle: () => <div data-testid="icon-check" />,
-    Calendar: () => <div data-testid="icon-calendar" />,
-    Hash: () => <div data-testid="icon-hash" />,
-    Map: () => <div data-testid="icon-map" />,
-    MessageCircle: () => <div data-testid="icon-message" />,
-    ArrowRight: () => <div data-testid="icon-arrow-right" />,
-    XCircle: () => <div data-testid="icon-x-circle" />,
-}))
+jest.mock('lucide-react', () => {
+    return new Proxy({}, {
+        get: (_target, prop: string) => {
+            const Comp = () => <div data-testid={`icon-${prop.toLowerCase()}`} />
+            Comp.displayName = prop
+            return Comp
+        },
+    })
+})
 
 jest.mock('@/components/property/PropertyCard', () => {
-    return function MockPropertyCard({ property }: any) {
+    return function MockPropertyCard({ property }: { property: Property }) {
         return <div data-testid="property-card">{property.title}</div>
     }
 })
 
 // Mock components to avoid deep rendering complexity
 jest.mock('@/components/property/PropertyGallery', () => {
-    return function MockGallery({ title }: any) {
+    return function MockGallery({ title }: { title: string }) {
         return <div data-testid="property-gallery">{title}</div>
     }
 })
 
 jest.mock('@/components/property/PropertyInfo', () => {
-    return function MockInfo({ property }: any) {
+    return function MockInfo({ property }: { property: Property }) {
         return <div data-testid="property-info">{property.description}</div>
     }
 })
@@ -65,6 +65,21 @@ jest.mock('@/components/property/PropertySidebar', () => {
         return <div data-testid="property-sidebar">Sidebar</div>
     }
 })
+
+jest.mock('@/components/property/CloseDealDialog', () => {
+    return function MockCloseDealDialog() {
+        return null
+    }
+})
+
+jest.mock('@/contexts/UserContext', () => ({
+    useUser: () => ({
+        session: null,
+        loading: false,
+        isBroker: false,
+        isAuthenticated: false,
+    }),
+}))
 
 const mockProperty: Property = {
     id: 1,
@@ -113,6 +128,12 @@ describe('PropertyDetailClient', () => {
     it('renders property details', () => {
         render(<PropertyDetailClient initialProperty={mockProperty} />)
 
+        expect(
+            screen.getByRole('main', { name: /detalhes do imóvel luxury villa/i })
+        ).toBeInTheDocument()
+        expect(
+            screen.getByRole('navigation', { name: /breadcrumb/i })
+        ).toBeInTheDocument()
         expect(screen.getAllByText('Luxury Villa')[0]).toBeInTheDocument()
         expect(screen.getByTestId('property-gallery')).toBeInTheDocument()
         expect(screen.getByTestId('property-info')).toBeInTheDocument()

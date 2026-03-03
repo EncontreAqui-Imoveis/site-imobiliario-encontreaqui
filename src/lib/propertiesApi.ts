@@ -1,6 +1,14 @@
 import { Property } from '@/types/property'
+import { reportObservedError } from '@/lib/observability'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://backend-production-6acc.up.railway.app'
+
+type ErrorPayload = {
+    message?: string
+    error?: string
+    requestId?: string
+    request_id?: string
+}
 
 function toNumber(value: unknown): number | undefined {
     if (value === null || value === undefined || value === '') return undefined
@@ -159,6 +167,44 @@ function unwrapPropertyArray(payload: unknown): unknown[] {
     return []
 }
 
+async function logFailedResponse(context: string, response: Response): Promise<void> {
+    const requestId = response.headers.get('x-request-id') || undefined
+    let message: string | undefined
+    let payloadRequestId: string | undefined
+
+    const contentType = response.headers.get('Content-Type') || ''
+    if (contentType.includes('application/json')) {
+        try {
+            const payload = (await response.json()) as ErrorPayload
+            if (typeof payload?.message === 'string' && payload.message.trim().length > 0) {
+                message = payload.message.trim()
+            } else if (typeof payload?.error === 'string' && payload.error.trim().length > 0) {
+                message = payload.error.trim()
+            }
+            if (typeof payload?.requestId === 'string' && payload.requestId.trim().length > 0) {
+                payloadRequestId = payload.requestId.trim()
+            } else if (typeof payload?.request_id === 'string' && payload.request_id.trim().length > 0) {
+                payloadRequestId = payload.request_id.trim()
+            }
+        } catch {
+            message = undefined
+        }
+    }
+
+    console.error(context, {
+        status: response.status,
+        requestId: requestId || payloadRequestId,
+        message,
+    })
+    reportObservedError(new Error(context), {
+        module: 'properties-api',
+        status: response.status,
+        requestId: requestId || payloadRequestId,
+        message,
+        url: response.url || undefined,
+    })
+}
+
 async function fetchProperties(params: URLSearchParams): Promise<Property[]> {
     try {
         const response = await fetch(`${API_BASE_URL}/properties?${params.toString()}`, {
@@ -166,6 +212,7 @@ async function fetchProperties(params: URLSearchParams): Promise<Property[]> {
         })
 
         if (!response.ok) {
+            await logFailedResponse('Error fetching properties list:', response)
             return []
         }
 
@@ -175,6 +222,10 @@ async function fetchProperties(params: URLSearchParams): Promise<Property[]> {
             .filter((item): item is Property => item !== null)
     } catch (error) {
         console.error('Error fetching properties list:', error)
+        reportObservedError(error, {
+            module: 'properties-api',
+            message: 'Error fetching properties list',
+        })
         return []
     }
 }
@@ -205,13 +256,20 @@ export async function fetchPropertyById(id: string | number): Promise<Property |
             cache: 'no-store',
         })
 
-        if (!response.ok) return null
+        if (!response.ok) {
+            await logFailedResponse('Error fetching property details:', response)
+            return null
+        }
 
         const payload = await response.json()
         const raw = payload?.data ?? payload
         return normalizeProperty(raw)
     } catch (error) {
         console.error('Error fetching property details:', error)
+        reportObservedError(error, {
+            module: 'properties-api',
+            message: 'Error fetching property details',
+        })
         return null
     }
 }

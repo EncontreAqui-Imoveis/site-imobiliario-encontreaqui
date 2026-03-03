@@ -1,14 +1,43 @@
 import { render, screen } from '@testing-library/react'
 import PropertySidebar from '@/components/property/PropertySidebar'
 import { Property } from '@/types/property'
-import { APP_LINKS } from '@/lib/appLinks'
 
-jest.mock('lucide-react', () => ({
-    Info: () => <div data-testid="icon-info" />,
-    ShieldCheck: () => <div data-testid="icon-shield" />,
-    Smartphone: () => <div data-testid="icon-smartphone" />,
-    Download: () => <div data-testid="icon-download" />,
+// Mock next/link
+jest.mock('next/link', () => {
+    function MockNextLink({ children, href, ...rest }: { children: React.ReactNode; href: string;[key: string]: unknown }) {
+        return <a href={href} {...rest}>{children}</a>
+    }
+    MockNextLink.displayName = 'MockNextLink'
+    return MockNextLink
+})
+
+// Mock all lucide-react icons
+jest.mock('lucide-react', () => {
+    return new Proxy({}, {
+        get: (_target, prop: string) => {
+            const Comp = () => <div data-testid={`icon-${prop.toLowerCase()}`} />
+            Comp.displayName = prop
+            return Comp
+        },
+    })
+})
+
+// Mock UserContext
+jest.mock('@/contexts/UserContext', () => ({
+    useUser: () => ({
+        session: null,
+        loading: false,
+        isBroker: false,
+        isAuthenticated: false,
+    }),
 }))
+
+// Mock FavoriteButton
+jest.mock('@/components/property/FavoriteButton', () => {
+    return function MockFavoriteButton() {
+        return <div data-testid="favorite-button" />
+    }
+})
 
 const property: Property = {
     id: 77,
@@ -29,15 +58,46 @@ const property: Property = {
 }
 
 describe('PropertySidebar store links', () => {
-    it('renders app CTA and explicit Android/iOS store buttons', () => {
+    it('renders the "Ver no Aplicativo" deep link containing the property ID', () => {
         render(<PropertySidebar property={property} />)
 
-        const openApp = screen.getByRole('link', { name: /abrir este imóvel no app/i })
-        const androidStore = screen.getByRole('link', { name: /baixar no android/i })
-        const iosStore = screen.getByRole('link', { name: /baixar no ios/i })
+        expect(
+            screen.getByRole('complementary', { name: /resumo e ações do imóvel/i })
+        ).toBeInTheDocument()
+        expect(
+            screen.getByRole('region', { name: /ações do aplicativo/i })
+        ).toBeInTheDocument()
+        expect(
+            screen.getByRole('region', { name: /download do aplicativo/i })
+        ).toBeInTheDocument()
 
-        expect(openApp).toHaveAttribute('href', expect.stringContaining('77'))
-        expect(androidStore).toHaveAttribute('href', APP_LINKS.androidStore)
-        expect(iosStore).toHaveAttribute('href', APP_LINKS.iosStore)
+        const appLink = screen.getByText(/ver no aplicativo/i).closest('a')
+        expect(appLink).toHaveAttribute('href', expect.stringContaining('77'))
+        expect(appLink).toHaveAttribute(
+            'aria-label',
+            expect.stringContaining('Casa Modelo')
+        )
+    })
+
+    it('renders the app download CTA with a store URL', () => {
+        render(<PropertySidebar property={property} />)
+
+        const downloadLink = screen.getByText(/baixar o app/i).closest('a')
+        expect(downloadLink).toHaveAttribute('href', expect.stringMatching(/play\.google|apple\.com/))
+        expect(downloadLink).toHaveAttribute(
+            'aria-label',
+            'Baixar o aplicativo Encontre Aqui Imóveis'
+        )
+    })
+
+    it('renders proposal and messaging CTAs with accessible names tied to the property', () => {
+        render(<PropertySidebar property={{ ...property, brokerPhone: '62999998888' }} />)
+
+        expect(
+            screen.getByRole('link', { name: /falar pelo whatsapp sobre casa modelo/i })
+        ).toBeInTheDocument()
+        expect(
+            screen.getByRole('link', { name: /entrar para fazer proposta para casa modelo/i })
+        ).toBeInTheDocument()
     })
 })

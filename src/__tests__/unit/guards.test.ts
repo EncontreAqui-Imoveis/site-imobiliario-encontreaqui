@@ -11,8 +11,6 @@ jest.mock('@/lib/api/auth', () => ({
     fetchCurrentSession: (...args: unknown[]) => mockFetchSession(...args),
 }))
 
-import { redirect } from 'next/navigation'
-
 describe('auth guards', () => {
     let guards: typeof import('@/lib/auth/guards')
 

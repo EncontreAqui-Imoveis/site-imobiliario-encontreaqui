@@ -3,9 +3,11 @@
 import { formatPrice, Property } from '@/types/property'
 import {
     MapPin, Bed, Bath, Car, Maximize,
-    Wifi, Waves, Sun, Cpu, Wind, Sofa, Building2,
-    Calendar, Hash, Share2, CheckCircle
+    Wifi, Waves, Sun, Cpu, Wind, Sofa, Building2, type LucideIcon,
+    Calendar, Hash, Share2, CheckCircle,
+    Map, Home as HomeIcon, Signpost, Layers, Mail, Phone, Globe
 } from 'lucide-react'
+import FavoriteButton from '@/components/property/FavoriteButton'
 
 interface PropertyInfoProps {
     property: Property
@@ -46,7 +48,7 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
     const additionalInfo = [
         property.valorCondominio ? { icon: Building2, label: 'Condomínio', value: formatPrice(property.valorCondominio) } : null,
         property.valorIptu ? { icon: Hash, label: 'IPTU', value: formatPrice(property.valorIptu) } : null,
-    ].filter(Boolean) as { icon: any; label: string; value: string }[]
+    ].filter(Boolean) as { icon: LucideIcon; label: string; value: string }[]
 
     const handleShare = async () => {
         const url = window.location.href
@@ -57,7 +59,7 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                     text: `Confira o imóvel "${property.title}" no EncontreAquiImóveis`,
                     url,
                 })
-            } catch (err) {
+            } catch {
                 console.log('Share cancelled')
             }
         } else {
@@ -87,6 +89,7 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                         </span>
                     </div>
                     <div className="flex items-center gap-2">
+                        <FavoriteButton propertyId={property.id} size="md" />
                         <button
                             onClick={handleShare}
                             className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-colors"
@@ -164,6 +167,139 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                         <p className="text-gray-600 whitespace-pre-line leading-relaxed text-base">
                             {property.description}
                         </p>
+                    </div>
+                </div>
+            )}
+
+            {/* Detailed Location Section */}
+            {(property.address || property.numero || property.quadra || property.lote || property.bairro) && (
+                <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100">
+                    <h2 className="font-display text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                        <Map className="w-5 h-5 text-primary-500" />
+                        Localização
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {property.address && (
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                                <MapPin className="w-4 h-4 text-primary-500 flex-shrink-0" />
+                                <div className="min-w-0">
+                                    <p className="text-xs text-gray-500">Endereço</p>
+                                    <p className="text-sm font-semibold text-gray-900 truncate">{property.address}</p>
+                                </div>
+                            </div>
+                        )}
+                        {property.numero && (
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                                <HomeIcon className="w-4 h-4 text-primary-500 flex-shrink-0" />
+                                <div>
+                                    <p className="text-xs text-gray-500">Número</p>
+                                    <p className="text-sm font-semibold text-gray-900">{property.numero || 'S/N'}</p>
+                                </div>
+                            </div>
+                        )}
+                        {property.quadra && (
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                                <Signpost className="w-4 h-4 text-primary-500 flex-shrink-0" />
+                                <div>
+                                    <p className="text-xs text-gray-500">Quadra</p>
+                                    <p className="text-sm font-semibold text-gray-900">{property.quadra}</p>
+                                </div>
+                            </div>
+                        )}
+                        {property.lote && (
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                                <Layers className="w-4 h-4 text-primary-500 flex-shrink-0" />
+                                <div>
+                                    <p className="text-xs text-gray-500">Lote</p>
+                                    <p className="text-sm font-semibold text-gray-900">{property.lote}</p>
+                                </div>
+                            </div>
+                        )}
+                        {property.bairro && (
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                                <Building2 className="w-4 h-4 text-primary-500 flex-shrink-0" />
+                                <div>
+                                    <p className="text-xs text-gray-500">Bairro</p>
+                                    <p className="text-sm font-semibold text-gray-900">{property.bairro}</p>
+                                </div>
+                            </div>
+                        )}
+                        {property.complemento && (
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                                <Hash className="w-4 h-4 text-primary-500 flex-shrink-0" />
+                                <div>
+                                    <p className="text-xs text-gray-500">Complemento</p>
+                                    <p className="text-sm font-semibold text-gray-900">{property.complemento}</p>
+                                </div>
+                            </div>
+                        )}
+                        {property.tipoLote && (
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                                <Map className="w-4 h-4 text-primary-500 flex-shrink-0" />
+                                <div>
+                                    <p className="text-xs text-gray-500">Tipo de Lote</p>
+                                    <p className="text-sm font-semibold text-gray-900 capitalize">{property.tipoLote}</p>
+                                </div>
+                            </div>
+                        )}
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                            <MapPin className="w-4 h-4 text-primary-500 flex-shrink-0" />
+                            <div>
+                                <p className="text-xs text-gray-500">Cidade</p>
+                                <p className="text-sm font-semibold text-gray-900">{property.city}{property.state && ` • ${property.state}`}</p>
+                            </div>
+                        </div>
+                        {property.cep && (
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                                <Mail className="w-4 h-4 text-primary-500 flex-shrink-0" />
+                                <div>
+                                    <p className="text-xs text-gray-500">CEP</p>
+                                    <p className="text-sm font-semibold text-gray-900">{property.cep}</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Agency Section */}
+            {property.agencyName && (
+                <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100">
+                    <h2 className="font-display text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                        <Building2 className="w-5 h-5 text-primary-500" />
+                        Imobiliária Responsável
+                    </h2>
+                    <div className="flex items-start gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-primary-100 flex items-center justify-center flex-shrink-0">
+                            <Building2 className="w-7 h-7 text-primary-600" />
+                        </div>
+                        <div className="flex-1 min-w-0 space-y-2">
+                            <h3 className="text-lg font-bold text-gray-900">{property.agencyName}</h3>
+                            {property.agencyAddress && (
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                    <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                    <span>{property.agencyAddress}</span>
+                                </div>
+                            )}
+                            {property.agencyPhone && (
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                    <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                    <a href={`tel:${property.agencyPhone}`} className="hover:text-primary-600 transition-colors">{property.agencyPhone}</a>
+                                </div>
+                            )}
+                            {property.agencyEmail && (
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                    <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                    <a href={`mailto:${property.agencyEmail}`} className="hover:text-primary-600 transition-colors">{property.agencyEmail}</a>
+                                </div>
+                            )}
+                            {property.agencyWebsite && (
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                    <Globe className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                    <a href={property.agencyWebsite.startsWith('http') ? property.agencyWebsite : `https://${property.agencyWebsite}`} target="_blank" rel="noopener noreferrer" className="hover:text-primary-600 transition-colors">{property.agencyWebsite}</a>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

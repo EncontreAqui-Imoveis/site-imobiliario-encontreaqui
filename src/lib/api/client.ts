@@ -1,3 +1,5 @@
+import { reportObservedError } from '@/lib/observability'
+
 const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_URL || 'https://backend-production-6acc.up.railway.app'
 
@@ -6,6 +8,8 @@ type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 export interface ApiErrorPayload {
     message?: string
     code?: string
+    requestId?: string
+    request_id?: string
     [key: string]: unknown
 }
 
@@ -14,10 +18,13 @@ export class ApiError extends Error {
 
     payload?: ApiErrorPayload
 
-    constructor(status: number, message: string, payload?: ApiErrorPayload) {
+    requestId?: string
+
+    constructor(status: number, message: string, payload?: ApiErrorPayload, requestId?: string) {
         super(message)
         this.status = status
         this.payload = payload
+        this.requestId = requestId
         this.name = 'ApiError'
     }
 }
@@ -105,6 +112,8 @@ async function request<T = unknown>(path: string, options: RequestOptions = {}):
     if (!response.ok && !skipThrowOnError) {
         const payload = (data || {}) as ApiErrorPayload
         const message = payload.message || `Erro na API (${response.status})`
+        const requestId =
+            response.headers.get('x-request-id') || payload.requestId || payload.request_id
 
         // Auto-logout on 401 (expired session) — skip for auth endpoints and session-check
         if (response.status === 401 && typeof window !== 'undefined' && !path.startsWith('/auth/') && path !== '/me') {
@@ -116,7 +125,15 @@ async function request<T = unknown>(path: string, options: RequestOptions = {}):
             return new Promise<T>(() => { })
         }
 
-        throw new ApiError(response.status, message, payload)
+        const apiError = new ApiError(response.status, message, payload, requestId || undefined)
+        reportObservedError(apiError, {
+            module: 'api-client',
+            requestId: apiError.requestId,
+            status: response.status,
+            url,
+            message: apiError.message,
+        })
+        throw apiError
     }
 
     return data as T

@@ -1,9 +1,9 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
 import { Home, ChevronRight } from 'lucide-react'
-import PropertyCard from '@/components/property/PropertyCard'
 import PropertyGrid from '@/components/property/PropertyGrid'
 import SearchFilters from '@/components/search/SearchFilters'
+import ActiveFilterChips from '@/components/search/ActiveFilterChips'
 import { Property } from '@/types/property'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://backend-production-6acc.up.railway.app'
@@ -84,7 +84,10 @@ export default async function PropertiesPage({
             <div className="bg-white border-b border-gray-100">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     {/* Breadcrumb */}
-                    <nav className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                    <nav
+                        aria-label="Breadcrumb"
+                        className="flex items-center gap-2 text-sm text-gray-500 mb-4"
+                    >
                         <Link href="/" className="hover:text-primary-600 transition-colors">
                             <Home className="w-4 h-4" />
                         </Link>
@@ -104,12 +107,18 @@ export default async function PropertiesPage({
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Filters Sidebar */}
-                    <aside className="lg:w-72 flex-shrink-0">
+                    <aside
+                        aria-label="Filtros de busca"
+                        className="lg:w-72 flex-shrink-0"
+                    >
                         <SearchFilters />
                     </aside>
 
                     {/* Results */}
-                    <main className="flex-1">
+                    <main className="flex-1" aria-label="Resultados de imóveis">
+                        <Suspense fallback={null}>
+                            <ActiveFilterChips />
+                        </Suspense>
                         <Suspense fallback={<PropertyGrid properties={[]} isLoading={true} />}>
                             <PropertyGrid properties={properties} />
                         </Suspense>

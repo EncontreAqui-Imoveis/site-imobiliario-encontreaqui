@@ -3,11 +3,10 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { signInWithPopup } from 'firebase/auth'
-import { login, loginWithGoogle } from '@/lib/api/auth'
+import { login } from '@/lib/api/auth'
+import { loginWithGooglePopup } from '@/lib/auth/googleFlow'
 import { useUser } from '@/contexts/UserContext'
 import type { ApiError } from '@/lib/api/client'
-import { auth, googleProvider } from '@/lib/firebase'
 
 export default function LoginPage() {
     const router = useRouter()
@@ -52,9 +51,7 @@ export default function LoginPage() {
         setError(null)
 
         try {
-            const result = await signInWithPopup(auth, googleProvider)
-            const idToken = await result.user.getIdToken()
-            await loginWithGoogle(idToken)
+            await loginWithGooglePopup()
             await refresh()
             router.push(next)
         } catch (err) {

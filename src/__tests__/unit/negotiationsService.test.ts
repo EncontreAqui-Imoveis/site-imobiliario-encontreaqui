@@ -1,0 +1,62 @@
+jest.mock('@/lib/api/client', () => ({
+    apiClient: {
+        get: jest.fn(),
+        post: jest.fn(),
+    },
+}))
+
+describe('negotiations service', () => {
+    beforeEach(() => {
+        jest.clearAllMocks()
+    })
+
+    it('fetchMyNegotiations() delegates to apiClient.get', async () => {
+        const { apiClient } = await import('@/lib/api/client')
+        const { fetchMyNegotiations } = await import('@/lib/negotiationsService')
+        ;(apiClient.get as jest.Mock).mockResolvedValueOnce([])
+
+        await fetchMyNegotiations()
+
+        expect(apiClient.get).toHaveBeenCalledWith('/negotiations/mine')
+    })
+
+    it('createProposal() delegates to apiClient.post', async () => {
+        const { apiClient } = await import('@/lib/api/client')
+        const { createProposal } = await import('@/lib/negotiationsService')
+        ;(apiClient.post as jest.Mock).mockResolvedValueOnce(undefined)
+
+        const payload = {
+            propertyId: 10,
+            clientName: 'Cliente',
+            clientCpf: '12345678900',
+            validadeDias: 10,
+            pagamento: {
+                dinheiro: 10,
+                permuta: 0,
+                financiamento: 0,
+                outros: 0,
+            },
+        }
+
+        await createProposal(payload)
+
+        expect(apiClient.post).toHaveBeenCalledWith('/negotiations/proposal', payload)
+    })
+
+    it('searchApprovedBrokers() normalizes the payload and filters invalid brokers', async () => {
+        const { apiClient } = await import('@/lib/api/client')
+        const { searchApprovedBrokers } = await import('@/lib/negotiationsService')
+        ;(apiClient.get as jest.Mock).mockResolvedValueOnce({
+            data: [
+                { id: 1, name: 'Corretor Válido' },
+                { id: 0, name: 'Inválido' },
+                { id: 2, name: '' },
+            ],
+        })
+
+        const result = await searchApprovedBrokers('corretor')
+
+        expect(apiClient.get).toHaveBeenCalledWith('/brokers/approved?search=corretor&limit=5')
+        expect(result).toEqual([{ id: 1, name: 'Corretor Válido' }])
+    })
+})

@@ -3,11 +3,10 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { signInWithPopup } from 'firebase/auth'
-import { register, loginWithGoogle } from '@/lib/api/auth'
+import { register } from '@/lib/api/auth'
+import { loginWithGooglePopup } from '@/lib/auth/googleFlow'
 import { useUser } from '@/contexts/UserContext'
 import type { ApiError } from '@/lib/api/client'
-import { auth, googleProvider } from '@/lib/firebase'
 
 const BRAZILIAN_STATES = [
     'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
@@ -111,9 +110,7 @@ export default function CadastroPage() {
         setError(null)
 
         try {
-            const result = await signInWithPopup(auth, googleProvider)
-            const idToken = await result.user.getIdToken()
-            await loginWithGoogle(idToken)
+            await loginWithGooglePopup()
             await refresh()
             router.push('/onboarding')
         } catch {

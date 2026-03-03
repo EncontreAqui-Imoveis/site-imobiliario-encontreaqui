@@ -24,3 +24,11 @@ export async function markAsRead(id: number): Promise<void> {
 export async function markAllAsRead(): Promise<void> {
     await apiClient.post('/users/notifications/read-all')
 }
+
+export async function deleteNotification(id: number): Promise<void> {
+    await apiClient.delete(`/users/notifications/${encodeURIComponent(id)}`)
+}
+
+export async function clearAllNotifications(): Promise<void> {
+    await apiClient.delete('/users/notifications')
+}

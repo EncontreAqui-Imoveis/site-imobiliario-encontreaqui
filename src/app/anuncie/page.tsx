@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@/contexts/UserContext'
 import { createProperty } from '@/lib/api/user'
+import { saveDraft, loadDraft, clearDraft, hasDraft as checkHasDraft } from '@/lib/drafts'
 import { validateImageFile, sanitizeText } from '@/lib/sanitize'
 import type { ApiError } from '@/lib/api/client'
 import { Building2, MapPin, Info, Camera, DollarSign, Check, ArrowLeft, ArrowRight, X, Loader2 } from 'lucide-react'
@@ -70,6 +71,59 @@ export default function AnunciePage() {
             router.replace('/onboarding/broker')
         }
     }, [authLoading, session, isBroker, router])
+
+    // Draft: restore on mount
+    const [showDraftBanner, setShowDraftBanner] = useState(false)
+
+    useEffect(() => {
+        if (checkHasDraft()) setShowDraftBanner(true)
+    }, [])
+
+    function restoreDraft() {
+        const draft = loadDraft()
+        if (!draft) return
+        const d = draft.data as Record<string, string | number | boolean>
+        if (d.propertyType) setPropertyType(String(d.propertyType))
+        if (d.purpose) setPurpose(String(d.purpose))
+        if (d.cep) setCep(String(d.cep))
+        if (d.state) setState(String(d.state))
+        if (d.city) setCity(String(d.city))
+        if (d.bairro) setBairro(String(d.bairro))
+        if (d.address) setAddress(String(d.address))
+        if (d.numero) setNumero(String(d.numero))
+        if (d.complemento) setComplemento(String(d.complemento))
+        if (d.title) setTitle(String(d.title))
+        if (d.description) setDescription(String(d.description))
+        if (d.bedrooms) setBedrooms(Number(d.bedrooms))
+        if (d.bathrooms) setBathrooms(Number(d.bathrooms))
+        if (d.garageSpots) setGarageSpots(Number(d.garageSpots))
+        if (d.areaConstruida) setAreaConstruida(Number(d.areaConstruida))
+        if (d.areaTerreno) setAreaTerreno(Number(d.areaTerreno))
+        if (d.temPiscina) setTemPiscina(Boolean(d.temPiscina))
+        if (d.temEnergiaSolar) setTemEnergiaSolar(Boolean(d.temEnergiaSolar))
+        if (d.ehMobiliada) setEhMobiliada(Boolean(d.ehMobiliada))
+        if (d.priceSale) setPriceSale(Number(d.priceSale))
+        if (d.priceRent) setPriceRent(Number(d.priceRent))
+        if (d.valorCondominio) setValorCondominio(Number(d.valorCondominio))
+        if (d.valorIptu) setValorIptu(Number(d.valorIptu))
+        setStep(Math.min(draft.currentStep || 1, 6) as WizardStep)
+        setShowDraftBanner(false)
+    }
+
+    function discardDraft() {
+        clearDraft()
+        setShowDraftBanner(false)
+    }
+
+    // Auto-save draft on step changes
+    useEffect(() => {
+        saveDraft(step, {
+            propertyType, purpose, cep, state, city, bairro, address, numero, complemento,
+            title, description, bedrooms, bathrooms, garageSpots, areaConstruida, areaTerreno,
+            temPiscina, temEnergiaSolar, ehMobiliada, priceSale, priceRent, valorCondominio, valorIptu,
+        })
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [step])
 
     const handleCepBlur = async () => {
         const clean = cep.replace(/\D/g, '')
@@ -153,6 +207,7 @@ export default function AnunciePage() {
 
         try {
             const result = await createProperty(formData)
+            clearDraft()
             router.push(`/imoveis/${result.id}`)
         } catch (err) {
             const apiErr = err as ApiError
@@ -162,7 +217,6 @@ export default function AnunciePage() {
         }
     }
 
-    const formatPrice = (val: string) => Number(val.replace(/\D/g, '')) / 100
     const formatCep = (val: string) => {
         const d = val.replace(/\D/g, '').slice(0, 8)
         return d.length <= 5 ? d : `${d.slice(0, 5)}-${d.slice(5)}`
@@ -179,6 +233,35 @@ export default function AnunciePage() {
     return (
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 pt-24">
             <h1 className="text-2xl font-bold text-slate-900 mb-6">Anunciar Imóvel</h1>
+
+            {/* Draft Banner */}
+            {showDraftBanner && (
+                <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                            <Info className="w-5 h-5 text-amber-600" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-sm font-semibold text-amber-900">Rascunho encontrado</p>
+                            <p className="text-xs text-amber-700">Você tem um anúncio em andamento. Deseja continuar?</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                            onClick={discardDraft}
+                            className="px-3 py-1.5 text-xs font-medium text-amber-700 hover:text-amber-900 hover:bg-amber-100 rounded-lg transition-colors"
+                        >
+                            Descartar
+                        </button>
+                        <button
+                            onClick={restoreDraft}
+                            className="px-4 py-1.5 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors"
+                        >
+                            Continuar
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Progress */}
             <div className="flex items-center gap-1 mb-8 overflow-x-auto pb-1">
@@ -360,7 +443,9 @@ export default function AnunciePage() {
                             <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                                 {imagePreviews.map((preview, i) => (
                                     <div key={i} className="relative aspect-square rounded-xl overflow-hidden group">
-                                        <img src={preview} alt="" className="w-full h-full object-cover" />
+                                        {/* Local blob previews are not compatible with next/image optimization. */}
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={preview} alt={`Prévia ${i + 1}`} className="w-full h-full object-cover" />
                                         <button
                                             onClick={() => removeImage(i)}
                                             className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"

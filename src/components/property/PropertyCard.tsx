@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Bed, Bath, Car, Maximize, MapPin, ChevronLeft, ChevronRight } from 'lucide-react'
-import { Property, formatPrice } from '@/types/property'
+import { Property, formatPrice, getPromoSalePrice, getPromoRentPrice } from '@/types/property'
 import FavoriteButton from '@/components/property/FavoriteButton'
 
 interface PropertyCardProps {
@@ -147,14 +147,31 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                         <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-0.5">
                             {property.priceSale ? 'Venda' : (property.priceRent ? 'Aluguel' : 'Valor')}
                         </p>
-                        <p className="text-xl font-display font-bold text-primary-700">
-                            {property.priceSale
-                                ? formatPrice(property.priceSale)
-                                : (property.priceRent
-                                    ? formatPrice(property.priceRent)
-                                    : formatPrice(property.price))}
-                            {property.priceRent && <span className="text-sm font-normal text-gray-500">/mês</span>}
-                        </p>
+                        {(() => {
+                            const promoSale = getPromoSalePrice(property)
+                            const promoRent = getPromoRentPrice(property)
+                            const basePrice = property.priceSale ?? property.priceRent ?? property.price
+                            const promo = promoSale ?? promoRent
+                            if (promo) {
+                                return (
+                                    <>
+                                        <p className="text-sm text-gray-400 line-through font-medium">
+                                            {formatPrice(basePrice)}
+                                        </p>
+                                        <p className="text-xl font-display font-bold text-green-600">
+                                            {formatPrice(promo)}
+                                            {property.priceRent && <span className="text-sm font-normal text-gray-500">/mês</span>}
+                                        </p>
+                                    </>
+                                )
+                            }
+                            return (
+                                <p className="text-xl font-display font-bold text-primary-700">
+                                    {formatPrice(basePrice)}
+                                    {property.priceRent && <span className="text-sm font-normal text-gray-500">/mês</span>}
+                                </p>
+                            )
+                        })()}
                     </div>
 
                     <FavoriteButton propertyId={property.id} size="sm" />

@@ -1,6 +1,13 @@
-import { render, screen, act } from '@testing-library/react'
-import { Suspense } from 'react'
+import { Children, isValidElement, type ReactElement, type ReactNode } from 'react'
+import { render, screen } from '@testing-library/react'
+
 import HomePage from '@/app/page'
+import {
+    FeaturedSection,
+    FeaturedSkeleton,
+    RecentSection,
+    RecentSkeleton,
+} from '@/components/home/HomeSections'
 import { fetchFeaturedProperties, fetchRecentProperties } from '@/lib/propertiesApi'
 import { Property } from '@/types/property'
 
@@ -34,8 +41,16 @@ jest.mock('@/components/home/AboutSection', () => {
 })
 
 jest.mock('@/components/property/PropertyCardSkeleton', () => {
-    return function MockSkeleton() {
-        return <div data-testid="skeleton">Loading...</div>
+    return function MockSkeleton({ count = 1 }: { count?: number }) {
+        return (
+            <>
+                {Array.from({ length: count }).map((_, index) => (
+                    <div data-testid="skeleton" key={index}>
+                        Loading...
+                    </div>
+                ))}
+            </>
+        )
     }
 })
 
@@ -59,51 +74,59 @@ describe('HomePage integration', () => {
         jest.clearAllMocks()
     })
 
-    it('renders hero and about sections', () => {
-        ; (fetchFeaturedProperties as jest.Mock).mockResolvedValue([])
-            ; (fetchRecentProperties as jest.Mock).mockResolvedValue([])
-
+    it('returns the expected static page structure without rendering async server components in jsdom', () => {
         const page = HomePage()
-        render(page)
 
-        expect(screen.getByTestId('hero-section')).toBeInTheDocument()
-        expect(screen.getByTestId('about-section')).toBeInTheDocument()
+        expect(isValidElement(page)).toBe(true)
+
+        const fragment = page as ReactElement<{ children: ReactNode }>
+        const children = Children.toArray(fragment.props.children)
+
+        expect(children).toHaveLength(4)
     })
 
-    it('loads featured and recent properties via Suspense', async () => {
+    it('loads featured properties through the server section', async () => {
         ; (fetchFeaturedProperties as jest.Mock).mockResolvedValue([createProperty(1), createProperty(2)])
-            ; (fetchRecentProperties as jest.Mock).mockResolvedValue([createProperty(3)])
 
-        await act(async () => {
-            render(HomePage())
-        })
+        render(await FeaturedSection())
 
-        // After Suspense resolves, data components render
         expect(fetchFeaturedProperties).toHaveBeenCalledWith(6)
+        expect(screen.getByTestId('featured-carousel')).toHaveTextContent('Featured: 2')
+    })
+
+    it('loads recent properties through the server section', async () => {
+        ; (fetchRecentProperties as jest.Mock).mockResolvedValue([createProperty(3)])
+
+        render(await RecentSection())
+
         expect(fetchRecentProperties).toHaveBeenCalledWith(8)
+        expect(screen.getByTestId('recent-properties')).toHaveTextContent('Recent: 1')
     })
 
-    it('shows skeleton fallbacks initially', () => {
-        // Never-resolving promises to keep Suspense in loading state
-        ; (fetchFeaturedProperties as jest.Mock).mockReturnValue(new Promise(() => { }))
-            ; (fetchRecentProperties as jest.Mock).mockReturnValue(new Promise(() => { }))
+    it('renders skeleton fallbacks without relying on suspense resolution in jsdom', () => {
+        render(
+            <>
+                <FeaturedSkeleton />
+                <RecentSkeleton />
+            </>
+        )
 
-        render(HomePage())
-
-        // Skeletons should be visible
         const skeletons = screen.getAllByTestId('skeleton')
-        expect(skeletons.length).toBeGreaterThanOrEqual(2)
+        expect(skeletons.length).toBe(11)
     })
 
-    it('renders empty state when API returns no data', async () => {
+    it('handles empty responses in both data sections', async () => {
         ; (fetchFeaturedProperties as jest.Mock).mockResolvedValue([])
-            ; (fetchRecentProperties as jest.Mock).mockResolvedValue([])
+        ; (fetchRecentProperties as jest.Mock).mockResolvedValue([])
 
-        await act(async () => {
-            render(HomePage())
-        })
+        render(
+            <>
+                {await FeaturedSection()}
+                {await RecentSection()}
+            </>
+        )
 
-        expect(screen.getByTestId('hero-section')).toBeInTheDocument()
-        expect(screen.getByTestId('about-section')).toBeInTheDocument()
+        expect(screen.getByTestId('featured-carousel')).toHaveTextContent('Featured: 0')
+        expect(screen.getByTestId('recent-properties')).toHaveTextContent('Recent: 0')
     })
 })

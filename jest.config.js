@@ -9,6 +9,20 @@ const createJestConfig = nextJest({
 const customJestConfig = {
     setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
     testEnvironment: 'jest-environment-jsdom',
+    collectCoverageFrom: [
+        'src/**/*.{ts,tsx,js,jsx}',
+        '!src/**/*.d.ts',
+        '!src/**/__tests__/**',
+    ],
+    coverageDirectory: '<rootDir>/coverage',
+    coverageThreshold: {
+        global: {
+            branches: 15,
+            functions: 15,
+            lines: 15,
+            statements: 15,
+        },
+    },
     // Limit parallel workers to prevent ENOMEM on machines with limited RAM
     maxWorkers: '50%',
     moduleNameMapper: {

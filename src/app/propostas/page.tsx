@@ -4,11 +4,10 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
-import { apiClient } from '@/lib/api/client'
+import { fetchMyNegotiations } from '@/lib/negotiationsService'
 import type { NegotiationSummary } from '@/types/negotiation'
 import { getStatusLabel, getStatusColor } from '@/types/negotiation'
 import { FileText, Loader2, Plus, Building2 } from 'lucide-react'
-import { formatPrice } from '@/types/property'
 
 export default function PropostasPage() {
     const router = useRouter()
@@ -34,7 +33,7 @@ export default function PropostasPage() {
     const loadNegotiations = async () => {
         setLoading(true)
         try {
-            const data = await apiClient.get<NegotiationSummary[]>('/negotiations/mine')
+            const data = await fetchMyNegotiations()
             setNegotiations(data)
         } catch {
             setError('Erro ao carregar negociações.')
