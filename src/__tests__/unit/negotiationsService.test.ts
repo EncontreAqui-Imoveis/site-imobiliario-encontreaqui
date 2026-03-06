@@ -40,7 +40,14 @@ describe('negotiations service', () => {
 
         await createProposal(payload)
 
-        expect(apiClient.post).toHaveBeenCalledWith('/negotiations/proposal', payload)
+        expect(apiClient.post).toHaveBeenCalledWith(
+            '/negotiations/proposal',
+            expect.objectContaining({
+                ...payload,
+                idempotency_key: expect.any(String),
+            }),
+        )
+        expect((apiClient.post as jest.Mock).mock.calls[0][1]).not.toHaveProperty('idempotencyKey')
     })
 
     it('searchApprovedBrokers() normalizes the payload and filters invalid brokers', async () => {

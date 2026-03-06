@@ -1,4 +1,5 @@
 import { apiClient, type ApiError } from '@/lib/api/client'
+import { generateIdempotencyKey } from '@/lib/idempotency'
 import { reportObservedError } from '@/lib/observability'
 import type { NegotiationSummary } from '@/types/negotiation'
 import type { Property } from '@/types/property'
@@ -15,6 +16,7 @@ export interface CreateProposalPayload {
     clientName: string
     clientCpf: string
     validadeDias: number
+    idempotencyKey?: string
     sellerBrokerId?: number
     pagamento: {
         dinheiro: number
@@ -25,7 +27,12 @@ export interface CreateProposalPayload {
 }
 
 export async function createProposal(payload: CreateProposalPayload): Promise<void> {
-    await apiClient.post('/negotiations/proposal', payload)
+    const { idempotencyKey, ...restPayload } = payload
+    const generatedIdempotencyKey = idempotencyKey ?? generateIdempotencyKey()
+    await apiClient.post('/negotiations/proposal', {
+        ...restPayload,
+        idempotency_key: generatedIdempotencyKey,
+    })
 }
 
 export interface ApprovedBrokerLookup {

@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Home, ChevronRight, ArrowRight, MessageCircle, Smartphone, Handshake, Edit, FileText, ScrollText } from 'lucide-react'
-import PropertyGallery from '@/components/property/PropertyGallery'
-import PropertyInfo from '@/components/property/PropertyInfo'
-import PropertySidebar from '@/components/property/PropertySidebar'
-import PropertyCard from '@/components/property/PropertyCard'
-import CloseDealDialog from '@/components/property/CloseDealDialog'
+import {
+    CloseDealDialog,
+    PropertyCard,
+    PropertyGallery,
+    PropertyInfo,
+    PropertySidebar,
+} from '@/components/property'
 import { Property, formatPrice, getPromoSalePrice, getPromoRentPrice } from '@/types/property'
 import { buildAppDeepLink } from '@/lib/appLinks'
 import { useUser } from '@/contexts/UserContext'

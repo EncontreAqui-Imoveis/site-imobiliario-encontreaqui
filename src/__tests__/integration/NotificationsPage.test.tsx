@@ -53,6 +53,7 @@ const mockedMarkAsRead = markAsRead as jest.Mock
 const mockedMarkAllAsRead = markAllAsRead as jest.Mock
 const mockedDeleteNotification = deleteNotification as jest.Mock
 const mockedClearAllNotifications = clearAllNotifications as jest.Mock
+const originalConsoleError = console.error
 
 // Test data
 const longMessage = 'A'.repeat(250)
@@ -94,6 +95,17 @@ describe('Notifications Page - Integration', () => {
         mockPush.mockClear()
         mockReplace.mockClear()
         window.confirm = jest.fn(() => true)
+        console.error = (...args: unknown[]) => {
+            const firstArg = args[0]
+            if (typeof firstArg === 'string' && firstArg.includes('not wrapped in act')) {
+                return
+            }
+            originalConsoleError(...args)
+        }
+    })
+
+    afterEach(() => {
+        console.error = originalConsoleError
     })
 
     it('loads and displays notifications', async () => {

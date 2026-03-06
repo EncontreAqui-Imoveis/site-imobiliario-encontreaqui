@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api/client'
+import { generateIdempotencyKey } from '@/lib/idempotency'
 
 export type NegotiationStatus =
     | 'PROPOSAL_DRAFT'
@@ -33,6 +34,7 @@ export interface CreateProposalPayload {
     payment: PaymentDetails
     clientName?: string
     clientCpf?: string
+    idempotencyKey?: string
 }
 
 export interface CreateProposalResponse {
@@ -40,7 +42,14 @@ export interface CreateProposalResponse {
 }
 
 export async function createProposal(payload: CreateProposalPayload): Promise<CreateProposalResponse> {
-    return apiClient.post<CreateProposalResponse>('/negotiations/proposal', payload)
+    const idempotencyKey = payload.idempotencyKey ?? generateIdempotencyKey()
+    return apiClient.post<CreateProposalResponse>('/negotiations/proposal', {
+        propertyId: payload.propertyId,
+        payment: payload.payment,
+        clientName: payload.clientName,
+        clientCpf: payload.clientCpf,
+        idempotency_key: idempotencyKey,
+    })
 }
 
 export async function uploadSignedProposal(negotiationId: string, file: File): Promise<void> {

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { unstable_batchedUpdates } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@/contexts/UserContext'
 import {
@@ -73,22 +74,30 @@ export default function NotificacoesPage() {
 
     const loadNotifications = async () => {
         setLoading(true)
+        setError(null)
         try {
             const data = await getNotifications()
-            setNotifications(data)
+            unstable_batchedUpdates(() => {
+                setNotifications(data)
+                setError(null)
+                setLoading(false)
+            })
         } catch {
-            setError('Erro ao carregar notificações.')
-        } finally {
-            setLoading(false)
+            unstable_batchedUpdates(() => {
+                setError('Erro ao carregar notificações.')
+                setLoading(false)
+            })
         }
     }
 
     const handleMarkRead = useCallback(async (id: number) => {
         try {
             await markAsRead(id)
-            setNotifications(prev =>
-                prev.map(n => n.id === id ? { ...n, isRead: true } : n)
-            )
+            unstable_batchedUpdates(() => {
+                setNotifications(prev =>
+                    prev.map(n => n.id === id ? { ...n, isRead: true } : n)
+                )
+            })
         } catch {
             // silent
         }
@@ -97,7 +106,9 @@ export default function NotificacoesPage() {
     const handleMarkAllRead = useCallback(async () => {
         try {
             await markAllAsRead()
-            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
+            unstable_batchedUpdates(() => {
+                setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
+            })
         } catch {
             // silent
         }
@@ -107,11 +118,15 @@ export default function NotificacoesPage() {
         setDeletingId(id)
         try {
             await deleteNotification(id)
-            setNotifications(prev => prev.filter(n => n.id !== id))
+            unstable_batchedUpdates(() => {
+                setNotifications(prev => prev.filter(n => n.id !== id))
+            })
         } catch {
             // silent — keep notification in list
         } finally {
-            setDeletingId(null)
+            unstable_batchedUpdates(() => {
+                setDeletingId(null)
+            })
         }
     }, [])
 
@@ -120,11 +135,15 @@ export default function NotificacoesPage() {
         setClearingAll(true)
         try {
             await clearAllNotifications()
-            setNotifications([])
+            unstable_batchedUpdates(() => {
+                setNotifications([])
+            })
         } catch {
             // silent
         } finally {
-            setClearingAll(false)
+            unstable_batchedUpdates(() => {
+                setClearingAll(false)
+            })
         }
     }, [])
 

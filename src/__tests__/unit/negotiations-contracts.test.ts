@@ -36,6 +36,8 @@ describe('negotiations API', () => {
         const [url, init] = mockFetch.mock.calls[0]
         expect(url).toContain('/negotiations/proposal')
         expect(init.method).toBe('POST')
+        const requestBody = JSON.parse(init.body as string) as Record<string, unknown>
+        expect(requestBody.idempotency_key).toEqual(expect.any(String))
     })
 
     it('uploadSignedProposal() sends FormData with file', async () => {
