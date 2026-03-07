@@ -71,6 +71,7 @@ describe('auth API', () => {
 
         const session = await auth.fetchCurrentSession()
         expect(session).toBeNull()
+        expect(mockFetch.mock.calls[0][0]).toContain('/auth/me')
     })
 
     it('fetchCurrentSession() propagates non-401/403 errors', async () => {
@@ -93,5 +94,25 @@ describe('auth API', () => {
 
         const url = mockFetch.mock.calls[0][0]
         expect(url).toContain(encodeURIComponent('user+test@example.com'))
+    })
+
+    it('sendEmailVerificationCode() posts to the new verification send endpoint', async () => {
+        mockFetch.mockResolvedValueOnce(okResponse({ status: 'ok', delivery: 'sent' }))
+
+        await auth.sendEmailVerificationCode('user@test.com')
+
+        const [url, init] = mockFetch.mock.calls[0]
+        expect(url).toContain('/auth/email-verification/send')
+        expect(init.method).toBe('POST')
+    })
+
+    it('verifyPasswordResetCode() posts to the new password reset verify endpoint', async () => {
+        mockFetch.mockResolvedValueOnce(okResponse({ reset_session_token: 'token', expires_at: '2026-03-06T10:00:00Z' }))
+
+        await auth.verifyPasswordResetCode('user@test.com', '123456')
+
+        const [url, init] = mockFetch.mock.calls[0]
+        expect(url).toContain('/auth/password-reset/verify-code')
+        expect(JSON.parse(init.body).code).toBe('123456')
     })
 })

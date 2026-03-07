@@ -9,6 +9,18 @@ export interface UserSession {
     profileStatus: 'incomplete' | 'complete'
 }
 
+export interface EmailSendResult {
+    delivery: string
+    expires_at?: string | null
+    cooldown_sec?: number
+    daily_remaining?: number
+}
+
+export interface PasswordResetVerifyResult {
+    reset_session_token: string
+    expires_at: string
+}
+
 export interface LoginPayload {
     email: string
     password: string
@@ -30,7 +42,7 @@ export interface RegisterPayload {
 
 export async function fetchCurrentSession(): Promise<UserSession | null> {
     try {
-        return await apiClient.get<UserSession>('/me')
+        return await apiClient.get<UserSession>('/auth/me')
     } catch (error) {
         if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
             return null
@@ -55,16 +67,46 @@ export async function requestPasswordReset(email: string): Promise<void> {
     await apiClient.post('/auth/password-reset/request', { email })
 }
 
-export async function requestOtp(email: string): Promise<void> {
-    await apiClient.post('/auth/otp/request', { email })
+export async function sendEmailVerificationCode(email: string): Promise<EmailSendResult> {
+    return apiClient.post<EmailSendResult>('/auth/email-verification/send', { email })
 }
 
-export async function verifyOtp(email: string, code: string): Promise<void> {
-    await apiClient.post('/auth/otp/verify', { email, code })
+export async function verifyEmailCode(email: string, code: string): Promise<void> {
+    await apiClient.post('/auth/email-verification/verify-code', { email, code })
 }
 
-export async function checkEmail(email: string): Promise<{ exists: boolean }> {
-    return apiClient.get<{ exists: boolean }>(`/auth/check-email?email=${encodeURIComponent(email)}`)
+export async function verifyPasswordResetCode(
+    email: string,
+    code: string,
+): Promise<PasswordResetVerifyResult> {
+    return apiClient.post<PasswordResetVerifyResult>('/auth/password-reset/verify-code', {
+        email,
+        code,
+    })
+}
+
+export async function confirmPasswordReset(
+    email: string,
+    resetSessionToken: string,
+    newPassword: string,
+): Promise<void> {
+    await apiClient.post('/auth/password-reset/confirm', {
+        email,
+        reset_session_token: resetSessionToken,
+        new_password: newPassword,
+    })
+}
+
+export async function checkEmail(email: string): Promise<{
+    exists: boolean
+    hasFirebaseUid?: boolean
+    hasPassword?: boolean
+}> {
+    return apiClient.get<{
+        exists: boolean
+        hasFirebaseUid?: boolean
+        hasPassword?: boolean
+    }>(`/auth/check-email?email=${encodeURIComponent(email)}`)
 }
 
 export async function logout(): Promise<void> {

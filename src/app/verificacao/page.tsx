@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@/contexts/UserContext'
-import { requestOtp, verifyOtp } from '@/lib/api/auth'
+import { sendEmailVerificationCode, verifyEmailCode } from '@/lib/api/auth'
 import type { ApiError } from '@/lib/api/client'
 import { ShieldCheck, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -17,7 +17,7 @@ export default function VerificacaoPage() {
     const [resending, setResending] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
-    const [otpSent, setOtpSent] = useState(false)
+    const [codeSent, setCodeSent] = useState(false)
     const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
     useEffect(() => {
@@ -28,13 +28,13 @@ export default function VerificacaoPage() {
 
     const email = session?.user.email || ''
 
-    const handleSendOtp = async () => {
+    const handleSendCode = async () => {
         if (!email) return
         setResending(true)
         setError(null)
         try {
-            await requestOtp(email)
-            setOtpSent(true)
+            await sendEmailVerificationCode(email)
+            setCodeSent(true)
         } catch (err) {
             const apiErr = err as ApiError
             if ('status' in apiErr && apiErr.status === 429) {
@@ -74,7 +74,7 @@ export default function VerificacaoPage() {
         setSubmitting(true)
         setError(null)
         try {
-            await verifyOtp(email, fullCode)
+            await verifyEmailCode(email, fullCode)
             setSuccess(true)
             await refresh()
             setTimeout(() => {
@@ -82,8 +82,12 @@ export default function VerificacaoPage() {
             }, 2000)
         } catch (err) {
             const apiErr = err as ApiError
-            if ('status' in apiErr && apiErr.status === 400) {
-                setError('Código inválido ou expirado. Solicite um novo.')
+            if ('status' in apiErr && apiErr.status === 410) {
+                setError('Código expirado. Solicite um novo.')
+            } else if ('status' in apiErr && apiErr.status === 423) {
+                setError('Você atingiu o limite de tentativas. Solicite um novo código.')
+            } else if ('status' in apiErr && apiErr.status === 400) {
+                setError('Código inválido. Revise os 6 dígitos e tente novamente.')
             } else {
                 setError('Erro ao verificar código. Tente novamente.')
             }
@@ -125,13 +129,13 @@ export default function VerificacaoPage() {
                                 Verificar conta
                             </h1>
                             <p className="text-sm text-slate-600">
-                                Enviaremos um código de verificação para <strong>{email}</strong>
+                                Enviaremos um código de 6 dígitos para <strong>{email}</strong>
                             </p>
                         </div>
 
-                        {!otpSent ? (
+                        {!codeSent ? (
                             <button
-                                onClick={handleSendOtp}
+                                onClick={handleSendCode}
                                 disabled={resending}
                                 className="w-full inline-flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 disabled:bg-primary-300 text-white text-sm font-semibold px-4 py-2.5 shadow-md shadow-primary-500/20 transition-colors"
                             >
@@ -170,7 +174,7 @@ export default function VerificacaoPage() {
                                 </button>
 
                                 <button
-                                    onClick={handleSendOtp}
+                                    onClick={handleSendCode}
                                     disabled={resending}
                                     className="w-full text-center text-sm text-primary-600 hover:text-primary-700 font-medium disabled:opacity-50"
                                 >
@@ -179,7 +183,13 @@ export default function VerificacaoPage() {
                             </div>
                         )}
 
-                        <div className="text-center">
+                        <div className="space-y-3 text-center">
+                            <Link
+                                href="/perfil/editar"
+                                className="inline-flex items-center justify-center text-sm font-medium text-primary-600 hover:text-primary-700"
+                            >
+                                Trocar e-mail
+                            </Link>
                             <Link
                                 href="/meus-imoveis"
                                 className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-700"

@@ -116,7 +116,13 @@ async function request<T = unknown>(path: string, options: RequestOptions = {}):
             response.headers.get('x-request-id') || payload.requestId || payload.request_id
 
         // Auto-logout on 401 (expired session) — skip for auth endpoints and session-check
-        if (response.status === 401 && typeof window !== 'undefined' && !path.startsWith('/auth/') && path !== '/me') {
+        if (
+            response.status === 401 &&
+            typeof window !== 'undefined' &&
+            !path.startsWith('/auth/') &&
+            path !== '/auth/me' &&
+            path !== '/users/me'
+        ) {
             const currentPath = window.location.pathname + window.location.search
             // SAST-4: Validate path starts with / to prevent open redirect
             const safePath = currentPath.startsWith('/') ? currentPath : '/'
