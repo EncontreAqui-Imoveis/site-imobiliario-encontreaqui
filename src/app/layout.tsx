@@ -3,6 +3,7 @@ import './globals.css'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import { UserProvider } from '@/contexts/UserContext'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,6 +38,7 @@ export default function RootLayout({
                     </main>
                     <Footer />
                 </UserProvider>
+                <SpeedInsights />
             </body>
         </html>
     )
