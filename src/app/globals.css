@@ -1,8 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 /* Custom Font Variables */
 :root {
@@ -14,6 +12,36 @@
   --color-primary-light: #339697;
   --color-accent: #ffca45;
   --color-accent-light: #ffe57f;
+}
+
+@theme {
+  --font-sans: var(--font-dm-sans);
+  --font-display: var(--font-hk-grotesk);
+
+  --color-primary-50: #e6f2f2;
+  --color-primary-100: #cce5e5;
+  --color-primary-200: #99cbcb;
+  --color-primary-300: #66b0b1;
+  --color-primary-400: #339697;
+  --color-primary-500: #0d5051;
+  --color-primary-600: #0b4647;
+  --color-primary-700: #093b3c;
+  --color-primary-800: #073031;
+  --color-primary-900: #052526;
+
+  --color-accent-50: #fffaeb;
+  --color-accent-100: #fff3c7;
+  --color-accent-200: #ffeca3;
+  --color-accent-300: #ffe57f;
+  --color-accent-400: #ffdb5c;
+  --color-accent-500: #ffca45;
+  --color-accent-600: #e6b63e;
+  --color-accent-700: #cc9f37;
+  --color-accent-800: #b38930;
+  --color-accent-900: #997329;
+
+  --animate-fade-in: fadeIn 0.5s ease-out forwards;
+  --animate-slide-up: slideUp 0.5s ease-out forwards;
 }
 
 html {
@@ -71,83 +99,67 @@ h3 {
   scrollbar-width: none;
 }
 
-@layer components {
-
-  /* Gradient backgrounds with new brand colors */
-  .gradient-primary {
-    @apply bg-gradient-to-br from-primary-500 to-primary-700;
-  }
-
-  .gradient-accent {
-    @apply bg-gradient-to-br from-accent-400 to-accent-600;
-  }
-
-  .gradient-hero {
-    background: linear-gradient(135deg, #0d5051 0%, #093b3c 50%, #052526 100%);
-  }
-
-  .gradient-hero-gold {
-    background: linear-gradient(135deg, #0d5051 0%, #0b4647 100%);
-  }
-
-  /* Card hover effect */
-  .card-hover {
-    @apply transition-all duration-300 hover:-translate-y-1;
-  }
-
-  /* Gold accent button */
-  .btn-accent {
-    @apply bg-accent-500 hover:bg-accent-600 text-primary-900 font-semibold shadow-lg shadow-accent-500/25 hover:shadow-accent-500/40 transition-all duration-200;
-  }
-
-  /* Teal primary button */
-  .btn-primary {
-    @apply bg-primary-500 hover:bg-primary-600 text-white font-semibold shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 transition-all duration-200;
-  }
-
-  /* Gold badge */
-  .badge-gold {
-    @apply bg-accent-500 text-primary-900 font-semibold px-3 py-1 rounded-full text-sm;
-  }
-
-  /* Teal badge */
-  .badge-teal {
-    @apply bg-primary-500 text-white font-semibold px-3 py-1 rounded-full text-sm;
-  }
+@utility gradient-primary {
+  @apply bg-gradient-to-br from-primary-500 to-primary-700;
 }
 
-@layer utilities {
+@utility gradient-accent {
+  @apply bg-gradient-to-br from-accent-400 to-accent-600;
+}
 
-  /* Text gradient with brand colors */
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-500 to-accent-500;
-  }
+@utility gradient-hero {
+  background: linear-gradient(135deg, #0d5051 0%, #093b3c 50%, #052526 100%);
+}
 
-  /* Gold underline accent */
-  .underline-accent {
-    text-decoration: underline;
-    text-decoration-color: #ffca45;
-    text-underline-offset: 4px;
-    text-decoration-thickness: 3px;
-  }
+@utility gradient-hero-gold {
+  background: linear-gradient(135deg, #0d5051 0%, #0b4647 100%);
+}
 
-  /* Animations */
-  .animate-fadeIn {
-    animation: fadeIn 0.5s ease-out forwards;
-  }
+@utility card-hover {
+  @apply transition-all duration-300 hover:-translate-y-1;
+}
 
-  .animate-slideUp {
-    animation: slideUp 0.5s ease-out forwards;
-  }
+@utility btn-accent {
+  @apply bg-accent-500 font-semibold text-primary-900 shadow-lg shadow-accent-500/25 transition-all duration-200 hover:bg-accent-600 hover:shadow-accent-500/40;
+}
 
-  /* Glass effect */
-  .glass {
-    @apply bg-white/80 backdrop-blur-md;
-  }
+@utility btn-primary {
+  @apply bg-primary-500 font-semibold text-white shadow-lg shadow-primary-500/25 transition-all duration-200 hover:bg-primary-600 hover:shadow-primary-500/40;
+}
 
-  .glass-dark {
-    @apply bg-primary-900/80 backdrop-blur-md;
-  }
+@utility badge-gold {
+  @apply rounded-full bg-accent-500 px-3 py-1 text-sm font-semibold text-primary-900;
+}
+
+@utility badge-teal {
+  @apply rounded-full bg-primary-500 px-3 py-1 text-sm font-semibold text-white;
+}
+
+@utility text-gradient {
+  @apply bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent;
+}
+
+@utility underline-accent {
+  text-decoration: underline;
+  text-decoration-color: #ffca45;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 3px;
+}
+
+@utility animate-fadeIn {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@utility animate-slideUp {
+  animation: slideUp 0.5s ease-out forwards;
+}
+
+@utility glass {
+  @apply bg-white/80 backdrop-blur-md;
+}
+
+@utility glass-dark {
+  @apply bg-primary-900/80 backdrop-blur-md;
 }
 
 @keyframes fadeIn {

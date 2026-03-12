@@ -1,27 +1,37 @@
-import { FlatCompat } from '@eslint/eslintrc'
-import { dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { defineConfig, globalIgnores } from 'eslint/config'
+import nextPlugin from '@next/eslint-plugin-next'
+import tseslint from 'typescript-eslint'
+import globals from 'globals'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-
-const compat = new FlatCompat({
-    baseDirectory: __dirname,
-})
-
-const config = [
-    {
-        ignores: [
-            '.next/**',
-            'coverage/**',
-            'node_modules/**',
-            'dist/**',
-            'out/**',
-            'jest.config.js',
-            'next-env.d.ts',
-        ],
+export default defineConfig([
+  globalIgnores([
+    '.next/**',
+    'coverage/**',
+    'node_modules/**',
+    'dist/**',
+    'out/**',
+    'eslint.config.mjs',
+    'middleware.ts',
+    'next.config.js',
+    'jest.config.js',
+    'jest.setup.js',
+    'next-env.d.ts',
+  ]),
+  {
+    files: ['**/*.{js,jsx,ts,tsx,mjs,cjs}'],
+    plugins: {
+      '@next/next': nextPlugin,
     },
-    ...compat.extends('next/core-web-vitals', 'next/typescript'),
-]
-
-export default config
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
+    rules: {
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs['core-web-vitals'].rules,
+    },
+  },
+  ...tseslint.configs.recommended,
+])

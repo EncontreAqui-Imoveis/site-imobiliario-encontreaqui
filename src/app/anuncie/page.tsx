@@ -122,7 +122,6 @@ export default function AnunciePage() {
             title, description, bedrooms, bathrooms, garageSpots, areaConstruida, areaTerreno,
             temPiscina, temEnergiaSolar, ehMobiliada, priceSale, priceRent, valorCondominio, valorIptu,
         })
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [step])
 
     const handleCepBlur = async () => {
