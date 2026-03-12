@@ -15,7 +15,7 @@ interface PropertyCardProps {
 export default function PropertyCard({ property, variant = 'default' }: PropertyCardProps) {
     const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
-    const images = property.images?.length ? property.images : ['/placeholder-property.jpg']
+    const images = property.images?.length ? property.images : ['/logo_circular.png']
     const hasMultipleImages = images.length > 1
     const isFeatured = variant === 'featured'
     const purposeBadge = property.purpose.toLowerCase().includes('alug')

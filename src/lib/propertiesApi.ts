@@ -139,7 +139,7 @@ export function normalizeProperty(raw: unknown): Property | null {
         ehMobiliada: toBoolean(item.ehMobiliada ?? item.eh_mobiliada),
         valorCondominio: toNumber(item.valorCondominio ?? item.valor_condominio),
         valorIptu: toNumber(item.valorIptu ?? item.valor_iptu),
-        images: images.length > 0 ? images : ['/placeholder-property.jpg'],
+        images: images.length > 0 ? images : ['/logo_circular.png'],
         videoUrl: toStringOrUndefined(item.videoUrl ?? item.video_url),
         brokerId: toNumber(item.brokerId ?? item.broker_id),
         brokerName: toStringOrUndefined(item.brokerName ?? item.broker_name),
