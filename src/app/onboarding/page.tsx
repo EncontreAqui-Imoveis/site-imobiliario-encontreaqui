@@ -138,7 +138,7 @@ export default function OnboardingPage() {
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4" aria-describedby={error ? 'onboarding-error' : undefined}>
                     {/* Telefone */}
                     <div className="space-y-1.5">
                         <label htmlFor="phone" className="block text-sm font-medium text-slate-700">
@@ -156,8 +156,8 @@ export default function OnboardingPage() {
                     </div>
 
                     {/* Endereço */}
-                    <div className="space-y-3 pt-2">
-                        <h3 className="text-sm font-semibold text-slate-800">Endereço</h3>
+                    <fieldset className="space-y-3 pt-2">
+                        <legend className="text-sm font-semibold text-slate-800">Endereço</legend>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1.5">
                                 <label htmlFor="cep" className="block text-xs font-medium text-slate-600">CEP</label>
@@ -170,7 +170,7 @@ export default function OnboardingPage() {
                                     className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                                     placeholder="00000-000"
                                 />
-                                {cepLoading && <p className="text-xs text-primary-500">Buscando CEP...</p>}
+                                {cepLoading && <p role="status" aria-live="polite" className="text-xs text-primary-500">Buscando CEP...</p>}
                             </div>
                             <div className="space-y-1.5">
                                 <label htmlFor="state" className="block text-xs font-medium text-slate-600">Estado</label>
@@ -236,10 +236,10 @@ export default function OnboardingPage() {
                                 />
                             </div>
                         </div>
-                    </div>
+                    </fieldset>
 
                     {error && (
-                        <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+                        <p id="onboarding-error" role="alert" className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
                             {error}
                         </p>
                     )}

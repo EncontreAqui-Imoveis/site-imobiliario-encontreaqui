@@ -106,7 +106,7 @@ export default function LoginPage() {
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form onSubmit={handleSubmit} className="space-y-5" aria-describedby={error ? 'login-error' : undefined}>
                     <div className="space-y-1.5">
                         <label htmlFor="email" className="block text-sm font-medium text-slate-700">
                             E-mail
@@ -140,15 +140,19 @@ export default function LoginPage() {
                             type="password"
                             autoComplete="current-password"
                             required
+                            aria-describedby="login-password-hint"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                             placeholder="••••••••"
                         />
+                        <p id="login-password-hint" className="text-xs text-slate-500">
+                            Use a senha cadastrada na sua conta.
+                        </p>
                     </div>
 
                     {error && (
-                        <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+                        <p id="login-error" role="alert" className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
                             {error}
                         </p>
                     )}

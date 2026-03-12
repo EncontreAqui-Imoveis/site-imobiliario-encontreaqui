@@ -116,7 +116,7 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
                 </p>
             </div>
 
-            <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
+            <div className="flex items-center gap-2 text-xs font-medium text-slate-600" aria-label="Etapas da proposta">
                 <span className={`px-2.5 py-1 rounded-full ${step === 1 ? 'bg-primary-600 text-white' : 'bg-slate-100'}`}>
                     1. Dados do cliente
                 </span>
@@ -129,8 +129,8 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
             </div>
 
             {step === 1 && (
-                <section className="space-y-4">
-                    <h2 className="text-sm font-semibold text-slate-800">
+                <section className="space-y-4" aria-labelledby="proposal-step-client">
+                    <h2 id="proposal-step-client" className="text-sm font-semibold text-slate-800">
                         Informações do cliente
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -164,8 +164,8 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
             )}
 
             {step === 2 && (
-                <section className="space-y-4">
-                    <h2 className="text-sm font-semibold text-slate-800">
+                <section className="space-y-4" aria-labelledby="proposal-step-payment">
+                    <h2 id="proposal-step-payment" className="text-sm font-semibold text-slate-800">
                         Condições de pagamento
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -205,7 +205,7 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
                             </span>
                         </p>
                         {hasMathMismatch && (
-                            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 mt-1">
+                            <p role="status" aria-live="polite" className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 mt-1">
                                 A soma das condições precisa bater exatamente com o valor do imóvel antes de enviar.
                             </p>
                         )}
@@ -214,8 +214,8 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
             )}
 
             {step === 3 && (
-                <section className="space-y-4">
-                    <h2 className="text-sm font-semibold text-slate-800">
+                <section className="space-y-4" aria-labelledby="proposal-step-review">
+                    <h2 id="proposal-step-review" className="text-sm font-semibold text-slate-800">
                         Revisão da proposta
                     </h2>
                     <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm space-y-1.5">
@@ -244,7 +244,7 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
             )}
 
             {error && (
-                <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+                <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
                     {error}
                 </p>
             )}

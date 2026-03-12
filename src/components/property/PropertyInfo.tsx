@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { formatPrice, Property } from '@/types/property'
 import {
     MapPin, Bed, Bath, Car, Maximize,
@@ -8,6 +9,7 @@ import {
     Map, Home as HomeIcon, Signpost, Layers, Mail, Phone, Globe
 } from 'lucide-react'
 import FavoriteButton from '@/components/property/FavoriteButton'
+import { shareOrCopy } from '@/lib/webShare'
 
 interface PropertyInfoProps {
     property: Property
@@ -33,6 +35,7 @@ function formatDate(date?: string): string {
 
 export default function PropertyInfo({ property }: PropertyInfoProps) {
     const statusInfo = statusColors[property.status?.toLowerCase()] || statusColors.pending
+    const [shareMessage, setShareMessage] = useState<string | null>(null)
 
     // Build comfort amenities
     const comfortAmenities = [
@@ -52,20 +55,23 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
 
     const handleShare = async () => {
         const url = window.location.href
-        if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: property.title,
-                    text: `Confira o imóvel "${property.title}" no EncontreAquiImóveis`,
-                    url,
-                })
-            } catch {
-                console.log('Share cancelled')
-            }
-        } else {
-            navigator.clipboard.writeText(url)
-            alert('Link copiado!')
+        const result = await shareOrCopy({
+            title: property.title,
+            text: `Confira o imóvel "${property.title}" no EncontreAquiImóveis`,
+            url,
+        })
+
+        if (result.kind === 'copied') {
+            setShareMessage('Link copiado para a área de transferência.')
+            return
         }
+
+        if (result.kind === 'unsupported') {
+            setShareMessage('Não foi possível compartilhar este imóvel neste navegador.')
+            return
+        }
+
+        setShareMessage('Compartilhamento iniciado com sucesso.')
     }
 
     return (
@@ -100,6 +106,16 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                         </button>
                     </div>
                 </div>
+
+                {shareMessage && (
+                    <div
+                        role="status"
+                        aria-live="polite"
+                        className="mb-4 rounded-xl border border-primary-100 bg-primary-50 px-4 py-3 text-sm text-primary-900"
+                    >
+                        {shareMessage}
+                    </div>
+                )}
 
                 {/* Title */}
                 <h1 className="font-display text-3xl sm:text-4xl font-bold text-gray-900 mb-4 leading-tight">
