@@ -1,5 +1,10 @@
 import { apiClient, ApiError } from '@/lib/api/client'
-import { clearAuthToken, persistAuthToken } from '@/lib/auth/tokenStore'
+import {
+    clearAuthToken,
+    hasAuthTokenInBrowser,
+    hasAuthTokenInServer,
+    persistAuthToken,
+} from '@/lib/auth/tokenStore'
 import type { Broker, BrokerDocuments, User } from '@/types/user'
 
 export interface UserSession {
@@ -104,6 +109,13 @@ function mapProfileResponseToSession(response: ProfileResponse): UserSession {
 }
 
 export async function fetchCurrentSession(): Promise<UserSession | null> {
+    const tokenAvailable =
+        typeof window !== 'undefined' ? hasAuthTokenInBrowser() : await hasAuthTokenInServer()
+
+    if (!tokenAvailable) {
+        return null
+    }
+
     try {
         const response = await apiClient.get<ProfileResponse>('/users/me')
         return mapProfileResponseToSession(response)

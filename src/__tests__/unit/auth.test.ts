@@ -105,6 +105,7 @@ describe('auth API', () => {
     })
 
     it('fetchCurrentSession() returns null on 401', async () => {
+        window.localStorage.setItem('ea_auth_token', 'token-401')
         mockFetch.mockResolvedValueOnce(errorResponse(401, 'Unauthorized'))
 
         const session = await auth.fetchCurrentSession()
@@ -113,9 +114,16 @@ describe('auth API', () => {
     })
 
     it('fetchCurrentSession() propagates non-401/403 errors', async () => {
+        window.localStorage.setItem('ea_auth_token', 'token-500')
         mockFetch.mockResolvedValueOnce(errorResponse(500, 'Server error'))
 
         await expect(auth.fetchCurrentSession()).rejects.toThrow()
+    })
+
+    it('fetchCurrentSession() skips the request when there is no auth token', async () => {
+        const session = await auth.fetchCurrentSession()
+        expect(session).toBeNull()
+        expect(mockFetch).not.toHaveBeenCalled()
     })
 
     it('logout() does not throw even on failure', async () => {

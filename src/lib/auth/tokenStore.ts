@@ -39,10 +39,18 @@ export function readAuthTokenFromBrowser(): string | null {
     return decoded || null
 }
 
+export function hasAuthTokenInBrowser(): boolean {
+    return Boolean(readAuthTokenFromBrowser())
+}
+
 export async function readAuthTokenFromServer(): Promise<string | null> {
     const { cookies } = await import('next/headers')
     const cookieStore = await cookies()
     return cookieStore.get(AUTH_TOKEN_COOKIE)?.value?.trim() || null
+}
+
+export async function hasAuthTokenInServer(): Promise<boolean> {
+    return Boolean(await readAuthTokenFromServer())
 }
 
 export { AUTH_TOKEN_COOKIE }
