@@ -29,12 +29,19 @@ describe('auth API', () => {
 
     beforeEach(async () => {
         jest.resetModules()
+        window.localStorage.clear()
+        document.cookie = 'ea_auth_token=; Path=/; Max-Age=0'
         auth = await import('@/lib/api/auth')
     })
 
     it('login() sends POST to /auth/login', async () => {
-        const session = { user: { id: 1 }, isBroker: false, profileStatus: 'complete' }
-        mockFetch.mockResolvedValueOnce(okResponse(session))
+        mockFetch.mockResolvedValueOnce(
+            okResponse({
+                user: { id: 1, role: 'client' },
+                token: 'token-123',
+                needsCompletion: false,
+            }),
+        )
 
         const result = await auth.login({ email: 'test@test.com', password: '123456' })
 
@@ -42,28 +49,59 @@ describe('auth API', () => {
         const [url, init] = mockFetch.mock.calls[0]
         expect(url).toContain('/auth/login')
         expect(init.method).toBe('POST')
-        expect(result).toEqual(session)
+        expect(result).toEqual({
+            user: { id: 1, role: 'client' },
+            isBroker: false,
+            broker: undefined,
+            profileStatus: 'incomplete',
+        })
+        expect(window.localStorage.getItem('ea_auth_token')).toBe('token-123')
     })
 
     it('register() sends POST with full payload', async () => {
-        const session = { user: { id: 1 }, isBroker: false, profileStatus: 'incomplete' }
-        mockFetch.mockResolvedValueOnce(okResponse(session))
+        mockFetch.mockResolvedValueOnce(
+            okResponse({
+                user: {
+                    id: 1,
+                    role: 'client',
+                    phone: null,
+                    street: null,
+                    number: null,
+                    bairro: null,
+                    city: null,
+                    state: null,
+                    cep: null,
+                },
+                token: 'token-xyz',
+                needsCompletion: true,
+            }),
+        )
 
-        await auth.register({ name: 'João', email: 'j@test.com', password: '123', city: 'SP', state: 'SP' })
+        const result = await auth.register({ name: 'João', email: 'j@test.com', password: '123', city: 'SP', state: 'SP' })
 
         const body = JSON.parse(mockFetch.mock.calls[0][1].body)
         expect(body.name).toBe('João')
         expect(body.email).toBe('j@test.com')
         expect(body.city).toBe('SP')
+        expect(result.profileStatus).toBe('incomplete')
+        expect(window.localStorage.getItem('ea_auth_token')).toBe('token-xyz')
     })
 
     it('loginWithGoogle() sends idToken in body', async () => {
-        mockFetch.mockResolvedValueOnce(okResponse({ user: { id: 1 } }))
+        mockFetch.mockResolvedValueOnce(
+            okResponse({
+                user: { id: 1, role: 'client' },
+                token: 'google-token-session',
+                needsCompletion: false,
+            }),
+        )
 
-        await auth.loginWithGoogle('google-token-123')
+        const result = await auth.loginWithGoogle('google-token-123')
 
         const body = JSON.parse(mockFetch.mock.calls[0][1].body)
         expect(body.idToken).toBe('google-token-123')
+        expect(result.isBroker).toBe(false)
+        expect(window.localStorage.getItem('ea_auth_token')).toBe('google-token-session')
     })
 
     it('fetchCurrentSession() returns null on 401', async () => {
@@ -71,7 +109,7 @@ describe('auth API', () => {
 
         const session = await auth.fetchCurrentSession()
         expect(session).toBeNull()
-        expect(mockFetch.mock.calls[0][0]).toContain('/auth/me')
+        expect(mockFetch.mock.calls[0][0]).toContain('/users/me')
     })
 
     it('fetchCurrentSession() propagates non-401/403 errors', async () => {

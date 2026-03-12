@@ -1,4 +1,5 @@
 import { apiClient, ApiError } from '@/lib/api/client'
+import { clearAuthToken, persistAuthToken } from '@/lib/auth/tokenStore'
 import type { Broker, BrokerDocuments, User } from '@/types/user'
 
 export interface UserSession {
@@ -7,6 +8,21 @@ export interface UserSession {
     broker?: Broker
     brokerDocuments?: BrokerDocuments
     profileStatus: 'incomplete' | 'complete'
+}
+
+type AuthResponse = {
+    user: User
+    token?: string
+    needsCompletion?: boolean
+    requiresDocuments?: boolean
+    broker?: Broker
+}
+
+type ProfileResponse = {
+    role?: 'client' | 'broker'
+    status?: 'pending_verification' | 'approved' | 'rejected'
+    requiresDocuments?: boolean
+    user: User
 }
 
 export interface EmailSendResult {
@@ -40,11 +56,60 @@ export interface RegisterPayload {
     cep?: string
 }
 
+function isProfileComplete(user: User): boolean {
+    return Boolean(
+        user.phone &&
+        user.street &&
+        user.number &&
+        user.bairro &&
+        user.city &&
+        user.state &&
+        user.cep,
+    )
+}
+
+function mapAuthResponseToSession(response: AuthResponse): UserSession {
+    return {
+        user: response.user,
+        isBroker: response.user.role === 'broker' || response.broker?.status != null,
+        broker: response.broker,
+        profileStatus:
+            response.needsCompletion === true || !isProfileComplete(response.user)
+                ? 'incomplete'
+                : 'complete',
+    }
+}
+
+function mapProfileResponseToSession(response: ProfileResponse): UserSession {
+    const isBroker = response.role === 'broker'
+    const broker =
+        isBroker
+            ? {
+                  ...(response.user as unknown as Broker),
+                  creci: (response.user as unknown as Broker).creci ?? '',
+                  status: response.status ?? 'pending_verification',
+              }
+            : undefined
+
+    return {
+        user: {
+            ...response.user,
+            role: response.role ?? 'client',
+            broker_status: response.status ?? null,
+        } as User,
+        isBroker,
+        broker,
+        profileStatus: isProfileComplete(response.user) ? 'complete' : 'incomplete',
+    }
+}
+
 export async function fetchCurrentSession(): Promise<UserSession | null> {
     try {
-        return await apiClient.get<UserSession>('/auth/me')
+        const response = await apiClient.get<ProfileResponse>('/users/me')
+        return mapProfileResponseToSession(response)
     } catch (error) {
         if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+            clearAuthToken()
             return null
         }
         throw error
@@ -52,15 +117,27 @@ export async function fetchCurrentSession(): Promise<UserSession | null> {
 }
 
 export async function login(payload: LoginPayload): Promise<UserSession> {
-    return apiClient.post<UserSession>('/auth/login', payload)
+    const response = await apiClient.post<AuthResponse>('/auth/login', payload)
+    if (response.token) {
+        persistAuthToken(response.token)
+    }
+    return mapAuthResponseToSession(response)
 }
 
 export async function register(payload: RegisterPayload): Promise<UserSession> {
-    return apiClient.post<UserSession>('/auth/register', payload)
+    const response = await apiClient.post<AuthResponse>('/auth/register', payload)
+    if (response.token) {
+        persistAuthToken(response.token)
+    }
+    return mapAuthResponseToSession(response)
 }
 
 export async function loginWithGoogle(idToken: string): Promise<UserSession> {
-    return apiClient.post<UserSession>('/auth/google', { idToken })
+    const response = await apiClient.post<AuthResponse>('/auth/google', { idToken })
+    if (response.token) {
+        persistAuthToken(response.token)
+    }
+    return mapAuthResponseToSession(response)
 }
 
 export async function requestPasswordReset(email: string): Promise<void> {
@@ -114,6 +191,8 @@ export async function logout(): Promise<void> {
         await apiClient.post('/auth/logout', undefined, { skipThrowOnError: true })
     } catch {
         // Logout deve ser resiliente a falhas.
+    } finally {
+        clearAuthToken()
     }
 }
 

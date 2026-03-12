@@ -25,6 +25,8 @@ beforeEach(() => {
     ; (globalThis as typeof globalThis & { Sentry?: { captureException: typeof sentryCaptureMock } }).Sentry = {
         captureException: sentryCaptureMock,
     }
+    window.localStorage.clear()
+    document.cookie = 'ea_auth_token=; Path=/; Max-Age=0'
     mockFetch.mockReset()
     sentryCaptureMock.mockReset()
 })
@@ -84,6 +86,21 @@ describe('apiClient request behavior', () => {
 
         const calledInit = mockFetch.mock.calls[0][1]
         expect(calledInit.credentials).toBe('include')
+    })
+
+    it('injects Authorization header when auth token exists in browser storage', async () => {
+        window.localStorage.setItem('ea_auth_token', 'token-storage-123')
+        mockFetch.mockResolvedValueOnce({
+            ok: true,
+            headers: new Headers({ 'Content-Type': 'application/json' }),
+            json: () => Promise.resolve({}),
+        })
+
+        await apiClient.get('/test')
+
+        const calledInit = mockFetch.mock.calls[0][1]
+        const headers = calledInit.headers as Headers
+        expect(headers.get('Authorization')).toBe('Bearer token-storage-123')
     })
 
     it('throws ApiError on 400 response', async () => {

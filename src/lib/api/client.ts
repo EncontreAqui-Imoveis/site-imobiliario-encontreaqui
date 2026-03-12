@@ -1,4 +1,5 @@
 import { reportObservedError } from '@/lib/observability'
+import { readAuthTokenFromBrowser, readAuthTokenFromServer } from '@/lib/auth/tokenStore'
 
 const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_URL || 'https://backend-production-6acc.up.railway.app'
@@ -49,6 +50,18 @@ interface RequestOptions {
     skipThrowOnError?: boolean
 }
 
+async function resolveAuthToken(): Promise<string | null> {
+    if (typeof window !== 'undefined') {
+        return readAuthTokenFromBrowser()
+    }
+
+    try {
+        return await readAuthTokenFromServer()
+    } catch {
+        return null
+    }
+}
+
 async function request<T = unknown>(path: string, options: RequestOptions = {}): Promise<T> {
     const {
         method = 'GET',
@@ -73,6 +86,11 @@ async function request<T = unknown>(path: string, options: RequestOptions = {}):
         if (!baseHeaders.has('Content-Type')) {
             baseHeaders.set('Content-Type', 'application/json')
         }
+    }
+
+    const authToken = await resolveAuthToken()
+    if (authToken && !baseHeaders.has('Authorization')) {
+        baseHeaders.set('Authorization', `Bearer ${authToken}`)
     }
 
     const init: RequestInit = {

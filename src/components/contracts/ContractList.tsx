@@ -22,6 +22,21 @@ function statusLabel(status: ContractSummary['status']): string {
     }
 }
 
+function statusChipClass(status: ContractSummary['status']): string {
+    switch (status) {
+        case 'AWAITING_DOCS':
+            return 'bg-amber-50 text-amber-700'
+        case 'IN_DRAFT':
+            return 'bg-blue-50 text-blue-700'
+        case 'AWAITING_SIGNATURES':
+            return 'bg-violet-50 text-violet-700'
+        case 'FINALIZED':
+            return 'bg-emerald-50 text-emerald-700'
+        default:
+            return 'bg-slate-50 text-slate-700'
+    }
+}
+
 export function ContractList({ contracts }: ContractListProps) {
     if (!contracts.length) {
         return (
@@ -37,9 +52,9 @@ export function ContractList({ contracts }: ContractListProps) {
                 <Link
                     key={contract.id}
                     href={`/contratos/${encodeURIComponent(contract.id)}`}
-                    className="flex items-center justify-between rounded-xl border border-slate-100 bg-white px-4 py-3 shadow-sm hover:border-primary-200 hover:shadow-md transition-all"
+                    className="flex flex-col gap-3 rounded-xl border border-slate-100 bg-white px-4 py-4 shadow-sm transition-all hover:border-primary-200 hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
                 >
-                    <div className="space-y-0.5">
+                    <div className="space-y-1">
                         <p className="text-sm font-semibold text-slate-900">
                             Contrato #{contract.id.slice(0, 8)}…
                         </p>
@@ -47,10 +62,13 @@ export function ContractList({ contracts }: ContractListProps) {
                             Negociação {contract.negotiationId.slice(0, 8)}… • Imóvel #{contract.propertyId}
                         </p>
                     </div>
-                    <div className="text-right text-xs">
-                        <p className="font-medium text-primary-700">
+                    <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">
+                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusChipClass(contract.status)}`}>
                             {statusLabel(contract.status)}
-                        </p>
+                        </span>
+                        <span className="text-xs font-medium text-primary-700">
+                            Abrir contrato
+                        </span>
                     </div>
                 </Link>
             ))}

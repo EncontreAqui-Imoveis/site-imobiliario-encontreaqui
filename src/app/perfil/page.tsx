@@ -30,6 +30,15 @@ export default function PerfilPage() {
     }
 
     const user = session.user
+    const brokerStatus = session.broker?.status ?? user.broker_status ?? null
+    const brokerStatusLabel =
+        brokerStatus === 'approved'
+            ? 'Corretor aprovado'
+            : brokerStatus === 'pending_verification'
+                ? 'Corretor em análise'
+                : brokerStatus === 'rejected'
+                    ? 'Solicitação rejeitada'
+                    : null
 
     return (
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 pt-24">
@@ -50,6 +59,19 @@ export default function PerfilPage() {
                                     Corretor
                                 </span>
                             )}
+                            {brokerStatusLabel && (
+                                <span
+                                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                                        brokerStatus === 'approved'
+                                            ? 'bg-green-50 text-green-700'
+                                            : brokerStatus === 'pending_verification'
+                                                ? 'bg-amber-50 text-amber-700'
+                                                : 'bg-red-50 text-red-700'
+                                    }`}
+                                >
+                                    {brokerStatusLabel}
+                                </span>
+                            )}
                             {session.profileStatus === 'complete' ? (
                                 <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700">
                                     Perfil completo
@@ -57,6 +79,15 @@ export default function PerfilPage() {
                             ) : (
                                 <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700">
                                     Perfil incompleto
+                                </span>
+                            )}
+                            {user.email_verified ? (
+                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                                    E-mail verificado
+                                </span>
+                            ) : (
+                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700">
+                                    E-mail pendente
                                 </span>
                             )}
                         </div>
