@@ -127,7 +127,7 @@ export default function PropertyDetailClient({ initialProperty }: PropertyDetail
                                         Gerencie este imóvel
                                     </p>
                                 </div>
-                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${statusLower === 'approved' ? 'bg-green-100 text-green-700' :
+                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${statusLower === 'approved' ? 'bg-slate-100 text-slate-700' :
                                     statusLower === 'sold' ? 'bg-blue-100 text-blue-700' :
                                         statusLower === 'rented' ? 'bg-purple-100 text-purple-700' :
                                             statusLower === 'pending_approval' ? 'bg-amber-100 text-amber-700' :
@@ -198,10 +198,10 @@ export default function PropertyDetailClient({ initialProperty }: PropertyDetail
                                 href="/contratos"
                                 className="flex flex-col items-center gap-2 px-4 py-5 hover:bg-gray-50 transition-colors text-center group"
                             >
-                                <div className="w-10 h-10 rounded-xl bg-emerald-100 group-hover:bg-emerald-200 flex items-center justify-center transition-colors">
-                                    <ScrollText className="w-5 h-5 text-emerald-600" />
+                                <div className="w-10 h-10 rounded-xl bg-slate-100 group-hover:bg-slate-200 flex items-center justify-center transition-colors">
+                                    <ScrollText className="w-5 h-5 text-slate-600" />
                                 </div>
-                                <span className="text-xs font-semibold text-gray-700 group-hover:text-emerald-700">Ver contratos</span>
+                                <span className="text-xs font-semibold text-gray-700 group-hover:text-slate-700">Ver contratos</span>
                             </Link>
                         </div>
                     </section>
@@ -277,7 +277,7 @@ export default function PropertyDetailClient({ initialProperty }: PropertyDetail
                         {originalPrice && (
                             <p className="text-xs text-gray-400 line-through">{originalPrice}</p>
                         )}
-                        <p className={`text-lg font-bold truncate ${promoPrice ? 'text-green-600' : 'text-primary-700'}`}>
+                        <p className="text-lg font-bold truncate text-primary-700">
                             {displayPrice}
                         </p>
                     </div>
@@ -298,7 +298,7 @@ export default function PropertyDetailClient({ initialProperty }: PropertyDetail
                             href={whatsappLink}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-sm transition-colors shadow-md"
+                            className="flex items-center gap-1.5 px-4 py-3 bg-primary-700 hover:bg-primary-800 text-white font-bold rounded-xl text-sm transition-colors shadow-md"
                         >
                             <MessageCircle className="w-4 h-4" />
                             Contatar

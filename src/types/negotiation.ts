@@ -81,13 +81,13 @@ export function getStatusColor(status: NegotiationStatus): string {
         PROPOSAL_SENT: 'bg-blue-50 text-blue-700',
         PROPOSAL_SIGNED: 'bg-indigo-50 text-indigo-700',
         IN_CONTRACT: 'bg-purple-50 text-purple-700',
-        CONTRACT_FINALIZED: 'bg-emerald-50 text-emerald-700',
-        IN_NEGOTIATION: 'bg-teal-50 text-teal-700',
+        CONTRACT_FINALIZED: 'bg-slate-100 text-slate-700',
+        IN_NEGOTIATION: 'bg-slate-100 text-slate-700',
         DOCUMENTATION_PHASE: 'bg-orange-50 text-orange-700',
         CONTRACT_DRAFTING: 'bg-sky-50 text-sky-700',
         AWAITING_SIGNATURES: 'bg-violet-50 text-violet-700',
-        SOLD: 'bg-green-50 text-green-700',
-        RENTED: 'bg-teal-50 text-teal-700',
+        SOLD: 'bg-slate-100 text-slate-700',
+        RENTED: 'bg-blue-50 text-blue-700',
         CANCELLED: 'bg-red-50 text-red-700',
     }
     return colors[status] || 'bg-slate-50 text-slate-700'

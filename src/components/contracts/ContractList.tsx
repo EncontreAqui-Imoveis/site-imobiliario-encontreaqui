@@ -31,7 +31,7 @@ function statusChipClass(status: ContractSummary['status']): string {
         case 'AWAITING_SIGNATURES':
             return 'bg-violet-50 text-violet-700'
         case 'FINALIZED':
-            return 'bg-emerald-50 text-emerald-700'
+            return 'bg-slate-100 text-slate-700'
         default:
             return 'bg-slate-50 text-slate-700'
     }

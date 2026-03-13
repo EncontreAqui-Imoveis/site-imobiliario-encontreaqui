@@ -20,7 +20,7 @@ export default function Footer() {
     const currentYear = new Date().getFullYear()
 
     return (
-        <footer className="bg-primary-900 text-gray-300">
+        <footer className="border-t border-slate-800 bg-slate-950 text-slate-300">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
                     <div>
@@ -34,19 +34,19 @@ export default function Footer() {
                                 priority
                             />
                         </Link>
-                        <p className="text-gray-400 text-sm leading-relaxed">
+                        <p className="text-slate-400 text-sm leading-relaxed">
                             Vitrine oficial de imóveis. Para interações completas, utilize o aplicativo da imobiliária.
                         </p>
                     </div>
 
                     <div>
-                        <h3 className="text-white font-semibold mb-4">Navegação</h3>
+                        <h3 className="text-slate-100 font-semibold mb-4">Navegação</h3>
                         <ul className="space-y-2">
                             {footerLinks.map((link) => (
                                 <li key={link.href}>
                                     <Link
                                         href={link.href}
-                                        className="text-gray-400 hover:text-accent-400 transition-colors text-sm"
+                                        className="text-slate-400 hover:text-slate-200 transition-colors text-sm"
                                     >
                                         {link.label}
                                     </Link>
@@ -56,13 +56,13 @@ export default function Footer() {
                     </div>
 
                     <div>
-                        <h3 className="text-white font-semibold mb-4">Minha Conta</h3>
+                        <h3 className="text-slate-100 font-semibold mb-4">Minha Conta</h3>
                         <ul className="space-y-2">
                             {accountLinks.map((link) => (
                                 <li key={link.href}>
                                     <Link
                                         href={link.href}
-                                        className="text-gray-400 hover:text-accent-400 transition-colors text-sm"
+                                        className="text-slate-400 hover:text-slate-200 transition-colors text-sm"
                                     >
                                         {link.label}
                                     </Link>
@@ -72,7 +72,7 @@ export default function Footer() {
                     </div>
 
                     <div>
-                        <h3 className="text-white font-semibold mb-4">Aplicativo</h3>
+                        <h3 className="text-slate-100 font-semibold mb-4">Aplicativo</h3>
                         <div className="space-y-2">
                             <a
                                 href={APP_LINKS.androidStore}
@@ -87,7 +87,7 @@ export default function Footer() {
                                 href={APP_LINKS.iosStore}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex w-full items-center justify-center gap-2 px-4 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-semibold transition-colors"
+                                className="inline-flex w-full items-center justify-center gap-2 px-4 py-3 border border-slate-700 bg-slate-900 hover:bg-slate-800 rounded-xl text-sm font-semibold transition-colors"
                             >
                                 <Download className="w-4 h-4" />
                                 Baixar no iOS
@@ -97,17 +97,17 @@ export default function Footer() {
                 </div>
             </div>
 
-            <div className="border-t border-primary-800">
+            <div className="border-t border-slate-800">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-slate-500">
                             © {currentYear} Encontre Aqui Imóveis. Todos os direitos reservados.
                         </p>
                         <div className="flex gap-6">
-                            <Link href="/termos" className="text-sm text-gray-500 hover:text-gray-400 transition-colors">
+                            <Link href="/termos" className="text-sm text-slate-500 hover:text-slate-300 transition-colors">
                                 Termos de Uso
                             </Link>
-                            <Link href="/privacidade" className="text-sm text-gray-500 hover:text-gray-400 transition-colors">
+                            <Link href="/privacidade" className="text-sm text-slate-500 hover:text-slate-300 transition-colors">
                                 Privacidade
                             </Link>
                         </div>

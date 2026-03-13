@@ -91,7 +91,7 @@ export default function PropertySidebar({ property }: PropertySidebarProps) {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label={`Falar pelo WhatsApp sobre ${property.title}`}
-                                    className="w-full flex items-center justify-center gap-2 py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-green-600/30 active:scale-[0.98]"
+                                    className="w-full flex items-center justify-center gap-2 py-4 bg-primary-700 hover:bg-primary-800 text-white font-bold rounded-xl transition-all shadow-lg shadow-primary-900/25 active:scale-[0.98]"
                                 >
                                     <MessageCircle className="w-5 h-5" />
                                     Falar pelo WhatsApp

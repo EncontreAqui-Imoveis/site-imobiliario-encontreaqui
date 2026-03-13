@@ -18,7 +18,7 @@ interface PropertyInfoProps {
 // Status color mapping
 const statusColors: Record<string, { bg: string; text: string; label: string }> = {
     pending: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Pendente' },
-    approved: { bg: 'bg-green-100', text: 'text-green-700', label: 'Disponível' },
+    approved: { bg: 'bg-slate-100', text: 'text-slate-700', label: 'Disponível' },
     rejected: { bg: 'bg-red-100', text: 'text-red-700', label: 'Rejeitado' },
     sold: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Vendido' },
     rented: { bg: 'bg-purple-100', text: 'text-purple-700', label: 'Alugado' },
@@ -89,7 +89,7 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                         </span>
                         <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wide rounded-full ${property.purpose?.includes('Alug')
                             ? 'bg-amber-100 text-amber-700'
-                            : 'bg-green-100 text-green-700'
+                            : 'bg-slate-100 text-slate-700'
                             }`}>
                             {property.purpose}
                         </span>
@@ -335,7 +335,7 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                             <span className={`text-sm font-medium ${item.active ? 'text-gray-900' : 'text-gray-500'}`}>
                                 {item.label}
                             </span>
-                            {item.active && <CheckCircle className="w-4 h-4 text-green-500 ml-auto" />}
+                            {item.active && <CheckCircle className="w-4 h-4 text-primary-500 ml-auto" />}
                         </div>
                     ))}
                 </div>

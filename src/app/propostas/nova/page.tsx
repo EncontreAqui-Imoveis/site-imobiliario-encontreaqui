@@ -405,7 +405,7 @@ export default function ProposalWizardPage() {
                                         )}
 
                                         {selectedBroker && (
-                                            <p className="text-sm font-semibold text-green-700 flex items-center gap-1">
+                                            <p className="text-sm font-semibold text-primary-700 flex items-center gap-1">
                                                 <CheckCircle className="w-4 h-4" />
                                                 Selecionado: {selectedBroker.name}
                                             </p>
@@ -452,7 +452,7 @@ export default function ProposalWizardPage() {
                                     <span className="text-gray-500">Valor do Imóvel</span>
                                     <span className="font-bold text-gray-900">{formatPrice(propertyValue)}</span>
                                 </div>
-                                <div className={`flex justify-between text-sm ${isBalanced ? 'text-green-700' : remaining > 0 ? 'text-amber-600' : 'text-red-600'}`}>
+                                <div className={`flex justify-between text-sm ${isBalanced ? 'text-primary-700' : remaining > 0 ? 'text-amber-600' : 'text-red-600'}`}>
                                     <span>Falta Alocar</span>
                                     <span className="font-bold">
                                         {formatPrice(Math.abs(remaining))}
@@ -460,7 +460,7 @@ export default function ProposalWizardPage() {
                                     </span>
                                 </div>
                                 {isBalanced && (
-                                    <div className="flex items-center gap-1 text-xs text-green-600 font-medium">
+                                    <div className="flex items-center gap-1 text-xs text-primary-600 font-medium">
                                         <CheckCircle className="w-3.5 h-3.5" />
                                         Pagamento balanceado
                                     </div>

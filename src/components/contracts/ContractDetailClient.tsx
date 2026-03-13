@@ -25,7 +25,7 @@ function approvalBadge(status: ContractDetail['sellerApprovalStatus']) {
     switch (status) {
         case 'APPROVED':
         case 'APPROVED_WITH_RES':
-            return <span className={`${baseClasses} bg-emerald-50 text-emerald-700`}>Aprovado</span>
+            return <span className={`${baseClasses} bg-slate-100 text-slate-700`}>Aprovado</span>
         case 'REJECTED':
             return <span className={`${baseClasses} bg-red-50 text-red-700`}>Rejeitado</span>
         default:

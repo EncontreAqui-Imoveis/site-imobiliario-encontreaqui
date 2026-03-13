@@ -158,7 +158,7 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                                         <p className="text-sm text-gray-400 line-through font-medium">
                                             {formatPrice(basePrice)}
                                         </p>
-                                        <p className="text-xl font-display font-bold text-green-600">
+                                        <p className="text-xl font-display font-bold text-primary-700">
                                             {formatPrice(promo)}
                                             {property.priceRent && <span className="text-sm font-normal text-gray-500">/mês</span>}
                                         </p>

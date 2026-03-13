@@ -21,7 +21,7 @@ function formatDate(dateStr?: string) {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-    approved: { label: 'Disponíveis', color: 'text-green-700', bg: 'bg-green-100' },
+    approved: { label: 'Disponíveis', color: 'text-slate-700', bg: 'bg-slate-100' },
     pending_approval: { label: 'Em análise', color: 'text-amber-700', bg: 'bg-amber-100' },
     pending: { label: 'Em análise', color: 'text-amber-700', bg: 'bg-amber-100' },
     rejected: { label: 'Rejeitados', color: 'text-red-700', bg: 'bg-red-100' },
@@ -120,7 +120,7 @@ export default function RelatoriosPage() {
                     {report && (
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <SummaryCard icon={DollarSign} label="Comissões" value={formatCurrency(report.totalCommissionEarned)} color="primary" />
-                            <SummaryCard icon={TrendingUp} label="Vendas" value={String(report.totalSales)} color="green" />
+                            <SummaryCard icon={TrendingUp} label="Vendas" value={String(report.totalSales)} color="primary" />
                             <SummaryCard icon={ShoppingBag} label="Aluguéis" value={String(report.totalRentals)} color="blue" />
                             <SummaryCard icon={Building2} label="Imóveis" value={String(report.totalPropertiesListed)} color="purple" />
                         </div>
@@ -215,7 +215,7 @@ export default function RelatoriosPage() {
                                                             }`}>
                                                             {dealLabel}
                                                         </span>
-                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${c.status === 'PAID' ? 'bg-green-50 text-green-700'
+                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${c.status === 'PAID' ? 'bg-slate-100 text-slate-700'
                                                             : c.status === 'CANCELLED' ? 'bg-red-50 text-red-700'
                                                                 : 'bg-amber-50 text-amber-700'
                                                             }`}>
@@ -318,7 +318,7 @@ function SummaryCard({ icon: Icon, label, value, color }: {
 }) {
     const colorMap: Record<string, string> = {
         primary: 'from-primary-500 to-primary-600',
-        green: 'from-green-500 to-green-600',
+        green: 'from-primary-500 to-primary-600',
         blue: 'from-blue-500 to-blue-600',
         purple: 'from-purple-500 to-purple-600',
     }

@@ -7,9 +7,9 @@
   --font-dm-sans: 'DM Sans', system-ui, sans-serif;
   --font-hk-grotesk: 'HK Grotesk', 'DM Sans', system-ui, sans-serif;
 
-  /* Encontre Aqui Imóveis - Brand Colors */
-  --color-primary: #0d5051;
-  --color-primary-light: #339697;
+  /* Encontre Aqui Imóveis - Neutralized Brand Base */
+  --color-primary: #465569;
+  --color-primary-light: #7f92ab;
   --color-accent: #ffca45;
   --color-accent-light: #ffe57f;
 }
@@ -18,16 +18,16 @@
   --font-sans: var(--font-dm-sans);
   --font-display: var(--font-hk-grotesk);
 
-  --color-primary-50: #e6f2f2;
-  --color-primary-100: #cce5e5;
-  --color-primary-200: #99cbcb;
-  --color-primary-300: #66b0b1;
-  --color-primary-400: #339697;
-  --color-primary-500: #0d5051;
-  --color-primary-600: #0b4647;
-  --color-primary-700: #093b3c;
-  --color-primary-800: #073031;
-  --color-primary-900: #052526;
+  --color-primary-50: #f5f7fb;
+  --color-primary-100: #e8edf4;
+  --color-primary-200: #d2dbe8;
+  --color-primary-300: #b7c4d3;
+  --color-primary-400: #7f92ab;
+  --color-primary-500: #465569;
+  --color-primary-600: #3b4758;
+  --color-primary-700: #2f3947;
+  --color-primary-800: #202836;
+  --color-primary-900: #121822;
 
   --color-accent-50: #fffaeb;
   --color-accent-100: #fff3c7;
@@ -75,18 +75,18 @@ h3 {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #0d5051;
+  background: #465569;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #093b3c;
+  background: #2f3947;
 }
 
 /* Selection Color */
 ::selection {
   background-color: #ffca45;
-  color: #0d5051;
+  color: #121822;
 }
 
 /* Hide scrollbar for carousels */
@@ -108,11 +108,11 @@ h3 {
 }
 
 @utility gradient-hero {
-  background: linear-gradient(135deg, #0d5051 0%, #093b3c 50%, #052526 100%);
+  background: linear-gradient(135deg, #465569 0%, #2f3947 50%, #121822 100%);
 }
 
 @utility gradient-hero-gold {
-  background: linear-gradient(135deg, #0d5051 0%, #0b4647 100%);
+  background: linear-gradient(135deg, #465569 0%, #2f3947 100%);
 }
 
 @utility card-hover {
