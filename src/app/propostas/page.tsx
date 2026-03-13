@@ -49,6 +49,32 @@ export default function PropostasPage() {
         return true
     })
 
+    const resolveNegotiationHref = (status: NegotiationSummary['status'], id: string) => {
+        if (status === 'PENDING_PROPOSAL' || status === 'PROPOSAL_SENT') {
+            return `/propostas/${id}/upload-assinada`
+        }
+        return '/contratos'
+    }
+
+    const resolveActionLabel = (status: NegotiationSummary['status']) => {
+        if (status === 'PENDING_PROPOSAL' || status === 'PROPOSAL_SENT') {
+            return 'Enviar proposta assinada'
+        }
+        if (status === 'DOCUMENTATION_PHASE') {
+            return 'Aguardar análise documental'
+        }
+        if (status === 'CONTRACT_DRAFTING') {
+            return 'Acompanhar minuta'
+        }
+        if (status === 'AWAITING_SIGNATURES') {
+            return 'Acompanhar assinaturas'
+        }
+        if (status === 'IN_NEGOTIATION') {
+            return 'Acompanhar negociação'
+        }
+        return 'Abrir contratos'
+    }
+
     if (authLoading || !session) {
         return (
             <div className="min-h-[60vh] flex items-center justify-center">
@@ -69,6 +95,14 @@ export default function PropostasPage() {
                         <p className="text-sm text-slate-500">{negotiations.length} negociações</p>
                     </div>
                 </div>
+            </div>
+
+            <div
+                role="status"
+                aria-live="polite"
+                className="mb-6 rounded-2xl border border-slate-100 bg-white px-4 py-4 text-sm text-slate-600 shadow-sm"
+            >
+                Acompanhe aqui o ciclo da proposta: envio, análise documental, minuta, assinaturas e contrato.
             </div>
 
             {/* Filters */}
@@ -98,7 +132,7 @@ export default function PropostasPage() {
                 </div>
             ) : error ? (
                 <div className="text-center py-20">
-                    <p className="text-sm text-red-600">{error}</p>
+                    <p role="alert" className="text-sm text-red-600">{error}</p>
                     <button onClick={loadNegotiations} className="mt-3 text-sm text-primary-600 font-medium hover:underline">
                         Tentar novamente
                     </button>
@@ -125,9 +159,7 @@ export default function PropostasPage() {
                     {filtered.map((neg) => (
                         <Link
                             key={neg.id}
-                            href={neg.status === 'PENDING_PROPOSAL' || neg.status === 'PROPOSAL_SENT'
-                                ? `/propostas/${neg.id}/upload-assinada`
-                                : `/contratos`}
+                            href={resolveNegotiationHref(neg.status, neg.id)}
                             className="block bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-4"
                         >
                             <div className="flex items-center gap-4">
@@ -156,6 +188,9 @@ export default function PropostasPage() {
                                             </>
                                         )}
                                     </div>
+                                    <p className="mt-2 text-xs font-medium text-primary-700">
+                                        {resolveActionLabel(neg.status)}
+                                    </p>
                                 </div>
                             </div>
                         </Link>

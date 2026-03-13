@@ -4,6 +4,10 @@ export type NegotiationStatus =
     | 'PROPOSAL_SIGNED'
     | 'IN_CONTRACT'
     | 'CONTRACT_FINALIZED'
+    | 'IN_NEGOTIATION'
+    | 'DOCUMENTATION_PHASE'
+    | 'CONTRACT_DRAFTING'
+    | 'AWAITING_SIGNATURES'
     | 'SOLD'
     | 'RENTED'
     | 'CANCELLED'
@@ -60,6 +64,10 @@ export function getStatusLabel(status: NegotiationStatus): string {
         PROPOSAL_SIGNED: 'Proposta Assinada',
         IN_CONTRACT: 'Em Contrato',
         CONTRACT_FINALIZED: 'Contrato Finalizado',
+        IN_NEGOTIATION: 'Em Negociação',
+        DOCUMENTATION_PHASE: 'Em análise documental',
+        CONTRACT_DRAFTING: 'Em confecção da minuta',
+        AWAITING_SIGNATURES: 'Aguardando assinaturas',
         SOLD: 'Vendido',
         RENTED: 'Alugado',
         CANCELLED: 'Cancelada',
@@ -74,6 +82,10 @@ export function getStatusColor(status: NegotiationStatus): string {
         PROPOSAL_SIGNED: 'bg-indigo-50 text-indigo-700',
         IN_CONTRACT: 'bg-purple-50 text-purple-700',
         CONTRACT_FINALIZED: 'bg-emerald-50 text-emerald-700',
+        IN_NEGOTIATION: 'bg-teal-50 text-teal-700',
+        DOCUMENTATION_PHASE: 'bg-orange-50 text-orange-700',
+        CONTRACT_DRAFTING: 'bg-sky-50 text-sky-700',
+        AWAITING_SIGNATURES: 'bg-violet-50 text-violet-700',
         SOLD: 'bg-green-50 text-green-700',
         RENTED: 'bg-teal-50 text-teal-700',
         CANCELLED: 'bg-red-50 text-red-700',
