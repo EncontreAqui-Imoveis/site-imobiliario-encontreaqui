@@ -5,14 +5,13 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
 import { fetchEditableProperty, saveEditedProperty } from '@/lib/propertiesEditorService'
+import { PROPERTY_TYPES, PROPERTY_PURPOSES } from '@/lib/propertyCreate'
 import { Property } from '@/types/property'
 import {
     ArrowLeft, Loader2, Save, Home, ChevronRight,
     AlertTriangle, CheckCircle
 } from 'lucide-react'
 
-const PROPERTY_TYPES = ['Casa', 'Apartamento', 'Terreno', 'Propriedade Rural', 'Propriedade Comercial'] as const
-const PURPOSES = ['Venda', 'Aluguel', 'Venda e Aluguel'] as const
 const STATES = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO']
 
 export default function EditPropertyPage() {
@@ -20,6 +19,7 @@ export default function EditPropertyPage() {
     const params = useParams()
     const propertyId = params.id as string
     const { session, loading: authLoading, isBroker } = useUser()
+    const isClientOwner = session?.user?.role !== 'broker'
 
     const [property, setProperty] = useState<Property | null>(null)
     const [loadError, setLoadError] = useState<string | null>(null)
@@ -44,8 +44,10 @@ export default function EditPropertyPage() {
     useEffect(() => {
         if (!authLoading && !session) {
             router.replace(`/auth/login?next=/meus-imoveis/${propertyId}/editar`)
+        } else if (!authLoading && session?.user?.role === 'broker' && !isBroker) {
+            router.replace('/onboarding/broker')
         }
-    }, [authLoading, session, router, propertyId])
+    }, [authLoading, session, isBroker, router, propertyId])
 
     // Load property
     const loadProperty = useCallback(async () => {
@@ -137,7 +139,7 @@ export default function EditPropertyPage() {
                 valorIptu: parseFloat(form.valorIptu) || 0,
             }
 
-            await saveEditedProperty(property.id, payload)
+            await saveEditedProperty(property.id, payload, isClientOwner ? 'client' : 'broker')
             setSaved(true)
         } catch (err: unknown) {
             setSaveError(err instanceof Error ? err.message : 'Erro ao salvar alterações.')
@@ -151,7 +153,7 @@ export default function EditPropertyPage() {
         return <div className="min-h-screen flex items-center justify-center pt-20"><Loader2 className="w-6 h-6 animate-spin text-primary-500" /></div>
     }
 
-    if (!isBroker) {
+    if (session?.user?.role === 'broker' && !isBroker) {
         return (
             <div className="min-h-screen flex items-center justify-center pt-20">
                 <div className="text-center space-y-4 max-w-md">
@@ -233,7 +235,7 @@ export default function EditPropertyPage() {
                             <div>
                                 <label className={labelClass}>Finalidade</label>
                                 <select value={form.purpose} onChange={e => updateField('purpose', e.target.value)} className={inputClass}>
-                                    {PURPOSES.map(p => <option key={p} value={p}>{p}</option>)}
+                                    {PROPERTY_PURPOSES.map(p => <option key={p} value={p}>{p}</option>)}
                                 </select>
                             </div>
                         </div>

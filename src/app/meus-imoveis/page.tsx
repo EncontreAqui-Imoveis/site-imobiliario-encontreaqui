@@ -32,6 +32,7 @@ function getStatusBadge(status: string) {
 export default function MeusImoveisPage() {
     const router = useRouter()
     const { session, loading: authLoading, isBroker } = useUser()
+    const canCreateProperty = Boolean(session)
 
     const [properties, setProperties] = useState<PropertySummary[]>([])
     const [loading, setLoading] = useState(true)
@@ -82,7 +83,7 @@ export default function MeusImoveisPage() {
                         <p className="text-sm text-slate-500">{properties.length} imóveis cadastrados</p>
                     </div>
                 </div>
-                {isBroker && (
+                {canCreateProperty && (
                     <Link
                         href="/anuncie"
                         className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-xl shadow-md shadow-primary-500/20 transition-colors"
@@ -111,9 +112,9 @@ export default function MeusImoveisPage() {
                     <p className="text-sm text-slate-500">
                         {isBroker
                             ? 'Cadastre seu primeiro imóvel para começar a receber propostas.'
-                            : 'Torne-se corretor para cadastrar imóveis.'}
+                            : 'Cadastre seu primeiro imóvel para enviá-lo para análise.'}
                     </p>
-                    {isBroker ? (
+                    {canCreateProperty ? (
                         <Link
                             href="/anuncie"
                             className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-xl transition-colors"

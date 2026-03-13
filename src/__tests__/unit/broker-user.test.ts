@@ -56,8 +56,8 @@ describe('user API', () => {
         userApi = await import('@/lib/api/user')
     })
 
-    it('createProperty() sends FormData via POST', async () => {
-        mockFetch.mockResolvedValueOnce(okResponse({ id: 42 }))
+    it('createProperty() sends FormData via POST for broker flow', async () => {
+        mockFetch.mockResolvedValueOnce(okResponse({ propertyId: 42 }))
 
         const formData = new FormData()
         formData.append('title', 'Test Property')
@@ -67,6 +67,18 @@ describe('user API', () => {
         const [url, init] = mockFetch.mock.calls[0]
         expect(url).toContain('/properties')
         expect(init.method).toBe('POST')
+    })
+
+    it('createProperty() sends client-owner flow to /properties/client', async () => {
+        mockFetch.mockResolvedValueOnce(okResponse({ propertyId: 77 }))
+
+        const formData = new FormData()
+        formData.append('title', 'Client Property')
+        const result = await userApi.createProperty(formData, 'client-owner')
+
+        expect(result.id).toBe(77)
+        const [url] = mockFetch.mock.calls[0]
+        expect(url).toContain('/properties/client')
     })
 
     it('deleteProperty() sends DELETE request', async () => {

@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api/client'
+import { CreatePropertyActor, resolveCreatePropertyPath } from '@/lib/propertyCreate'
 
 export interface UpdateProfilePayload {
     name?: string
@@ -37,8 +38,21 @@ export async function getMyProperties(): Promise<PropertySummary[]> {
     return Array.isArray(response) ? response : (response?.data ?? [])
 }
 
-export async function createProperty(formData: FormData): Promise<{ id: number }> {
-    return apiClient.post<{ id: number }>('/properties', formData)
+export async function createProperty(
+    formData: FormData,
+    actor: CreatePropertyActor = 'broker',
+): Promise<{ id: number }> {
+    const response = await apiClient.post<{ id?: number; propertyId?: number }>(
+        resolveCreatePropertyPath(actor),
+        formData,
+    )
+
+    const id = Number(response.id ?? response.propertyId ?? 0)
+    if (!Number.isFinite(id) || id <= 0) {
+        throw new Error('Resposta inválida ao criar imóvel.')
+    }
+
+    return { id }
 }
 
 export async function updateProperty(id: number, formData: FormData): Promise<void> {

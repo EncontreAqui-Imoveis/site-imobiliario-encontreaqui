@@ -14,6 +14,11 @@ export async function fetchEditableProperty(propertyId: string): Promise<Propert
     return (data.data || data) as Property
 }
 
-export async function saveEditedProperty(propertyId: number, payload: unknown): Promise<void> {
-    await apiClient.put(`/properties/${propertyId}`, payload)
+export async function saveEditedProperty(
+    propertyId: number,
+    payload: unknown,
+    actor: 'broker' | 'client',
+): Promise<void> {
+    const path = actor === 'client' ? `/properties/client/${propertyId}` : `/properties/${propertyId}`
+    await apiClient.put(path, payload)
 }

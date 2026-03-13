@@ -1,4 +1,4 @@
-import { sanitizeText, sanitizeObject, validateImageFile, validateDocumentFile } from '@/lib/sanitize'
+import { sanitizeText, sanitizeObject, validateDocumentFile, validateImageFile, validateVideoFile } from '@/lib/sanitize'
 
 describe('sanitizeText', () => {
     it('removes simple HTML tags', () => {
@@ -74,6 +74,12 @@ describe('validateImageFile', () => {
         const result = validateImageFile(file)
         expect(result.valid).toBe(true)
     })
+
+    it('rejects GIF files to match backend upload policy', () => {
+        const file = new File(['test'], 'animated.gif', { type: 'image/gif' })
+        const result = validateImageFile(file)
+        expect(result.valid).toBe(false)
+    })
 })
 
 describe('validateDocumentFile', () => {
@@ -86,6 +92,20 @@ describe('validateDocumentFile', () => {
     it('rejects executable files', () => {
         const file = new File(['test'], 'virus.exe', { type: 'application/x-msdownload' })
         const result = validateDocumentFile(file)
+        expect(result.valid).toBe(false)
+    })
+})
+
+describe('validateVideoFile', () => {
+    it('accepts MP4 files', () => {
+        const file = new File(['video'], 'tour.mp4', { type: 'video/mp4' })
+        const result = validateVideoFile(file)
+        expect(result.valid).toBe(true)
+    })
+
+    it('rejects unsupported video files', () => {
+        const file = new File(['video'], 'tour.mkv', { type: 'video/x-matroska' })
+        const result = validateVideoFile(file)
         expect(result.valid).toBe(false)
     })
 })

@@ -1,112 +1,174 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useUser } from '@/contexts/UserContext'
-import { createProperty } from '@/lib/api/user'
-import { saveDraft, loadDraft, clearDraft, hasDraft as checkHasDraft } from '@/lib/drafts'
-import { validateImageFile, sanitizeText } from '@/lib/sanitize'
-import type { ApiError } from '@/lib/api/client'
-import { Building2, MapPin, Info, Camera, DollarSign, Check, ArrowLeft, ArrowRight, X, Loader2 } from 'lucide-react'
+import {
+    AlertTriangle,
+    ArrowLeft,
+    ArrowRight,
+    Building2,
+    Camera,
+    Check,
+    Home,
+    Info,
+    Loader2,
+    Save,
+    UserRound,
+    Video,
+    X,
+} from 'lucide-react'
 
-const PROPERTY_TYPES = ['Casa', 'Apartamento', 'Terreno', 'Propriedade Rural', 'Propriedade Comercial'] as const
-const PURPOSES = ['Venda', 'Aluguel', 'Venda e Aluguel'] as const
-const BRAZILIAN_STATES = [
-    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
-]
+import type { ApiError } from '@/lib/api/client'
+import { createProperty } from '@/lib/api/user'
+import { clearDraft, hasDraft as checkHasDraft, loadDraft, saveDraft } from '@/lib/drafts'
+import {
+    BRAZILIAN_STATES,
+    buildCreatePropertyFormData,
+    CreatePropertyActor,
+    CreatePropertyDraftData,
+    digitsOnly,
+    formatCepInput,
+    LOT_TYPES,
+    PROPERTY_PURPOSES,
+    PROPERTY_TYPES,
+    requiresLotFields,
+    supportsRent,
+    supportsSale,
+} from '@/lib/propertyCreate'
+import { validateImageFile, validateVideoFile } from '@/lib/sanitize'
+import { useUser } from '@/contexts/UserContext'
 
 type WizardStep = 1 | 2 | 3 | 4 | 5 | 6
+type CepLookupResult = { logradouro: string; bairro: string; localidade: string; uf: string }
 
-const STEP_LABELS = ['Tipo', 'Localização', 'Detalhes', 'Fotos', 'Preço', 'Revisão']
+const STEPS = ['Dados principais', 'Localização', 'Áreas', 'Comodidades', 'Mídia', 'Revisão'] as const
+const INPUT = 'w-full rounded-xl border border-slate-200 px-3 py-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500'
+const LABEL = 'mb-1 block text-xs font-medium text-slate-600'
+const INITIAL: CreatePropertyDraftData = {
+    actorMode: null, propertyType: '', purpose: '', title: '', description: '', ownerName: '', ownerPhone: '',
+    priceSale: '', priceRent: '', cep: '', state: 'GO', city: '', bairro: '', address: '', numero: '', complemento: '',
+    quadra: '', lote: '', tipoLote: '', semNumero: false, bedrooms: '', bathrooms: '', garageSpots: '',
+    areaConstruida: '', areaTerreno: '', hasWifi: false, temPiscina: false, temAutomacao: false,
+    temArCondicionado: false, ehMobiliada: false, valorCondominio: '',
+}
+
+function parseDraft(data: Record<string, unknown>): CreatePropertyDraftData {
+    return {
+        ...INITIAL,
+        ...Object.fromEntries(Object.entries(INITIAL).map(([key, fallback]) => {
+            const value = data[key]
+            if (typeof fallback === 'boolean') return [key, Boolean(value)]
+            return [key, String(value ?? fallback)]
+        })),
+        actorMode: data.actorMode === 'broker' || data.actorMode === 'client-owner' ? data.actorMode : null,
+    }
+}
+
+function validOwnerPhone(value: string) {
+    const digits = digitsOnly(value)
+    return digits.length === 0 || digits.length === 11
+}
+
+async function lookupCep(cep: string): Promise<CepLookupResult | null> {
+    const clean = digitsOnly(cep)
+    if (clean.length !== 8) return null
+    try {
+        const response = await fetch(`https://viacep.com.br/ws/${clean}/json/`)
+        if (!response.ok) return null
+        const data = (await response.json()) as { erro?: boolean } & Partial<CepLookupResult>
+        if (data.erro) return null
+        return {
+            logradouro: String(data.logradouro ?? '').trim(),
+            bairro: String(data.bairro ?? '').trim(),
+            localidade: String(data.localidade ?? '').trim(),
+            uf: String(data.uf ?? '').trim().toUpperCase(),
+        }
+    } catch {
+        return null
+    }
+}
+
+async function fetchCitiesByState(uf: string): Promise<string[]> {
+    if (uf.trim().length !== 2) return []
+    try {
+        const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`)
+        if (!response.ok) return []
+        const rows = (await response.json()) as Array<{ nome?: string }>
+        return Array.from(new Set(rows.map((row) => String(row.nome ?? '').trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'pt-BR'))
+    } catch {
+        return []
+    }
+}
 
 export default function AnunciePage() {
     const router = useRouter()
-    const { session, loading: authLoading, isBroker } = useUser()
-
+    const { session, loading: authLoading } = useUser()
+    const imageInputRef = useRef<HTMLInputElement>(null)
+    const videoInputRef = useRef<HTMLInputElement>(null)
+    const [actorMode, setActorMode] = useState<CreatePropertyActor | null>(null)
     const [step, setStep] = useState<WizardStep>(1)
+    const [form, setForm] = useState<CreatePropertyDraftData>(INITIAL)
+    const [images, setImages] = useState<File[]>([])
+    const [imagePreviews, setImagePreviews] = useState<string[]>([])
+    const [video, setVideo] = useState<File | null>(null)
+    const [videoPreview, setVideoPreview] = useState<string | null>(null)
+    const [cityOptions, setCityOptions] = useState<string[]>([])
+    const [showDraftBanner, setShowDraftBanner] = useState(false)
+    const [cepLoading, setCepLoading] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
-    // Step 1: Type
-    const [propertyType, setPropertyType] = useState<string>('')
-    const [purpose, setPurpose] = useState<string>('')
-
-    // Step 2: Location
-    const [cep, setCep] = useState('')
-    const [state, setState] = useState('')
-    const [city, setCity] = useState('')
-    const [bairro, setBairro] = useState('')
-    const [address, setAddress] = useState('')
-    const [numero, setNumero] = useState('')
-    const [complemento, setComplemento] = useState('')
-    const [cepLoading, setCepLoading] = useState(false)
-
-    // Step 3: Details
-    const [title, setTitle] = useState('')
-    const [description, setDescription] = useState('')
-    const [bedrooms, setBedrooms] = useState<number>(0)
-    const [bathrooms, setBathrooms] = useState<number>(0)
-    const [garageSpots, setGarageSpots] = useState<number>(0)
-    const [areaConstruida, setAreaConstruida] = useState<number>(0)
-    const [areaTerreno, setAreaTerreno] = useState<number>(0)
-    const [temPiscina, setTemPiscina] = useState(false)
-    const [temEnergiaSolar, setTemEnergiaSolar] = useState(false)
-    const [ehMobiliada, setEhMobiliada] = useState(false)
-
-    // Step 4: Photos
-    const [images, setImages] = useState<File[]>([])
-    const [imagePreviews, setImagePreviews] = useState<string[]>([])
-    const fileInputRef = useRef<HTMLInputElement>(null)
-
-    // Step 5: Price
-    const [priceSale, setPriceSale] = useState<number>(0)
-    const [priceRent, setPriceRent] = useState<number>(0)
-    const [valorCondominio, setValorCondominio] = useState<number>(0)
-    const [valorIptu, setValorIptu] = useState<number>(0)
+    const isApprovedBroker = Boolean(session?.user?.role === 'broker' && session.user.broker_status === 'approved')
+    const isBrokerPending = Boolean(session?.user?.role === 'broker' && !isApprovedBroker)
+    const isClient = Boolean(session && session.user.role !== 'broker')
+    const saleEnabled = useMemo(() => supportsSale(form.purpose), [form.purpose])
+    const rentEnabled = useMemo(() => supportsRent(form.purpose), [form.purpose])
+    const needsLotFields = useMemo(() => requiresLotFields(form.propertyType), [form.propertyType])
 
     useEffect(() => {
-        if (!authLoading && !session) {
-            router.replace('/auth/login?next=/anuncie')
-        } else if (!authLoading && session && !isBroker) {
-            router.replace('/onboarding/broker')
-        }
-    }, [authLoading, session, isBroker, router])
-
-    // Draft: restore on mount
-    const [showDraftBanner, setShowDraftBanner] = useState(false)
+        if (!authLoading && !session) router.replace('/auth/login?next=/anuncie')
+        if (!authLoading && isApprovedBroker) setActorMode('broker')
+        if (!authLoading && isBrokerPending) router.replace('/onboarding/broker')
+    }, [authLoading, session, isApprovedBroker, isBrokerPending, router])
 
     useEffect(() => {
         if (checkHasDraft()) setShowDraftBanner(true)
     }, [])
 
+    useEffect(() => {
+        if (!actorMode) return
+        saveDraft(step, { ...form, actorMode })
+    }, [actorMode, form, step])
+
+    useEffect(() => {
+        let cancelled = false
+        void fetchCitiesByState(form.state).then((cities) => {
+            if (!cancelled) setCityOptions(cities)
+        })
+        return () => {
+            cancelled = true
+        }
+    }, [form.state])
+
+    useEffect(() => () => {
+        imagePreviews.forEach((preview) => URL.revokeObjectURL(preview))
+        if (videoPreview) URL.revokeObjectURL(videoPreview)
+    }, [imagePreviews, videoPreview])
+
+    function updateField<K extends keyof CreatePropertyDraftData>(key: K, value: CreatePropertyDraftData[K]) {
+        setForm((current) => ({ ...current, [key]: value }))
+        setError(null)
+    }
+
     function restoreDraft() {
         const draft = loadDraft()
         if (!draft) return
-        const d = draft.data as Record<string, string | number | boolean>
-        if (d.propertyType) setPropertyType(String(d.propertyType))
-        if (d.purpose) setPurpose(String(d.purpose))
-        if (d.cep) setCep(String(d.cep))
-        if (d.state) setState(String(d.state))
-        if (d.city) setCity(String(d.city))
-        if (d.bairro) setBairro(String(d.bairro))
-        if (d.address) setAddress(String(d.address))
-        if (d.numero) setNumero(String(d.numero))
-        if (d.complemento) setComplemento(String(d.complemento))
-        if (d.title) setTitle(String(d.title))
-        if (d.description) setDescription(String(d.description))
-        if (d.bedrooms) setBedrooms(Number(d.bedrooms))
-        if (d.bathrooms) setBathrooms(Number(d.bathrooms))
-        if (d.garageSpots) setGarageSpots(Number(d.garageSpots))
-        if (d.areaConstruida) setAreaConstruida(Number(d.areaConstruida))
-        if (d.areaTerreno) setAreaTerreno(Number(d.areaTerreno))
-        if (d.temPiscina) setTemPiscina(Boolean(d.temPiscina))
-        if (d.temEnergiaSolar) setTemEnergiaSolar(Boolean(d.temEnergiaSolar))
-        if (d.ehMobiliada) setEhMobiliada(Boolean(d.ehMobiliada))
-        if (d.priceSale) setPriceSale(Number(d.priceSale))
-        if (d.priceRent) setPriceRent(Number(d.priceRent))
-        if (d.valorCondominio) setValorCondominio(Number(d.valorCondominio))
-        if (d.valorIptu) setValorIptu(Number(d.valorIptu))
-        setStep(Math.min(draft.currentStep || 1, 6) as WizardStep)
+        setForm(parseDraft(draft.data))
+        if (draft.data.actorMode === 'broker' || draft.data.actorMode === 'client-owner') {
+            setActorMode(draft.data.actorMode)
+        }
+        setStep(Math.min(Math.max(Number(draft.currentStep || 1), 1), 6) as WizardStep)
         setShowDraftBanner(false)
     }
 
@@ -115,433 +177,366 @@ export default function AnunciePage() {
         setShowDraftBanner(false)
     }
 
-    // Auto-save draft on step changes
-    useEffect(() => {
-        saveDraft(step, {
-            propertyType, purpose, cep, state, city, bairro, address, numero, complemento,
-            title, description, bedrooms, bathrooms, garageSpots, areaConstruida, areaTerreno,
-            temPiscina, temEnergiaSolar, ehMobiliada, priceSale, priceRent, valorCondominio, valorIptu,
-        })
-    }, [step])
-
-    const handleCepBlur = async () => {
-        const clean = cep.replace(/\D/g, '')
-        if (clean.length !== 8) return
+    async function handleCepBlur() {
+        const result = await lookupCep(form.cep)
+        if (!result) return
         setCepLoading(true)
-        try {
-            const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`)
-            const data = await res.json()
-            if (!data.erro) {
-                setAddress(data.logradouro || address)
-                setBairro(data.bairro || bairro)
-                setCity(data.localidade || city)
-                setState(data.uf || state)
-            }
-        } catch { /* silent */ } finally { setCepLoading(false) }
+        setForm((current) => ({
+            ...current,
+            cep: formatCepInput(form.cep),
+            address: result.logradouro || current.address,
+            bairro: result.bairro || current.bairro,
+            city: result.localidade || current.city,
+            state: result.uf || current.state,
+        }))
+        setCepLoading(false)
     }
 
-    const handleAddImages = (files: FileList | null) => {
+    function handleImagesSelected(event: ChangeEvent<HTMLInputElement>) {
+        const files = event.target.files
         if (!files) return
-        const newFiles: File[] = []
-        const newPreviews: string[] = []
-        for (let i = 0; i < files.length && images.length + newFiles.length < 15; i++) {
-            const validation = validateImageFile(files[i])
-            if (validation.valid) {
-                newFiles.push(files[i])
-                newPreviews.push(URL.createObjectURL(files[i]))
+        const nextFiles: File[] = []
+        const nextPreviews: string[] = []
+        for (let index = 0; index < files.length && images.length + nextFiles.length < 20; index += 1) {
+            const file = files[index]
+            const validation = validateImageFile(file)
+            if (!validation.valid) {
+                setError(validation.error ?? 'Arquivo de imagem inválido.')
+                continue
             }
+            nextFiles.push(file)
+            nextPreviews.push(URL.createObjectURL(file))
         }
-        setImages(prev => [...prev, ...newFiles])
-        setImagePreviews(prev => [...prev, ...newPreviews])
+        if (files.length + images.length > 20) {
+            setError('Você pode enviar no máximo 20 imagens.')
+        }
+        if (nextFiles.length) {
+            setImages((current) => [...current, ...nextFiles])
+            setImagePreviews((current) => [...current, ...nextPreviews])
+        }
+        event.target.value = ''
     }
 
-    const removeImage = (idx: number) => {
-        URL.revokeObjectURL(imagePreviews[idx])
-        setImages(prev => prev.filter((_, i) => i !== idx))
-        setImagePreviews(prev => prev.filter((_, i) => i !== idx))
+    function removeImage(index: number) {
+        URL.revokeObjectURL(imagePreviews[index])
+        setImages((current) => current.filter((_, currentIndex) => currentIndex !== index))
+        setImagePreviews((current) => current.filter((_, currentIndex) => currentIndex !== index))
     }
 
-    const canAdvance = () => {
+    function handleVideoSelected(event: ChangeEvent<HTMLInputElement>) {
+        const file = event.target.files?.[0]
+        if (!file) return
+        const validation = validateVideoFile(file)
+        if (!validation.valid) {
+            setError(validation.error ?? 'Arquivo de vídeo inválido.')
+            event.target.value = ''
+            return
+        }
+        if (videoPreview) URL.revokeObjectURL(videoPreview)
+        setVideo(file)
+        setVideoPreview(URL.createObjectURL(file))
+        event.target.value = ''
+    }
+
+    function removeVideo() {
+        if (videoPreview) URL.revokeObjectURL(videoPreview)
+        setVideo(null)
+        setVideoPreview(null)
+    }
+
+    function canAdvance() {
         switch (step) {
-            case 1: return propertyType && purpose
-            case 2: return city && state
-            case 3: return title.trim().length > 3 && description.trim().length > 10
-            case 4: return images.length > 0
-            case 5: return (purpose !== 'Aluguel' ? priceSale > 0 : true) && (purpose !== 'Venda' ? priceRent > 0 : true)
-            default: return true
+            case 1:
+                return Boolean(
+                    form.propertyType &&
+                        form.purpose &&
+                        form.title.trim() &&
+                        form.description.trim() &&
+                        validOwnerPhone(form.ownerPhone) &&
+                        (!saleEnabled || Number(form.priceSale) > 0) &&
+                        (!rentEnabled || Number(form.priceRent) > 0),
+                )
+            case 2:
+                return Boolean(
+                    digitsOnly(form.cep).length === 8 &&
+                        form.address.trim() &&
+                        form.bairro.trim() &&
+                        form.city.trim() &&
+                        form.state.trim() &&
+                        (form.semNumero || form.numero.trim()) &&
+                        (!needsLotFields ||
+                            (form.quadra.trim() && form.lote.trim() && form.tipoLote.trim())),
+                )
+            case 3:
+                return Number(form.areaConstruida) > 0 && Number(form.areaTerreno) > 0
+            case 4:
+                return true
+            case 5:
+                return images.length > 0
+            default:
+                return true
         }
     }
 
-    const handleSubmit = async () => {
+    async function handleSubmit() {
+        if (!actorMode) return
         setSubmitting(true)
         setError(null)
-
-        const formData = new FormData()
-        // SAST-3: Sanitize text inputs before sending to API
-        formData.append('title', sanitizeText(title))
-        formData.append('description', sanitizeText(description))
-        formData.append('type', propertyType)
-        formData.append('purpose', purpose)
-        formData.append('city', sanitizeText(city))
-        formData.append('state', state)
-        formData.append('address', sanitizeText(address))
-        if (bairro) formData.append('bairro', sanitizeText(bairro))
-        if (cep) formData.append('cep', cep.replace(/\D/g, ''))
-        if (numero) formData.append('numero', numero)
-        if (complemento) formData.append('complemento', complemento)
-        if (bedrooms) formData.append('bedrooms', String(bedrooms))
-        if (bathrooms) formData.append('bathrooms', String(bathrooms))
-        if (garageSpots) formData.append('garageSpots', String(garageSpots))
-        if (areaConstruida) formData.append('areaConstruida', String(areaConstruida))
-        if (areaTerreno) formData.append('areaTerreno', String(areaTerreno))
-        if (priceSale) formData.append('priceSale', String(priceSale))
-        if (priceRent) formData.append('priceRent', String(priceRent))
-        if (valorCondominio) formData.append('valorCondominio', String(valorCondominio))
-        if (valorIptu) formData.append('valorIptu', String(valorIptu))
-        formData.append('temPiscina', String(temPiscina))
-        formData.append('temEnergiaSolar', String(temEnergiaSolar))
-        formData.append('ehMobiliada', String(ehMobiliada))
-
-        images.forEach(img => formData.append('images', img))
-
         try {
-            const result = await createProperty(formData)
+            const formData = buildCreatePropertyFormData({ ...form, actorMode, images, video })
+            const result = await createProperty(formData, actorMode)
             clearDraft()
-            router.push(`/imoveis/${result.id}`)
-        } catch (err) {
-            const apiErr = err as ApiError
-            setError(apiErr?.message || 'Erro ao cadastrar imóvel.')
+            router.push(`/meus-imoveis?created=${result.id}`)
+        } catch (submissionError) {
+            const apiError = submissionError as ApiError
+            setError(apiError?.message || 'Erro ao cadastrar imóvel.')
         } finally {
             setSubmitting(false)
         }
     }
 
-    const formatCep = (val: string) => {
-        const d = val.replace(/\D/g, '').slice(0, 8)
-        return d.length <= 5 ? d : `${d.slice(0, 5)}-${d.slice(5)}`
-    }
-
-    if (authLoading || !session || !isBroker) {
+    if (authLoading || !session) {
         return (
             <div className="min-h-[60vh] flex items-center justify-center">
-                <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+                <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
             </div>
         )
     }
 
-    return (
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 pt-24">
-            <h1 className="text-2xl font-bold text-slate-900 mb-6">Anunciar Imóvel</h1>
+    if (isBrokerPending) {
+        return (
+            <div className="min-h-[60vh] flex items-center justify-center px-4">
+                <div className="max-w-md rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center">
+                    <AlertTriangle className="mx-auto mb-3 h-10 w-10 text-amber-600" />
+                    <h1 className="text-lg font-bold text-amber-950">Seu perfil ainda não está liberado para anunciar</h1>
+                    <p className="mt-2 text-sm text-amber-800">Conclua a etapa de corretor para anunciar imóveis profissionalmente.</p>
+                    <Link href="/onboarding/broker" className="mt-4 inline-flex rounded-xl bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-amber-700">
+                        Ir para o onboarding
+                    </Link>
+                </div>
+            </div>
+        )
+    }
 
-            {/* Draft Banner */}
-            {showDraftBanner && (
-                <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                            <Info className="w-5 h-5 text-amber-600" />
+    if (!actorMode && isClient) {
+        return (
+            <div className="mx-auto flex min-h-[60vh] max-w-5xl flex-col gap-6 px-4 py-8 pt-24">
+                <div>
+                    <h1 className="text-3xl font-bold text-slate-900">Anunciar imóvel</h1>
+                    <p className="mt-2 max-w-2xl text-sm text-slate-600">Escolha como você quer continuar no site.</p>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                    <button type="button" onClick={() => setActorMode('client-owner')} className="rounded-2xl border border-primary-200 bg-white p-6 text-left shadow-sm hover:border-primary-400 hover:shadow-md">
+                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
+                            <Home className="h-6 w-6" />
                         </div>
-                        <div className="min-w-0">
+                        <h2 className="text-lg font-bold text-slate-900">Anunciar meu próprio imóvel</h2>
+                        <p className="mt-2 text-sm text-slate-600">Use o fluxo de cliente-proprietário para enviar o imóvel para análise.</p>
+                    </button>
+                    <Link href="/onboarding/broker" className="rounded-2xl border border-accent-200 bg-accent-50 p-6 text-left shadow-sm hover:border-accent-400 hover:shadow-md">
+                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-100 text-accent-700">
+                            <UserRound className="h-6 w-6" />
+                        </div>
+                        <h2 className="text-lg font-bold text-slate-900">Quero me tornar corretor</h2>
+                        <p className="mt-2 text-sm text-slate-600">Siga para o fluxo de corretor para operar de forma profissional na plataforma.</p>
+                    </Link>
+                </div>
+            </div>
+        )
+    }
+
+    const stepTitle = STEPS[step - 1]
+    return (
+        <div className="mx-auto max-w-4xl px-4 py-8 pt-24 sm:px-6">
+            <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900">Cadastrar imóvel</h1>
+                    <p className="mt-1 text-sm text-slate-500">
+                        {actorMode === 'client-owner' ? 'Fluxo de cliente-proprietário' : 'Fluxo de corretor aprovado'}
+                    </p>
+                </div>
+                <button type="button" onClick={() => router.back()} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                    <ArrowLeft className="h-4 w-4" />
+                    Voltar
+                </button>
+            </div>
+
+            {showDraftBanner && (
+                <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-start gap-3">
+                        <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                            <Info className="h-5 w-5" />
+                        </div>
+                        <div>
                             <p className="text-sm font-semibold text-amber-900">Rascunho encontrado</p>
-                            <p className="text-xs text-amber-700">Você tem um anúncio em andamento. Deseja continuar?</p>
+                            <p className="text-xs text-amber-800">Você pode continuar seu cadastro de onde parou.</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                        <button
-                            onClick={discardDraft}
-                            className="px-3 py-1.5 text-xs font-medium text-amber-700 hover:text-amber-900 hover:bg-amber-100 rounded-lg transition-colors"
-                        >
-                            Descartar
-                        </button>
-                        <button
-                            onClick={restoreDraft}
-                            className="px-4 py-1.5 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors"
-                        >
-                            Continuar
-                        </button>
+                    <div className="flex gap-2">
+                        <button type="button" onClick={discardDraft} className="rounded-xl px-4 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100">Descartar</button>
+                        <button type="button" onClick={restoreDraft} className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700">Continuar</button>
                     </div>
                 </div>
             )}
 
-            {/* Progress */}
-            <div className="flex items-center gap-1 mb-8 overflow-x-auto pb-1">
-                {STEP_LABELS.map((label, i) => (
-                    <div key={i} className="flex items-center gap-1 flex-shrink-0">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${i + 1 < step ? 'bg-green-500 text-white' :
-                            i + 1 === step ? 'bg-primary-600 text-white' :
-                                'bg-slate-100 text-slate-400'
-                            }`}>
-                            {i + 1 < step ? <Check className="w-4 h-4" /> : i + 1}
+            <div className="mb-8 flex items-center gap-1 overflow-x-auto pb-1">
+                {STEPS.map((label, index) => {
+                    const visualStep = index + 1
+                    const completed = visualStep < step
+                    const current = visualStep === step
+                    return (
+                        <div key={label} className="flex flex-shrink-0 items-center gap-2">
+                            <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${completed ? 'bg-primary-600 text-white' : current ? 'bg-primary-700 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                {completed ? <Check className="h-4 w-4" /> : visualStep}
+                            </div>
+                            <span className={`hidden text-xs font-medium sm:inline ${current ? 'text-primary-700' : 'text-slate-500'}`}>{label}</span>
+                            {index < STEPS.length - 1 && <div className="mx-1 h-0.5 w-6 bg-slate-200" />}
                         </div>
-                        <span className={`text-xs font-medium hidden sm:inline ${i + 1 === step ? 'text-primary-600' : 'text-slate-400'}`}>
-                            {label}
-                        </span>
-                        {i < STEP_LABELS.length - 1 && <div className="w-6 h-0.5 bg-slate-200 mx-1" />}
-                    </div>
-                ))}
+                    )
+                })}
             </div>
 
-            <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 p-6 space-y-6">
-                {/* Step 1: Type */}
+            <div className="space-y-6 rounded-2xl border border-slate-100 bg-white p-6 shadow-lg shadow-slate-200/50">
+                <div className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5 text-primary-600" />
+                    <h2 className="text-lg font-bold text-slate-900">{stepTitle}</h2>
+                </div>
+
                 {step === 1 && (
-                    <div className="space-y-5">
-                        <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                            <Building2 className="w-4 h-4" /> Tipo do imóvel
-                        </h2>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            {PROPERTY_TYPES.map(t => (
-                                <button key={t} onClick={() => setPropertyType(t)}
-                                    className={`p-3 rounded-xl border text-sm font-medium transition-all ${propertyType === t ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-slate-200 hover:border-slate-300'
-                                        }`}>
-                                    {t}
-                                </button>
-                            ))}
+                    <>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <div><label className={LABEL}>Tipo do imóvel *</label><select value={form.propertyType} onChange={(e) => updateField('propertyType', e.target.value)} className={INPUT}><option value="">Selecionar</option>{PROPERTY_TYPES.map((o) => <option key={o} value={o}>{o}</option>)}</select></div>
+                            <div><label className={LABEL}>Finalidade *</label><select value={form.purpose} onChange={(e) => updateField('purpose', e.target.value)} className={INPUT}><option value="">Selecionar</option>{PROPERTY_PURPOSES.map((o) => <option key={o} value={o}>{o}</option>)}</select></div>
                         </div>
-                        <h2 className="text-sm font-semibold text-slate-800 pt-2">Finalidade</h2>
-                        <div className="grid grid-cols-3 gap-3">
-                            {PURPOSES.map(p => (
-                                <button key={p} onClick={() => setPurpose(p)}
-                                    className={`p-3 rounded-xl border text-sm font-medium transition-all ${purpose === p ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-slate-200 hover:border-slate-300'
-                                        }`}>
-                                    {p}
-                                </button>
-                            ))}
+                        <div><label className={LABEL}>Título *</label><input value={form.title} onChange={(e) => updateField('title', e.target.value)} className={INPUT} /></div>
+                        <div><label className={LABEL}>Descrição *</label><textarea value={form.description} onChange={(e) => updateField('description', e.target.value)} rows={4} className={INPUT} /></div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <div><label className={LABEL}>Nome do proprietário</label><input value={form.ownerName} onChange={(e) => updateField('ownerName', e.target.value)} className={INPUT} /></div>
+                            <div><label className={LABEL}>Telefone do proprietário</label><input value={form.ownerPhone} onChange={(e) => updateField('ownerPhone', e.target.value)} className={INPUT} placeholder="(64) 99999-9999" /></div>
                         </div>
-                    </div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            {saleEnabled && <div><label className={LABEL}>Preço de venda *</label><input type="number" min="0" step="0.01" value={form.priceSale} onChange={(e) => updateField('priceSale', e.target.value)} className={INPUT} /></div>}
+                            {rentEnabled && <div><label className={LABEL}>Preço de aluguel *</label><input type="number" min="0" step="0.01" value={form.priceRent} onChange={(e) => updateField('priceRent', e.target.value)} className={INPUT} /></div>}
+                        </div>
+                    </>
                 )}
 
-                {/* Step 2: Location */}
                 {step === 2 && (
-                    <div className="space-y-4">
-                        <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                            <MapPin className="w-4 h-4" /> Localização
-                        </h2>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-slate-600">CEP</label>
-                                <input type="text" value={cep} onChange={e => setCep(formatCep(e.target.value))} onBlur={handleCepBlur}
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none" placeholder="00000-000" />
-                                {cepLoading && <p className="text-xs text-primary-500">Buscando...</p>}
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-slate-600">Estado</label>
-                                <select value={state} onChange={e => setState(e.target.value)}
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none">
-                                    <option value="">UF</option>
-                                    {BRAZILIAN_STATES.map(uf => <option key={uf} value={uf}>{uf}</option>)}
-                                </select>
-                            </div>
+                    <>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <div><label className={LABEL}>CEP *</label><input value={form.cep} onChange={(e) => updateField('cep', formatCepInput(e.target.value))} onBlur={handleCepBlur} className={INPUT} placeholder="00000-000" />{cepLoading && <p className="mt-1 text-xs text-primary-500">Buscando CEP...</p>}</div>
+                            <div><label className={LABEL}>Estado *</label><select value={form.state} onChange={(e) => updateField('state', e.target.value)} className={INPUT}>{BRAZILIAN_STATES.map((o) => <option key={o} value={o}>{o}</option>)}</select></div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-slate-600">Cidade *</label>
-                                <input type="text" value={city} onChange={e => setCity(e.target.value)} required
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-slate-600">Bairro</label>
-                                <input type="text" value={bairro} onChange={e => setBairro(e.target.value)}
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none" />
-                            </div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <div><label className={LABEL}>Cidade *</label><input list="city-options" value={form.city} onChange={(e) => updateField('city', e.target.value)} className={INPUT} />{cityOptions.length > 0 && <datalist id="city-options">{cityOptions.map((city) => <option key={city} value={city} />)}</datalist>}</div>
+                            <div><label className={LABEL}>Bairro *</label><input value={form.bairro} onChange={(e) => updateField('bairro', e.target.value)} className={INPUT} /></div>
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-xs font-medium text-slate-600">Endereço</label>
-                            <input type="text" value={address} onChange={e => setAddress(e.target.value)}
-                                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none" />
+                        <div><label className={LABEL}>Rua *</label><input value={form.address} onChange={(e) => updateField('address', e.target.value)} className={INPUT} /></div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <div><label className={LABEL}>{form.semNumero ? 'Número (opcional)' : 'Número *'}</label><input value={form.numero} disabled={form.semNumero} onChange={(e) => updateField('numero', e.target.value)} className={`${INPUT} disabled:bg-slate-50 disabled:text-slate-400`} /><label className="mt-2 inline-flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" checked={form.semNumero} onChange={(e) => updateField('semNumero', e.target.checked)} className="rounded border-slate-300 text-primary-600 focus:ring-primary-500" />Sem número</label></div>
+                            <div><label className={LABEL}>Complemento</label><input value={form.complemento} onChange={(e) => updateField('complemento', e.target.value)} className={INPUT} /></div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-slate-600">Número</label>
-                                <input type="text" value={numero} onChange={e => setNumero(e.target.value)}
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-slate-600">Complemento</label>
-                                <input type="text" value={complemento} onChange={e => setComplemento(e.target.value)}
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none" />
-                            </div>
+                        <div className="grid gap-3 sm:grid-cols-3">
+                            <div><label className={LABEL}>{needsLotFields ? 'Quadra *' : 'Quadra'}</label><input value={form.quadra} onChange={(e) => updateField('quadra', e.target.value)} className={INPUT} /></div>
+                            <div><label className={LABEL}>{needsLotFields ? 'Lote *' : 'Lote'}</label><input value={form.lote} onChange={(e) => updateField('lote', e.target.value)} className={INPUT} /></div>
+                            <div><label className={LABEL}>{needsLotFields ? 'Tipo de lote *' : 'Tipo de lote'}</label><select value={form.tipoLote} onChange={(e) => updateField('tipoLote', e.target.value)} className={INPUT}><option value="">Selecionar</option>{LOT_TYPES.map((o) => <option key={o} value={o}>{o}</option>)}</select></div>
                         </div>
-                    </div>
+                    </>
                 )}
 
-                {/* Step 3: Details */}
                 {step === 3 && (
-                    <div className="space-y-4">
-                        <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                            <Info className="w-4 h-4" /> Detalhes
-                        </h2>
-                        <div className="space-y-1">
-                            <label className="text-xs font-medium text-slate-600">Título *</label>
-                            <input type="text" value={title} onChange={e => setTitle(e.target.value)}
-                                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none"
-                                placeholder="Ex: Casa moderna 3 quartos" />
+                    <>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <div><label className={LABEL}>Área construída *</label><input type="number" min="0" step="0.01" value={form.areaConstruida} onChange={(e) => updateField('areaConstruida', e.target.value)} className={INPUT} /></div>
+                            <div><label className={LABEL}>Área do terreno *</label><input type="number" min="0" step="0.01" value={form.areaTerreno} onChange={(e) => updateField('areaTerreno', e.target.value)} className={INPUT} /></div>
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-xs font-medium text-slate-600">Descrição *</label>
-                            <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4}
-                                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-primary-500 focus:outline-none"
-                                placeholder="Descreva o imóvel em detalhes..." />
+                        <div className="grid gap-3 sm:grid-cols-3">
+                            <div><label className={LABEL}>Quartos</label><input type="number" min="0" value={form.bedrooms} onChange={(e) => updateField('bedrooms', e.target.value)} className={INPUT} /></div>
+                            <div><label className={LABEL}>Banheiros</label><input type="number" min="0" value={form.bathrooms} onChange={(e) => updateField('bathrooms', e.target.value)} className={INPUT} /></div>
+                            <div><label className={LABEL}>Garagens</label><input type="number" min="0" value={form.garageSpots} onChange={(e) => updateField('garageSpots', e.target.value)} className={INPUT} /></div>
                         </div>
-                        <div className="grid grid-cols-3 gap-3">
-                            {[
-                                ['Quartos', bedrooms, setBedrooms],
-                                ['Banheiros', bathrooms, setBathrooms],
-                                ['Vagas', garageSpots, setGarageSpots],
-                            ].map(([label, val, setter]) => (
-                                <div key={label as string} className="space-y-1">
-                                    <label className="text-xs font-medium text-slate-600">{label as string}</label>
-                                    <input type="number" min={0} value={val as number} onChange={e => (setter as (v: number) => void)(Number(e.target.value))}
-                                        className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none" />
-                                </div>
-                            ))}
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-slate-600">Área construída (m²)</label>
-                                <input type="number" min={0} value={areaConstruida} onChange={e => setAreaConstruida(Number(e.target.value))}
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-slate-600">Área terreno (m²)</label>
-                                <input type="number" min={0} value={areaTerreno} onChange={e => setAreaTerreno(Number(e.target.value))}
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none" />
-                            </div>
-                        </div>
-                        <div className="flex flex-wrap gap-4 pt-2">
-                            {[
-                                ['Piscina', temPiscina, setTemPiscina],
-                                ['Energia Solar', temEnergiaSolar, setTemEnergiaSolar],
-                                ['Mobiliada', ehMobiliada, setEhMobiliada],
-                            ].map(([label, val, setter]) => (
-                                <label key={label as string} className="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" checked={val as boolean} onChange={e => (setter as (v: boolean) => void)(e.target.checked)}
-                                        className="rounded border-slate-300 text-primary-600 focus:ring-primary-500" />
-                                    <span className="text-sm text-slate-700">{label as string}</span>
+                    </>
+                )}
+
+                {step === 4 && (
+                    <>
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {([
+                                ['hasWifi', 'Wi‑Fi'],
+                                ['temPiscina', 'Piscina'],
+                                ['temAutomacao', 'Automação residencial'],
+                                ['temArCondicionado', 'Ar-condicionado'],
+                                ['ehMobiliada', 'Imóvel mobiliado'],
+                            ] as const).map(([key, label]) => (
+                                <label key={key} className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50">
+                                    <input type="checkbox" checked={form[key]} onChange={(e) => updateField(key, e.target.checked)} className="rounded border-slate-300 text-primary-600 focus:ring-primary-500" />
+                                    <span>{label}</span>
                                 </label>
                             ))}
                         </div>
-                    </div>
+                        <div><label className={LABEL}>Condomínio</label><input type="number" min="0" step="0.01" value={form.valorCondominio} onChange={(e) => updateField('valorCondominio', e.target.value)} className={INPUT} /></div>
+                    </>
                 )}
 
-                {/* Step 4: Photos */}
-                {step === 4 && (
-                    <div className="space-y-4">
-                        <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                            <Camera className="w-4 h-4" /> Fotos ({images.length}/15)
-                        </h2>
-                        <div
-                            onClick={() => fileInputRef.current?.click()}
-                            className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center cursor-pointer hover:border-primary-400 hover:bg-primary-50/30 transition-colors"
-                        >
-                            <Camera className="w-10 h-10 mx-auto text-slate-300 mb-2" />
-                            <p className="text-sm text-slate-600">Clique para adicionar fotos</p>
-                            <p className="text-xs text-slate-400 mt-1">JPEG, PNG ou WebP • Máx 10MB cada</p>
-                            <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden"
-                                onChange={e => handleAddImages(e.target.files)} />
-                        </div>
-                        {imagePreviews.length > 0 && (
-                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                                {imagePreviews.map((preview, i) => (
-                                    <div key={i} className="relative aspect-square rounded-xl overflow-hidden group">
-                                        {/* Local blob previews are not compatible with next/image optimization. */}
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img src={preview} alt={`Prévia ${i + 1}`} className="w-full h-full object-cover" />
-                                        <button
-                                            onClick={() => removeImage(i)}
-                                            className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                            <X className="w-3 h-3" />
-                                        </button>
-                                        {i === 0 && (
-                                            <span className="absolute bottom-1 left-1 px-2 py-0.5 bg-primary-600 text-white text-[10px] font-bold rounded-full">
-                                                Capa
-                                            </span>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* Step 5: Price */}
                 {step === 5 && (
-                    <div className="space-y-4">
-                        <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                            <DollarSign className="w-4 h-4" /> Valores
-                        </h2>
-                        {(purpose === 'Venda' || purpose === 'Venda e Aluguel') && (
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-slate-600">Preço de venda (R$) *</label>
-                                <input type="number" min={0} step="1000" value={priceSale} onChange={e => setPriceSale(Number(e.target.value))}
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none" />
-                            </div>
-                        )}
-                        {(purpose === 'Aluguel' || purpose === 'Venda e Aluguel') && (
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-slate-600">Preço de aluguel (R$/mês) *</label>
-                                <input type="number" min={0} step="100" value={priceRent} onChange={e => setPriceRent(Number(e.target.value))}
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none" />
-                            </div>
-                        )}
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-slate-600">Condomínio (R$/mês)</label>
-                                <input type="number" min={0} value={valorCondominio} onChange={e => setValorCondominio(Number(e.target.value))}
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-slate-600">IPTU (R$/ano)</label>
-                                <input type="number" min={0} value={valorIptu} onChange={e => setValorIptu(Number(e.target.value))}
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none" />
-                            </div>
+                    <>
+                        <div role="button" tabIndex={0} onClick={() => imageInputRef.current?.click()} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') imageInputRef.current?.click() }} className="cursor-pointer rounded-2xl border-2 border-dashed border-slate-200 p-8 text-center hover:border-primary-400 hover:bg-primary-50/30">
+                            <Camera className="mx-auto mb-3 h-10 w-10 text-slate-300" />
+                            <p className="text-sm font-medium text-slate-700">Adicionar fotos do imóvel</p>
+                            <p className="mt-1 text-xs text-slate-500">JPEG, PNG ou WebP • até 20 imagens • 10MB por arquivo</p>
+                            <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleImagesSelected} />
                         </div>
-                    </div>
+                        {imagePreviews.length > 0 && <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">{imagePreviews.map((preview, index) => <div key={preview} className="group relative aspect-square overflow-hidden rounded-xl">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={preview} alt={`Prévia ${index + 1}`} className="h-full w-full object-cover" />
+                            <button type="button" onClick={() => removeImage(index)} className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900/80 text-white opacity-0 group-hover:opacity-100" aria-label={`Remover imagem ${index + 1}`}><X className="h-4 w-4" /></button>{index === 0 && <span className="absolute bottom-2 left-2 rounded-full bg-primary-700 px-2 py-0.5 text-[10px] font-bold text-white">Capa</span>}</div>)}</div>}
+                        <div className="rounded-2xl border border-slate-200 p-5">
+                            <div className="mb-3 flex items-center gap-2"><Video className="h-5 w-5 text-primary-600" /><h3 className="text-sm font-semibold text-slate-900">Vídeo opcional</h3></div>
+                            <div className="flex flex-wrap gap-3">
+                                <button type="button" onClick={() => videoInputRef.current?.click()} className="rounded-xl border border-primary-200 bg-primary-50 px-4 py-2.5 text-sm font-medium text-primary-700 hover:bg-primary-100">{video ? 'Trocar vídeo' : 'Selecionar vídeo'}</button>
+                                {video && <button type="button" onClick={removeVideo} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Remover vídeo</button>}
+                            </div>
+                            <input ref={videoInputRef} type="file" accept="video/mp4,video/quicktime,video/x-msvideo,video/webm,video/3gpp" className="hidden" onChange={handleVideoSelected} />
+                            {video && <div className="mt-4 space-y-3"><p className="text-sm font-medium text-slate-700">{video.name}</p>{videoPreview && <video controls className="w-full rounded-xl border border-slate-200 bg-black" src={videoPreview} />}</div>}
+                        </div>
+                    </>
                 )}
 
-                {/* Step 6: Review */}
                 {step === 6 && (
-                    <div className="space-y-4">
-                        <h2 className="text-sm font-semibold text-slate-800">Revisão do anúncio</h2>
-                        <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm space-y-2">
-                            <p><span className="font-medium text-slate-700">Tipo:</span> {propertyType} • {purpose}</p>
-                            <p><span className="font-medium text-slate-700">Título:</span> {title}</p>
-                            <p><span className="font-medium text-slate-700">Local:</span> {[address, numero, bairro, city, state].filter(Boolean).join(', ')}</p>
-                            <p><span className="font-medium text-slate-700">Quartos:</span> {bedrooms} • <span className="font-medium text-slate-700">Banheiros:</span> {bathrooms} • <span className="font-medium text-slate-700">Vagas:</span> {garageSpots}</p>
-                            {priceSale > 0 && <p><span className="font-medium text-slate-700">Venda:</span> R$ {priceSale.toLocaleString('pt-BR')}</p>}
-                            {priceRent > 0 && <p><span className="font-medium text-slate-700">Aluguel:</span> R$ {priceRent.toLocaleString('pt-BR')}/mês</p>}
-                            <p><span className="font-medium text-slate-700">Fotos:</span> {images.length} anexadas</p>
+                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-700">
+                        <div className="grid gap-2 sm:grid-cols-2">
+                            <p><span className="font-semibold text-slate-900">Fluxo:</span> {actorMode === 'client-owner' ? 'Cliente-proprietário' : 'Corretor'}</p>
+                            <p><span className="font-semibold text-slate-900">Tipo:</span> {form.propertyType}</p>
+                            <p><span className="font-semibold text-slate-900">Finalidade:</span> {form.purpose}</p>
+                            <p><span className="font-semibold text-slate-900">CEP:</span> {form.cep}</p>
+                            <p className="sm:col-span-2"><span className="font-semibold text-slate-900">Título:</span> {form.title}</p>
+                            <p className="sm:col-span-2"><span className="font-semibold text-slate-900">Local:</span> {[form.address, form.numero, form.bairro, form.city, form.state].filter(Boolean).join(', ')}</p>
+                            <p><span className="font-semibold text-slate-900">Área construída:</span> {form.areaConstruida || '—'} m²</p>
+                            <p><span className="font-semibold text-slate-900">Área do terreno:</span> {form.areaTerreno || '—'} m²</p>
+                            {saleEnabled && <p><span className="font-semibold text-slate-900">Venda:</span> R$ {Number(form.priceSale || 0).toLocaleString('pt-BR')}</p>}
+                            {rentEnabled && <p><span className="font-semibold text-slate-900">Aluguel:</span> R$ {Number(form.priceRent || 0).toLocaleString('pt-BR')}</p>}
+                            <p><span className="font-semibold text-slate-900">Imagens:</span> {images.length}</p>
+                            <p><span className="font-semibold text-slate-900">Vídeo:</span> {video ? 'Sim' : 'Não'}</p>
                         </div>
                     </div>
                 )}
 
-                {error && (
-                    <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">{error}</p>
-                )}
+                {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
-                {/* Navigation */}
-                <div className="flex justify-between pt-2">
-                    <button
-                        onClick={() => setStep(prev => Math.max(1, prev - 1) as WizardStep)}
-                        disabled={step === 1}
-                        className="flex items-center gap-1 text-sm text-slate-600 hover:text-slate-800 disabled:text-slate-300"
-                    >
-                        <ArrowLeft className="w-4 h-4" /> Voltar
+                <div className="flex items-center justify-between pt-2">
+                    <button type="button" onClick={() => setStep((current) => Math.max(1, current - 1) as WizardStep)} disabled={step === 1} className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 disabled:text-slate-300">
+                        <ArrowLeft className="h-4 w-4" />
+                        Voltar
                     </button>
                     {step < 6 ? (
-                        <button
-                            onClick={() => setStep(prev => Math.min(6, prev + 1) as WizardStep)}
-                            disabled={!canAdvance()}
-                            className="flex items-center gap-1 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-300 text-white text-sm font-semibold rounded-xl shadow-md transition-colors"
-                        >
-                            Avançar <ArrowRight className="w-4 h-4" />
+                        <button type="button" onClick={() => setStep((current) => Math.min(6, current + 1) as WizardStep)} disabled={!canAdvance()} className="inline-flex items-center gap-2 rounded-xl bg-primary-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-800 disabled:bg-primary-300">
+                            Avançar
+                            <ArrowRight className="h-4 w-4" />
                         </button>
                     ) : (
-                        <button
-                            onClick={handleSubmit}
-                            disabled={submitting}
-                            className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-300 text-white text-sm font-semibold rounded-xl shadow-md transition-colors"
-                        >
-                            {submitting ? 'Cadastrando...' : 'Cadastrar imóvel'}
+                        <button type="button" onClick={handleSubmit} disabled={submitting} className="inline-flex items-center gap-2 rounded-xl bg-primary-700 px-6 py-2.5 text-sm font-semibold text-white hover:bg-primary-800 disabled:bg-primary-300">
+                            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                            {submitting ? 'Cadastrando...' : 'Enviar para análise'}
                         </button>
                     )}
                 </div>

@@ -2,7 +2,7 @@ export interface Property {
     id: number
     title: string
     description: string
-    type: 'Casa' | 'Apartamento' | 'Terreno' | 'Propriedade Rural' | 'Propriedade Comercial'
+    type: string
     status: 'pending_approval' | 'approved' | 'rejected' | 'rented' | 'sold'
     purpose: 'Venda' | 'Aluguel' | 'Venda e Aluguel'
     price: number
