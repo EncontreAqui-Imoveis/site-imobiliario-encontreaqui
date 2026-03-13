@@ -39,7 +39,11 @@ export interface CommissionSummary {
 }
 
 export async function getMyCommissions(): Promise<CommissionSummary[]> {
-    return apiClient.get<CommissionSummary[]>('/brokers/me/commissions')
+    const response = await apiClient.get<{
+        data?: CommissionSummary[]
+    } | CommissionSummary[]>('/brokers/me/commissions')
+
+    return Array.isArray(response) ? response : (response?.data ?? [])
 }
 
 export interface PerformanceReport {
@@ -58,5 +62,21 @@ export interface PerformanceReport {
 }
 
 export async function getMyPerformanceReport(): Promise<PerformanceReport> {
-    return apiClient.get<PerformanceReport>('/brokers/me/performance-report')
+    const response = await apiClient.get<{
+        data?: Record<string, unknown>
+    } | Record<string, unknown>>('/brokers/me/performance-report')
+
+    const data = (Array.isArray(response) ? {} : response?.data ?? response) as Record<string, unknown>
+
+    return {
+        totalSales: Number(data.totalSales ?? 0),
+        totalRentals: Number(data.totalRents ?? data.totalRentals ?? 0),
+        totalCommissionEarned: Number(data.totalCommission ?? data.totalCommissionEarned ?? 0),
+        totalPropertiesListed: Number(data.totalProperties ?? data.totalPropertiesListed ?? 0),
+        activeNegotiations: Number(data.activeNegotiations ?? 0),
+        statusBreakdown: (data.statusBreakdown as Record<string, number> | undefined) ?? {},
+        monthlyBreakdown: Array.isArray(data.monthlyBreakdown)
+            ? (data.monthlyBreakdown as PerformanceReport['monthlyBreakdown'])
+            : [],
+    }
 }

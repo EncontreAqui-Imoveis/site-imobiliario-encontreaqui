@@ -30,7 +30,11 @@ export interface PropertySummary {
 }
 
 export async function getMyProperties(): Promise<PropertySummary[]> {
-    return apiClient.get<PropertySummary[]>('/users/me/properties')
+    const response = await apiClient.get<{
+        data?: PropertySummary[]
+    } | PropertySummary[]>('/users/me/properties')
+
+    return Array.isArray(response) ? response : (response?.data ?? [])
 }
 
 export async function createProperty(formData: FormData): Promise<{ id: number }> {

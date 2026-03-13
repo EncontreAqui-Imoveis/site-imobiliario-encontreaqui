@@ -8,7 +8,11 @@ const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_URL || 'https://site-imobiliario-backend-production.up.railway.app'
 
 export async function fetchMyNegotiations(): Promise<NegotiationSummary[]> {
-    return apiClient.get<NegotiationSummary[]>('/negotiations/mine')
+    const response = await apiClient.get<{
+        data?: NegotiationSummary[]
+    } | NegotiationSummary[]>('/negotiations/mine')
+
+    return Array.isArray(response) ? response : (response?.data ?? [])
 }
 
 export interface CreateProposalPayload {

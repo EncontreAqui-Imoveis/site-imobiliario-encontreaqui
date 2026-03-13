@@ -8,7 +8,11 @@ import type {
 } from '@/types/contract'
 
 export async function getMyContracts(): Promise<ContractSummary[]> {
-    return apiClient.get<ContractSummary[]>('/contracts/me')
+    const response = await apiClient.get<{
+        data?: ContractSummary[]
+    } | ContractSummary[]>('/contracts/me')
+
+    return Array.isArray(response) ? response : (response?.data ?? [])
 }
 
 export async function getContractById(id: string): Promise<ContractDetail> {
