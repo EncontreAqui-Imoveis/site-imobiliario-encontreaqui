@@ -23,7 +23,8 @@ export const PROPERTY_TYPES = [
 export const PROPERTY_PURPOSES = ['Venda', 'Aluguel', 'Venda e Aluguel'] as const
 export const LOT_TYPES = ['meio', 'inteiro'] as const
 export const MAX_PROPERTY_COUNT = 99
-export const MAX_PROPERTY_AREA = 99999999.99
+export const MAX_PROPERTY_AREA = 9999999.99
+export const MAX_PROPERTY_PRICE = 9999999999.99
 export const BRAZILIAN_STATES = [
     'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
 ] as const
@@ -115,6 +116,21 @@ export function normalizeDecimalInput(value: string): number {
     return Number.parseFloat(normalized) || 0
 }
 
+export function sanitizeDecimalInput(value: string): string {
+    const cleaned = value.replace(/[^\d.,]/g, '')
+    if (!cleaned) return ''
+
+    const hasSeparator = /[.,]/.test(cleaned)
+    const [integerPart, ...decimalParts] = cleaned.split(/[.,]/)
+    const normalizedInteger = integerPart.replace(/^0+(?=\d)/, '')
+    const decimal = decimalParts.join('').slice(0, 2)
+    const baseInteger = normalizedInteger || '0'
+
+    if (!hasSeparator) return normalizedInteger
+    if (!decimal) return `${baseInteger}.`
+    return `${baseInteger}.${decimal}`
+}
+
 export function clampCountInput(value: string): string {
     const digits = digitsOnly(value).slice(0, 2)
     if (!digits) return ''
@@ -122,10 +138,13 @@ export function clampCountInput(value: string): string {
 }
 
 export function clampAreaInput(value: string): string {
-    const parsed = normalizeDecimalInput(value)
-    if (!Number.isFinite(parsed) || parsed <= 0) return value.replace(/[^\d.,]/g, '')
-    const clamped = Math.min(parsed, MAX_PROPERTY_AREA)
-    return String(clamped)
+    const sanitized = sanitizeDecimalInput(value)
+    const parsed = normalizeDecimalInput(sanitized)
+    if (!Number.isFinite(parsed) || parsed <= 0) return sanitized
+    if (parsed > MAX_PROPERTY_AREA) {
+        return MAX_PROPERTY_AREA.toFixed(2)
+    }
+    return sanitized
 }
 
 export function supportsSale(purpose: string): boolean {
@@ -149,9 +168,14 @@ export function buildCreatePropertyFormData(payload: CreatePropertyPayload): For
 
     const saleEnabled = supportsSale(payload.purpose)
     const rentEnabled = supportsRent(payload.purpose)
-    const salePrice = normalizeDecimalInput(payload.priceSale)
-    const rentPrice = normalizeDecimalInput(payload.priceRent)
+    const salePrice = Math.min(MAX_PROPERTY_PRICE, normalizeDecimalInput(payload.priceSale))
+    const rentPrice = Math.min(MAX_PROPERTY_PRICE, normalizeDecimalInput(payload.priceRent))
     const basePrice = saleEnabled ? salePrice : rentEnabled ? rentPrice : 0
+    const bedrooms = Math.min(MAX_PROPERTY_COUNT, normalizeDecimalInput(payload.bedrooms))
+    const bathrooms = Math.min(MAX_PROPERTY_COUNT, normalizeDecimalInput(payload.bathrooms))
+    const garageSpots = Math.min(MAX_PROPERTY_COUNT, normalizeDecimalInput(payload.garageSpots))
+    const areaConstruida = Math.min(MAX_PROPERTY_AREA, normalizeDecimalInput(payload.areaConstruida))
+    const areaTerreno = Math.min(MAX_PROPERTY_AREA, normalizeDecimalInput(payload.areaTerreno))
 
     formData.append('title', sanitizeText(payload.title))
     formData.append('description', sanitizeText(payload.description))
@@ -175,11 +199,11 @@ export function buildCreatePropertyFormData(payload: CreatePropertyPayload): For
     appendIfPresent(formData, 'tipo_lote', sanitizeText(payload.tipoLote))
     formData.append('sem_numero', payload.semNumero ? '1' : '0')
 
-    appendIfPresent(formData, 'bedrooms', normalizeDecimalInput(payload.bedrooms))
-    appendIfPresent(formData, 'bathrooms', normalizeDecimalInput(payload.bathrooms))
-    appendIfPresent(formData, 'garage_spots', normalizeDecimalInput(payload.garageSpots))
-    appendIfPresent(formData, 'area_construida', normalizeDecimalInput(payload.areaConstruida))
-    appendIfPresent(formData, 'area_terreno', normalizeDecimalInput(payload.areaTerreno))
+    appendIfPresent(formData, 'bedrooms', bedrooms)
+    appendIfPresent(formData, 'bathrooms', bathrooms)
+    appendIfPresent(formData, 'garage_spots', garageSpots)
+    appendIfPresent(formData, 'area_construida', areaConstruida)
+    appendIfPresent(formData, 'area_terreno', areaTerreno)
 
     formData.append('has_wifi', payload.hasWifi ? '1' : '0')
     formData.append('tem_piscina', payload.temPiscina ? '1' : '0')

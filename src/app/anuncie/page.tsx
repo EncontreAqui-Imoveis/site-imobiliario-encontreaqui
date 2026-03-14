@@ -34,6 +34,7 @@ import {
     LOT_TYPES,
     MAX_PROPERTY_AREA,
     MAX_PROPERTY_COUNT,
+    MAX_PROPERTY_PRICE,
     PROPERTY_PURPOSES,
     PROPERTY_TYPES,
     requiresLotFields,
@@ -52,6 +53,9 @@ type CepLookupResult = { logradouro: string; bairro: string; localidade: string;
 const STEPS = ['Dados principais', 'Localização', 'Áreas', 'Comodidades', 'Mídia', 'Revisão'] as const
 const INPUT = 'w-full rounded-xl border border-slate-200 px-3 py-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500'
 const LABEL = 'mb-1 block text-xs font-medium text-slate-600'
+const REVIEW_CARD = 'min-w-0 rounded-xl border border-slate-200 bg-white p-4'
+const REVIEW_LABEL = 'text-xs font-semibold uppercase tracking-[0.12em] text-slate-500'
+const REVIEW_VALUE = 'mt-2 text-sm text-slate-800 whitespace-pre-wrap break-words [overflow-wrap:anywhere]'
 const INITIAL: CreatePropertyDraftData = {
     actorMode: null, propertyType: '', purpose: '', title: '', description: '', ownerName: '', ownerPhone: '',
     priceSale: '', priceRent: '', cep: '', state: 'GO', city: '', bairro: '', address: '', numero: '', complemento: '',
@@ -137,6 +141,8 @@ export default function AnunciePage() {
     const saleEnabled = useMemo(() => supportsSale(form.purpose), [form.purpose])
     const rentEnabled = useMemo(() => supportsRent(form.purpose), [form.purpose])
     const needsLotFields = useMemo(() => requiresLotFields(form.propertyType), [form.propertyType])
+    const salePriceValue = useMemo(() => parseCurrencyInput(form.priceSale), [form.priceSale])
+    const rentPriceValue = useMemo(() => parseCurrencyInput(form.priceRent), [form.priceRent])
 
     useEffect(() => {
         if (!authLoading && !session) router.replace('/auth/login?next=/anuncie')
@@ -266,8 +272,8 @@ export default function AnunciePage() {
                         form.description.trim() &&
                         validOwnerPhone(form.ownerPhone) &&
                         form.description.trim().length <= 500 &&
-                        (!saleEnabled || parseCurrencyInput(form.priceSale) > 0) &&
-                        (!rentEnabled || parseCurrencyInput(form.priceRent) > 0),
+                        (!saleEnabled || (salePriceValue > 0 && salePriceValue <= MAX_PROPERTY_PRICE)) &&
+                        (!rentEnabled || (rentPriceValue > 0 && rentPriceValue <= MAX_PROPERTY_PRICE)),
                 )
             case 2:
                 return Boolean(
@@ -534,30 +540,147 @@ export default function AnunciePage() {
 
                 {step === 6 && (
                     <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-700">
-                        <div className="grid gap-2 sm:grid-cols-2">
-                            <p><span className="font-semibold text-slate-900">Fluxo:</span> {actorMode === 'client-owner' ? 'Cliente-proprietário' : 'Corretor'}</p>
-                            <p><span className="font-semibold text-slate-900">Tipo:</span> {form.propertyType}</p>
-                            <p><span className="font-semibold text-slate-900">Finalidade:</span> {form.purpose}</p>
-                            <p><span className="font-semibold text-slate-900">Tipo de lote:</span> {form.tipoLote}</p>
-                            <p><span className="font-semibold text-slate-900">CEP:</span> {form.cep}</p>
-                            <p className="sm:col-span-2"><span className="font-semibold text-slate-900">Título:</span> {form.title}</p>
-                            <p className="sm:col-span-2 break-words [overflow-wrap:anywhere]"><span className="font-semibold text-slate-900">Descrição:</span> {form.description}</p>
-                            <p className="sm:col-span-2"><span className="font-semibold text-slate-900">Local:</span> {[form.address, form.numero, form.bairro, form.city, form.state].filter(Boolean).join(', ')}</p>
-                            <p><span className="font-semibold text-slate-900">Área construída:</span> {form.areaConstruida || '—'} m²</p>
-                            <p><span className="font-semibold text-slate-900">Área do terreno:</span> {form.areaTerreno || '—'} m²</p>
-                            <p><span className="font-semibold text-slate-900">Quadra:</span> {form.quadra || '—'}</p>
-                            <p><span className="font-semibold text-slate-900">Lote:</span> {form.lote || '—'}</p>
-                            {saleEnabled && <p><span className="font-semibold text-slate-900">Venda:</span> {form.priceSale || 'R$ 0,00'}</p>}
-                            {rentEnabled && <p><span className="font-semibold text-slate-900">Aluguel:</span> {form.priceRent || 'R$ 0,00'}</p>}
-                            <p><span className="font-semibold text-slate-900">Comodidades:</span> {[
-                                form.hasWifi && 'Wi‑Fi',
-                                form.temPiscina && 'Piscina',
-                                form.temAutomacao && 'Automação',
-                                form.temArCondicionado && 'Ar-condicionado',
-                                form.ehMobiliada && 'Mobiliado',
-                            ].filter(Boolean).join(', ') || 'Nenhuma selecionada'}</p>
-                            <p><span className="font-semibold text-slate-900">Imagens:</span> {images.length}</p>
-                            <p><span className="font-semibold text-slate-900">Vídeo:</span> {video ? 'Sim' : 'Não'}</p>
+                        <div className="space-y-4">
+                            <div className="grid gap-3 md:grid-cols-2">
+                                <div className={REVIEW_CARD}>
+                                    <p className={REVIEW_LABEL}>Fluxo</p>
+                                    <p className={REVIEW_VALUE}>{actorMode === 'client-owner' ? 'Cliente-proprietário' : 'Corretor'}</p>
+                                </div>
+                                <div className={REVIEW_CARD}>
+                                    <p className={REVIEW_LABEL}>Tipo</p>
+                                    <p className={REVIEW_VALUE}>{form.propertyType || '—'}</p>
+                                </div>
+                                <div className={REVIEW_CARD}>
+                                    <p className={REVIEW_LABEL}>Finalidade</p>
+                                    <p className={REVIEW_VALUE}>{form.purpose || '—'}</p>
+                                </div>
+                                <div className={REVIEW_CARD}>
+                                    <p className={REVIEW_LABEL}>Tipo de lote</p>
+                                    <p className={REVIEW_VALUE}>{form.tipoLote || '—'}</p>
+                                </div>
+                            </div>
+
+                            <div className={REVIEW_CARD}>
+                                <p className={REVIEW_LABEL}>Título</p>
+                                <p className={`${REVIEW_VALUE} text-base font-medium text-slate-900`}>{form.title || '—'}</p>
+                            </div>
+
+                            <div className={REVIEW_CARD}>
+                                <p className={REVIEW_LABEL}>Descrição</p>
+                                <p className={REVIEW_VALUE}>{form.description || '—'}</p>
+                            </div>
+
+                            <div className={REVIEW_CARD}>
+                                <p className={REVIEW_LABEL}>Localização</p>
+                                <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                    <div className="min-w-0">
+                                        <p className={REVIEW_LABEL}>CEP</p>
+                                        <p className={REVIEW_VALUE}>{form.cep || '—'}</p>
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className={REVIEW_LABEL}>Estado</p>
+                                        <p className={REVIEW_VALUE}>{form.state || '—'}</p>
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className={REVIEW_LABEL}>Cidade</p>
+                                        <p className={REVIEW_VALUE}>{form.city || '—'}</p>
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className={REVIEW_LABEL}>Bairro</p>
+                                        <p className={REVIEW_VALUE}>{form.bairro || '—'}</p>
+                                    </div>
+                                    <div className="min-w-0 sm:col-span-2">
+                                        <p className={REVIEW_LABEL}>Rua</p>
+                                        <p className={REVIEW_VALUE}>{form.address || '—'}</p>
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className={REVIEW_LABEL}>Número</p>
+                                        <p className={REVIEW_VALUE}>{form.semNumero ? 'Sem número' : form.numero || '—'}</p>
+                                    </div>
+                                    <div className="min-w-0 sm:col-span-2">
+                                        <p className={REVIEW_LABEL}>Complemento</p>
+                                        <p className={REVIEW_VALUE}>{form.complemento || '—'}</p>
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className={REVIEW_LABEL}>Quadra</p>
+                                        <p className={REVIEW_VALUE}>{form.quadra || '—'}</p>
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className={REVIEW_LABEL}>Lote</p>
+                                        <p className={REVIEW_VALUE}>{form.lote || '—'}</p>
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className={REVIEW_LABEL}>Tipo de lote</p>
+                                        <p className={REVIEW_VALUE}>{form.tipoLote || '—'}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid gap-3 md:grid-cols-2">
+                                <div className={REVIEW_CARD}>
+                                    <p className={REVIEW_LABEL}>Áreas e dimensões</p>
+                                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                                        <div className="min-w-0">
+                                            <p className={REVIEW_LABEL}>Área construída</p>
+                                            <p className={REVIEW_VALUE}>{form.areaConstruida || '—'} m²</p>
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className={REVIEW_LABEL}>Área do terreno</p>
+                                            <p className={REVIEW_VALUE}>{form.areaTerreno || '—'} m²</p>
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className={REVIEW_LABEL}>Quartos</p>
+                                            <p className={REVIEW_VALUE}>{form.bedrooms || '—'}</p>
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className={REVIEW_LABEL}>Banheiros</p>
+                                            <p className={REVIEW_VALUE}>{form.bathrooms || '—'}</p>
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className={REVIEW_LABEL}>Garagens</p>
+                                            <p className={REVIEW_VALUE}>{form.garageSpots || '—'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className={REVIEW_CARD}>
+                                    <p className={REVIEW_LABEL}>Condições comerciais</p>
+                                    <div className="mt-3 space-y-3">
+                                        {saleEnabled && (
+                                            <div className="min-w-0">
+                                                <p className={REVIEW_LABEL}>Venda</p>
+                                                <p className={REVIEW_VALUE}>{form.priceSale || 'R$ 0,00'}</p>
+                                            </div>
+                                        )}
+                                        {rentEnabled && (
+                                            <div className="min-w-0">
+                                                <p className={REVIEW_LABEL}>Aluguel</p>
+                                                <p className={REVIEW_VALUE}>{form.priceRent || 'R$ 0,00'}</p>
+                                            </div>
+                                        )}
+                                        <div className="min-w-0">
+                                            <p className={REVIEW_LABEL}>Comodidades</p>
+                                            <p className={REVIEW_VALUE}>{[
+                                                form.hasWifi && 'Wi‑Fi',
+                                                form.temPiscina && 'Piscina',
+                                                form.temAutomacao && 'Automação',
+                                                form.temArCondicionado && 'Ar-condicionado',
+                                                form.ehMobiliada && 'Mobiliado',
+                                            ].filter(Boolean).join(', ') || 'Nenhuma selecionada'}</p>
+                                        </div>
+                                        <div className="grid gap-3 sm:grid-cols-2">
+                                            <div className="min-w-0">
+                                                <p className={REVIEW_LABEL}>Imagens</p>
+                                                <p className={REVIEW_VALUE}>{String(images.length)}</p>
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className={REVIEW_LABEL}>Vídeo</p>
+                                                <p className={REVIEW_VALUE}>{video ? 'Sim' : 'Não'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
