@@ -36,8 +36,10 @@ import {
     supportsRent,
     supportsSale,
 } from '@/lib/propertyCreate'
+import { formatCurrencyInput, parseCurrencyInput } from '@/lib/currencyInput'
 import { validateImageFile, validateVideoFile } from '@/lib/sanitize'
 import { useUser } from '@/contexts/UserContext'
+import { CurrencyInput } from '@/components/form/CurrencyInput'
 
 type WizardStep = 1 | 2 | 3 | 4 | 5 | 6
 type CepLookupResult = { logradouro: string; bairro: string; localidade: string; uf: string }
@@ -50,11 +52,11 @@ const INITIAL: CreatePropertyDraftData = {
     priceSale: '', priceRent: '', cep: '', state: 'GO', city: '', bairro: '', address: '', numero: '', complemento: '',
     quadra: '', lote: '', tipoLote: '', semNumero: false, bedrooms: '', bathrooms: '', garageSpots: '',
     areaConstruida: '', areaTerreno: '', hasWifi: false, temPiscina: false, temAutomacao: false,
-    temArCondicionado: false, ehMobiliada: false, valorCondominio: '',
+    temArCondicionado: false, ehMobiliada: false,
 }
 
 function parseDraft(data: Record<string, unknown>): CreatePropertyDraftData {
-    return {
+    const parsed = {
         ...INITIAL,
         ...Object.fromEntries(Object.entries(INITIAL).map(([key, fallback]) => {
             const value = data[key]
@@ -62,6 +64,11 @@ function parseDraft(data: Record<string, unknown>): CreatePropertyDraftData {
             return [key, String(value ?? fallback)]
         })),
         actorMode: data.actorMode === 'broker' || data.actorMode === 'client-owner' ? data.actorMode : null,
+    }
+    return {
+        ...parsed,
+        priceSale: formatCurrencyInput(parsed.priceSale),
+        priceRent: formatCurrencyInput(parsed.priceRent),
     }
 }
 
@@ -253,8 +260,9 @@ export default function AnunciePage() {
                         form.title.trim() &&
                         form.description.trim() &&
                         validOwnerPhone(form.ownerPhone) &&
-                        (!saleEnabled || Number(form.priceSale) > 0) &&
-                        (!rentEnabled || Number(form.priceRent) > 0),
+                        form.description.trim().length <= 500 &&
+                        (!saleEnabled || parseCurrencyInput(form.priceSale) > 0) &&
+                        (!rentEnabled || parseCurrencyInput(form.priceRent) > 0),
                 )
             case 2:
                 return Boolean(
@@ -264,8 +272,8 @@ export default function AnunciePage() {
                         form.city.trim() &&
                         form.state.trim() &&
                         (form.semNumero || form.numero.trim()) &&
-                        (!needsLotFields ||
-                            (form.quadra.trim() && form.lote.trim() && form.tipoLote.trim())),
+                        form.tipoLote.trim() &&
+                        (!needsLotFields || (form.quadra.trim() && form.lote.trim())),
                 )
             case 3:
                 return Number(form.areaConstruida) > 0 && Number(form.areaTerreno) > 0
@@ -409,14 +417,20 @@ export default function AnunciePage() {
                             <div><label className={LABEL}>Finalidade *</label><select value={form.purpose} onChange={(e) => updateField('purpose', e.target.value)} className={INPUT}><option value="">Selecionar</option>{PROPERTY_PURPOSES.map((o) => <option key={o} value={o}>{o}</option>)}</select></div>
                         </div>
                         <div><label className={LABEL}>Título *</label><input value={form.title} onChange={(e) => updateField('title', e.target.value)} className={INPUT} /></div>
-                        <div><label className={LABEL}>Descrição *</label><textarea value={form.description} onChange={(e) => updateField('description', e.target.value)} rows={4} className={INPUT} /></div>
+                        <div>
+                            <div className="flex items-center justify-between">
+                                <label className={LABEL}>Descrição *</label>
+                                <span className={`text-xs ${form.description.length > 500 ? 'text-red-600' : 'text-slate-500'}`}>{form.description.length}/500</span>
+                            </div>
+                            <textarea value={form.description} onChange={(e) => updateField('description', e.target.value.slice(0, 500))} rows={4} maxLength={500} className={INPUT} />
+                        </div>
                         <div className="grid gap-3 sm:grid-cols-2">
                             <div><label className={LABEL}>Nome do proprietário</label><input value={form.ownerName} onChange={(e) => updateField('ownerName', e.target.value)} className={INPUT} /></div>
                             <div><label className={LABEL}>Telefone do proprietário</label><input value={form.ownerPhone} onChange={(e) => updateField('ownerPhone', e.target.value)} className={INPUT} placeholder="(64) 99999-9999" /></div>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2">
-                            {saleEnabled && <div><label className={LABEL}>Preço de venda *</label><input type="number" min="0" step="0.01" value={form.priceSale} onChange={(e) => updateField('priceSale', e.target.value)} className={INPUT} /></div>}
-                            {rentEnabled && <div><label className={LABEL}>Preço de aluguel *</label><input type="number" min="0" step="0.01" value={form.priceRent} onChange={(e) => updateField('priceRent', e.target.value)} className={INPUT} /></div>}
+                            {saleEnabled && <div><label className={LABEL}>Preço de venda *</label><CurrencyInput value={form.priceSale} onChange={(value) => updateField('priceSale', value)} className={INPUT} placeholder="R$ 0,00" /></div>}
+                            {rentEnabled && <div><label className={LABEL}>Preço de aluguel *</label><CurrencyInput value={form.priceRent} onChange={(value) => updateField('priceRent', value)} className={INPUT} placeholder="R$ 0,00" /></div>}
                         </div>
                     </>
                 )}
@@ -439,7 +453,7 @@ export default function AnunciePage() {
                         <div className="grid gap-3 sm:grid-cols-3">
                             <div><label className={LABEL}>{needsLotFields ? 'Quadra *' : 'Quadra'}</label><input value={form.quadra} onChange={(e) => updateField('quadra', e.target.value)} className={INPUT} /></div>
                             <div><label className={LABEL}>{needsLotFields ? 'Lote *' : 'Lote'}</label><input value={form.lote} onChange={(e) => updateField('lote', e.target.value)} className={INPUT} /></div>
-                            <div><label className={LABEL}>{needsLotFields ? 'Tipo de lote *' : 'Tipo de lote'}</label><select value={form.tipoLote} onChange={(e) => updateField('tipoLote', e.target.value)} className={INPUT}><option value="">Selecionar</option>{LOT_TYPES.map((o) => <option key={o} value={o}>{o}</option>)}</select></div>
+                            <div><label className={LABEL}>Tipo de lote *</label><select value={form.tipoLote} onChange={(e) => updateField('tipoLote', e.target.value)} className={INPUT}><option value="">Selecionar</option>{LOT_TYPES.map((o) => <option key={o} value={o}>{o}</option>)}</select></div>
                         </div>
                     </>
                 )}
@@ -474,7 +488,6 @@ export default function AnunciePage() {
                                 </label>
                             ))}
                         </div>
-                        <div><label className={LABEL}>Condomínio</label><input type="number" min="0" step="0.01" value={form.valorCondominio} onChange={(e) => updateField('valorCondominio', e.target.value)} className={INPUT} /></div>
                     </>
                 )}
 
@@ -492,6 +505,10 @@ export default function AnunciePage() {
                             <button type="button" onClick={() => removeImage(index)} className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900/80 text-white opacity-0 group-hover:opacity-100" aria-label={`Remover imagem ${index + 1}`}><X className="h-4 w-4" /></button>{index === 0 && <span className="absolute bottom-2 left-2 rounded-full bg-primary-700 px-2 py-0.5 text-[10px] font-bold text-white">Capa</span>}</div>)}</div>}
                         <div className="rounded-2xl border border-slate-200 p-5">
                             <div className="mb-3 flex items-center gap-2"><Video className="h-5 w-5 text-primary-600" /><h3 className="text-sm font-semibold text-slate-900">Vídeo opcional</h3></div>
+                            <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                                <p className="font-medium text-slate-800">O vídeo não é obrigatório.</p>
+                                <p className="mt-1">Use-o apenas se quiser dar mais contexto visual ao imóvel. O cadastro pode seguir normalmente só com as fotos.</p>
+                            </div>
                             <div className="flex flex-wrap gap-3">
                                 <button type="button" onClick={() => videoInputRef.current?.click()} className="rounded-xl border border-primary-200 bg-primary-50 px-4 py-2.5 text-sm font-medium text-primary-700 hover:bg-primary-100">{video ? 'Trocar vídeo' : 'Selecionar vídeo'}</button>
                                 {video && <button type="button" onClick={removeVideo} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Remover vídeo</button>}
@@ -508,13 +525,24 @@ export default function AnunciePage() {
                             <p><span className="font-semibold text-slate-900">Fluxo:</span> {actorMode === 'client-owner' ? 'Cliente-proprietário' : 'Corretor'}</p>
                             <p><span className="font-semibold text-slate-900">Tipo:</span> {form.propertyType}</p>
                             <p><span className="font-semibold text-slate-900">Finalidade:</span> {form.purpose}</p>
+                            <p><span className="font-semibold text-slate-900">Tipo de lote:</span> {form.tipoLote}</p>
                             <p><span className="font-semibold text-slate-900">CEP:</span> {form.cep}</p>
                             <p className="sm:col-span-2"><span className="font-semibold text-slate-900">Título:</span> {form.title}</p>
+                            <p className="sm:col-span-2"><span className="font-semibold text-slate-900">Descrição:</span> {form.description}</p>
                             <p className="sm:col-span-2"><span className="font-semibold text-slate-900">Local:</span> {[form.address, form.numero, form.bairro, form.city, form.state].filter(Boolean).join(', ')}</p>
                             <p><span className="font-semibold text-slate-900">Área construída:</span> {form.areaConstruida || '—'} m²</p>
                             <p><span className="font-semibold text-slate-900">Área do terreno:</span> {form.areaTerreno || '—'} m²</p>
-                            {saleEnabled && <p><span className="font-semibold text-slate-900">Venda:</span> R$ {Number(form.priceSale || 0).toLocaleString('pt-BR')}</p>}
-                            {rentEnabled && <p><span className="font-semibold text-slate-900">Aluguel:</span> R$ {Number(form.priceRent || 0).toLocaleString('pt-BR')}</p>}
+                            <p><span className="font-semibold text-slate-900">Quadra:</span> {form.quadra || '—'}</p>
+                            <p><span className="font-semibold text-slate-900">Lote:</span> {form.lote || '—'}</p>
+                            {saleEnabled && <p><span className="font-semibold text-slate-900">Venda:</span> {form.priceSale || 'R$ 0,00'}</p>}
+                            {rentEnabled && <p><span className="font-semibold text-slate-900">Aluguel:</span> {form.priceRent || 'R$ 0,00'}</p>}
+                            <p><span className="font-semibold text-slate-900">Comodidades:</span> {[
+                                form.hasWifi && 'Wi‑Fi',
+                                form.temPiscina && 'Piscina',
+                                form.temAutomacao && 'Automação',
+                                form.temArCondicionado && 'Ar-condicionado',
+                                form.ehMobiliada && 'Mobiliado',
+                            ].filter(Boolean).join(', ') || 'Nenhuma selecionada'}</p>
                             <p><span className="font-semibold text-slate-900">Imagens:</span> {images.length}</p>
                             <p><span className="font-semibold text-slate-900">Vídeo:</span> {video ? 'Sim' : 'Não'}</p>
                         </div>

@@ -16,6 +16,8 @@ import {
     DollarSign, Percent, Wand2, CheckCircle, AlertTriangle, Home, ChevronRight,
     Search, ShieldCheck
 } from 'lucide-react'
+import { CurrencyInput } from '@/components/form/CurrencyInput'
+import { formatCurrencyInput } from '@/lib/currencyInput'
 
 /* ─── Types ─── */
 
@@ -164,7 +166,7 @@ export default function ProposalWizardPage() {
             if (newUnit === 'percent' && propertyValue > 0) {
                 newValue = ((amountInReais / propertyValue) * 100).toFixed(1).replace('.', ',')
             } else {
-                newValue = amountInReais.toFixed(2).replace('.', ',')
+                newValue = formatCurrencyInput(amountInReais.toFixed(2).replace('.', ','))
             }
             return { ...prev, [key]: { value: newValue, unit: newUnit } }
         })
@@ -180,7 +182,7 @@ export default function ProposalWizardPage() {
         if (field.unit === 'percent' && propertyValue > 0) {
             newValue = ((rem / propertyValue) * 100).toFixed(1).replace('.', ',')
         } else {
-            newValue = rem.toFixed(2).replace('.', ',')
+            newValue = formatCurrencyInput(rem.toFixed(2).replace('.', ','))
         }
         setPayments(prev => ({ ...prev, [targetKey]: { ...prev[targetKey], value: newValue } }))
     }
@@ -487,16 +489,25 @@ export default function ProposalWizardPage() {
                                             <div className="flex gap-2">
                                                 <div className="flex-1 relative">
                                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
-                                                        {field.unit === 'reais' ? 'R$' : '%'}
+                                                        {field.unit === 'percent' ? '%' : ''}
                                                     </span>
-                                                    <input
-                                                        type="text"
-                                                        value={field.value}
-                                                        onChange={e => updatePayment(key, e.target.value)}
-                                                        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
-                                                        placeholder="0,00"
-                                                        inputMode="decimal"
-                                                    />
+                                                    {field.unit === 'reais' ? (
+                                                        <CurrencyInput
+                                                            value={field.value}
+                                                            onChange={(value) => updatePayment(key, value)}
+                                                            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+                                                            placeholder="R$ 0,00"
+                                                        />
+                                                    ) : (
+                                                        <input
+                                                            type="text"
+                                                            value={field.value}
+                                                            onChange={e => updatePayment(key, e.target.value)}
+                                                            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+                                                            placeholder="0,00"
+                                                            inputMode="decimal"
+                                                        />
+                                                    )}
                                                 </div>
 
                                                 {/* Unit toggle */}

@@ -90,6 +90,35 @@ describe('user API', () => {
         expect(url).toContain('/properties/99')
         expect(init.method).toBe('DELETE')
     })
+
+    it('getMyProperties() uses /properties/me and normalizes the payload', async () => {
+        mockFetch.mockResolvedValueOnce(okResponse([
+            {
+                id: 9,
+                title: 'Casa Nova',
+                status: 'pending_approval',
+                price: 350000,
+                city: 'Rio Verde',
+                state: 'GO',
+                type: 'Casa',
+                purpose: 'Venda',
+                images: ['https://img.test/casa.jpg'],
+                created_at: '2026-03-13T10:00:00.000Z',
+            },
+        ]))
+
+        const result = await userApi.getMyProperties()
+
+        const [url] = mockFetch.mock.calls[0]
+        expect(url).toContain('/properties/me')
+        expect(result[0]).toEqual(
+            expect.objectContaining({
+                id: 9,
+                title: 'Casa Nova',
+                imageUrl: 'https://img.test/casa.jpg',
+            }),
+        )
+    })
 })
 
 describe('favorites API', () => {

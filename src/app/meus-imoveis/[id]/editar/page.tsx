@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
 import { fetchEditableProperty, saveEditedProperty } from '@/lib/propertiesEditorService'
 import { PROPERTY_TYPES, PROPERTY_PURPOSES } from '@/lib/propertyCreate'
+import { formatCurrencyInput, parseCurrencyInput } from '@/lib/currencyInput'
+import { CurrencyInput } from '@/components/form/CurrencyInput'
 import { Property } from '@/types/property'
 import {
     ArrowLeft, Loader2, Save, Home, ChevronRight,
@@ -37,7 +39,7 @@ export default function EditPropertyPage() {
         areaConstruida: '', areaTerreno: '',
         hasWifi: false, temPiscina: false, temEnergiaSolar: false,
         temAutomacao: false, temArCondicionado: false, ehMobiliada: false,
-        valorCondominio: '', valorIptu: '',
+        valorIptu: '',
     })
 
     // Auth guard
@@ -59,8 +61,8 @@ export default function EditPropertyPage() {
                 description: p.description || '',
                 type: p.type || 'Casa',
                 purpose: p.purpose || 'Venda',
-                priceSale: p.priceSale ? String(p.priceSale) : '',
-                priceRent: p.priceRent ? String(p.priceRent) : '',
+                priceSale: p.priceSale ? formatCurrencyInput(String(p.priceSale)) : '',
+                priceRent: p.priceRent ? formatCurrencyInput(String(p.priceRent)) : '',
                 address: p.address || '',
                 numero: p.numero || '',
                 quadra: p.quadra || '',
@@ -82,7 +84,6 @@ export default function EditPropertyPage() {
                 temAutomacao: p.temAutomacao || false,
                 temArCondicionado: p.temArCondicionado || false,
                 ehMobiliada: p.ehMobiliada || false,
-                valorCondominio: p.valorCondominio ? String(p.valorCondominio) : '',
                 valorIptu: p.valorIptu ? String(p.valorIptu) : '',
             })
         } catch {
@@ -112,8 +113,8 @@ export default function EditPropertyPage() {
                 description: form.description.trim(),
                 type: form.type,
                 purpose: form.purpose,
-                priceSale: parseFloat(form.priceSale) || 0,
-                priceRent: parseFloat(form.priceRent) || 0,
+                priceSale: parseCurrencyInput(form.priceSale) || 0,
+                priceRent: parseCurrencyInput(form.priceRent) || 0,
                 address: form.address.trim(),
                 numero: form.numero.trim(),
                 quadra: form.quadra.trim(),
@@ -135,8 +136,7 @@ export default function EditPropertyPage() {
                 temAutomacao: form.temAutomacao,
                 temArCondicionado: form.temArCondicionado,
                 ehMobiliada: form.ehMobiliada,
-                valorCondominio: parseFloat(form.valorCondominio) || 0,
-                valorIptu: parseFloat(form.valorIptu) || 0,
+                valorIptu: parseCurrencyInput(form.valorIptu) || 0,
             }
 
             await saveEditedProperty(property.id, payload, isClientOwner ? 'client' : 'broker')
@@ -223,7 +223,8 @@ export default function EditPropertyPage() {
                         </div>
                         <div>
                             <label className={labelClass}>Descrição</label>
-                            <textarea value={form.description} onChange={e => updateField('description', e.target.value)} className={`${inputClass} min-h-[120px] resize-y`} />
+                            <div className="mb-1 text-right text-xs text-slate-500">{form.description.length}/500</div>
+                            <textarea value={form.description} onChange={e => updateField('description', e.target.value.slice(0, 500))} maxLength={500} className={`${inputClass} min-h-[120px] resize-y`} />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
@@ -247,21 +248,17 @@ export default function EditPropertyPage() {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className={labelClass}>Preço de Venda (R$)</label>
-                                <input type="number" value={form.priceSale} onChange={e => updateField('priceSale', e.target.value)} className={inputClass} step="0.01" min="0" />
+                                <CurrencyInput value={form.priceSale} onChange={(value) => updateField('priceSale', value)} className={inputClass} placeholder="R$ 0,00" />
                             </div>
                             <div>
                                 <label className={labelClass}>Aluguel Mensal (R$)</label>
-                                <input type="number" value={form.priceRent} onChange={e => updateField('priceRent', e.target.value)} className={inputClass} step="0.01" min="0" />
+                                <CurrencyInput value={form.priceRent} onChange={(value) => updateField('priceRent', value)} className={inputClass} placeholder="R$ 0,00" />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className={labelClass}>Condomínio (R$)</label>
-                                <input type="number" value={form.valorCondominio} onChange={e => updateField('valorCondominio', e.target.value)} className={inputClass} step="0.01" min="0" />
-                            </div>
+                        <div className="grid grid-cols-1 gap-4">
                             <div>
                                 <label className={labelClass}>IPTU Anual (R$)</label>
-                                <input type="number" value={form.valorIptu} onChange={e => updateField('valorIptu', e.target.value)} className={inputClass} step="0.01" min="0" />
+                                <CurrencyInput value={form.valorIptu} onChange={(value) => updateField('valorIptu', value)} className={inputClass} placeholder="R$ 0,00" />
                             </div>
                         </div>
                     </section>

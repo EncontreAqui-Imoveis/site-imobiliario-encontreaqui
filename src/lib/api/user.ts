@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/api/client'
 import { CreatePropertyActor, resolveCreatePropertyPath } from '@/lib/propertyCreate'
+import { normalizeProperty } from '@/lib/propertiesApi'
 
 export interface UpdateProfilePayload {
     name?: string
@@ -31,11 +32,23 @@ export interface PropertySummary {
 }
 
 export async function getMyProperties(): Promise<PropertySummary[]> {
-    const response = await apiClient.get<{
-        data?: PropertySummary[]
-    } | PropertySummary[]>('/users/me/properties')
+    const response = await apiClient.get<unknown[]>('/properties/me')
 
-    return Array.isArray(response) ? response : (response?.data ?? [])
+    return (Array.isArray(response) ? response : [])
+        .map((item) => normalizeProperty(item))
+        .filter((item): item is NonNullable<ReturnType<typeof normalizeProperty>> => item !== null)
+        .map((item) => ({
+            id: item.id,
+            title: item.title,
+            status: item.status,
+            price: item.priceSale ?? item.priceRent ?? item.price,
+            city: item.city,
+            state: item.state,
+            type: item.type,
+            purpose: item.purpose,
+            imageUrl: item.images[0],
+            createdAt: item.createdAt,
+        }))
 }
 
 export async function createProperty(

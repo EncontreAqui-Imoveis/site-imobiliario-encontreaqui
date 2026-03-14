@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useUser } from '@/contexts/UserContext'
@@ -31,12 +32,18 @@ function getStatusBadge(status: string) {
 
 export default function MeusImoveisPage() {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const { session, loading: authLoading, isBroker } = useUser()
     const canCreateProperty = Boolean(session)
+    const createdId = Number(searchParams.get('created') ?? 0)
 
     const [properties, setProperties] = useState<PropertySummary[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const createdProperty = useMemo(
+        () => properties.find((property) => property.id === createdId),
+        [properties, createdId],
+    )
 
     useEffect(() => {
         if (!authLoading && !session) {
@@ -94,6 +101,14 @@ export default function MeusImoveisPage() {
                 )}
             </div>
 
+            {createdId > 0 && (
+                <div className="mb-6 rounded-2xl border border-primary-100 bg-primary-50 px-4 py-3 text-sm text-primary-900">
+                    {createdProperty
+                        ? `Imóvel "${createdProperty.title}" enviado com sucesso para análise.`
+                        : 'Seu imóvel foi enviado para análise. Se ele ainda não aparecer abaixo, atualize a lista em alguns instantes.'}
+                </div>
+            )}
+
             {loading ? (
                 <div className="flex items-center justify-center py-20">
                     <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
@@ -135,8 +150,9 @@ export default function MeusImoveisPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {properties.map((property) => {
                         const badge = getStatusBadge(property.status)
+                        const isJustCreated = property.id === createdId
                         return (
-                            <div key={property.id} className="bg-white rounded-2xl shadow-md shadow-slate-200/50 border border-slate-100 overflow-hidden hover:shadow-lg transition-shadow group">
+                            <div key={property.id} className={`bg-white rounded-2xl shadow-md shadow-slate-200/50 border overflow-hidden hover:shadow-lg transition-shadow group ${isJustCreated ? 'border-primary-300 ring-2 ring-primary-100' : 'border-slate-100'}`}>
                                 <div className="relative aspect-[4/3] bg-slate-100">
                                     {property.imageUrl ? (
                                         <Image
@@ -153,6 +169,11 @@ export default function MeusImoveisPage() {
                                     <span className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-semibold ${badge.className}`}>
                                         {badge.label}
                                     </span>
+                                    {isJustCreated && (
+                                        <span className="absolute top-3 right-3 rounded-full bg-primary-700 px-2.5 py-1 text-xs font-semibold text-white">
+                                            Novo
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="p-4 space-y-2">
                                     <h3 className="font-semibold text-slate-900 line-clamp-1">{property.title}</h3>

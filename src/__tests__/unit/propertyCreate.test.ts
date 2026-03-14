@@ -59,7 +59,6 @@ describe('propertyCreate helpers', () => {
             temAutomacao: true,
             temArCondicionado: false,
             ehMobiliada: false,
-            valorCondominio: '0',
             images: [image],
             video,
         })

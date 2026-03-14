@@ -59,7 +59,6 @@ export type CreatePropertyDraftData = {
     temAutomacao: boolean
     temArCondicionado: boolean
     ehMobiliada: boolean
-    valorCondominio: string
 }
 
 export type CreatePropertyPayload = CreatePropertyDraftData & {
@@ -166,7 +165,6 @@ export function buildCreatePropertyFormData(payload: CreatePropertyPayload): For
     appendIfPresent(formData, 'garage_spots', normalizeDecimalInput(payload.garageSpots))
     appendIfPresent(formData, 'area_construida', normalizeDecimalInput(payload.areaConstruida))
     appendIfPresent(formData, 'area_terreno', normalizeDecimalInput(payload.areaTerreno))
-    appendIfPresent(formData, 'valor_condominio', normalizeDecimalInput(payload.valorCondominio))
 
     formData.append('has_wifi', payload.hasWifi ? '1' : '0')
     formData.append('tem_piscina', payload.temPiscina ? '1' : '0')

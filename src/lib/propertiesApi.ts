@@ -69,16 +69,7 @@ function normalizeStatus(rawStatus: unknown): Property['status'] {
 
 function normalizeType(rawType: unknown): Property['type'] {
     const normalized = String(rawType ?? 'Casa').trim()
-    if (
-        normalized === 'Casa' ||
-        normalized === 'Apartamento' ||
-        normalized === 'Terreno' ||
-        normalized === 'Propriedade Rural' ||
-        normalized === 'Propriedade Comercial'
-    ) {
-        return normalized
-    }
-    return 'Casa'
+    return normalized.length > 0 ? normalized : 'Casa'
 }
 
 function normalizePurpose(rawPurpose: unknown): Property['purpose'] {

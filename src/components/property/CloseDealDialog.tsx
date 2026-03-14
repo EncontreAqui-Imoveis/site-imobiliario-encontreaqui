@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { Property, formatPrice } from '@/types/property'
 import { cancelPropertyDeal, closePropertyDeal } from '@/lib/propertyDeals'
+import { CurrencyInput } from '@/components/form/CurrencyInput'
+import { formatCurrencyInput } from '@/lib/currencyInput'
 import {
     X, Loader2, DollarSign, Percent, AlertTriangle,
     Handshake, Ban, ChevronDown
@@ -63,7 +65,7 @@ export default function CloseDealDialog({ property, open, onClose, onDealClosed 
             if (type === 'rent') return property.priceRent ?? property.price ?? 0
             return property.priceSale ?? property.price ?? 0
         }
-        setAmount(resolveDefault(dealType).toFixed(2).replace('.', ','))
+        setAmount(formatCurrencyInput(resolveDefault(dealType).toFixed(2).replace('.', ',')))
     }, [dealType, property])
 
     // Dialog open/close
@@ -186,13 +188,11 @@ export default function CloseDealDialog({ property, open, onClose, onDealClosed 
                         <label className="block text-sm font-medium text-gray-700 mb-1">Valor final</label>
                         <div className="relative">
                             <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                            <input
-                                type="text"
+                            <CurrencyInput
                                 value={amount}
-                                onChange={e => setAmount(e.target.value)}
+                                onChange={setAmount}
                                 className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
-                                placeholder="0,00"
-                                inputMode="decimal"
+                                placeholder="R$ 0,00"
                             />
                         </div>
                     </div>
