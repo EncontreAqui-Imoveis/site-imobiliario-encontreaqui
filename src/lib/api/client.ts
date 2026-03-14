@@ -8,6 +8,7 @@ type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
 export interface ApiErrorPayload {
     message?: string
+    error?: string
     code?: string
     requestId?: string
     request_id?: string
@@ -129,7 +130,10 @@ async function request<T = unknown>(path: string, options: RequestOptions = {}):
 
     if (!response.ok && !skipThrowOnError) {
         const payload = (data || {}) as ApiErrorPayload
-        const message = payload.message || `Erro na API (${response.status})`
+        const message =
+            payload.message ||
+            (typeof payload.error === 'string' ? payload.error : undefined) ||
+            `Erro na API (${response.status})`
         const requestId =
             response.headers.get('x-request-id') || payload.requestId || payload.request_id
 

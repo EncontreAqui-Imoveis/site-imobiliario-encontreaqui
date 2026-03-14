@@ -54,6 +54,7 @@ const STEPS = ['Dados principais', 'Localização', 'Áreas', 'Comodidades', 'M�
 const INPUT = 'w-full rounded-xl border border-slate-200 px-3 py-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500'
 const LABEL = 'mb-1 block text-xs font-medium text-slate-600'
 const REVIEW_CARD = 'min-w-0 rounded-xl border border-slate-200 bg-white p-4'
+const REVIEW_SECTION_TITLE = 'text-base font-bold text-slate-900'
 const REVIEW_LABEL = 'text-xs font-semibold uppercase tracking-[0.12em] text-slate-500'
 const REVIEW_VALUE = 'mt-2 text-sm text-slate-800 whitespace-pre-wrap break-words [overflow-wrap:anywhere]'
 const INITIAL: CreatePropertyDraftData = {
@@ -543,35 +544,35 @@ export default function AnunciePage() {
                         <div className="space-y-4">
                             <div className="grid gap-3 md:grid-cols-2">
                                 <div className={REVIEW_CARD}>
-                                    <p className={REVIEW_LABEL}>Fluxo</p>
+                                    <p className={REVIEW_SECTION_TITLE}>Fluxo</p>
                                     <p className={REVIEW_VALUE}>{actorMode === 'client-owner' ? 'Cliente-proprietário' : 'Corretor'}</p>
                                 </div>
                                 <div className={REVIEW_CARD}>
-                                    <p className={REVIEW_LABEL}>Tipo</p>
+                                    <p className={REVIEW_SECTION_TITLE}>Tipo</p>
                                     <p className={REVIEW_VALUE}>{form.propertyType || '—'}</p>
                                 </div>
                                 <div className={REVIEW_CARD}>
-                                    <p className={REVIEW_LABEL}>Finalidade</p>
+                                    <p className={REVIEW_SECTION_TITLE}>Finalidade</p>
                                     <p className={REVIEW_VALUE}>{form.purpose || '—'}</p>
                                 </div>
                                 <div className={REVIEW_CARD}>
-                                    <p className={REVIEW_LABEL}>Tipo de lote</p>
+                                    <p className={REVIEW_SECTION_TITLE}>Tipo de lote</p>
                                     <p className={REVIEW_VALUE}>{form.tipoLote || '—'}</p>
                                 </div>
                             </div>
 
                             <div className={REVIEW_CARD}>
-                                <p className={REVIEW_LABEL}>Título</p>
+                                <p className={REVIEW_SECTION_TITLE}>Título</p>
                                 <p className={`${REVIEW_VALUE} text-base font-medium text-slate-900`}>{form.title || '—'}</p>
                             </div>
 
                             <div className={REVIEW_CARD}>
-                                <p className={REVIEW_LABEL}>Descrição</p>
+                                <p className={REVIEW_SECTION_TITLE}>Descrição</p>
                                 <p className={REVIEW_VALUE}>{form.description || '—'}</p>
                             </div>
 
                             <div className={REVIEW_CARD}>
-                                <p className={REVIEW_LABEL}>Localização</p>
+                                <p className={REVIEW_SECTION_TITLE}>Localização</p>
                                 <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                                     <div className="min-w-0">
                                         <p className={REVIEW_LABEL}>CEP</p>
@@ -618,7 +619,7 @@ export default function AnunciePage() {
 
                             <div className="grid gap-3 md:grid-cols-2">
                                 <div className={REVIEW_CARD}>
-                                    <p className={REVIEW_LABEL}>Áreas e dimensões</p>
+                                    <p className={REVIEW_SECTION_TITLE}>Áreas e dimensões</p>
                                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
                                         <div className="min-w-0">
                                             <p className={REVIEW_LABEL}>Área construída</p>
@@ -644,7 +645,7 @@ export default function AnunciePage() {
                                 </div>
 
                                 <div className={REVIEW_CARD}>
-                                    <p className={REVIEW_LABEL}>Condições comerciais</p>
+                                    <p className={REVIEW_SECTION_TITLE}>Condições comerciais</p>
                                     <div className="mt-3 space-y-3">
                                         {saleEnabled && (
                                             <div className="min-w-0">
