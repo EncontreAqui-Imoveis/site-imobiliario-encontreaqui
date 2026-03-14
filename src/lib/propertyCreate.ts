@@ -22,6 +22,8 @@ export const PROPERTY_TYPES = [
 
 export const PROPERTY_PURPOSES = ['Venda', 'Aluguel', 'Venda e Aluguel'] as const
 export const LOT_TYPES = ['meio', 'inteiro'] as const
+export const MAX_PROPERTY_COUNT = 99
+export const MAX_PROPERTY_AREA = 99999999.99
 export const BRAZILIAN_STATES = [
     'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
 ] as const
@@ -111,6 +113,19 @@ export function normalizeDecimalInput(value: string): number {
     }
 
     return Number.parseFloat(normalized) || 0
+}
+
+export function clampCountInput(value: string): string {
+    const digits = digitsOnly(value).slice(0, 2)
+    if (!digits) return ''
+    return String(Math.min(MAX_PROPERTY_COUNT, Number.parseInt(digits, 10)))
+}
+
+export function clampAreaInput(value: string): string {
+    const parsed = normalizeDecimalInput(value)
+    if (!Number.isFinite(parsed) || parsed <= 0) return value.replace(/[^\d.,]/g, '')
+    const clamped = Math.min(parsed, MAX_PROPERTY_AREA)
+    return String(clamped)
 }
 
 export function supportsSale(purpose: string): boolean {

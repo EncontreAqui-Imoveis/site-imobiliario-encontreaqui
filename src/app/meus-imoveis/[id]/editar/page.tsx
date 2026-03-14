@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
 import { fetchEditableProperty, saveEditedProperty } from '@/lib/propertiesEditorService'
-import { LOT_TYPES, PROPERTY_TYPES, PROPERTY_PURPOSES } from '@/lib/propertyCreate'
+import { clampAreaInput, clampCountInput, LOT_TYPES, MAX_PROPERTY_AREA, MAX_PROPERTY_COUNT, PROPERTY_TYPES, PROPERTY_PURPOSES } from '@/lib/propertyCreate'
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/currencyInput'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
 import { Property } from '@/types/property'
@@ -325,24 +325,24 @@ export default function EditPropertyPage() {
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                             <div>
                                 <label className={labelClass}>Quartos</label>
-                                <input type="number" value={form.bedrooms} onChange={e => updateField('bedrooms', e.target.value)} className={inputClass} min="0" />
+                                <input type="number" value={form.bedrooms} onChange={e => updateField('bedrooms', clampCountInput(e.target.value))} className={inputClass} min="0" max={MAX_PROPERTY_COUNT} />
                             </div>
                             <div>
                                 <label className={labelClass}>Banheiros</label>
-                                <input type="number" value={form.bathrooms} onChange={e => updateField('bathrooms', e.target.value)} className={inputClass} min="0" />
+                                <input type="number" value={form.bathrooms} onChange={e => updateField('bathrooms', clampCountInput(e.target.value))} className={inputClass} min="0" max={MAX_PROPERTY_COUNT} />
                             </div>
                             <div>
                                 <label className={labelClass}>Vagas</label>
-                                <input type="number" value={form.garageSpots} onChange={e => updateField('garageSpots', e.target.value)} className={inputClass} min="0" />
+                                <input type="number" value={form.garageSpots} onChange={e => updateField('garageSpots', clampCountInput(e.target.value))} className={inputClass} min="0" max={MAX_PROPERTY_COUNT} />
                             </div>
                             <div>
                                 <label className={labelClass}>Área Útil (m²)</label>
-                                <input type="number" value={form.areaConstruida} onChange={e => updateField('areaConstruida', e.target.value)} className={inputClass} step="0.01" min="0" />
+                                <input type="number" value={form.areaConstruida} onChange={e => updateField('areaConstruida', clampAreaInput(e.target.value))} className={inputClass} step="0.01" min="0" max={MAX_PROPERTY_AREA} />
                             </div>
                         </div>
                         <div>
                             <label className={labelClass}>Área Total (m²)</label>
-                            <input type="number" value={form.areaTerreno} onChange={e => updateField('areaTerreno', e.target.value)} className={inputClass} step="0.01" min="0" />
+                            <input type="number" value={form.areaTerreno} onChange={e => updateField('areaTerreno', clampAreaInput(e.target.value))} className={inputClass} step="0.01" min="0" max={MAX_PROPERTY_AREA} />
                         </div>
                     </section>
 

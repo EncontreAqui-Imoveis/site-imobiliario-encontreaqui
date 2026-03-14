@@ -25,11 +25,15 @@ import { clearDraft, hasDraft as checkHasDraft, loadDraft, saveDraft } from '@/l
 import {
     BRAZILIAN_STATES,
     buildCreatePropertyFormData,
+    clampAreaInput,
+    clampCountInput,
     CreatePropertyActor,
     CreatePropertyDraftData,
     digitsOnly,
     formatCepInput,
     LOT_TYPES,
+    MAX_PROPERTY_AREA,
+    MAX_PROPERTY_COUNT,
     PROPERTY_PURPOSES,
     PROPERTY_TYPES,
     requiresLotFields,
@@ -277,7 +281,15 @@ export default function AnunciePage() {
                         (!needsLotFields || (form.quadra.trim() && form.lote.trim())),
                 )
             case 3:
-                return Number(form.areaConstruida) > 0 && Number(form.areaTerreno) > 0
+                return (
+                    Number(form.areaConstruida) > 0 &&
+                    Number(form.areaTerreno) > 0 &&
+                    Number(form.areaConstruida) <= MAX_PROPERTY_AREA &&
+                    Number(form.areaTerreno) <= MAX_PROPERTY_AREA &&
+                    (!form.bedrooms || Number(form.bedrooms) <= MAX_PROPERTY_COUNT) &&
+                    (!form.bathrooms || Number(form.bathrooms) <= MAX_PROPERTY_COUNT) &&
+                    (!form.garageSpots || Number(form.garageSpots) <= MAX_PROPERTY_COUNT)
+                )
             case 4:
                 return true
             case 5:
@@ -462,13 +474,13 @@ export default function AnunciePage() {
                 {step === 3 && (
                     <>
                         <div className="grid gap-3 sm:grid-cols-2">
-                            <div><label className={LABEL}>Área construída (m²) *</label><input type="number" min="0" step="0.01" value={form.areaConstruida} onChange={(e) => updateField('areaConstruida', e.target.value)} className={INPUT} /></div>
-                            <div><label className={LABEL}>Área do terreno (m²) *</label><input type="number" min="0" step="0.01" value={form.areaTerreno} onChange={(e) => updateField('areaTerreno', e.target.value)} className={INPUT} /></div>
+                            <div><label className={LABEL}>Área construída (m²) *</label><input type="number" min="0" max={MAX_PROPERTY_AREA} step="0.01" value={form.areaConstruida} onChange={(e) => updateField('areaConstruida', clampAreaInput(e.target.value))} className={INPUT} /></div>
+                            <div><label className={LABEL}>Área do terreno (m²) *</label><input type="number" min="0" max={MAX_PROPERTY_AREA} step="0.01" value={form.areaTerreno} onChange={(e) => updateField('areaTerreno', clampAreaInput(e.target.value))} className={INPUT} /></div>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-3">
-                            <div><label className={LABEL}>Quartos</label><input type="number" min="0" value={form.bedrooms} onChange={(e) => updateField('bedrooms', e.target.value)} className={INPUT} /></div>
-                            <div><label className={LABEL}>Banheiros</label><input type="number" min="0" value={form.bathrooms} onChange={(e) => updateField('bathrooms', e.target.value)} className={INPUT} /></div>
-                            <div><label className={LABEL}>Garagens</label><input type="number" min="0" value={form.garageSpots} onChange={(e) => updateField('garageSpots', e.target.value)} className={INPUT} /></div>
+                            <div><label className={LABEL}>Quartos</label><input type="number" min="0" max={MAX_PROPERTY_COUNT} value={form.bedrooms} onChange={(e) => updateField('bedrooms', clampCountInput(e.target.value))} className={INPUT} /></div>
+                            <div><label className={LABEL}>Banheiros</label><input type="number" min="0" max={MAX_PROPERTY_COUNT} value={form.bathrooms} onChange={(e) => updateField('bathrooms', clampCountInput(e.target.value))} className={INPUT} /></div>
+                            <div><label className={LABEL}>Garagens</label><input type="number" min="0" max={MAX_PROPERTY_COUNT} value={form.garageSpots} onChange={(e) => updateField('garageSpots', clampCountInput(e.target.value))} className={INPUT} /></div>
                         </div>
                     </>
                 )}
@@ -529,7 +541,7 @@ export default function AnunciePage() {
                             <p><span className="font-semibold text-slate-900">Tipo de lote:</span> {form.tipoLote}</p>
                             <p><span className="font-semibold text-slate-900">CEP:</span> {form.cep}</p>
                             <p className="sm:col-span-2"><span className="font-semibold text-slate-900">Título:</span> {form.title}</p>
-                            <p className="sm:col-span-2"><span className="font-semibold text-slate-900">Descrição:</span> {form.description}</p>
+                            <p className="sm:col-span-2 break-words [overflow-wrap:anywhere]"><span className="font-semibold text-slate-900">Descrição:</span> {form.description}</p>
                             <p className="sm:col-span-2"><span className="font-semibold text-slate-900">Local:</span> {[form.address, form.numero, form.bairro, form.city, form.state].filter(Boolean).join(', ')}</p>
                             <p><span className="font-semibold text-slate-900">Área construída:</span> {form.areaConstruida || '—'} m²</p>
                             <p><span className="font-semibold text-slate-900">Área do terreno:</span> {form.areaTerreno || '—'} m²</p>
