@@ -180,7 +180,7 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                 <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100">
                     <h2 className="font-display text-xl font-bold text-gray-900 mb-4">Sobre o imóvel</h2>
                     <div className="prose prose-gray max-w-none">
-                        <p className="text-gray-600 whitespace-pre-line leading-relaxed text-base">
+                        <p className="text-gray-600 whitespace-pre-line break-words [overflow-wrap:anywhere] leading-relaxed text-base">
                             {property.description}
                         </p>
                     </div>

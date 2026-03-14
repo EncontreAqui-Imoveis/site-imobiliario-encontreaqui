@@ -6,6 +6,7 @@ import { useUser } from '@/contexts/UserContext'
 import { updateProfile } from '@/lib/api/user'
 import type { ApiError } from '@/lib/api/client'
 import { UserCircle, CheckCircle } from 'lucide-react'
+import { formatPhoneInput, normalizePhoneDigits } from '@/lib/phoneInput'
 
 const BRAZILIAN_STATES = [
     'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
@@ -71,13 +72,6 @@ export default function OnboardingPage() {
         }
     }
 
-    const formatPhone = (val: string) => {
-        const digits = val.replace(/\D/g, '').slice(0, 11)
-        if (digits.length <= 2) return digits
-        if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`
-        return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
-    }
-
     const formatCep = (val: string) => {
         const digits = val.replace(/\D/g, '').slice(0, 8)
         if (digits.length <= 5) return digits
@@ -91,7 +85,7 @@ export default function OnboardingPage() {
 
         try {
             await updateProfile({
-                phone: phone.replace(/\D/g, '') || undefined,
+                phone: normalizePhoneDigits(phone) || undefined,
                 cep: cep.replace(/\D/g, '') || undefined,
                 street: street || undefined,
                 number: number || undefined,
@@ -149,9 +143,9 @@ export default function OnboardingPage() {
                             type="tel"
                             required
                             value={phone}
-                            onChange={(e) => setPhone(formatPhone(e.target.value))}
+                            onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
                             className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                            placeholder="(00) 00000-0000"
+                            placeholder="+55 (00) 00000-0000"
                         />
                     </div>
 

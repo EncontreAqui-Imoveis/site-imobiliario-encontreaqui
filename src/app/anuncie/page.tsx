@@ -37,6 +37,7 @@ import {
     supportsSale,
 } from '@/lib/propertyCreate'
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/currencyInput'
+import { formatPhoneInput } from '@/lib/phoneInput'
 import { validateImageFile, validateVideoFile } from '@/lib/sanitize'
 import { useUser } from '@/contexts/UserContext'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
@@ -426,7 +427,7 @@ export default function AnunciePage() {
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2">
                             <div><label className={LABEL}>Nome do proprietário</label><input value={form.ownerName} onChange={(e) => updateField('ownerName', e.target.value)} className={INPUT} /></div>
-                            <div><label className={LABEL}>Telefone do proprietário</label><input value={form.ownerPhone} onChange={(e) => updateField('ownerPhone', e.target.value)} className={INPUT} placeholder="(64) 99999-9999" /></div>
+                            <div><label className={LABEL}>Telefone do proprietário</label><input value={form.ownerPhone} onChange={(e) => updateField('ownerPhone', formatPhoneInput(e.target.value))} className={INPUT} placeholder="+55 (00) 00000-0000" /></div>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2">
                             {saleEnabled && <div><label className={LABEL}>Preço de venda *</label><CurrencyInput value={form.priceSale} onChange={(value) => updateField('priceSale', value)} className={INPUT} placeholder="R$ 0,00" /></div>}
@@ -461,8 +462,8 @@ export default function AnunciePage() {
                 {step === 3 && (
                     <>
                         <div className="grid gap-3 sm:grid-cols-2">
-                            <div><label className={LABEL}>Área construída *</label><input type="number" min="0" step="0.01" value={form.areaConstruida} onChange={(e) => updateField('areaConstruida', e.target.value)} className={INPUT} /></div>
-                            <div><label className={LABEL}>Área do terreno *</label><input type="number" min="0" step="0.01" value={form.areaTerreno} onChange={(e) => updateField('areaTerreno', e.target.value)} className={INPUT} /></div>
+                            <div><label className={LABEL}>Área construída (m²) *</label><input type="number" min="0" step="0.01" value={form.areaConstruida} onChange={(e) => updateField('areaConstruida', e.target.value)} className={INPUT} /></div>
+                            <div><label className={LABEL}>Área do terreno (m²) *</label><input type="number" min="0" step="0.01" value={form.areaTerreno} onChange={(e) => updateField('areaTerreno', e.target.value)} className={INPUT} /></div>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-3">
                             <div><label className={LABEL}>Quartos</label><input type="number" min="0" value={form.bedrooms} onChange={(e) => updateField('bedrooms', e.target.value)} className={INPUT} /></div>

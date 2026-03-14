@@ -7,6 +7,7 @@ import { register } from '@/lib/api/auth'
 import { loginWithGooglePopup } from '@/lib/auth/googleFlow'
 import { useUser } from '@/contexts/UserContext'
 import type { ApiError } from '@/lib/api/client'
+import { formatPhoneInput, normalizePhoneDigits } from '@/lib/phoneInput'
 
 const BRAZILIAN_STATES = [
     'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
@@ -55,13 +56,6 @@ export default function CadastroPage() {
         }
     }
 
-    const formatPhone = (val: string) => {
-        const digits = val.replace(/\D/g, '').slice(0, 11)
-        if (digits.length <= 2) return digits
-        if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`
-        return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
-    }
-
     const formatCep = (val: string) => {
         const digits = val.replace(/\D/g, '').slice(0, 8)
         if (digits.length <= 5) return digits
@@ -78,7 +72,7 @@ export default function CadastroPage() {
                 name,
                 email,
                 password,
-                phone: phone.replace(/\D/g, '') || undefined,
+                phone: normalizePhoneDigits(phone) || undefined,
                 city: city || undefined,
                 state: state || undefined,
                 street: street || undefined,
@@ -222,9 +216,9 @@ export default function CadastroPage() {
                             id="phone"
                             type="tel"
                             value={phone}
-                            onChange={(e) => setPhone(formatPhone(e.target.value))}
+                            onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
                             className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                            placeholder="(00) 00000-0000"
+                            placeholder="+55 (00) 00000-0000"
                         />
                     </div>
 

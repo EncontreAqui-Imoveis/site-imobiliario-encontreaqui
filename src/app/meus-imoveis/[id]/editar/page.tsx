@@ -310,7 +310,7 @@ export default function EditPropertyPage() {
                                 </select>
                             </div>
                             <div>
-                                <label className={labelClass}>Tipo de Lote</label>
+                                <label className={labelClass}>Tipo de Lote *</label>
                                 <input type="text" value={form.tipoLote} onChange={e => updateField('tipoLote', e.target.value)} className={inputClass} placeholder="ex: Residencial" />
                             </div>
                         </div>
