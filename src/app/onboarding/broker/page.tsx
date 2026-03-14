@@ -152,6 +152,7 @@ export default function BrokerOnboardingPage() {
                                     required
                                     value={creci}
                                     onChange={(e) => setCreci(e.target.value)}
+                                    maxLength={25}
                                     className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                                     placeholder="Ex: 12345-F"
                                 />

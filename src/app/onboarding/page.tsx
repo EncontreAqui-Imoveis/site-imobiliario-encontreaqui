@@ -40,7 +40,7 @@ export default function OnboardingPage() {
     useEffect(() => {
         if (session?.user) {
             const u = session.user
-            setPhone(u.phone || '')
+            setPhone(formatPhoneInput(u.phone || ''))
             setCep(u.cep || '')
             setStreet(u.street || '')
             setNumber(u.number || '')
@@ -144,6 +144,7 @@ export default function OnboardingPage() {
                             required
                             value={phone}
                             onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
+                            maxLength={19}
                             className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                             placeholder="+55 (00) 00000-0000"
                         />
@@ -187,6 +188,7 @@ export default function OnboardingPage() {
                                 <input
                                     id="city" type="text" value={city}
                                     onChange={(e) => setCity(e.target.value)}
+                                    maxLength={120}
                                     className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                                     placeholder="Sua cidade"
                                 />
@@ -196,6 +198,7 @@ export default function OnboardingPage() {
                                 <input
                                     id="bairro" type="text" value={bairro}
                                     onChange={(e) => setBairro(e.target.value)}
+                                    maxLength={120}
                                     className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                                     placeholder="Bairro"
                                 />
@@ -206,6 +209,7 @@ export default function OnboardingPage() {
                             <input
                                 id="street" type="text" value={street}
                                 onChange={(e) => setStreet(e.target.value)}
+                                maxLength={120}
                                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                                 placeholder="Nome da rua"
                             />
@@ -216,6 +220,7 @@ export default function OnboardingPage() {
                                 <input
                                     id="number" type="text" value={number}
                                     onChange={(e) => setNumber(e.target.value)}
+                                    maxLength={120}
                                     className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                                     placeholder="Nº"
                                 />
@@ -225,6 +230,7 @@ export default function OnboardingPage() {
                                 <input
                                     id="complement" type="text" value={complement}
                                     onChange={(e) => setComplement(e.target.value)}
+                                    maxLength={120}
                                     className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                                     placeholder="Apto, bloco..."
                                 />

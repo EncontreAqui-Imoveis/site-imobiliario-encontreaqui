@@ -118,6 +118,7 @@ export default function HeroSection() {
                                         type="text"
                                         value={city}
                                         onChange={(e) => setCity(e.target.value)}
+                                        maxLength={120}
                                         placeholder="Ex: São Paulo"
                                         className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                     />

@@ -138,6 +138,7 @@ export default function Header() {
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
+                                maxLength={120}
                                 placeholder="Buscar imóveis..."
                                 className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-accent-500 ${isHomepage && !isScrolled
                                     ? 'bg-white/10 border-white/20 text-white placeholder-white/60 focus:bg-white/20'
@@ -295,6 +296,7 @@ export default function Header() {
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
+                                    maxLength={120}
                                     placeholder="Buscar imóveis..."
                                     className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
                                 />

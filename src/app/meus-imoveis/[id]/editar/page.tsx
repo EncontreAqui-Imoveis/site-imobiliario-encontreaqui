@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
 import { fetchEditableProperty, saveEditedProperty } from '@/lib/propertiesEditorService'
-import { PROPERTY_TYPES, PROPERTY_PURPOSES } from '@/lib/propertyCreate'
+import { LOT_TYPES, PROPERTY_TYPES, PROPERTY_PURPOSES } from '@/lib/propertyCreate'
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/currencyInput'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
 import { Property } from '@/types/property'
@@ -219,7 +219,7 @@ export default function EditPropertyPage() {
                         <h2 className="text-lg font-bold text-gray-900">Informações Básicas</h2>
                         <div>
                             <label className={labelClass}>Título *</label>
-                            <input type="text" value={form.title} onChange={e => updateField('title', e.target.value)} className={inputClass} />
+                            <input type="text" value={form.title} onChange={e => updateField('title', e.target.value)} maxLength={120} className={inputClass} />
                         </div>
                         <div>
                             <label className={labelClass}>Descrição</label>
@@ -268,26 +268,26 @@ export default function EditPropertyPage() {
                         <h2 className="text-lg font-bold text-gray-900">Localização</h2>
                         <div>
                             <label className={labelClass}>Endereço</label>
-                            <input type="text" value={form.address} onChange={e => updateField('address', e.target.value)} className={inputClass} />
+                            <input type="text" value={form.address} onChange={e => updateField('address', e.target.value)} maxLength={120} className={inputClass} />
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <div>
                                 <label className={labelClass}>Número</label>
-                                <input type="text" value={form.numero} onChange={e => updateField('numero', e.target.value)} className={inputClass} />
+                                <input type="text" value={form.numero} onChange={e => updateField('numero', e.target.value)} maxLength={25} className={inputClass} />
                             </div>
                             <div>
                                 <label className={labelClass}>Quadra</label>
-                                <input type="text" value={form.quadra} onChange={e => updateField('quadra', e.target.value)} className={inputClass} />
+                                <input type="text" value={form.quadra} onChange={e => updateField('quadra', e.target.value)} maxLength={25} className={inputClass} />
                             </div>
                             <div>
                                 <label className={labelClass}>Lote</label>
-                                <input type="text" value={form.lote} onChange={e => updateField('lote', e.target.value)} className={inputClass} />
+                                <input type="text" value={form.lote} onChange={e => updateField('lote', e.target.value)} maxLength={25} className={inputClass} />
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className={labelClass}>Bairro</label>
-                                <input type="text" value={form.bairro} onChange={e => updateField('bairro', e.target.value)} className={inputClass} />
+                                <input type="text" value={form.bairro} onChange={e => updateField('bairro', e.target.value)} maxLength={120} className={inputClass} />
                             </div>
                             <div>
                                 <label className={labelClass}>CEP</label>
@@ -296,12 +296,12 @@ export default function EditPropertyPage() {
                         </div>
                         <div>
                             <label className={labelClass}>Complemento</label>
-                            <input type="text" value={form.complemento} onChange={e => updateField('complemento', e.target.value)} className={inputClass} />
+                            <input type="text" value={form.complemento} onChange={e => updateField('complemento', e.target.value)} maxLength={120} className={inputClass} />
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <div>
                                 <label className={labelClass}>Cidade</label>
-                                <input type="text" value={form.city} onChange={e => updateField('city', e.target.value)} className={inputClass} />
+                                <input type="text" value={form.city} onChange={e => updateField('city', e.target.value)} maxLength={120} className={inputClass} />
                             </div>
                             <div>
                                 <label className={labelClass}>Estado</label>
@@ -311,7 +311,10 @@ export default function EditPropertyPage() {
                             </div>
                             <div>
                                 <label className={labelClass}>Tipo de Lote *</label>
-                                <input type="text" value={form.tipoLote} onChange={e => updateField('tipoLote', e.target.value)} className={inputClass} placeholder="ex: Residencial" />
+                                <select value={form.tipoLote} onChange={e => updateField('tipoLote', e.target.value)} className={inputClass}>
+                                    <option value="">Selecionar</option>
+                                    {LOT_TYPES.map((lotType) => <option key={lotType} value={lotType}>{lotType}</option>)}
+                                </select>
                             </div>
                         </div>
                     </section>

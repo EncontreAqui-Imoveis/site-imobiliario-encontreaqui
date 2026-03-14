@@ -344,6 +344,7 @@ export default function ProposalWizardPage() {
                                         type="text"
                                         value={clientName}
                                         onChange={e => setClientName(e.target.value)}
+                                        maxLength={120}
                                         className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
                                         placeholder="Nome completo do comprador"
                                     />
@@ -395,6 +396,7 @@ export default function ProposalWizardPage() {
                                                 type="text"
                                                 value={brokerSearch}
                                                 onChange={e => handleBrokerSearch(e.target.value)}
+                                                maxLength={120}
                                                 className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
                                                 placeholder="Buscar por nome, email ou CRECI"
                                             />

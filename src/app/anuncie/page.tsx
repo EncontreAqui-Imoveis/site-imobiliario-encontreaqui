@@ -75,7 +75,7 @@ function parseDraft(data: Record<string, unknown>): CreatePropertyDraftData {
 
 function validOwnerPhone(value: string) {
     const digits = digitsOnly(value)
-    return digits.length === 0 || digits.length === 11
+    return digits.length === 0 || (digits.length >= 10 && digits.length <= 13)
 }
 
 async function lookupCep(cep: string): Promise<CepLookupResult | null> {
@@ -417,7 +417,7 @@ export default function AnunciePage() {
                             <div><label className={LABEL}>Tipo do imóvel *</label><select value={form.propertyType} onChange={(e) => updateField('propertyType', e.target.value)} className={INPUT}><option value="">Selecionar</option>{PROPERTY_TYPES.map((o) => <option key={o} value={o}>{o}</option>)}</select></div>
                             <div><label className={LABEL}>Finalidade *</label><select value={form.purpose} onChange={(e) => updateField('purpose', e.target.value)} className={INPUT}><option value="">Selecionar</option>{PROPERTY_PURPOSES.map((o) => <option key={o} value={o}>{o}</option>)}</select></div>
                         </div>
-                        <div><label className={LABEL}>Título *</label><input value={form.title} onChange={(e) => updateField('title', e.target.value)} className={INPUT} /></div>
+                        <div><label className={LABEL}>Título *</label><input value={form.title} onChange={(e) => updateField('title', e.target.value)} maxLength={120} className={INPUT} /></div>
                         <div>
                             <div className="flex items-center justify-between">
                                 <label className={LABEL}>Descrição *</label>
@@ -426,8 +426,8 @@ export default function AnunciePage() {
                             <textarea value={form.description} onChange={(e) => updateField('description', e.target.value.slice(0, 500))} rows={4} maxLength={500} className={INPUT} />
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2">
-                            <div><label className={LABEL}>Nome do proprietário</label><input value={form.ownerName} onChange={(e) => updateField('ownerName', e.target.value)} className={INPUT} /></div>
-                            <div><label className={LABEL}>Telefone do proprietário</label><input value={form.ownerPhone} onChange={(e) => updateField('ownerPhone', formatPhoneInput(e.target.value))} className={INPUT} placeholder="+55 (00) 00000-0000" /></div>
+                            <div><label className={LABEL}>Nome do proprietário</label><input value={form.ownerName} onChange={(e) => updateField('ownerName', e.target.value)} maxLength={120} className={INPUT} /></div>
+                            <div><label className={LABEL}>Telefone do proprietário</label><input value={form.ownerPhone} onChange={(e) => updateField('ownerPhone', formatPhoneInput(e.target.value))} maxLength={19} className={INPUT} placeholder="+55 (00) 00000-0000" /></div>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2">
                             {saleEnabled && <div><label className={LABEL}>Preço de venda *</label><CurrencyInput value={form.priceSale} onChange={(value) => updateField('priceSale', value)} className={INPUT} placeholder="R$ 0,00" /></div>}
@@ -443,17 +443,17 @@ export default function AnunciePage() {
                             <div><label className={LABEL}>Estado *</label><select value={form.state} onChange={(e) => updateField('state', e.target.value)} className={INPUT}>{BRAZILIAN_STATES.map((o) => <option key={o} value={o}>{o}</option>)}</select></div>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2">
-                            <div><label className={LABEL}>Cidade *</label><input list="city-options" value={form.city} onChange={(e) => updateField('city', e.target.value)} className={INPUT} />{cityOptions.length > 0 && <datalist id="city-options">{cityOptions.map((city) => <option key={city} value={city} />)}</datalist>}</div>
-                            <div><label className={LABEL}>Bairro *</label><input value={form.bairro} onChange={(e) => updateField('bairro', e.target.value)} className={INPUT} /></div>
+                            <div><label className={LABEL}>Cidade *</label><input list="city-options" value={form.city} onChange={(e) => updateField('city', e.target.value)} maxLength={120} className={INPUT} />{cityOptions.length > 0 && <datalist id="city-options">{cityOptions.map((city) => <option key={city} value={city} />)}</datalist>}</div>
+                            <div><label className={LABEL}>Bairro *</label><input value={form.bairro} onChange={(e) => updateField('bairro', e.target.value)} maxLength={120} className={INPUT} /></div>
                         </div>
-                        <div><label className={LABEL}>Rua *</label><input value={form.address} onChange={(e) => updateField('address', e.target.value)} className={INPUT} /></div>
+                        <div><label className={LABEL}>Rua *</label><input value={form.address} onChange={(e) => updateField('address', e.target.value)} maxLength={120} className={INPUT} /></div>
                         <div className="grid gap-3 sm:grid-cols-2">
-                            <div><label className={LABEL}>{form.semNumero ? 'Número (opcional)' : 'Número *'}</label><input value={form.numero} disabled={form.semNumero} onChange={(e) => updateField('numero', e.target.value)} className={`${INPUT} disabled:bg-slate-50 disabled:text-slate-400`} /><label className="mt-2 inline-flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" checked={form.semNumero} onChange={(e) => updateField('semNumero', e.target.checked)} className="rounded border-slate-300 text-primary-600 focus:ring-primary-500" />Sem número</label></div>
-                            <div><label className={LABEL}>Complemento</label><input value={form.complemento} onChange={(e) => updateField('complemento', e.target.value)} className={INPUT} /></div>
+                            <div><label className={LABEL}>{form.semNumero ? 'Número (opcional)' : 'Número *'}</label><input value={form.numero} disabled={form.semNumero} onChange={(e) => updateField('numero', e.target.value)} maxLength={25} className={`${INPUT} disabled:bg-slate-50 disabled:text-slate-400`} /><label className="mt-2 inline-flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" checked={form.semNumero} onChange={(e) => updateField('semNumero', e.target.checked)} className="rounded border-slate-300 text-primary-600 focus:ring-primary-500" />Sem número</label></div>
+                            <div><label className={LABEL}>Complemento</label><input value={form.complemento} onChange={(e) => updateField('complemento', e.target.value)} maxLength={120} className={INPUT} /></div>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-3">
-                            <div><label className={LABEL}>{needsLotFields ? 'Quadra *' : 'Quadra'}</label><input value={form.quadra} onChange={(e) => updateField('quadra', e.target.value)} className={INPUT} /></div>
-                            <div><label className={LABEL}>{needsLotFields ? 'Lote *' : 'Lote'}</label><input value={form.lote} onChange={(e) => updateField('lote', e.target.value)} className={INPUT} /></div>
+                            <div><label className={LABEL}>{needsLotFields ? 'Quadra *' : 'Quadra'}</label><input value={form.quadra} onChange={(e) => updateField('quadra', e.target.value)} maxLength={25} className={INPUT} /></div>
+                            <div><label className={LABEL}>{needsLotFields ? 'Lote *' : 'Lote'}</label><input value={form.lote} onChange={(e) => updateField('lote', e.target.value)} maxLength={25} className={INPUT} /></div>
                             <div><label className={LABEL}>Tipo de lote *</label><select value={form.tipoLote} onChange={(e) => updateField('tipoLote', e.target.value)} className={INPUT}><option value="">Selecionar</option>{LOT_TYPES.map((o) => <option key={o} value={o}>{o}</option>)}</select></div>
                         </div>
                     </>

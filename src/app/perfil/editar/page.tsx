@@ -43,7 +43,7 @@ export default function EditarPerfilPage() {
         if (session?.user) {
             const u = session.user
             setName(u.name || '')
-            setPhone(u.phone || '')
+            setPhone(formatPhoneInput(u.phone || ''))
             setCep(u.cep || '')
             setStreet(u.street || '')
             setNumber(u.number || '')
@@ -125,13 +125,13 @@ export default function EditarPerfilPage() {
             <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 p-6 space-y-4">
                 <div className="space-y-1.5">
                     <label htmlFor="name" className="block text-sm font-medium text-slate-700">Nome</label>
-                    <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)}
+                    <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} maxLength={120}
                         className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                 </div>
 
                 <div className="space-y-1.5">
                     <label htmlFor="phone" className="block text-sm font-medium text-slate-700">Telefone</label>
-                    <input id="phone" type="tel" value={phone} onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
+                    <input id="phone" type="tel" value={phone} onChange={(e) => setPhone(formatPhoneInput(e.target.value))} maxLength={19}
                         className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                         placeholder="+55 (00) 00000-0000" />
                 </div>
@@ -157,29 +157,29 @@ export default function EditarPerfilPage() {
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1">
                             <label htmlFor="city" className="block text-xs font-medium text-slate-600">Cidade</label>
-                            <input id="city" type="text" value={city} onChange={(e) => setCity(e.target.value)}
+                            <input id="city" type="text" value={city} onChange={(e) => setCity(e.target.value)} maxLength={120}
                                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                         </div>
                         <div className="space-y-1">
                             <label htmlFor="bairro" className="block text-xs font-medium text-slate-600">Bairro</label>
-                            <input id="bairro" type="text" value={bairro} onChange={(e) => setBairro(e.target.value)}
+                            <input id="bairro" type="text" value={bairro} onChange={(e) => setBairro(e.target.value)} maxLength={120}
                                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                         </div>
                     </div>
                     <div className="space-y-1">
                         <label htmlFor="street" className="block text-xs font-medium text-slate-600">Rua</label>
-                        <input id="street" type="text" value={street} onChange={(e) => setStreet(e.target.value)}
+                        <input id="street" type="text" value={street} onChange={(e) => setStreet(e.target.value)} maxLength={120}
                             className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1">
                             <label htmlFor="number" className="block text-xs font-medium text-slate-600">Número</label>
-                            <input id="number" type="text" value={number} onChange={(e) => setNumber(e.target.value)}
+                            <input id="number" type="text" value={number} onChange={(e) => setNumber(e.target.value)} maxLength={120}
                                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                         </div>
                         <div className="space-y-1">
                             <label htmlFor="complement" className="block text-xs font-medium text-slate-600">Complemento</label>
-                            <input id="complement" type="text" value={complement} onChange={(e) => setComplement(e.target.value)}
+                            <input id="complement" type="text" value={complement} onChange={(e) => setComplement(e.target.value)} maxLength={120}
                                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                         </div>
                     </div>

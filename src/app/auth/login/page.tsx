@@ -116,6 +116,7 @@ export default function LoginPage() {
                             type="email"
                             autoComplete="email"
                             required
+                            maxLength={120}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -140,6 +141,7 @@ export default function LoginPage() {
                             type="password"
                             autoComplete="current-password"
                             required
+                            maxLength={256}
                             aria-describedby="login-password-hint"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}

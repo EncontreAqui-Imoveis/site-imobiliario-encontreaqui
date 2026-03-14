@@ -213,6 +213,7 @@ export default function SearchFilters() {
                                 type="text"
                                 value={filters.search}
                                 onChange={(e) => handleChange('search', e.target.value)}
+                                maxLength={120}
                                 placeholder="Buscar por termo..."
                                 className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
                             />
@@ -252,6 +253,7 @@ export default function SearchFilters() {
                                         type="text"
                                         value={filters.city}
                                         onChange={(e) => handleChange('city', e.target.value)}
+                                        maxLength={120}
                                         placeholder="Cidade"
                                         className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                                     />
@@ -259,6 +261,7 @@ export default function SearchFilters() {
                                         type="text"
                                         value={filters.bairro}
                                         onChange={(e) => handleChange('bairro', e.target.value)}
+                                        maxLength={120}
                                         placeholder="Bairro"
                                         className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                                     />

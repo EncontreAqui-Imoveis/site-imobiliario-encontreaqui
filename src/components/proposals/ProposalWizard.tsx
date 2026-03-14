@@ -8,6 +8,8 @@ import { createProposal } from '@/lib/api/negotiations'
 import type { ApiError } from '@/lib/api/client'
 import { useRouter } from 'next/navigation'
 import { maskCpf } from '@/lib/privacy'
+import { CurrencyInput } from '@/components/form/CurrencyInput'
+import { formatCurrencyInput, parseCurrencyInput } from '@/lib/currencyInput'
 
 interface ProposalWizardProps {
     property: Property
@@ -31,11 +33,11 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
 
     const validUntil = new Date()
     validUntil.setDate(validUntil.getDate() + 10)
-    const [payment, setPayment] = useState<PaymentDetails>({
-        dinheiro: 0,
-        financiamento: 0,
-        permuta: 0,
-        outros: 0,
+    const [paymentDisplay, setPaymentDisplay] = useState<Record<keyof PaymentDetails, string>>({
+        dinheiro: '',
+        financiamento: '',
+        permuta: '',
+        outros: '',
     })
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -43,6 +45,16 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
     const propertyValue = useMemo(() => {
         return property.priceSale ?? property.price
     }, [property.priceSale, property.price])
+
+    const payment = useMemo<PaymentDetails>(
+        () => ({
+            dinheiro: parseCurrencyInput(paymentDisplay.dinheiro),
+            financiamento: parseCurrencyInput(paymentDisplay.financiamento),
+            permuta: parseCurrencyInput(paymentDisplay.permuta),
+            outros: parseCurrencyInput(paymentDisplay.outros),
+        }),
+        [paymentDisplay],
+    )
 
     const paymentTotal = useMemo(
         () => payment.dinheiro + payment.financiamento + payment.permuta + payment.outros,
@@ -65,8 +77,7 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
     }
 
     const handleChangePayment = (field: keyof PaymentDetails, value: string) => {
-        const numeric = Number(value.replace(',', '.')) || 0
-        setPayment((prev) => ({ ...prev, [field]: numeric }))
+        setPaymentDisplay((prev) => ({ ...prev, [field]: formatCurrencyInput(value) }))
     }
 
     const handleSubmit = async () => {
@@ -142,6 +153,7 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
                                 type="text"
                                 value={clientName}
                                 onChange={(e) => setClientName(e.target.value)}
+                                maxLength={120}
                                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                                 placeholder="Nome do comprador"
                             />
@@ -179,13 +191,11 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
                                 <label className="block text-xs font-medium text-slate-700">
                                     {label}
                                 </label>
-                                <input
-                                    type="number"
-                                    min={0}
-                                    step="0.01"
-                                    value={payment[field]}
-                                    onChange={(e) => handleChangePayment(field, e.target.value)}
+                                <CurrencyInput
+                                    value={paymentDisplay[field]}
+                                    onChange={(value) => handleChangePayment(field, value)}
                                     className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                    placeholder="R$ 0,00"
                                 />
                             </div>
                         ))}
