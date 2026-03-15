@@ -8,7 +8,6 @@ import {
     Calendar, Hash, Share2, CheckCircle,
     Map, Home as HomeIcon, Signpost, Layers, Mail, Phone, Globe
 } from 'lucide-react'
-import FavoriteButton from '@/components/property/FavoriteButton'
 import { shareOrCopy } from '@/lib/webShare'
 
 interface PropertyInfoProps {
@@ -95,7 +94,6 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                         </span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <FavoriteButton propertyId={property.id} size="md" />
                         <button
                             onClick={handleShare}
                             className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-colors"

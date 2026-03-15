@@ -36,6 +36,8 @@ export default function MeusImoveisPage() {
     const { session, loading: authLoading, isBroker } = useUser()
     const canCreateProperty = Boolean(session)
     const createdId = Number(searchParams.get('created') ?? 0)
+    const focusId = Number(searchParams.get('focus') ?? 0)
+    const editBlocked = searchParams.get('editBlocked') === '1'
 
     const [properties, setProperties] = useState<PropertySummary[]>([])
     const [loading, setLoading] = useState(true)
@@ -44,6 +46,12 @@ export default function MeusImoveisPage() {
         () => properties.find((property) => property.id === createdId),
         [properties, createdId],
     )
+
+    useEffect(() => {
+        if (!focusId || properties.length === 0) return
+        const element = document.getElementById(`my-property-${focusId}`)
+        element?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, [focusId, properties])
 
     useEffect(() => {
         if (!authLoading && !session) {
@@ -108,6 +116,11 @@ export default function MeusImoveisPage() {
                         : 'Seu imóvel foi enviado para análise. Se ele ainda não aparecer abaixo, atualize a lista em alguns instantes.'}
                 </div>
             )}
+            {editBlocked && (
+                <div className="mb-6 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    Imóveis pendentes de aprovação podem ser visualizados, mas não podem ser editados até o fim da análise.
+                </div>
+            )}
 
             {loading ? (
                 <div className="flex items-center justify-center py-20">
@@ -151,8 +164,10 @@ export default function MeusImoveisPage() {
                     {properties.map((property) => {
                         const badge = getStatusBadge(property.status)
                         const isJustCreated = property.id === createdId
+                        const isFocused = property.id === focusId
+                        const canEdit = property.status !== 'pending_approval'
                         return (
-                            <div key={property.id} className={`bg-white rounded-2xl shadow-md shadow-slate-200/50 border overflow-hidden hover:shadow-lg transition-shadow group ${isJustCreated ? 'border-primary-300 ring-2 ring-primary-100' : 'border-slate-100'}`}>
+                            <div id={`my-property-${property.id}`} key={property.id} className={`bg-white rounded-2xl shadow-md shadow-slate-200/50 border overflow-hidden hover:shadow-lg transition-shadow group ${(isJustCreated || isFocused) ? 'border-primary-300 ring-2 ring-primary-100' : 'border-slate-100'}`}>
                                 <div className="relative aspect-[4/3] bg-slate-100">
                                     {property.imageUrl ? (
                                         <Image
@@ -190,13 +205,20 @@ export default function MeusImoveisPage() {
                                             <Eye className="w-3.5 h-3.5" />
                                             Ver
                                         </Link>
-                                        <Link
-                                            href={`/meus-imoveis/${property.id}/editar`}
-                                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 transition-colors"
-                                        >
-                                            <Edit className="w-3.5 h-3.5" />
-                                            Editar
-                                        </Link>
+                                        {canEdit ? (
+                                            <Link
+                                                href={`/meus-imoveis/${property.id}/editar`}
+                                                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 transition-colors"
+                                            >
+                                                <Edit className="w-3.5 h-3.5" />
+                                                Editar
+                                            </Link>
+                                        ) : (
+                                            <div className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-400 border border-slate-200 rounded-lg bg-slate-50">
+                                                <Edit className="w-3.5 h-3.5" />
+                                                Em análise
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

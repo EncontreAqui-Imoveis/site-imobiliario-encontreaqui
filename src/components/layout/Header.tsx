@@ -113,6 +113,12 @@ export default function Header() {
     const logoFilter = isHomepage && !isScrolled ? 'brightness-0 invert' : ''
     const userName = session?.user?.name?.split(' ')[0] || 'Usuário'
     const userInitial = userName.charAt(0).toUpperCase()
+    const resolvedAuthNavLinks = isBroker
+        ? authNavLinks
+        : authNavLinks.filter((link) => link.href !== '/propostas')
+    const resolvedUserMenuLinks = isBroker
+        ? userMenuLinks
+        : userMenuLinks.filter((link) => link.href !== '/propostas')
 
     return (
         <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${headerBg} ${!isHomepage || isScrolled ? 'border-b border-gray-100' : ''}`}>
@@ -205,7 +211,7 @@ export default function Header() {
                                         </div>
 
                                         {/* Nav links */}
-                                        {userMenuLinks.map((link) => {
+                                        {resolvedUserMenuLinks.map((link) => {
                                             const Icon = link.icon
                                             return (
                                                 <Link
@@ -327,7 +333,7 @@ export default function Header() {
                             {isAuthenticated && (
                                 <>
                                     <div className="my-2 border-t border-gray-100" />
-                                    {authNavLinks.map((link) => {
+                                    {resolvedAuthNavLinks.map((link) => {
                                         const Icon = link.icon
                                         return (
                                             <Link

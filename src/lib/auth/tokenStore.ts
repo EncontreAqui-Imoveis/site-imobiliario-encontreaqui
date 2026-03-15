@@ -43,6 +43,23 @@ export function hasAuthTokenInBrowser(): boolean {
     return Boolean(readAuthTokenFromBrowser())
 }
 
+export function syncAuthTokenCookieFromStorage(): void {
+    if (typeof window === 'undefined') return
+
+    const fromStorage = window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY)?.trim()
+    if (!fromStorage) return
+
+    const cookieMatch = document.cookie
+        .split(';')
+        .map((entry) => entry.trim())
+        .find((entry) => entry.startsWith(`${AUTH_TOKEN_COOKIE}=`))
+
+    const cookieValue = cookieMatch ? decodeURIComponent(cookieMatch.split('=')[1] ?? '').trim() : ''
+    if (cookieValue === fromStorage) return
+
+    document.cookie = buildCookieValue(fromStorage)
+}
+
 export async function readAuthTokenFromServer(): Promise<string | null> {
     const { cookies } = await import('next/headers')
     const cookieStore = await cookies()

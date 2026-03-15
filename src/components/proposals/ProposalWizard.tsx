@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Property } from '@/types/property'
 import { formatPrice } from '@/types/property'
 import type { PaymentDetails } from '@/lib/api/negotiations'
@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation'
 import { maskCpf } from '@/lib/privacy'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/currencyInput'
+import { useUser } from '@/contexts/UserContext'
 
 interface ProposalWizardProps {
     property: Property
@@ -19,6 +20,7 @@ type Step = 1 | 2 | 3
 
 export function ProposalWizard({ property }: ProposalWizardProps) {
     const router = useRouter()
+    const { session, isBroker, loading: authLoading } = useUser()
     const [step, setStep] = useState<Step>(1)
     const [clientName, setClientName] = useState('')
     const [clientCpf, setClientCpf] = useState('')
@@ -45,6 +47,19 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
     const propertyValue = useMemo(() => {
         return property.priceSale ?? property.price
     }, [property.priceSale, property.price])
+    const canGenerateProposal =
+        Boolean(
+            !authLoading &&
+            session?.user?.id != null &&
+            isBroker &&
+            property.status === 'approved' &&
+            property.brokerId === session.user.id
+        )
+
+    useEffect(() => {
+        if (authLoading || canGenerateProposal) return
+        router.replace(`/imoveis/${property.id}?proposalBlocked=1`)
+    }, [authLoading, canGenerateProposal, property.id, router])
 
     const payment = useMemo<PaymentDetails>(
         () => ({
@@ -113,6 +128,14 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
     }
 
     return (
+        !canGenerateProposal ? (
+            <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-6 md:p-8 space-y-4">
+                <p className="text-sm text-slate-600">
+                    Apenas o corretor captador de um imóvel aprovado pode gerar proposta.
+                </p>
+                <p className="text-sm text-slate-500">Redirecionando para o imóvel...</p>
+            </div>
+        ) : (
         <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-6 md:p-8 space-y-6">
             <div className="space-y-1">
                 <h1 className="text-2xl font-bold text-slate-900">
@@ -292,6 +315,7 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
                 </div>
             </div>
         </div>
+        )
     )
 }
 

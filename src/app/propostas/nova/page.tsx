@@ -118,6 +118,21 @@ export default function ProposalWizardPage() {
         load()
     }, [propertyId])
 
+    const canGenerateForProperty =
+        Boolean(
+            property &&
+            session?.user?.id != null &&
+            isBroker &&
+            property.status === 'approved' &&
+            property.brokerId === session.user.id
+        )
+
+    useEffect(() => {
+        if (!property) return
+        if (canGenerateForProperty) return
+        router.replace(`/imoveis/${property.id}?proposalBlocked=1`)
+    }, [canGenerateForProperty, property, router])
+
     /* ── Broker search ── */
     const searchBrokers = useCallback(async (query: string) => {
         if (query.trim().length < 2) {
@@ -278,6 +293,17 @@ export default function ProposalWizardPage() {
                 <div className="space-y-3 text-center">
                     <Loader2 className="w-6 h-6 animate-spin text-primary-500 mx-auto" />
                     <p className="text-sm text-gray-500">Carregando imóvel...</p>
+                </div>
+            </div>
+        )
+    }
+
+    if (!canGenerateForProperty) {
+        return (
+            <div className="min-h-screen flex items-center justify-center pt-20">
+                <div className="space-y-3 text-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary-500 mx-auto" />
+                    <p className="text-sm text-gray-500">Redirecionando para o imóvel...</p>
                 </div>
             </div>
         )

@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import type { ReactNode } from 'react'
 import type { UserSession } from '@/lib/api/auth'
 import { fetchCurrentSession, logout as apiLogout } from '@/lib/api/auth'
+import { syncAuthTokenCookieFromStorage } from '@/lib/auth/tokenStore'
 
 interface UserContextValue {
     session: UserSession | null
@@ -27,6 +28,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setLoading(true)
         setError(null)
         try {
+            syncAuthTokenCookieFromStorage()
             const data = await fetchCurrentSession()
             setSession(data)
         } catch {

@@ -29,6 +29,7 @@ export interface Property {
     images: string[]
     videoUrl?: string
     brokerId?: number
+    ownerId?: number
     brokerName?: string
     brokerPhone?: string
     brokerEmail?: string

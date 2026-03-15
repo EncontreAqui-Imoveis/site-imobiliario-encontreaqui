@@ -2,33 +2,26 @@
 
 import { useState, useEffect } from 'react'
 import { formatPrice, Property } from '@/types/property'
-import { Info, ShieldCheck, Smartphone, MessageCircle, FileText, Phone } from 'lucide-react'
+import { Info, ShieldCheck, Smartphone, MessageCircle, Phone } from 'lucide-react'
 import { buildAppDeepLink, getStoreUrlClient } from '@/lib/appLinks'
-import { useUser } from '@/contexts/UserContext'
-import FavoriteButton from '@/components/property/FavoriteButton'
 import Link from 'next/link'
+import { buildPhoneLink, buildWhatsappLink } from '@/lib/contactLinks'
 
 interface PropertySidebarProps {
     property: Property
 }
 
 export default function PropertySidebar({ property }: PropertySidebarProps) {
-    const { isAuthenticated } = useUser()
     const [storeUrl, setStoreUrl] = useState('https://play.google.com/store')
 
     useEffect(() => {
         setStoreUrl(getStoreUrlClient())
     }, [])
 
-    const whatsappMessage = encodeURIComponent(
+    const whatsappMessage =
         `Olá! Vi o imóvel "${property.title}" (Cód: ${property.code || property.id}) no Encontre Aqui Imóveis e gostaria de mais informações.`
-    )
-    const whatsappLink = property.brokerPhone
-        ? `https://wa.me/55${property.brokerPhone.replace(/\D/g, '')}?text=${whatsappMessage}`
-        : null
-    const phoneLink = property.brokerPhone
-        ? `tel:+55${property.brokerPhone.replace(/\D/g, '')}`
-        : null
+    const whatsappLink = buildWhatsappLink(property.brokerPhone, whatsappMessage)
+    const phoneLink = buildPhoneLink(property.brokerPhone)
     const deepLink = buildAppDeepLink(property.id)
 
     return (
@@ -79,7 +72,6 @@ export default function PropertySidebar({ property }: PropertySidebarProps) {
                                     <span>Corretor Credenciado</span>
                                 </div>
                             </div>
-                            <FavoriteButton propertyId={property.id} size="md" />
                         </div>
 
                         {/* Action Buttons */}
@@ -108,27 +100,6 @@ export default function PropertySidebar({ property }: PropertySidebarProps) {
                                     <Phone className="w-5 h-5" />
                                     Ligar para o Corretor
                                 </a>
-                            )}
-
-                            {/* Proposal CTA — Secondary */}
-                            {isAuthenticated ? (
-                                <Link
-                                    href={`/propostas/nova?propertyId=${property.id}`}
-                                    aria-label={`Fazer proposta para ${property.title}`}
-                                    className="w-full flex items-center justify-center gap-2 py-4 bg-accent-500 hover:bg-accent-600 text-primary-900 font-bold rounded-xl transition-all shadow-lg shadow-accent-500/25 active:scale-[0.98]"
-                                >
-                                    <FileText className="w-5 h-5" />
-                                    Fazer Proposta
-                                </Link>
-                            ) : (
-                                <Link
-                                    href="/auth/login"
-                                    aria-label={`Entrar para fazer proposta para ${property.title}`}
-                                    className="w-full flex items-center justify-center gap-2 py-4 bg-accent-500 hover:bg-accent-600 text-primary-900 font-bold rounded-xl transition-all shadow-lg shadow-accent-500/25 active:scale-[0.98]"
-                                >
-                                    <FileText className="w-5 h-5" />
-                                    Entrar para fazer Proposta
-                                </Link>
                             )}
 
                         <section aria-label="Ações do aplicativo" className="space-y-3">

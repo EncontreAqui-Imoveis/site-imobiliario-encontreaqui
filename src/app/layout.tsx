@@ -3,6 +3,7 @@ import './globals.css'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import { UserProvider } from '@/contexts/UserContext'
+import { FavoritesProvider } from '@/contexts/FavoritesContext'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,11 +32,13 @@ export default function RootLayout({
         <html lang="pt-BR" data-scroll-behavior="smooth">
             <body className="min-h-screen flex flex-col">
                 <UserProvider>
-                    <Header />
-                    <main className="flex-1">
-                        {children}
-                    </main>
-                    <Footer />
+                    <FavoritesProvider>
+                        <Header />
+                        <main className="flex-1">
+                            {children}
+                        </main>
+                        <Footer />
+                    </FavoritesProvider>
                 </UserProvider>
             </body>
         </html>

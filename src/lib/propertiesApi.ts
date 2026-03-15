@@ -133,6 +133,7 @@ export function normalizeProperty(raw: unknown): Property | null {
         images: images.length > 0 ? images : ['/logo_circular.png'],
         videoUrl: toStringOrUndefined(item.videoUrl ?? item.video_url),
         brokerId: toNumber(item.brokerId ?? item.broker_id),
+        ownerId: toNumber(item.ownerId ?? item.owner_id),
         brokerName: toStringOrUndefined(item.brokerName ?? item.broker_name),
         brokerPhone: toStringOrUndefined(item.brokerPhone ?? item.broker_phone),
         brokerEmail: toStringOrUndefined(item.brokerEmail ?? item.broker_email),

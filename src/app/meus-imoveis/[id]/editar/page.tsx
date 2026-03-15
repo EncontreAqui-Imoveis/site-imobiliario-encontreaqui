@@ -93,6 +93,12 @@ export default function EditPropertyPage() {
 
     useEffect(() => { if (propertyId) loadProperty() }, [propertyId, loadProperty])
 
+    useEffect(() => {
+        if (!property) return
+        if (property.status !== 'pending_approval') return
+        router.replace(`/meus-imoveis?focus=${property.id}&editBlocked=1`)
+    }, [property, router])
+
     function updateField(key: string, value: string | boolean) {
         setForm(prev => ({ ...prev, [key]: value }))
         setSaved(false)
@@ -182,6 +188,15 @@ export default function EditPropertyPage() {
             <div className="min-h-screen flex items-center justify-center pt-20">
                 <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
                 <p className="text-sm text-gray-500 ml-2">Carregando...</p>
+            </div>
+        )
+    }
+
+    if (property.status === 'pending_approval') {
+        return (
+            <div className="min-h-screen flex items-center justify-center pt-20">
+                <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+                <p className="text-sm text-gray-500 ml-2">Redirecionando...</p>
             </div>
         )
     }

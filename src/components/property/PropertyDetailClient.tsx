@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Home, ChevronRight, ArrowRight, MessageCircle, Smartphone, Handshake, Edit, FileText, ScrollText } from 'lucide-react'
 import {
@@ -13,6 +14,7 @@ import {
 import { Property, formatPrice, getPromoSalePrice, getPromoRentPrice } from '@/types/property'
 import { buildAppDeepLink } from '@/lib/appLinks'
 import { useUser } from '@/contexts/UserContext'
+import { buildWhatsappLink } from '@/lib/contactLinks'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://site-imobiliario-backend-production.up.railway.app'
 
@@ -21,16 +23,21 @@ interface PropertyDetailClientProps {
 }
 
 export default function PropertyDetailClient({ initialProperty }: PropertyDetailClientProps) {
+    const router = useRouter()
     const [property, setProperty] = useState(initialProperty)
     const [similarProperties, setSimilarProperties] = useState<Property[]>([])
     const [showCloseDeal, setShowCloseDeal] = useState(false)
-    const { session, isBroker } = useUser()
+    const { session, loading: authLoading } = useUser()
 
     // Owner / broker detection
     const userId = session?.user?.id
-    const isOwner = isBroker && userId != null && userId === property.brokerId
+    const isOwner =
+        userId != null &&
+        ((property.brokerId != null && userId === property.brokerId) ||
+            (property.ownerId != null && userId === property.ownerId))
     const statusLower = property.status?.toLowerCase() || ''
     const canCloseDeal = isOwner && (statusLower === 'approved' || statusLower === 'sold' || statusLower === 'rented')
+    const shouldRedirectToOwnedView = !authLoading && isOwner
 
     useEffect(() => {
         if (!property.bairro) return
@@ -60,12 +67,14 @@ export default function PropertyDetailClient({ initialProperty }: PropertyDetail
         fetchSimilar()
     }, [property.bairro, property.id])
 
-    const whatsappMessage = encodeURIComponent(
+    useEffect(() => {
+        if (!shouldRedirectToOwnedView) return
+        router.replace(`/meus-imoveis?focus=${property.id}`)
+    }, [property.id, router, shouldRedirectToOwnedView])
+
+    const whatsappMessage =
         `Olá! Vi o imóvel "${property.title}" (Cód: ${property.code || property.id}) no Encontre Aqui e gostaria de mais informações.`
-    )
-    const whatsappLink = property.brokerPhone
-        ? `https://wa.me/55${property.brokerPhone.replace(/\D/g, '')}?text=${whatsappMessage}`
-        : null
+    const whatsappLink = buildWhatsappLink(property.brokerPhone, whatsappMessage)
     const deepLink = buildAppDeepLink(property.id)
 
     const promoSale = getPromoSalePrice(property)
@@ -88,6 +97,19 @@ export default function PropertyDetailClient({ initialProperty }: PropertyDetail
 
     function handleDealClosed(updatedStatus: string) {
         setProperty(prev => ({ ...prev, status: updatedStatus as Property['status'] }))
+    }
+
+    if (shouldRedirectToOwnedView) {
+        return (
+            <main className="min-h-screen bg-gray-50 pt-16 lg:pt-20 pb-24 lg:pb-12">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex items-center justify-center">
+                    <div className="flex items-center gap-3 text-sm text-slate-600">
+                        <FileText className="w-4 h-4 text-primary-600" />
+                        Redirecionando para a visão de meus imóveis...
+                    </div>
+                </div>
+            </main>
+        )
     }
 
     return (
