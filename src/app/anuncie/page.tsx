@@ -690,6 +690,40 @@ export default function AnunciePage() {
                                     </div>
                                 </div>
                             </div>
+
+                            <div className={REVIEW_CARD}>
+                                <p className={REVIEW_SECTION_TITLE}>Mídia enviada</p>
+                                <div className="mt-3 space-y-4">
+                                    <div>
+                                        <p className={REVIEW_LABEL}>Imagens</p>
+                                        <p className={REVIEW_VALUE}>{String(images.length)}</p>
+                                        {imagePreviews.length > 0 && (
+                                            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                                                {imagePreviews.map((preview, index) => (
+                                                    <div key={preview} className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img
+                                                            src={preview}
+                                                            alt={`Imagem ${index + 1} do resumo`}
+                                                            className="aspect-square h-full w-full object-cover"
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <p className={REVIEW_LABEL}>Vídeo</p>
+                                        <p className={REVIEW_VALUE}>{video ? 'Incluído' : 'Não enviado'}</p>
+                                        {videoPreview && (
+                                            <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-black">
+                                                <video controls className="w-full" src={videoPreview} />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}

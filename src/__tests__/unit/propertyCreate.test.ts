@@ -76,4 +76,47 @@ describe('propertyCreate helpers', () => {
         expect(formData.get('video')).toBe(video)
         expect(formData.getAll('images')).toHaveLength(1)
     })
+
+    it('preserves a 500-character description without expanding HTML entities', () => {
+        const description = `${'a'.repeat(499)}'`
+        expect(description).toHaveLength(500)
+
+        const formData = buildCreatePropertyFormData({
+            actorMode: 'broker',
+            propertyType: 'Casa',
+            purpose: 'Venda',
+            title: 'Casa térrea',
+            description,
+            ownerName: '',
+            ownerPhone: '',
+            priceSale: '250000',
+            priceRent: '',
+            cep: '75900-000',
+            state: 'GO',
+            city: 'Rio Verde',
+            bairro: 'Centro',
+            address: 'Rua A',
+            numero: '123',
+            complemento: '',
+            quadra: '',
+            lote: '',
+            tipoLote: 'inteiro',
+            semNumero: false,
+            bedrooms: '3',
+            bathrooms: '2',
+            garageSpots: '2',
+            areaConstruida: '180',
+            areaTerreno: '250',
+            hasWifi: false,
+            temPiscina: false,
+            temAutomacao: false,
+            temArCondicionado: false,
+            ehMobiliada: false,
+            images: [new File(['img'], 'front.jpg', { type: 'image/jpeg' })],
+            video: null,
+        })
+
+        expect(formData.get('description')).toBe(description)
+        expect(String(formData.get('description'))).toHaveLength(500)
+    })
 })
