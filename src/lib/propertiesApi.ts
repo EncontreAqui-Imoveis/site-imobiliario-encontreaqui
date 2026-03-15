@@ -1,5 +1,6 @@
 import { Property } from '@/types/property'
 import { reportObservedError } from '@/lib/observability'
+import { apiClient, ApiError } from '@/lib/api/client'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://backend-production-6acc.up.railway.app'
 
@@ -250,7 +251,15 @@ export async function fetchPropertyById(id: string | number): Promise<Property |
 
         if (!response.ok) {
             await logFailedResponse('Error fetching property details:', response)
-            return null
+            try {
+                const privatePayload = await apiClient.get<unknown>(`/properties/${encodeURIComponent(String(id))}`)
+                return normalizeProperty(privatePayload)
+            } catch (error) {
+                if (error instanceof ApiError && (error.status === 401 || error.status === 403 || error.status === 404)) {
+                    return null
+                }
+                throw error
+            }
         }
 
         const payload = await response.json()

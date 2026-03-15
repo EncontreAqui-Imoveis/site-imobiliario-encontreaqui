@@ -1,17 +1,17 @@
 import { apiClient } from '@/lib/api/client'
+import { normalizeProperty } from '@/lib/propertiesApi'
 import type { Property } from '@/types/property'
 
 const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_URL || 'https://site-imobiliario-backend-production.up.railway.app'
 
 export async function fetchEditableProperty(propertyId: string): Promise<Property> {
-    const response = await fetch(`${API_BASE_URL}/properties/${propertyId}`)
-    if (!response.ok) {
+    const response = await apiClient.get<unknown>(`/properties/${encodeURIComponent(propertyId)}`)
+    const normalized = normalizeProperty(response)
+    if (!normalized) {
         throw new Error('Imóvel não encontrado')
     }
-
-    const data = await response.json()
-    return (data.data || data) as Property
+    return normalized
 }
 
 export async function saveEditedProperty(
