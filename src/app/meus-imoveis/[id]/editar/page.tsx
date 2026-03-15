@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
 import { fetchEditableProperty, saveEditedProperty } from '@/lib/propertiesEditorService'
-import { clampAreaInput, clampCountInput, LOT_TYPES, MAX_PROPERTY_AREA, MAX_PROPERTY_COUNT, PROPERTY_TYPES, PROPERTY_PURPOSES } from '@/lib/propertyCreate'
+import { clampAreaInput, clampCountInput, digitsOnly, LOT_TYPES, MAX_PROPERTY_AREA, MAX_PROPERTY_COUNT, PROPERTY_TYPES, PROPERTY_PURPOSES } from '@/lib/propertyCreate'
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/currencyInput'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
 import { Property } from '@/types/property'
@@ -273,7 +273,7 @@ export default function EditPropertyPage() {
                         <div className="grid grid-cols-3 gap-4">
                             <div>
                                 <label className={labelClass}>Número</label>
-                                <input type="text" value={form.numero} onChange={e => updateField('numero', e.target.value)} maxLength={25} className={inputClass} />
+                                <input type="text" value={form.numero} onChange={e => updateField('numero', digitsOnly(e.target.value).slice(0, 25))} maxLength={25} inputMode="numeric" className={inputClass} />
                             </div>
                             <div>
                                 <label className={labelClass}>Quadra</label>

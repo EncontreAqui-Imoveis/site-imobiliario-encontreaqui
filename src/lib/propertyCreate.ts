@@ -1,5 +1,3 @@
-import { sanitizeText } from '@/lib/sanitize'
-
 export const PROPERTY_TYPES = [
     'Casa',
     'Apartamento',
@@ -90,6 +88,10 @@ function appendIfPresent(
     formData.append(key, raw)
 }
 
+function normalizeText(value: string): string {
+    return value.trim()
+}
+
 export function digitsOnly(value: string): string {
     return value.replace(/\D/g, '')
 }
@@ -177,26 +179,26 @@ export function buildCreatePropertyFormData(payload: CreatePropertyPayload): For
     const areaConstruida = Math.min(MAX_PROPERTY_AREA, normalizeDecimalInput(payload.areaConstruida))
     const areaTerreno = Math.min(MAX_PROPERTY_AREA, normalizeDecimalInput(payload.areaTerreno))
 
-    formData.append('title', sanitizeText(payload.title))
-    formData.append('description', sanitizeText(payload.description))
+    formData.append('title', normalizeText(payload.title))
+    formData.append('description', normalizeText(payload.description))
     formData.append('type', payload.propertyType)
     formData.append('purpose', payload.purpose)
     formData.append('price', String(basePrice))
 
     appendIfPresent(formData, 'price_sale', saleEnabled ? salePrice : null)
     appendIfPresent(formData, 'price_rent', rentEnabled ? rentPrice : null)
-    appendIfPresent(formData, 'owner_name', sanitizeText(payload.ownerName))
+    appendIfPresent(formData, 'owner_name', normalizeText(payload.ownerName))
     appendIfPresent(formData, 'owner_phone', digitsOnly(payload.ownerPhone))
-    formData.append('address', sanitizeText(payload.address))
+    formData.append('address', normalizeText(payload.address))
     appendIfPresent(formData, 'cep', digitsOnly(payload.cep))
-    formData.append('city', sanitizeText(payload.city))
+    formData.append('city', normalizeText(payload.city))
     formData.append('state', payload.state)
-    appendIfPresent(formData, 'numero', payload.semNumero ? null : sanitizeText(payload.numero))
-    appendIfPresent(formData, 'bairro', sanitizeText(payload.bairro))
-    appendIfPresent(formData, 'complemento', sanitizeText(payload.complemento))
-    appendIfPresent(formData, 'quadra', sanitizeText(payload.quadra))
-    appendIfPresent(formData, 'lote', sanitizeText(payload.lote))
-    appendIfPresent(formData, 'tipo_lote', sanitizeText(payload.tipoLote))
+    appendIfPresent(formData, 'numero', payload.semNumero ? null : normalizeText(payload.numero))
+    appendIfPresent(formData, 'bairro', normalizeText(payload.bairro))
+    appendIfPresent(formData, 'complemento', normalizeText(payload.complemento))
+    appendIfPresent(formData, 'quadra', normalizeText(payload.quadra))
+    appendIfPresent(formData, 'lote', normalizeText(payload.lote))
+    appendIfPresent(formData, 'tipo_lote', normalizeText(payload.tipoLote))
     formData.append('sem_numero', payload.semNumero ? '1' : '0')
 
     appendIfPresent(formData, 'bedrooms', bedrooms)

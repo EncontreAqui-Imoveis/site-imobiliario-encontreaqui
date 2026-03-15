@@ -132,6 +132,7 @@ export default function AnunciePage() {
     const [videoPreview, setVideoPreview] = useState<string | null>(null)
     const [cityOptions, setCityOptions] = useState<string[]>([])
     const [showDraftBanner, setShowDraftBanner] = useState(false)
+    const [draftDecisionResolved, setDraftDecisionResolved] = useState(false)
     const [cepLoading, setCepLoading] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -152,13 +153,18 @@ export default function AnunciePage() {
     }, [authLoading, session, isApprovedBroker, isBrokerPending, router])
 
     useEffect(() => {
-        if (checkHasDraft()) setShowDraftBanner(true)
+        const hasExistingDraft = checkHasDraft()
+        if (hasExistingDraft) {
+            setShowDraftBanner(true)
+            return
+        }
+        setDraftDecisionResolved(true)
     }, [])
 
     useEffect(() => {
-        if (!actorMode) return
+        if (!actorMode || !draftDecisionResolved) return
         saveDraft(step, { ...form, actorMode })
-    }, [actorMode, form, step])
+    }, [actorMode, draftDecisionResolved, form, step])
 
     useEffect(() => {
         let cancelled = false
@@ -189,11 +195,13 @@ export default function AnunciePage() {
         }
         setStep(Math.min(Math.max(Number(draft.currentStep || 1), 1), 6) as WizardStep)
         setShowDraftBanner(false)
+        setDraftDecisionResolved(true)
     }
 
     function discardDraft() {
         clearDraft()
         setShowDraftBanner(false)
+        setDraftDecisionResolved(true)
     }
 
     async function handleCepBlur() {
@@ -467,7 +475,7 @@ export default function AnunciePage() {
                         </div>
                         <div><label className={LABEL}>Rua *</label><input value={form.address} onChange={(e) => updateField('address', e.target.value)} maxLength={120} className={INPUT} /></div>
                         <div className="grid gap-3 sm:grid-cols-2">
-                            <div><label className={LABEL}>{form.semNumero ? 'Número (opcional)' : 'Número *'}</label><input value={form.numero} disabled={form.semNumero} onChange={(e) => updateField('numero', e.target.value)} maxLength={25} className={`${INPUT} disabled:bg-slate-50 disabled:text-slate-400`} /><label className="mt-2 inline-flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" checked={form.semNumero} onChange={(e) => updateField('semNumero', e.target.checked)} className="rounded border-slate-300 text-primary-600 focus:ring-primary-500" />Sem número</label></div>
+                            <div><label className={LABEL}>{form.semNumero ? 'Número (opcional)' : 'Número *'}</label><input value={form.numero} disabled={form.semNumero} onChange={(e) => updateField('numero', digitsOnly(e.target.value).slice(0, 25))} maxLength={25} inputMode="numeric" className={`${INPUT} disabled:bg-slate-50 disabled:text-slate-400`} /><label className="mt-2 inline-flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" checked={form.semNumero} onChange={(e) => updateField('semNumero', e.target.checked)} className="rounded border-slate-300 text-primary-600 focus:ring-primary-500" />Sem número</label></div>
                             <div><label className={LABEL}>Complemento</label><input value={form.complemento} onChange={(e) => updateField('complemento', e.target.value)} maxLength={120} className={INPUT} /></div>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-3">
