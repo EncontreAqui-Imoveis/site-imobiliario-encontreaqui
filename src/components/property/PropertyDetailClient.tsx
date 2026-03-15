@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Home, ChevronRight, ArrowRight, MessageCircle, Smartphone, Handshake, Edit, FileText, ScrollText } from 'lucide-react'
 import {
@@ -23,7 +22,6 @@ interface PropertyDetailClientProps {
 }
 
 export default function PropertyDetailClient({ initialProperty }: PropertyDetailClientProps) {
-    const router = useRouter()
     const [property, setProperty] = useState(initialProperty)
     const [similarProperties, setSimilarProperties] = useState<Property[]>([])
     const [showCloseDeal, setShowCloseDeal] = useState(false)
@@ -36,8 +34,9 @@ export default function PropertyDetailClient({ initialProperty }: PropertyDetail
         ((property.brokerId != null && userId === property.brokerId) ||
             (property.ownerId != null && userId === property.ownerId))
     const statusLower = property.status?.toLowerCase() || ''
+    const canEditProperty = isOwner && statusLower !== 'pending_approval'
+    const canGenerateProposal = isOwner && statusLower === 'approved'
     const canCloseDeal = isOwner && (statusLower === 'approved' || statusLower === 'sold' || statusLower === 'rented')
-    const shouldRedirectToOwnedView = !authLoading && isOwner
 
     useEffect(() => {
         if (!property.bairro) return
@@ -67,11 +66,6 @@ export default function PropertyDetailClient({ initialProperty }: PropertyDetail
         fetchSimilar()
     }, [property.bairro, property.id])
 
-    useEffect(() => {
-        if (!shouldRedirectToOwnedView) return
-        router.replace(`/meus-imoveis?focus=${property.id}`)
-    }, [property.id, router, shouldRedirectToOwnedView])
-
     const whatsappMessage =
         `Olá! Vi o imóvel "${property.title}" (Cód: ${property.code || property.id}) no Encontre Aqui e gostaria de mais informações.`
     const whatsappLink = buildWhatsappLink(property.brokerPhone, whatsappMessage)
@@ -97,19 +91,6 @@ export default function PropertyDetailClient({ initialProperty }: PropertyDetail
 
     function handleDealClosed(updatedStatus: string) {
         setProperty(prev => ({ ...prev, status: updatedStatus as Property['status'] }))
-    }
-
-    if (shouldRedirectToOwnedView) {
-        return (
-            <main className="min-h-screen bg-gray-50 pt-16 lg:pt-20 pb-24 lg:pb-12">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex items-center justify-center">
-                    <div className="flex items-center gap-3 text-sm text-slate-600">
-                        <FileText className="w-4 h-4 text-primary-600" />
-                        Redirecionando para a visão de meus imóveis...
-                    </div>
-                </div>
-            </main>
-        )
     }
 
     return (
@@ -168,26 +149,37 @@ export default function PropertyDetailClient({ initialProperty }: PropertyDetail
                         {/* Action Grid */}
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-x divide-gray-100">
                             {/* Edit Property */}
-                            <Link
-                                href={`/meus-imoveis/${property.id}/editar`}
-                                className="flex flex-col items-center gap-2 px-4 py-5 hover:bg-gray-50 transition-colors text-center group"
-                            >
-                                <div className="w-10 h-10 rounded-xl bg-primary-100 group-hover:bg-primary-200 flex items-center justify-center transition-colors">
-                                    <Edit className="w-5 h-5 text-primary-600" />
+                            {canEditProperty ? (
+                                <Link
+                                    href={`/meus-imoveis/${property.id}/editar`}
+                                    className="flex flex-col items-center gap-2 px-4 py-5 hover:bg-gray-50 transition-colors text-center group"
+                                >
+                                    <div className="w-10 h-10 rounded-xl bg-primary-100 group-hover:bg-primary-200 flex items-center justify-center transition-colors">
+                                        <Edit className="w-5 h-5 text-primary-600" />
+                                    </div>
+                                    <span className="text-xs font-semibold text-gray-700 group-hover:text-primary-700">Editar imóvel</span>
+                                </Link>
+                            ) : (
+                                <div className="flex flex-col items-center gap-2 px-4 py-5 text-center">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
+                                        <Edit className="w-5 h-5 text-slate-400" />
+                                    </div>
+                                    <span className="text-xs font-semibold text-slate-400">Em análise</span>
                                 </div>
-                                <span className="text-xs font-semibold text-gray-700 group-hover:text-primary-700">Editar imóvel</span>
-                            </Link>
+                            )}
 
                             {/* Generate Proposal */}
-                            <Link
-                                href={`/propostas/nova?propertyId=${property.id}`}
-                                className="flex flex-col items-center gap-2 px-4 py-5 hover:bg-gray-50 transition-colors text-center group"
-                            >
-                                <div className="w-10 h-10 rounded-xl bg-accent-100 group-hover:bg-accent-200 flex items-center justify-center transition-colors">
-                                    <FileText className="w-5 h-5 text-accent-600" />
-                                </div>
-                                <span className="text-xs font-semibold text-gray-700 group-hover:text-accent-700">Gerar proposta</span>
-                            </Link>
+                            {canGenerateProposal && (
+                                <Link
+                                    href={`/propostas/nova?propertyId=${property.id}`}
+                                    className="flex flex-col items-center gap-2 px-4 py-5 hover:bg-gray-50 transition-colors text-center group"
+                                >
+                                    <div className="w-10 h-10 rounded-xl bg-accent-100 group-hover:bg-accent-200 flex items-center justify-center transition-colors">
+                                        <FileText className="w-5 h-5 text-accent-600" />
+                                    </div>
+                                    <span className="text-xs font-semibold text-gray-700 group-hover:text-accent-700">Gerar proposta</span>
+                                </Link>
+                            )}
 
                             {/* Close / Update Deal */}
                             {canCloseDeal && (
@@ -240,7 +232,41 @@ export default function PropertyDetailClient({ initialProperty }: PropertyDetail
                         <PropertyInfo property={property} />
                     </div>
                     <div className="lg:col-span-1">
-                        <PropertySidebar property={property} />
+                        {isOwner ? (
+                            <aside className="space-y-6">
+                                <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-lg shadow-gray-200/50">
+                                    <h2 className="text-lg font-bold text-slate-900">Visão do proprietário</h2>
+                                    <p className="mt-2 text-sm text-slate-600">
+                                        Você está vendo este imóvel como proprietário/captador.
+                                    </p>
+                                    {statusLower === 'pending_approval' && (
+                                        <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                                            Este imóvel está em análise. Você pode ver os detalhes, mas ainda não pode editar nem gerar proposta.
+                                        </div>
+                                    )}
+                                    <div className="mt-4 space-y-3">
+                                        <Link
+                                            href="/meus-imoveis"
+                                            className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                                        >
+                                            <ScrollText className="w-4 h-4" />
+                                            Voltar para meus imóveis
+                                        </Link>
+                                        {canEditProperty && (
+                                            <Link
+                                                href={`/meus-imoveis/${property.id}/editar`}
+                                                className="flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-3 text-sm font-semibold text-white hover:bg-primary-700"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                                Editar imóvel
+                                            </Link>
+                                        )}
+                                    </div>
+                                </div>
+                            </aside>
+                        ) : (
+                            <PropertySidebar property={property} />
+                        )}
                     </div>
                 </div>
 
@@ -315,7 +341,7 @@ export default function PropertyDetailClient({ initialProperty }: PropertyDetail
                     )}
 
                     {/* WhatsApp */}
-                    {whatsappLink && (
+                    {!isOwner && whatsappLink && (
                         <a
                             href={whatsappLink}
                             target="_blank"
@@ -327,14 +353,23 @@ export default function PropertyDetailClient({ initialProperty }: PropertyDetail
                         </a>
                     )}
 
-                    {/* Ver no App */}
-                    <a
-                        href={deepLink}
-                        className="flex items-center gap-1.5 px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl text-sm transition-colors shadow-md"
-                    >
-                        <Smartphone className="w-4 h-4" />
-                        App
-                    </a>
+                    {isOwner ? (
+                        <Link
+                            href="/meus-imoveis"
+                            className="flex items-center gap-1.5 px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl text-sm transition-colors shadow-md"
+                        >
+                            <ScrollText className="w-4 h-4" />
+                            Meus imóveis
+                        </Link>
+                    ) : (
+                        <a
+                            href={deepLink}
+                            className="flex items-center gap-1.5 px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl text-sm transition-colors shadow-md"
+                        >
+                            <Smartphone className="w-4 h-4" />
+                            App
+                        </a>
+                    )}
                 </div>
             </div>
 
