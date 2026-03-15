@@ -35,6 +35,22 @@ function normalizeContractSummary(raw: unknown): ContractSummary | null {
         sellerApprovalStatus,
         buyerApprovalStatus,
         createdAt,
+        updatedAt: String(item.updatedAt ?? item.updated_at ?? '').trim() || undefined,
+        propertyTitle: typeof item.propertyTitle === 'string'
+            ? item.propertyTitle
+            : typeof item.property_title === 'string'
+                ? item.property_title
+                : null,
+        propertyCode: typeof item.propertyCode === 'string'
+            ? item.propertyCode
+            : typeof item.property_code === 'string'
+                ? item.property_code
+                : null,
+        propertyPurpose: typeof item.propertyPurpose === 'string'
+            ? item.propertyPurpose
+            : typeof item.property_purpose === 'string'
+                ? item.property_purpose
+                : null,
     }
 }
 

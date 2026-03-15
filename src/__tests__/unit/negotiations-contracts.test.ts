@@ -85,12 +85,27 @@ describe('contracts API', () => {
     })
 
     it('getContractById() encodes contractId in URL', async () => {
-        const mockContract = { id: 'abc', negotiationId: 'def', documents: [] }
+        const mockContract = {
+            contract: {
+                id: 'abc',
+                negotiationId: 'def',
+                propertyId: 30102,
+                status: 'IN_DRAFT',
+                sellerApprovalStatus: 'APPROVED_WITH_RES',
+                buyerApprovalStatus: 'PENDING',
+                propertyTitle: 'Casa modelo',
+                documents: [],
+            },
+            documents: [],
+        }
         mockFetch.mockResolvedValueOnce(okResponse(mockContract))
 
-        await contracts.getContractById('id/with/slashes')
+        const result = await contracts.getContractById('id/with/slashes')
 
         const url = mockFetch.mock.calls[0][0]
         expect(url).toContain(encodeURIComponent('id/with/slashes'))
+        expect(result.id).toBe('abc')
+        expect(result.negotiationId).toBe('def')
+        expect(result.propertyTitle).toBe('Casa modelo')
     })
 })
