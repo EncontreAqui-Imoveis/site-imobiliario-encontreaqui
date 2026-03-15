@@ -7,6 +7,11 @@ interface ContractListProps {
     contracts: ContractSummary[]
 }
 
+function shortId(value: string | null | undefined): string {
+    const normalized = String(value ?? '').trim()
+    return normalized ? `${normalized.slice(0, 8)}…` : '—'
+}
+
 function statusLabel(status: ContractSummary['status']): string {
     switch (status) {
         case 'AWAITING_DOCS':
@@ -56,10 +61,10 @@ export function ContractList({ contracts }: ContractListProps) {
                 >
                     <div className="space-y-1">
                         <p className="text-sm font-semibold text-slate-900">
-                            Contrato #{contract.id.slice(0, 8)}…
+                            Contrato #{shortId(contract.id)}
                         </p>
                         <p className="text-xs text-slate-600">
-                            Negociação {contract.negotiationId.slice(0, 8)}… • Imóvel #{contract.propertyId}
+                            Negociação {shortId(contract.negotiationId)} • Imóvel #{contract.propertyId}
                         </p>
                     </div>
                     <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">

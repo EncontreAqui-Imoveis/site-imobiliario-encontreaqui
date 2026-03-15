@@ -7,16 +7,93 @@ import type {
     Commission,
 } from '@/types/contract'
 
+function normalizeContractSummary(raw: unknown): ContractSummary | null {
+    if (!raw || typeof raw !== 'object') return null
+    const item = raw as Record<string, unknown>
+    const id = String(item.id ?? '').trim()
+    const negotiationId = String(item.negotiationId ?? item.negotiation_id ?? '').trim()
+    const propertyId = Number(item.propertyId ?? item.property_id ?? 0)
+    const status = String(item.status ?? '').trim() as ContractSummary['status']
+    const sellerApprovalStatus = String(
+        item.sellerApprovalStatus ?? item.seller_approval_status ?? 'PENDING'
+    ).trim() as ContractSummary['sellerApprovalStatus']
+    const buyerApprovalStatus = String(
+        item.buyerApprovalStatus ?? item.buyer_approval_status ?? 'PENDING'
+    ).trim() as ContractSummary['buyerApprovalStatus']
+    const createdAt = String(item.createdAt ?? item.created_at ?? '').trim()
+
+    if (!id || !negotiationId || !Number.isFinite(propertyId) || propertyId <= 0) {
+        return null
+    }
+
+    return {
+        id,
+        negotiationId,
+        propertyId,
+        status,
+        sellerApprovalStatus,
+        buyerApprovalStatus,
+        createdAt,
+    }
+}
+
+function normalizeContractDocument(raw: unknown) {
+    if (!raw || typeof raw !== 'object') return null
+    const item = raw as Record<string, unknown>
+    const id = Number(item.id ?? 0)
+    const negotiationId = String(item.negotiationId ?? item.negotiation_id ?? '').trim()
+    const createdAt = String(item.createdAt ?? item.created_at ?? '').trim()
+    if (!Number.isFinite(id) || id <= 0 || !negotiationId) {
+        return null
+    }
+    return {
+        id,
+        negotiationId,
+        type: (String(item.type ?? 'other').trim() || 'other') as ContractDetail['documents'][number]['type'],
+        documentType: (item.documentType ?? item.document_type ?? null) as ContractDocumentType | null,
+        side: (item.side ?? undefined) as 'seller' | 'buyer' | undefined,
+        originalFileName: typeof item.originalFileName === 'string'
+            ? item.originalFileName
+            : typeof item.original_file_name === 'string'
+                ? item.original_file_name
+                : undefined,
+        createdAt,
+    }
+}
+
+function normalizeContractDetail(raw: unknown): ContractDetail {
+    const summary = normalizeContractSummary(raw)
+    if (!summary) {
+        throw new Error('Contrato inválido.')
+    }
+    const item = raw as Record<string, unknown>
+    const documentsRaw = Array.isArray(item.documents) ? item.documents : []
+    const documents = documentsRaw
+        .map((document) => normalizeContractDocument(document))
+        .filter((document): document is NonNullable<ReturnType<typeof normalizeContractDocument>> => document !== null)
+    return {
+        ...summary,
+        sellerInfo: item.sellerInfo ?? item.seller_info,
+        buyerInfo: item.buyerInfo ?? item.buyer_info,
+        commissionData: item.commissionData ?? item.commission_data,
+        documents,
+    }
+}
+
 export async function getMyContracts(): Promise<ContractSummary[]> {
     const response = await apiClient.get<{
         data?: ContractSummary[]
     } | ContractSummary[]>('/contracts/me')
 
-    return Array.isArray(response) ? response : (response?.data ?? [])
+    const rows = Array.isArray(response) ? response : (response?.data ?? [])
+    return rows
+        .map((item) => normalizeContractSummary(item))
+        .filter((item): item is ContractSummary => item !== null)
 }
 
 export async function getContractById(id: string): Promise<ContractDetail> {
-    return apiClient.get<ContractDetail>(`/contracts/${encodeURIComponent(id)}`)
+    const response = await apiClient.get<unknown>(`/contracts/${encodeURIComponent(id)}`)
+    return normalizeContractDetail(response)
 }
 
 export async function uploadContractDocument(options: {

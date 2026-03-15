@@ -20,6 +20,11 @@ interface Props {
     contract: ContractDetail
 }
 
+function shortId(value: string | null | undefined): string {
+    const normalized = String(value ?? '').trim()
+    return normalized ? `${normalized.slice(0, 8)}…` : '—'
+}
+
 function approvalBadge(status: ContractDetail['sellerApprovalStatus']) {
     const baseClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium'
     switch (status) {
@@ -157,10 +162,10 @@ export function ContractDetailClient({ contract }: Props) {
         <div className="space-y-6">
             <div className="rounded-2xl border border-slate-100 bg-white px-5 py-4 shadow-sm space-y-2">
                 <h1 className="text-lg font-semibold text-slate-900">
-                    Contrato #{contract.id.slice(0, 8)}…
+                    Contrato #{shortId(contract.id)}
                 </h1>
                 <p className="text-xs text-slate-600">
-                    Negociação {contract.negotiationId.slice(0, 8)}… • Imóvel #{contract.propertyId}
+                    Negociação {shortId(contract.negotiationId)} • Imóvel #{contract.propertyId}
                 </p>
                 <div className="flex flex-wrap gap-3 text-xs mt-2">
                     <div className="flex items-center gap-1">
