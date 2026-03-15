@@ -18,6 +18,15 @@ export default function PropertyCard({ property, variant = 'default' }: Property
     const images = property.images?.length ? property.images : ['/logo_circular.png']
     const hasMultipleImages = images.length > 1
     const isFeatured = variant === 'featured'
+    const statusMeta = property.status === 'pending_approval'
+        ? { label: 'Em análise', className: 'bg-amber-100 text-amber-800' }
+        : property.status === 'sold'
+            ? { label: 'Vendido', className: 'bg-blue-100 text-blue-800' }
+            : property.status === 'rented'
+                ? { label: 'Alugado', className: 'bg-indigo-100 text-indigo-800' }
+                : property.status === 'rejected'
+                    ? { label: 'Rejeitado', className: 'bg-red-100 text-red-800' }
+                    : { label: 'Disponível', className: 'bg-slate-100 text-slate-700' }
     const purposeBadge = property.purpose.toLowerCase().includes('alug')
         ? { label: 'Aluguel', className: 'badge-gold' }
         : { label: 'Venda', className: 'badge-teal' }
@@ -37,11 +46,11 @@ export default function PropertyCard({ property, variant = 'default' }: Property
     return (
         <Link
             href={`/imoveis/${property.id}`}
-            className={`group block bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${isFeatured ? 'ring-2 ring-accent-400' : 'border border-gray-100'
+            className={`group block bg-white rounded-[28px] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${isFeatured ? 'ring-2 ring-accent-400' : 'border border-gray-100'
                 }`}
         >
             {/* Image Container */}
-            <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+            <div className="relative aspect-[5/4] overflow-hidden bg-gray-100">
                 <Image
                     src={images[currentImageIndex]}
                     alt={property.title}
@@ -86,95 +95,110 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                     </>
                 )}
 
-                {/* Purpose Badge */}
-                <div className={`absolute top-4 left-4 ${purposeBadge.className} shadow-lg backdrop-blur-sm bg-opacity-95`}>
-                    {purposeBadge.label}
-                </div>
-
-                {/* Type Badge */}
-                <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md text-gray-700 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg border border-white/20">
-                    {property.type}
+                <div className="absolute top-4 left-4 right-14 flex flex-wrap gap-2">
+                    <div className={`${purposeBadge.className} shadow-lg backdrop-blur-sm bg-opacity-95`}>
+                        {purposeBadge.label}
+                    </div>
+                    <div className={`rounded-full px-3 py-1.5 text-[11px] font-bold shadow-lg backdrop-blur-sm ${statusMeta.className}`}>
+                        {statusMeta.label}
+                    </div>
                 </div>
 
             </div>
 
             {/* Content */}
-            <div className="p-5">
+            <div className="p-6">
                 {/* Title */}
-                <h3 className="font-display font-bold text-gray-900 text-lg leading-tight mb-2 line-clamp-1 group-hover:text-primary-600 transition-colors">
-                    {property.title}
-                </h3>
+                <div className="mb-3 flex items-start justify-between gap-3">
+                    <h3 className="font-display font-bold text-gray-900 text-xl leading-tight line-clamp-2 group-hover:text-primary-600 transition-colors">
+                        {property.title}
+                    </h3>
+                    <div className="shrink-0 rounded-full bg-white shadow-sm">
+                        <FavoriteButton propertyId={property.id} size="sm" />
+                    </div>
+                </div>
+
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    {property.type}
+                </p>
 
                 {/* Location */}
-                <div className="flex items-center gap-1.5 text-gray-500 text-sm mb-4">
+                <div className="flex items-center gap-1.5 text-gray-500 text-sm mb-5">
                     <MapPin className="w-4 h-4 flex-shrink-0 text-primary-500" />
-                    <span className="truncate font-medium">
+                    <span className="line-clamp-1 font-medium">
                         {property.bairro ? `${property.bairro}, ` : ''}{property.city}
                     </span>
                 </div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-2 gap-y-2 gap-x-4 mb-4">
+                <div className="grid grid-cols-2 gap-3 mb-5">
                     {property.bedrooms != null && property.bedrooms > 0 && (
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Bed className="w-4 h-4 text-gray-400" />
-                            <span className="font-medium">{property.bedrooms} <span className="text-gray-400 font-normal">quartos</span></span>
+                        <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-sm text-gray-700">
+                            <div className="flex items-center gap-2">
+                                <Bed className="w-4 h-4 text-gray-400" />
+                                <span className="font-medium">{property.bedrooms} quartos</span>
+                            </div>
                         </div>
                     )}
                     {property.bathrooms != null && property.bathrooms > 0 && (
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Bath className="w-4 h-4 text-gray-400" />
-                            <span className="font-medium">{property.bathrooms} <span className="text-gray-400 font-normal">banhos</span></span>
+                        <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-sm text-gray-700">
+                            <div className="flex items-center gap-2">
+                                <Bath className="w-4 h-4 text-gray-400" />
+                                <span className="font-medium">{property.bathrooms} banheiros</span>
+                            </div>
                         </div>
                     )}
                     {property.garageSpots != null && property.garageSpots > 0 && (
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Car className="w-4 h-4 text-gray-400" />
-                            <span className="font-medium">{property.garageSpots} <span className="text-gray-400 font-normal">vagas</span></span>
+                        <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-sm text-gray-700">
+                            <div className="flex items-center gap-2">
+                                <Car className="w-4 h-4 text-gray-400" />
+                                <span className="font-medium">{property.garageSpots} vagas</span>
+                            </div>
                         </div>
                     )}
                     {property.areaConstruida != null && property.areaConstruida > 0 && (
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Maximize className="w-4 h-4 text-gray-400" />
-                            <span className="font-medium">{property.areaConstruida} <span className="text-gray-400 font-normal">m²</span></span>
+                        <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-sm text-gray-700">
+                            <div className="flex items-center gap-2">
+                                <Maximize className="w-4 h-4 text-gray-400" />
+                                <span className="font-medium">{property.areaConstruida} m²</span>
+                            </div>
                         </div>
                     )}
                 </div>
 
                 {/* Price */}
-                <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
-                    <div>
-                        <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-0.5">
-                            {property.priceSale ? 'Venda' : (property.priceRent ? 'Aluguel' : 'Valor')}
-                        </p>
-                        {(() => {
-                            const promoSale = getPromoSalePrice(property)
-                            const promoRent = getPromoRentPrice(property)
-                            const basePrice = property.priceSale ?? property.priceRent ?? property.price
-                            const promo = promoSale ?? promoRent
-                            if (promo) {
-                                return (
-                                    <>
-                                        <p className="text-sm text-gray-400 line-through font-medium">
-                                            {formatPrice(basePrice)}
-                                        </p>
-                                        <p className="text-xl font-display font-bold text-primary-700">
-                                            {formatPrice(promo)}
-                                            {property.priceRent && <span className="text-sm font-normal text-gray-500">/mês</span>}
-                                        </p>
-                                    </>
-                                )
-                            }
+                <div className="pt-4 border-t border-gray-100">
+                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">
+                        {property.priceSale ? 'Venda' : (property.priceRent ? 'Aluguel' : 'Valor')}
+                    </p>
+                    {(() => {
+                        const promoSale = getPromoSalePrice(property)
+                        const promoRent = getPromoRentPrice(property)
+                        const basePrice = property.priceSale ?? property.priceRent ?? property.price
+                        const promo = promoSale ?? promoRent
+                        if (promo) {
                             return (
-                                <p className="text-xl font-display font-bold text-primary-700">
-                                    {formatPrice(basePrice)}
-                                    {property.priceRent && <span className="text-sm font-normal text-gray-500">/mês</span>}
-                                </p>
+                                <>
+                                    <p className="text-sm text-gray-400 line-through font-medium">
+                                        {formatPrice(basePrice)}
+                                    </p>
+                                    <p className="text-2xl font-display font-bold text-primary-700">
+                                        {formatPrice(promo)}
+                                        {property.priceRent && <span className="text-sm font-normal text-gray-500">/mês</span>}
+                                    </p>
+                                </>
                             )
-                        })()}
-                    </div>
-
-                    <FavoriteButton propertyId={property.id} size="sm" />
+                        }
+                        return (
+                            <p className="text-2xl font-display font-bold text-primary-700">
+                                {formatPrice(basePrice)}
+                                {property.priceRent && <span className="text-sm font-normal text-gray-500">/mês</span>}
+                            </p>
+                        )
+                    })()}
+                    <p className="mt-2 text-xs text-slate-500">
+                        Abra para ver fotos, localização detalhada e informações completas.
+                    </p>
                 </div>
             </div>
         </Link>

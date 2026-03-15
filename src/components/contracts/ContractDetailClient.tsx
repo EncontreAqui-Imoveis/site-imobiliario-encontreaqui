@@ -49,6 +49,10 @@ function filterDocsBySide(docs: ContractDocument[], side: ContractSide): Contrac
     return docs.filter((doc) => doc.side === side)
 }
 
+function filterSharedDocs(docs: ContractDocument[]): ContractDocument[] {
+    return docs.filter((doc) => !doc.side)
+}
+
 export function ContractDetailClient({ contract }: Props) {
     const [documents, setDocuments] = useState<ContractDocument[]>(contract.documents)
     const [uploadingSide, setUploadingSide] = useState<ContractSide | null>(null)
@@ -156,6 +160,7 @@ export function ContractDetailClient({ contract }: Props) {
         )
     }
 
+    const sharedDocs = filterSharedDocs(documents)
     const sellerDocs = filterDocsBySide(documents, 'seller')
     const buyerDocs = filterDocsBySide(documents, 'buyer')
     const statusMeta = getContractStatusMeta(contract.status)
@@ -164,6 +169,8 @@ export function ContractDetailClient({ contract }: Props) {
     const currentStepIndex = CONTRACT_STATUS_FLOW.indexOf(contract.status)
     const sellerReason = approvalReasonText(contract.sellerApprovalReason)
     const buyerReason = approvalReasonText(contract.buyerApprovalReason)
+    const sellerLocked = isSideLocked(contract, 'seller')
+    const buyerLocked = isSideLocked(contract, 'buyer')
 
     return (
         <div className="space-y-6">
@@ -244,6 +251,39 @@ export function ContractDetailClient({ contract }: Props) {
             </section>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {sharedDocs.length > 0 && (
+                    <section className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm space-y-3 md:col-span-2" aria-labelledby="shared-documents">
+                        <div className="flex items-center justify-between">
+                            <h2 id="shared-documents" className="text-sm font-semibold text-slate-800">
+                                Documentos do contrato
+                            </h2>
+                            <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+                                Visualização
+                            </span>
+                        </div>
+                        <p className="text-xs text-slate-500">
+                            Aqui ficam os documentos compartilhados do fluxo contratual, como a minuta e outros arquivos sem vínculo exclusivo com vendedor ou comprador.
+                        </p>
+                        <ul className="space-y-1.5 text-xs">
+                            {sharedDocs.map((doc) => (
+                                <li key={doc.id} className="flex items-center justify-between gap-2">
+                                    <a
+                                        href={buildNegotiationDocumentDownloadUrl(doc.negotiationId, doc.id)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-primary-700 hover:text-primary-800 underline"
+                                    >
+                                        {doc.originalFileName || doc.documentType || 'Documento'}
+                                    </a>
+                                    <span className="text-[11px] text-slate-500">
+                                        Somente leitura
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                )}
+
                 <section className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm space-y-3" aria-labelledby="seller-documents">
                     <div className="flex items-center justify-between">
                         <h2 id="seller-documents" className="text-sm font-semibold text-slate-800">
@@ -283,12 +323,18 @@ export function ContractDetailClient({ contract }: Props) {
                         )}
                     </ul>
 
-                    <div className="space-y-1 text-xs text-slate-700">
-                        {renderUploadField('seller', 'doc_identidade', 'documento de identidade')}
-                        {renderUploadField('seller', 'comprovante_endereco', 'comprovante de endereço')}
-                        {renderUploadField('seller', 'certidao_casamento_nascimento', 'certidão casamento/nascimento')}
-                        {renderUploadField('seller', 'certidao_onus_acoes', 'certidão de ônus e ações (Venda)')}
-                    </div>
+                    {sellerLocked ? (
+                        <p className="text-xs text-slate-500">
+                            Este lado já foi aprovado. O envio e a remoção de documentos ficam bloqueados.
+                        </p>
+                    ) : (
+                        <div className="space-y-1 text-xs text-slate-700">
+                            {renderUploadField('seller', 'doc_identidade', 'documento de identidade')}
+                            {renderUploadField('seller', 'comprovante_endereco', 'comprovante de endereço')}
+                            {renderUploadField('seller', 'certidao_casamento_nascimento', 'certidão casamento/nascimento')}
+                            {renderUploadField('seller', 'certidao_onus_acoes', 'certidão de ônus e ações (Venda)')}
+                        </div>
+                    )}
                 </section>
 
                 <section className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm space-y-3" aria-labelledby="buyer-documents">
@@ -330,13 +376,19 @@ export function ContractDetailClient({ contract }: Props) {
                         )}
                     </ul>
 
-                    <div className="space-y-1 text-xs text-slate-700">
-                        {renderUploadField('buyer', 'doc_identidade', 'documento de identidade')}
-                        {renderUploadField('buyer', 'comprovante_endereco', 'comprovante de endereço')}
-                        {renderUploadField('buyer', 'comprovante_renda', 'comprovante de renda (Aluguel)')}
-                        {renderUploadField('buyer', 'contrato_assinado', 'contrato assinado')}
-                        {renderUploadField('buyer', 'comprovante_pagamento', 'comprovante de pagamento')}
-                    </div>
+                    {buyerLocked ? (
+                        <p className="text-xs text-slate-500">
+                            Este lado já foi aprovado. O envio e a remoção de documentos ficam bloqueados.
+                        </p>
+                    ) : (
+                        <div className="space-y-1 text-xs text-slate-700">
+                            {renderUploadField('buyer', 'doc_identidade', 'documento de identidade')}
+                            {renderUploadField('buyer', 'comprovante_endereco', 'comprovante de endereço')}
+                            {renderUploadField('buyer', 'comprovante_renda', 'comprovante de renda (Aluguel)')}
+                            {renderUploadField('buyer', 'contrato_assinado', 'contrato assinado')}
+                            {renderUploadField('buyer', 'comprovante_pagamento', 'comprovante de pagamento')}
+                        </div>
+                    )}
                 </section>
             </div>
 

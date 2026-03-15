@@ -24,7 +24,7 @@ export default function PropertyGrid({
                 aria-live="polite"
                 aria-busy="true"
                 aria-label="Carregando imóveis"
-                className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6`}
+                className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3"
             >
                 {[...Array(8)].map((_, i) => (
                     <div key={i} className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm animate-pulse">
@@ -77,7 +77,7 @@ export default function PropertyGrid({
     }
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
             {properties.map((property) => (
                 <PropertyCard key={property.id} property={property} />
             ))}

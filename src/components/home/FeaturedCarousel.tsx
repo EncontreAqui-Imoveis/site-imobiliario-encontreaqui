@@ -100,7 +100,7 @@ export default function FeaturedCarousel({
                         {properties.map((property) => (
                             <div
                                 key={property.id}
-                                className="flex-none w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]"
+                                className="flex-none w-full sm:w-[calc(50%-12px)] xl:w-[calc(33.333%-16px)]"
                             >
                                 <PropertyCard property={property} variant="featured" />
                             </div>
