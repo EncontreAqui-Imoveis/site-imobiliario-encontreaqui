@@ -163,8 +163,13 @@ export default function AnunciePage() {
 
     useEffect(() => {
         if (!actorMode || !draftDecisionResolved) return
-        saveDraft(step, { ...form, actorMode })
-    }, [actorMode, draftDecisionResolved, form, step])
+        saveDraft(step, {
+            ...form,
+            actorMode,
+            mediaImageCount: images.length,
+            mediaVideoSelected: Boolean(video),
+        })
+    }, [actorMode, draftDecisionResolved, form, images.length, step, video])
 
     useEffect(() => {
         if (!actorMode || !draftDecisionResolved) return
@@ -208,6 +213,11 @@ export default function AnunciePage() {
         setStep(Math.min(Math.max(Number(draft.currentStep || 1), 1), 6) as WizardStep)
         setShowDraftBanner(false)
         setDraftDecisionResolved(true)
+        const expectedImages = Number(draft.data.mediaImageCount ?? 0)
+        const expectedVideo = draft.data.mediaVideoSelected === true
+        if ((expectedImages > 0 && media.images.length === 0) || (expectedVideo && !media.video)) {
+            setError('O formulário foi restaurado, mas as mídias deste rascunho precisam ser selecionadas novamente.')
+        }
     }
 
     function discardDraft() {
