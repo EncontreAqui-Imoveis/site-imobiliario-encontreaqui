@@ -34,6 +34,12 @@ export interface ContractDocument {
     createdAt: string
 }
 
+export interface ContractApprovalReason {
+    reason?: string | null
+    details?: string | null
+    [key: string]: unknown
+}
+
 export interface ContractSummary {
     id: string
     negotiationId: string
@@ -42,12 +48,25 @@ export interface ContractSummary {
     sellerApprovalStatus: ApprovalStatus
     buyerApprovalStatus: ApprovalStatus
     createdAt: string
+    updatedAt?: string
+    propertyTitle?: string | null
+    propertyCode?: string | null
+    propertyPurpose?: string | null
 }
 
 export interface ContractDetail extends ContractSummary {
     sellerInfo?: unknown
     buyerInfo?: unknown
     commissionData?: unknown
+    workflowMetadata?: Record<string, unknown> | null
+    sellerApprovalReason?: ContractApprovalReason | null
+    buyerApprovalReason?: ContractApprovalReason | null
+    capturingBrokerId?: number | null
+    sellingBrokerId?: number | null
+    capturingBrokerName?: string | null
+    sellingBrokerName?: string | null
+    agencyName?: string | null
+    agencyAddress?: string | null
     documents: ContractDocument[]
 }
 

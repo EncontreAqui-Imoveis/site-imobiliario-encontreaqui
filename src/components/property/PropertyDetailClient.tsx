@@ -14,37 +14,63 @@ import { Property, formatPrice, getPromoSalePrice, getPromoRentPrice } from '@/t
 import { buildAppDeepLink } from '@/lib/appLinks'
 import { useUser } from '@/contexts/UserContext'
 import { buildWhatsappLink } from '@/lib/contactLinks'
+import { fetchEditableProperty } from '@/lib/propertiesEditorService'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://site-imobiliario-backend-production.up.railway.app'
 
 interface PropertyDetailClientProps {
-    initialProperty: Property
+    propertyId: string
+    initialProperty: Property | null
 }
 
-export default function PropertyDetailClient({ initialProperty }: PropertyDetailClientProps) {
+export default function PropertyDetailClient({ propertyId, initialProperty }: PropertyDetailClientProps) {
     const [property, setProperty] = useState(initialProperty)
     const [similarProperties, setSimilarProperties] = useState<Property[]>([])
     const [showCloseDeal, setShowCloseDeal] = useState(false)
+    const [loadError, setLoadError] = useState<string | null>(null)
     const { session, loading: authLoading } = useUser()
 
     // Owner / broker detection
     const userId = session?.user?.id
     const isOwner =
+        property != null &&
         userId != null &&
         ((property.brokerId != null && userId === property.brokerId) ||
             (property.ownerId != null && userId === property.ownerId))
-    const statusLower = property.status?.toLowerCase() || ''
+    const statusLower = property?.status?.toLowerCase() || ''
     const canEditProperty = isOwner && statusLower !== 'pending_approval'
     const canGenerateProposal = isOwner && statusLower === 'approved'
     const canCloseDeal = isOwner && (statusLower === 'approved' || statusLower === 'sold' || statusLower === 'rented')
 
     useEffect(() => {
-        if (!property.bairro) return
+        if (property || authLoading || !session) return
+        let cancelled = false
+        const loadOwnedProperty = async () => {
+            try {
+                const loadedProperty = await fetchEditableProperty(propertyId)
+                if (!cancelled) {
+                    setProperty(loadedProperty)
+                }
+            } catch {
+                if (!cancelled) {
+                    setLoadError('Imóvel não encontrado.')
+                }
+            }
+        }
+        void loadOwnedProperty()
+        return () => {
+            cancelled = true
+        }
+    }, [authLoading, property, propertyId, session])
+
+    useEffect(() => {
+        if (!property?.bairro) return
+        const currentProperty = property
 
         async function fetchSimilar() {
             try {
                 const similarRes = await fetch(
-                    `${API_BASE_URL}/properties?bairro=${encodeURIComponent(property.bairro || '')}&limit=4&status=approved`
+                    `${API_BASE_URL}/properties?bairro=${encodeURIComponent(currentProperty.bairro || '')}&limit=4&status=approved`
                 )
 
                 if (!similarRes.ok) return
@@ -54,7 +80,7 @@ export default function PropertyDetailClient({ initialProperty }: PropertyDetail
                 const allSimilar = Array.isArray(rawSimilar) ? rawSimilar : []
 
                 const filtered = allSimilar
-                    .filter((p: Property) => p.id !== property.id)
+                    .filter((p: Property) => p.id !== currentProperty.id)
                     .slice(0, 3)
 
                 setSimilarProperties(filtered)
@@ -64,17 +90,34 @@ export default function PropertyDetailClient({ initialProperty }: PropertyDetail
         }
 
         fetchSimilar()
-    }, [property.bairro, property.id])
+    }, [property])
 
     const whatsappMessage =
-        `Olá! Vi o imóvel "${property.title}" (Cód: ${property.code || property.id}) no Encontre Aqui e gostaria de mais informações.`
-    const whatsappLink = buildWhatsappLink(property.brokerPhone, whatsappMessage)
-    const deepLink = buildAppDeepLink(property.id)
+        property
+            ? `Olá! Vi o imóvel "${property.title}" (Cód: ${property.code || property.id}) no Encontre Aqui e gostaria de mais informações.`
+            : ''
+    const whatsappLink = buildWhatsappLink(property?.brokerPhone, whatsappMessage)
 
+    function handleDealClosed(updatedStatus: string) {
+        setProperty(prev => (prev ? { ...prev, status: updatedStatus as Property['status'] } : prev))
+    }
+
+    if (!property) {
+        return (
+            <main className="min-h-screen bg-gray-50 pt-16 lg:pt-20 pb-24 lg:pb-12">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex items-center justify-center">
+                    <div className="text-sm text-slate-600">
+                        {loadError ?? (!authLoading && !session ? 'Imóvel não encontrado.' : 'Carregando imóvel...')}
+                    </div>
+                </div>
+            </main>
+        )
+    }
+
+    const deepLink = buildAppDeepLink(property.id)
     const promoSale = getPromoSalePrice(property)
     const promoRent = getPromoRentPrice(property)
     const promoPrice = promoSale ?? promoRent
-
     const displayPrice = promoPrice
         ? formatPrice(promoPrice)
         : property.priceSale
@@ -88,10 +131,6 @@ export default function PropertyDetailClient({ initialProperty }: PropertyDetail
     const originalPrice = promoPrice
         ? formatPrice(property.priceSale ?? property.priceRent ?? property.price)
         : null
-
-    function handleDealClosed(updatedStatus: string) {
-        setProperty(prev => ({ ...prev, status: updatedStatus as Property['status'] }))
-    }
 
     return (
         <main
@@ -116,7 +155,7 @@ export default function PropertyDetailClient({ initialProperty }: PropertyDetail
                 </nav>
 
                 {/* Owner Actions Panel */}
-                {isOwner && (
+                {isOwner && statusLower !== 'pending_approval' && (
                     <section
                         aria-label="Painel do corretor"
                         className="mb-6 bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden"

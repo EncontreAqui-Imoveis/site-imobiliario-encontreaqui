@@ -5,6 +5,7 @@ import type {
     ContractDocumentType,
     ContractSide,
     Commission,
+    ContractApprovalReason,
 } from '@/types/contract'
 
 function normalizeContractSummary(raw: unknown): ContractSummary | null {
@@ -83,6 +84,60 @@ function normalizeContractDetail(raw: unknown): ContractDetail {
         sellerInfo: item.sellerInfo ?? item.seller_info,
         buyerInfo: item.buyerInfo ?? item.buyer_info,
         commissionData: item.commissionData ?? item.commission_data,
+        workflowMetadata:
+            item.workflowMetadata && typeof item.workflowMetadata === 'object'
+                ? item.workflowMetadata as Record<string, unknown>
+                : item.workflow_metadata && typeof item.workflow_metadata === 'object'
+                    ? item.workflow_metadata as Record<string, unknown>
+                    : null,
+        sellerApprovalReason:
+            item.sellerApprovalReason && typeof item.sellerApprovalReason === 'object'
+                ? item.sellerApprovalReason as ContractApprovalReason
+                : item.seller_approval_reason && typeof item.seller_approval_reason === 'object'
+                    ? item.seller_approval_reason as ContractApprovalReason
+                    : null,
+        buyerApprovalReason:
+            item.buyerApprovalReason && typeof item.buyerApprovalReason === 'object'
+                ? item.buyerApprovalReason as ContractApprovalReason
+                : item.buyer_approval_reason && typeof item.buyer_approval_reason === 'object'
+                    ? item.buyer_approval_reason as ContractApprovalReason
+                    : null,
+        capturingBrokerId:
+            typeof item.capturingBrokerId === 'number'
+                ? item.capturingBrokerId
+                : typeof item.capturing_broker_id === 'number'
+                    ? item.capturing_broker_id
+                    : null,
+        sellingBrokerId:
+            typeof item.sellingBrokerId === 'number'
+                ? item.sellingBrokerId
+                : typeof item.selling_broker_id === 'number'
+                    ? item.selling_broker_id
+                    : null,
+        capturingBrokerName:
+            typeof item.capturingBrokerName === 'string'
+                ? item.capturingBrokerName
+                : typeof item.capturing_broker_name === 'string'
+                    ? item.capturing_broker_name
+                    : null,
+        sellingBrokerName:
+            typeof item.sellingBrokerName === 'string'
+                ? item.sellingBrokerName
+                : typeof item.selling_broker_name === 'string'
+                    ? item.selling_broker_name
+                    : null,
+        agencyName:
+            typeof item.agencyName === 'string'
+                ? item.agencyName
+                : typeof item.agency_name === 'string'
+                    ? item.agency_name
+                    : null,
+        agencyAddress:
+            typeof item.agencyAddress === 'string'
+                ? item.agencyAddress
+                : typeof item.agency_address === 'string'
+                    ? item.agency_address
+                    : null,
         documents,
     }
 }

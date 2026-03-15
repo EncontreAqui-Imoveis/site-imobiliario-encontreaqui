@@ -1,20 +1,23 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+
 import type {
+    ContractApprovalReason,
     ContractDetail,
     ContractDocument,
-    ContractSide,
     ContractDocumentType,
+    ContractSide,
     Commission,
 } from '@/types/contract'
 import {
-    deleteContractDocument,
-    uploadContractDocument,
     buildNegotiationDocumentDownloadUrl,
+    deleteContractDocument,
     getNegotiationCommissions,
+    uploadContractDocument,
 } from '@/lib/api/contracts'
 import type { ApiError } from '@/lib/api/client'
+import { CONTRACT_STATUS_FLOW, getApprovalStatusMeta, getContractStatusMeta } from '@/lib/contractsUi'
 
 interface Props {
     contract: ContractDetail
@@ -26,16 +29,15 @@ function shortId(value: string | null | undefined): string {
 }
 
 function approvalBadge(status: ContractDetail['sellerApprovalStatus']) {
-    const baseClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium'
-    switch (status) {
-        case 'APPROVED':
-        case 'APPROVED_WITH_RES':
-            return <span className={`${baseClasses} bg-slate-100 text-slate-700`}>Aprovado</span>
-        case 'REJECTED':
-            return <span className={`${baseClasses} bg-red-50 text-red-700`}>Rejeitado</span>
-        default:
-            return <span className={`${baseClasses} bg-slate-100 text-slate-700`}>Pendente</span>
-    }
+    const meta = getApprovalStatusMeta(status)
+    return <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${meta.className}`}>{meta.label}</span>
+}
+
+function approvalReasonText(reason: ContractApprovalReason | null | undefined): string | null {
+    if (!reason || typeof reason !== 'object') return null
+    if (typeof reason.reason === 'string' && reason.reason.trim()) return reason.reason.trim()
+    if (typeof reason.details === 'string' && reason.details.trim()) return reason.details.trim()
+    return null
 }
 
 function isSideLocked(contract: ContractDetail, side: ContractSide): boolean {
@@ -65,7 +67,7 @@ export function ContractDetailClient({ contract }: Props) {
                     setCommissions(data)
                 }
             } catch {
-                // Falhas em carregar comissão não devem quebrar a tela.
+                // Carregamento de comissão não deve derrubar a tela.
             } finally {
                 if (!cancelled) {
                     setLoadingCommissions(false)
@@ -89,7 +91,6 @@ export function ContractDetailClient({ contract }: Props) {
                 documentType,
                 file,
             })
-            // Em um cenário real recarregaríamos os dados do contrato; por ora fazemos refresh leve.
         } catch (err) {
             const apiErr = err as ApiError
             if ('status' in apiErr) {
@@ -127,7 +128,7 @@ export function ContractDetailClient({ contract }: Props) {
         if (locked) {
             return (
                 <p className="text-xs text-slate-500">
-                    Este lado já foi aprovado. Edição de documentos está bloqueada.
+                    Este lado já foi aprovado. O envio e a remoção de documentos ficam bloqueados.
                 </p>
             )
         }
@@ -157,36 +158,102 @@ export function ContractDetailClient({ contract }: Props) {
 
     const sellerDocs = filterDocsBySide(documents, 'seller')
     const buyerDocs = filterDocsBySide(documents, 'buyer')
+    const statusMeta = getContractStatusMeta(contract.status)
+    const sellerMeta = getApprovalStatusMeta(contract.sellerApprovalStatus)
+    const buyerMeta = getApprovalStatusMeta(contract.buyerApprovalStatus)
+    const currentStepIndex = CONTRACT_STATUS_FLOW.indexOf(contract.status)
+    const sellerReason = approvalReasonText(contract.sellerApprovalReason)
+    const buyerReason = approvalReasonText(contract.buyerApprovalReason)
 
     return (
         <div className="space-y-6">
-            <div className="rounded-2xl border border-slate-100 bg-white px-5 py-4 shadow-sm space-y-2">
-                <h1 className="text-lg font-semibold text-slate-900">
-                    Contrato #{shortId(contract.id)}
-                </h1>
-                <p className="text-xs text-slate-600">
-                    Negociação {shortId(contract.negotiationId)} • Imóvel #{contract.propertyId}
-                </p>
-                <div className="flex flex-wrap gap-3 text-xs mt-2">
-                    <div className="flex items-center gap-1">
-                        <span className="text-slate-600">Vendedor:</span>
-                        {approvalBadge(contract.sellerApprovalStatus)}
+            <section className="rounded-2xl border border-slate-100 bg-white px-5 py-5 shadow-sm space-y-4" aria-labelledby="contract-header">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusMeta.chipClass}`}>
+                                {statusMeta.label}
+                            </span>
+                            {approvalBadge(contract.sellerApprovalStatus)}
+                            {approvalBadge(contract.buyerApprovalStatus)}
+                        </div>
+                        <h1 id="contract-header" className="text-lg font-semibold text-slate-900">
+                            {contract.propertyTitle?.trim() || `Contrato ${shortId(contract.id)}`}
+                        </h1>
+                        <p className="text-xs text-slate-600">
+                            Contrato {shortId(contract.id)} • Negociação {shortId(contract.negotiationId)} • Imóvel #{contract.propertyId}
+                        </p>
                     </div>
-                    <div className="flex items-center gap-1">
-                        <span className="text-slate-600">Comprador:</span>
-                        {approvalBadge(contract.buyerApprovalStatus)}
+                    <div className="max-w-sm rounded-xl border border-primary-100 bg-primary-50 px-4 py-3 text-sm text-primary-900">
+                        <p className="font-semibold">Próxima ação</p>
+                        <p className="mt-1">{statusMeta.nextAction}</p>
                     </div>
                 </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <section className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm space-y-3">
+                <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-4">
+                    <p className="text-sm text-slate-700">{statusMeta.description}</p>
+                    <div className="mt-4 grid gap-3 md:grid-cols-4">
+                        {CONTRACT_STATUS_FLOW.map((status, index) => {
+                            const stepMeta = getContractStatusMeta(status)
+                            const isCurrent = index === currentStepIndex
+                            const isCompleted = currentStepIndex >= index
+                            return (
+                                <div
+                                    key={status}
+                                    className={`rounded-xl border px-3 py-3 text-xs ${isCurrent
+                                        ? 'border-primary-300 bg-white shadow-sm'
+                                        : isCompleted
+                                            ? 'border-slate-200 bg-white'
+                                            : 'border-slate-100 bg-slate-100 text-slate-500'
+                                        }`}
+                                >
+                                    <p className="font-semibold">{stepMeta.label}</p>
+                                    <p className="mt-1 leading-relaxed">{stepMeta.description}</p>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-4">
+                        <p className="text-sm font-semibold text-slate-900">Situação do vendedor</p>
+                        <div className="mt-2 flex items-center gap-2">
+                            {approvalBadge(contract.sellerApprovalStatus)}
+                        </div>
+                        <p className="mt-2 text-xs text-slate-600">{sellerMeta.description}</p>
+                        {sellerReason && (
+                            <p className="mt-2 text-xs text-slate-700">
+                                Observação: {sellerReason}
+                            </p>
+                        )}
+                    </div>
+                    <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-4">
+                        <p className="text-sm font-semibold text-slate-900">Situação do comprador</p>
+                        <div className="mt-2 flex items-center gap-2">
+                            {approvalBadge(contract.buyerApprovalStatus)}
+                        </div>
+                        <p className="mt-2 text-xs text-slate-600">{buyerMeta.description}</p>
+                        {buyerReason && (
+                            <p className="mt-2 text-xs text-slate-700">
+                                Observação: {buyerReason}
+                            </p>
+                        )}
+                    </div>
+                </div>
+            </section>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <section className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm space-y-3" aria-labelledby="seller-documents">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-semibold text-slate-800">
+                        <h2 id="seller-documents" className="text-sm font-semibold text-slate-800">
                             Documentos do vendedor
                         </h2>
                         {approvalBadge(contract.sellerApprovalStatus)}
                     </div>
+                    <p className="text-xs text-slate-500">
+                        Envie e acompanhe os documentos do vendedor neste bloco. Quando este lado for aprovado, os envios ficam bloqueados para prevenir erro operacional.
+                    </p>
                     <ul className="space-y-1.5 text-xs">
                         {sellerDocs.map((doc) => (
                             <li key={doc.id} className="flex items-center justify-between gap-2">
@@ -224,13 +291,16 @@ export function ContractDetailClient({ contract }: Props) {
                     </div>
                 </section>
 
-                <section className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm space-y-3">
+                <section className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm space-y-3" aria-labelledby="buyer-documents">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-semibold text-slate-800">
+                        <h2 id="buyer-documents" className="text-sm font-semibold text-slate-800">
                             Documentos do comprador
                         </h2>
                         {approvalBadge(contract.buyerApprovalStatus)}
                     </div>
+                    <p className="text-xs text-slate-500">
+                        Envie e acompanhe os documentos do comprador neste bloco. A aprovação deste lado também determina o avanço do contrato.
+                    </p>
                     <ul className="space-y-1.5 text-xs">
                         {buyerDocs.map((doc) => (
                             <li key={doc.id} className="flex items-center justify-between gap-2">
@@ -271,14 +341,14 @@ export function ContractDetailClient({ contract }: Props) {
             </div>
 
             {error && (
-                <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+                <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
                     {error}
                 </p>
             )}
 
-            <section className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm space-y-3">
+            <section className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm space-y-3" aria-labelledby="contract-commissions">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-semibold text-slate-800">
+                    <h2 id="contract-commissions" className="text-sm font-semibold text-slate-800">
                         Comissões desta negociação
                     </h2>
                     {loadingCommissions && (
@@ -289,13 +359,13 @@ export function ContractDetailClient({ contract }: Props) {
                 </div>
                 {commissions && commissions.length > 0 ? (
                     <ul className="space-y-1.5 text-xs">
-                        {commissions.map((c) => (
-                            <li key={c.id} className="flex items-center justify-between gap-2">
+                        {commissions.map((commission) => (
+                            <li key={commission.id} className="flex items-center justify-between gap-2">
                                 <span>
-                                    Broker #{c.brokerId} • {c.role === 'CAPTURING' ? 'Captador' : 'Vendedor'}
+                                    Broker #{commission.brokerId} • {commission.role === 'CAPTURING' ? 'Captador' : 'Vendedor'}
                                 </span>
                                 <span className="font-medium">
-                                    R$ {c.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    R$ {commission.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                 </span>
                             </li>
                         ))}
@@ -309,4 +379,3 @@ export function ContractDetailClient({ contract }: Props) {
         </div>
     )
 }
-
