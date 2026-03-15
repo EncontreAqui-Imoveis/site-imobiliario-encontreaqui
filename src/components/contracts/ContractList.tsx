@@ -43,10 +43,10 @@ export function ContractList({ contracts }: ContractListProps) {
                                         {statusMeta.label}
                                     </span>
                                     <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium ${sellerMeta.className}`}>
-                                        Vendedor: {sellerMeta.label}
+                                        Vendedor: {sellerMeta.compactLabel}
                                     </span>
                                     <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium ${buyerMeta.className}`}>
-                                        Comprador: {buyerMeta.label}
+                                        Comprador: {buyerMeta.compactLabel}
                                     </span>
                                 </div>
 

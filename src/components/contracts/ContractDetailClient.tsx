@@ -46,11 +46,11 @@ function isSideLocked(contract: ContractDetail, side: ContractSide): boolean {
 }
 
 function filterDocsBySide(docs: ContractDocument[], side: ContractSide): ContractDocument[] {
-    return docs.filter((doc) => doc.side === side)
+    return docs.filter((doc) => doc.side === side && doc.documentType !== 'contrato_minuta')
 }
 
 function filterSharedDocs(docs: ContractDocument[]): ContractDocument[] {
-    return docs.filter((doc) => !doc.side)
+    return docs.filter((doc) => !doc.side || doc.documentType === 'contrato_minuta')
 }
 
 export function ContractDetailClient({ contract }: Props) {
@@ -181,8 +181,12 @@ export function ContractDetailClient({ contract }: Props) {
                             <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusMeta.chipClass}`}>
                                 {statusMeta.label}
                             </span>
-                            {approvalBadge(contract.sellerApprovalStatus)}
-                            {approvalBadge(contract.buyerApprovalStatus)}
+                            <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium ${sellerMeta.className}`}>
+                                Vendedor: {sellerMeta.compactLabel}
+                            </span>
+                            <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium ${buyerMeta.className}`}>
+                                Comprador: {buyerMeta.compactLabel}
+                            </span>
                         </div>
                         <h1 id="contract-header" className="text-lg font-semibold text-slate-900">
                             {contract.propertyTitle?.trim() || `Contrato ${shortId(contract.id)}`}
@@ -283,6 +287,16 @@ export function ContractDetailClient({ contract }: Props) {
                         </ul>
                     </section>
                 )}
+                {sharedDocs.length === 0 && contract.status === 'IN_DRAFT' && (
+                    <section className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-4 shadow-sm space-y-2 md:col-span-2" aria-labelledby="shared-documents-empty">
+                        <h2 id="shared-documents-empty" className="text-sm font-semibold text-amber-900">
+                            Minuta do contrato
+                        </h2>
+                        <p className="text-sm text-amber-800">
+                            A minuta ainda não foi anexada. Quando ela for adicionada, aparecerá aqui em visualização única para consulta.
+                        </p>
+                    </section>
+                )}
 
                 <section className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm space-y-3" aria-labelledby="seller-documents">
                     <div className="flex items-center justify-between">
@@ -325,7 +339,7 @@ export function ContractDetailClient({ contract }: Props) {
 
                     {sellerLocked ? (
                         <p className="text-xs text-slate-500">
-                            Este lado já foi aprovado. O envio e a remoção de documentos ficam bloqueados.
+                            Leitura apenas: este lado já foi aprovado e não aceita novos envios.
                         </p>
                     ) : (
                         <div className="space-y-1 text-xs text-slate-700">
@@ -378,7 +392,7 @@ export function ContractDetailClient({ contract }: Props) {
 
                     {buyerLocked ? (
                         <p className="text-xs text-slate-500">
-                            Este lado já foi aprovado. O envio e a remoção de documentos ficam bloqueados.
+                            Leitura apenas: este lado já foi aprovado e não aceita novos envios.
                         </p>
                     ) : (
                         <div className="space-y-1 text-xs text-slate-700">

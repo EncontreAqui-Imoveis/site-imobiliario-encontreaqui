@@ -52,24 +52,28 @@ export function getApprovalStatusMeta(status: ApprovalStatus) {
         case 'APPROVED':
             return {
                 label: 'Aprovado',
+                compactLabel: 'Aprovado',
                 className: 'bg-slate-100 text-slate-700',
                 description: 'Este lado já concluiu a aprovação documental.',
             }
         case 'APPROVED_WITH_RES':
             return {
                 label: 'Aprovado com ressalvas',
+                compactLabel: 'Com ressalvas',
                 className: 'bg-blue-50 text-blue-700',
                 description: 'Este lado foi aprovado, mas ainda exige leitura atenta das observações registradas.',
             }
         case 'REJECTED':
             return {
                 label: 'Rejeitado',
+                compactLabel: 'Rejeitado',
                 className: 'bg-red-50 text-red-700',
                 description: 'Há pendências ou inconsistências que precisam ser resolvidas antes de avançar.',
             }
         default:
             return {
                 label: 'Pendente',
+                compactLabel: 'Pendente',
                 className: 'bg-amber-50 text-amber-700',
                 description: 'Este lado ainda não concluiu a avaliação documental.',
             }
