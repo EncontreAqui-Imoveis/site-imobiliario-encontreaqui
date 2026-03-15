@@ -5,6 +5,10 @@
 
 const DRAFT_KEY = 'encontreaqui_property_draft'
 const DRAFT_TIMESTAMP_KEY = 'encontreaqui_property_draft_ts'
+const DRAFT_MEDIA_DB = 'encontreaqui_property_draft_media'
+const DRAFT_MEDIA_STORE = 'property_draft_media'
+const DRAFT_MEDIA_IMAGES_KEY = 'images'
+const DRAFT_MEDIA_VIDEO_KEY = 'video'
 
 /** Max age for a draft: 7 days */
 const MAX_DRAFT_AGE_MS = 7 * 24 * 60 * 60 * 1000
@@ -18,8 +22,83 @@ export interface PropertyDraft {
     updatedAt: string
 }
 
+type DraftMediaRecord = {
+    id: string
+    value: File[] | File | null
+}
+
 function isBrowser(): boolean {
     return typeof window !== 'undefined'
+}
+
+function supportsIndexedDb(): boolean {
+    return isBrowser() && typeof window.indexedDB !== 'undefined'
+}
+
+function openDraftMediaDb(): Promise<IDBDatabase | null> {
+    if (!supportsIndexedDb()) return Promise.resolve(null)
+
+    return new Promise((resolve, reject) => {
+        const request = window.indexedDB.open(DRAFT_MEDIA_DB, 1)
+
+        request.onupgradeneeded = () => {
+            const db = request.result
+            if (!db.objectStoreNames.contains(DRAFT_MEDIA_STORE)) {
+                db.createObjectStore(DRAFT_MEDIA_STORE, { keyPath: 'id' })
+            }
+        }
+
+        request.onsuccess = () => resolve(request.result)
+        request.onerror = () => reject(request.error)
+    })
+}
+
+async function putDraftMediaRecord(id: string, value: File[] | File | null): Promise<void> {
+    const db = await openDraftMediaDb()
+    if (!db) return
+
+    await new Promise<void>((resolve, reject) => {
+        const transaction = db.transaction(DRAFT_MEDIA_STORE, 'readwrite')
+        const store = transaction.objectStore(DRAFT_MEDIA_STORE)
+        store.put({ id, value } satisfies DraftMediaRecord)
+        transaction.oncomplete = () => resolve()
+        transaction.onerror = () => reject(transaction.error)
+        transaction.onabort = () => reject(transaction.error)
+    })
+
+    db.close()
+}
+
+async function getDraftMediaRecord<T extends File[] | File | null>(id: string): Promise<T | null> {
+    const db = await openDraftMediaDb()
+    if (!db) return null
+
+    const result = await new Promise<T | null>((resolve, reject) => {
+        const transaction = db.transaction(DRAFT_MEDIA_STORE, 'readonly')
+        const store = transaction.objectStore(DRAFT_MEDIA_STORE)
+        const request = store.get(id)
+        request.onsuccess = () => resolve((request.result?.value as T | undefined) ?? null)
+        request.onerror = () => reject(request.error)
+    })
+
+    db.close()
+    return result
+}
+
+async function deleteDraftMediaRecord(id: string): Promise<void> {
+    const db = await openDraftMediaDb()
+    if (!db) return
+
+    await new Promise<void>((resolve, reject) => {
+        const transaction = db.transaction(DRAFT_MEDIA_STORE, 'readwrite')
+        const store = transaction.objectStore(DRAFT_MEDIA_STORE)
+        store.delete(id)
+        transaction.oncomplete = () => resolve()
+        transaction.onerror = () => reject(transaction.error)
+        transaction.onabort = () => reject(transaction.error)
+    })
+
+    db.close()
 }
 
 /** Save the current wizard state as a draft */
@@ -36,6 +115,32 @@ export function saveDraft(step: number, data: Record<string, unknown>): void {
         localStorage.setItem(DRAFT_TIMESTAMP_KEY, Date.now().toString())
     } catch {
         console.warn('Failed to save draft to localStorage')
+    }
+}
+
+export async function saveDraftMedia(images: File[], video: File | null): Promise<void> {
+    if (!isBrowser()) return
+    try {
+        await putDraftMediaRecord(DRAFT_MEDIA_IMAGES_KEY, images)
+        await putDraftMediaRecord(DRAFT_MEDIA_VIDEO_KEY, video)
+    } catch {
+        console.warn('Failed to save draft media to indexedDB')
+    }
+}
+
+export async function loadDraftMedia(): Promise<{ images: File[]; video: File | null }> {
+    if (!isBrowser()) return { images: [], video: null }
+    try {
+        const [images, video] = await Promise.all([
+            getDraftMediaRecord<File[]>(DRAFT_MEDIA_IMAGES_KEY),
+            getDraftMediaRecord<File | null>(DRAFT_MEDIA_VIDEO_KEY),
+        ])
+        return {
+            images: Array.isArray(images) ? images : [],
+            video: video instanceof File ? video : null,
+        }
+    } catch {
+        return { images: [], video: null }
     }
 }
 
@@ -73,6 +178,8 @@ export function clearDraft(): void {
     try {
         localStorage.removeItem(DRAFT_KEY)
         localStorage.removeItem(DRAFT_TIMESTAMP_KEY)
+        void deleteDraftMediaRecord(DRAFT_MEDIA_IMAGES_KEY)
+        void deleteDraftMediaRecord(DRAFT_MEDIA_VIDEO_KEY)
     } catch {
         // ignore
     }

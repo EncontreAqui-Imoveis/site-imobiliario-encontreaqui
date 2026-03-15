@@ -21,7 +21,7 @@ import {
 
 import type { ApiError } from '@/lib/api/client'
 import { createProperty } from '@/lib/api/user'
-import { clearDraft, hasDraft as checkHasDraft, loadDraft, saveDraft } from '@/lib/drafts'
+import { clearDraft, hasDraft as checkHasDraft, loadDraft, loadDraftMedia, saveDraft, saveDraftMedia } from '@/lib/drafts'
 import {
     BRAZILIAN_STATES,
     buildCreatePropertyFormData,
@@ -167,6 +167,11 @@ export default function AnunciePage() {
     }, [actorMode, draftDecisionResolved, form, step])
 
     useEffect(() => {
+        if (!actorMode || !draftDecisionResolved) return
+        void saveDraftMedia(images, video)
+    }, [actorMode, draftDecisionResolved, images, video])
+
+    useEffect(() => {
         let cancelled = false
         void fetchCitiesByState(form.state).then((cities) => {
             if (!cancelled) setCityOptions(cities)
@@ -186,13 +191,20 @@ export default function AnunciePage() {
         setError(null)
     }
 
-    function restoreDraft() {
+    async function restoreDraft() {
         const draft = loadDraft()
         if (!draft) return
+        const media = await loadDraftMedia()
+        imagePreviews.forEach((preview) => URL.revokeObjectURL(preview))
+        if (videoPreview) URL.revokeObjectURL(videoPreview)
         setForm(parseDraft(draft.data))
         if (draft.data.actorMode === 'broker' || draft.data.actorMode === 'client-owner') {
             setActorMode(draft.data.actorMode)
         }
+        setImages(media.images)
+        setImagePreviews(media.images.map((file) => URL.createObjectURL(file)))
+        setVideo(media.video)
+        setVideoPreview(media.video ? URL.createObjectURL(media.video) : null)
         setStep(Math.min(Math.max(Number(draft.currentStep || 1), 1), 6) as WizardStep)
         setShowDraftBanner(false)
         setDraftDecisionResolved(true)
