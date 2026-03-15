@@ -700,16 +700,26 @@ export default function AnunciePage() {
                                         {imagePreviews.length > 0 && (
                                             <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                                                 {imagePreviews.map((preview, index) => (
-                                                    <div key={preview} className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                                                    <div key={`${images[index]?.name ?? 'image'}-${index}`} className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
                                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                                         <img
                                                             src={preview}
                                                             alt={`Imagem ${index + 1} do resumo`}
                                                             className="aspect-square h-full w-full object-cover"
                                                         />
+                                                        <div className="border-t border-slate-200 bg-white px-3 py-2">
+                                                            <p className="truncate text-xs text-slate-600">
+                                                                {images[index]?.name ?? `Imagem ${index + 1}`}
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 ))}
                                             </div>
+                                        )}
+                                        {images.length > 0 && imagePreviews.length === 0 && (
+                                            <p className="mt-3 text-xs text-slate-500">
+                                                As imagens foram selecionadas, mas a pré-visualização local não está disponível nesta sessão.
+                                            </p>
                                         )}
                                     </div>
 
@@ -720,6 +730,11 @@ export default function AnunciePage() {
                                             <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-black">
                                                 <video controls className="w-full" src={videoPreview} />
                                             </div>
+                                        )}
+                                        {video && !videoPreview && (
+                                            <p className="mt-3 text-xs text-slate-500">
+                                                O vídeo foi selecionado, mas a pré-visualização local não está disponível nesta sessão.
+                                            </p>
                                         )}
                                     </div>
                                 </div>
