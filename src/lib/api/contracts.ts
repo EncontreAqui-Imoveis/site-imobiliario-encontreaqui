@@ -62,12 +62,19 @@ function normalizeContractDocument(raw: unknown) {
 }
 
 function normalizeContractDetail(raw: unknown): ContractDetail {
-    const summary = normalizeContractSummary(raw)
+    const root = (raw && typeof raw === 'object' && 'contract' in (raw as Record<string, unknown>))
+        ? raw as Record<string, unknown>
+        : null
+    const summary = normalizeContractSummary(root?.contract ?? raw)
     if (!summary) {
         throw new Error('Contrato inválido.')
     }
-    const item = raw as Record<string, unknown>
-    const documentsRaw = Array.isArray(item.documents) ? item.documents : []
+    const item = (root?.contract ?? raw) as Record<string, unknown>
+    const documentsRaw = Array.isArray(root?.documents)
+        ? root!.documents
+        : Array.isArray(item.documents)
+            ? item.documents
+            : []
     const documents = documentsRaw
         .map((document) => normalizeContractDocument(document))
         .filter((document): document is NonNullable<ReturnType<typeof normalizeContractDocument>> => document !== null)

@@ -20,7 +20,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
             : 'Preço sob consulta'
 
     const title = `${property.title} | ${price} | Encontre Aqui Imóveis`
-    const description = property.description?.slice(0, 160) || `Confira este imóvel em ${property.bairro}, ${property.city}. ${property.bedrooms} quartos, ${property.bathrooms} banheiros.`
+    const description =
+        (typeof property.description === 'string' ? property.description.slice(0, 160) : '') ||
+        `Confira este imóvel em ${property.bairro}, ${property.city}. ${property.bedrooms} quartos, ${property.bathrooms} banheiros.`
     const images = property.images && property.images.length > 0 ? [property.images[0]] : []
 
     return {

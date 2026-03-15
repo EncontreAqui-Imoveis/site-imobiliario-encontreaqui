@@ -98,6 +98,7 @@ async function request<T = unknown>(path: string, options: RequestOptions = {}):
         method,
         headers: baseHeaders,
         credentials: includeCredentials ? 'include' : 'same-origin',
+        cache: 'no-store',
     }
 
     if (body !== undefined) {
