@@ -155,7 +155,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                 </nav>
 
                 {/* Owner Actions Panel */}
-                {isOwner && statusLower !== 'pending_approval' && (
+                {isOwner && (
                     <section
                         aria-label="Painel do corretor"
                         className="mb-6 bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden"
