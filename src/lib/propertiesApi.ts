@@ -138,6 +138,11 @@ export function normalizeProperty(raw: unknown): Property | null {
         brokerName: toStringOrUndefined(item.brokerName ?? item.broker_name),
         brokerPhone: toStringOrUndefined(item.brokerPhone ?? item.broker_phone),
         brokerEmail: toStringOrUndefined(item.brokerEmail ?? item.broker_email),
+        hasPendingEditRequest:
+            toBoolean(item.hasPendingEditRequest ?? item.has_pending_edit_request) ?? false,
+        pendingEditRequestId: toNumber(
+            item.pendingEditRequestId ?? item.pending_edit_request_id,
+        ),
         createdAt,
         code: toStringOrUndefined(item.code),
         latitude: toNumber(item.latitude),

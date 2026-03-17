@@ -38,7 +38,9 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
         ((property.brokerId != null && userId === property.brokerId) ||
             (property.ownerId != null && userId === property.ownerId))
     const statusLower = property?.status?.toLowerCase() || ''
-    const canEditProperty = isOwner && statusLower !== 'pending_approval'
+    const hasPendingEditRequest = property?.hasPendingEditRequest === true
+    const canEditProperty =
+        isOwner && statusLower !== 'pending_approval' && !hasPendingEditRequest
     const canGenerateProposal = isOwner && statusLower === 'approved'
     const canCloseDeal = isOwner && (statusLower === 'approved' || statusLower === 'sold' || statusLower === 'rented')
 
@@ -62,6 +64,27 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
             cancelled = true
         }
     }, [authLoading, property, propertyId, session])
+
+    useEffect(() => {
+        if (authLoading || !session || !isOwner) return
+        let cancelled = false
+
+        const loadOwnerVersion = async () => {
+            try {
+                const loadedProperty = await fetchEditableProperty(propertyId)
+                if (!cancelled) {
+                    setProperty(loadedProperty)
+                }
+            } catch {
+                // Mantém a versão já carregada quando a versão privada falhar.
+            }
+        }
+
+        void loadOwnerVersion()
+        return () => {
+            cancelled = true
+        }
+    }, [authLoading, isOwner, propertyId, session])
 
     useEffect(() => {
         if (!property?.bairro) return
@@ -203,7 +226,9 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                                     <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
                                         <Edit className="w-5 h-5 text-slate-400" />
                                     </div>
-                                    <span className="text-xs font-semibold text-slate-400">Em análise</span>
+                                    <span className="text-xs font-semibold text-slate-400">
+                                        {hasPendingEditRequest ? 'Edição pendente' : 'Em análise'}
+                                    </span>
                                 </div>
                             )}
 
@@ -281,6 +306,11 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                                     {statusLower === 'pending_approval' && (
                                         <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                                             Este imóvel está em análise. Você pode ver os detalhes, mas ainda não pode editar nem gerar proposta.
+                                        </div>
+                                    )}
+                                    {hasPendingEditRequest && (
+                                        <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+                                            Já existe uma solicitação de edição pendente para este imóvel. O admin precisa aprová-la antes de um novo pedido.
                                         </div>
                                     )}
                                     <div className="mt-4 space-y-3">

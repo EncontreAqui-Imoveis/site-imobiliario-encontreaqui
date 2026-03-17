@@ -33,6 +33,8 @@ export interface Property {
     brokerName?: string
     brokerPhone?: string
     brokerEmail?: string
+    hasPendingEditRequest?: boolean
+    pendingEditRequestId?: number
     createdAt: string
     code?: string
     latitude?: number

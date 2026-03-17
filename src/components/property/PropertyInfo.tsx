@@ -5,7 +5,7 @@ import { formatPrice, Property } from '@/types/property'
 import {
     MapPin, Bed, Bath, Car, Maximize,
     Wifi, Waves, Sun, Cpu, Wind, Sofa, Building2, type LucideIcon,
-    Calendar, Hash, Share2, CheckCircle,
+    Hash, Share2, CheckCircle,
     Map, Home as HomeIcon, Signpost, Layers, Mail, Phone, Globe
 } from 'lucide-react'
 import { shareOrCopy } from '@/lib/webShare'
@@ -49,7 +49,6 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
     // Build additional characteristics
     const additionalInfo = [
         property.valorCondominio ? { icon: Building2, label: 'Condomínio', value: formatPrice(property.valorCondominio) } : null,
-        property.valorIptu ? { icon: Hash, label: 'IPTU', value: formatPrice(property.valorIptu) } : null,
     ].filter(Boolean) as { icon: LucideIcon; label: string; value: string }[]
 
     const handleShare = async () => {
@@ -155,18 +154,12 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                 </div>
 
                 {/* Additional costs */}
-                {((property.valorCondominio || 0) > 0 || (property.valorIptu || 0) > 0) && (
+                {((property.valorCondominio || 0) > 0) && (
                     <div className="mt-6 flex flex-wrap gap-4 pt-6 border-t border-gray-100">
                         {property.valorCondominio && property.valorCondominio > 0 && (
                             <div className="flex items-center gap-2 text-sm text-gray-600">
                                 <Building2 className="w-4 h-4 text-gray-400" />
                                 <span>Condomínio: <span className="font-semibold text-gray-900">{formatPrice(property.valorCondominio)}</span></span>
-                            </div>
-                        )}
-                        {property.valorIptu && property.valorIptu > 0 && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                                <Calendar className="w-4 h-4 text-gray-400" />
-                                <span>IPTU: <span className="font-semibold text-gray-900">{formatPrice(property.valorIptu)}</span>/ano</span>
                             </div>
                         )}
                     </div>

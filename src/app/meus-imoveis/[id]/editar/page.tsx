@@ -39,7 +39,6 @@ export default function EditPropertyPage() {
         areaConstruida: '', areaTerreno: '',
         hasWifi: false, temPiscina: false, temEnergiaSolar: false,
         temAutomacao: false, temArCondicionado: false, ehMobiliada: false,
-        valorIptu: '',
     })
 
     // Auth guard
@@ -84,7 +83,6 @@ export default function EditPropertyPage() {
                 temAutomacao: p.temAutomacao || false,
                 temArCondicionado: p.temArCondicionado || false,
                 ehMobiliada: p.ehMobiliada || false,
-                valorIptu: p.valorIptu ? String(p.valorIptu) : '',
             })
         } catch {
             setLoadError('Não foi possível carregar o imóvel.')
@@ -142,10 +140,10 @@ export default function EditPropertyPage() {
                 temAutomacao: form.temAutomacao,
                 temArCondicionado: form.temArCondicionado,
                 ehMobiliada: form.ehMobiliada,
-                valorIptu: parseCurrencyInput(form.valorIptu) || 0,
             }
 
             await saveEditedProperty(property.id, payload, isClientOwner ? 'client' : 'broker')
+            setProperty((current) => (current ? { ...current, hasPendingEditRequest: true } : current))
             setSaved(true)
         } catch (err: unknown) {
             setSaveError(err instanceof Error ? err.message : 'Erro ao salvar alterações.')
@@ -197,6 +195,43 @@ export default function EditPropertyPage() {
             <div className="min-h-screen flex items-center justify-center pt-20">
                 <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
                 <p className="text-sm text-gray-500 ml-2">Redirecionando...</p>
+            </div>
+        )
+    }
+
+    if (property.hasPendingEditRequest) {
+        return (
+            <div className="min-h-screen bg-gray-50 pt-16 lg:pt-20">
+                <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+                    <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
+                        <Link href="/" className="hover:text-primary-600"><Home className="w-4 h-4" /></Link>
+                        <ChevronRight className="w-4 h-4" />
+                        <Link href="/meus-imoveis" className="hover:text-primary-600">Meus Imóveis</Link>
+                        <ChevronRight className="w-4 h-4" />
+                        <span className="text-gray-900 font-medium truncate max-w-[200px]">{property.title}</span>
+                    </nav>
+
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
+                        <div className="flex items-start gap-3">
+                            <AlertTriangle className="w-6 h-6 text-amber-600 mt-0.5" />
+                            <div className="space-y-2">
+                                <h1 className="text-2xl font-bold text-gray-900">Edição já enviada para análise</h1>
+                                <p className="text-sm text-amber-900">
+                                    Já existe uma solicitação de edição pendente para este imóvel.
+                                    Enquanto o admin não revisar, a versão pública atual continua valendo.
+                                </p>
+                                <div className="pt-2">
+                                    <Link
+                                        href={`/imoveis/${property.id}`}
+                                        className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700"
+                                    >
+                                        Voltar ao imóvel
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         )
     }
@@ -268,12 +303,6 @@ export default function EditPropertyPage() {
                             <div>
                                 <label className={labelClass}>Aluguel Mensal (R$)</label>
                                 <CurrencyInput value={form.priceRent} onChange={(value) => updateField('priceRent', value)} className={inputClass} placeholder="R$ 0,00" />
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-1 gap-4">
-                            <div>
-                                <label className={labelClass}>IPTU Anual (R$)</label>
-                                <CurrencyInput value={form.valorIptu} onChange={(value) => updateField('valorIptu', value)} className={inputClass} placeholder="R$ 0,00" />
                             </div>
                         </div>
                     </section>
@@ -396,7 +425,7 @@ export default function EditPropertyPage() {
                     {saved && (
                         <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3">
                             <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                            <p className="text-sm text-green-700">Alterações salvas com sucesso!</p>
+                            <p className="text-sm text-green-700">Solicitação de edição enviada para aprovação!</p>
                         </div>
                     )}
 
@@ -407,7 +436,7 @@ export default function EditPropertyPage() {
                         className="w-full flex items-center justify-center gap-2 py-4 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-primary-500/25 active:scale-[0.98] disabled:opacity-50"
                     >
                         {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                        {saving ? 'Salvando...' : 'Salvar Alterações'}
+                        {saving ? 'Enviando...' : 'Enviar para aprovação'}
                     </button>
                 </form>
             </div>
