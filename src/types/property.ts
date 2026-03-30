@@ -56,6 +56,13 @@ export interface Property {
     promotionalRentPrice?: number
     promotionStart?: string
     promotionEnd?: string
+    negotiationId?: string
+    negotiation?: {
+        id: string
+        status?: string
+        clientName?: string
+        value?: number
+    }
 }
 
 export interface ImageFile {

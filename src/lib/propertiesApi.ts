@@ -81,6 +81,43 @@ function normalizePurpose(rawPurpose: unknown): Property['purpose'] {
     return 'Venda'
 }
 
+function normalizeNegotiation(raw: Record<string, unknown>): Property['negotiation'] {
+    const negotiationSource =
+        raw.negotiation && typeof raw.negotiation === 'object'
+            ? (raw.negotiation as Record<string, unknown>)
+            : null
+
+    const id = toStringOrUndefined(
+        negotiationSource?.id ??
+            raw.negotiationId ??
+            raw.negotiation_id ??
+            raw.activeNegotiationId ??
+            raw.active_negotiation_id,
+    )
+
+    if (!id) return undefined
+
+    return {
+        id,
+        status: toStringOrUndefined(
+            negotiationSource?.status ??
+                raw.activeNegotiationStatus ??
+                raw.active_negotiation_status,
+        ),
+        clientName: toStringOrUndefined(
+            negotiationSource?.clientName ??
+                negotiationSource?.client_name ??
+                raw.activeNegotiationClientName ??
+                raw.active_negotiation_client_name,
+        ),
+        value: toNumber(
+            negotiationSource?.value ??
+                raw.activeNegotiationValue ??
+                raw.active_negotiation_value,
+        ),
+    }
+}
+
 export function normalizeProperty(raw: unknown): Property | null {
     if (!raw || typeof raw !== 'object') return null
 
@@ -102,6 +139,7 @@ export function normalizeProperty(raw: unknown): Property | null {
             : imagesFromPropertyImages.length > 0
                 ? imagesFromPropertyImages
                 : imagesFromImageUrls
+    const negotiation = normalizeNegotiation(item)
 
     return {
         id,
@@ -152,6 +190,8 @@ export function normalizeProperty(raw: unknown): Property | null {
         lote: toStringOrUndefined(item.lote),
         complemento: toStringOrUndefined(item.complemento),
         tipoLote: toStringOrUndefined(item.tipoLote ?? item.tipo_lote),
+        negotiationId: negotiation?.id,
+        negotiation,
     }
 }
 
