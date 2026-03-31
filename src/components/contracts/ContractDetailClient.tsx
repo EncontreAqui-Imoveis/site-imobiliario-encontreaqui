@@ -13,6 +13,7 @@ import type {
 import {
     buildNegotiationDocumentDownloadUrl,
     deleteContractDocument,
+    getContractById,
     getNegotiationCommissions,
     uploadContractDocument,
 } from '@/lib/api/contracts'
@@ -53,20 +54,110 @@ function filterSharedDocs(docs: ContractDocument[]): ContractDocument[] {
     return docs.filter((doc) => !doc.side || doc.documentType === 'contrato_minuta')
 }
 
+const DOCUMENT_LABELS: Record<string, string> = {
+    doc_identidade: 'Documento de identidade',
+    comprovante_endereco: 'Comprovante de endereço',
+    certidao_casamento_nascimento: 'Certidão de casamento/nascimento',
+    certidao_inteiro_teor: 'Certidão de inteiro teor',
+    certidao_onus_acoes: 'Certidão de ônus e ações',
+    comprovante_renda: 'Comprovante de renda',
+    contrato_minuta: 'Minuta do contrato',
+    contrato_assinado: 'Contrato assinado',
+    comprovante_pagamento: 'Comprovante de pagamento',
+    boleto_vistoria: 'Boleto/Vistoria',
+}
+
+const SALE_REQUIRED_DOCS: ContractDocumentType[] = [
+    'doc_identidade',
+    'comprovante_endereco',
+    'certidao_casamento_nascimento',
+    'certidao_inteiro_teor',
+    'certidao_onus_acoes',
+]
+
+const RENT_REQUIRED_DOCS: ContractDocumentType[] = [
+    'doc_identidade',
+    'comprovante_endereco',
+    'certidao_casamento_nascimento',
+    'comprovante_renda',
+]
+
+const SIGNATURE_REQUIRED_DOCS: ContractDocumentType[] = [
+    'contrato_assinado',
+    'comprovante_pagamento',
+]
+
+function isRentalPurpose(purpose: string | null | undefined): boolean {
+    const normalized = String(purpose ?? '').trim().toLowerCase()
+    return normalized.includes('alug') || normalized.includes('rent')
+}
+
+function isSalePurpose(purpose: string | null | undefined): boolean {
+    const normalized = String(purpose ?? '').trim().toLowerCase()
+    return normalized.includes('venda') || normalized.includes('sale')
+}
+
+function requiredDocTypesForContract(contract: ContractDetail, awaitingSignatures = false): ContractDocumentType[] {
+    if (awaitingSignatures) {
+        return SIGNATURE_REQUIRED_DOCS
+    }
+
+    const isSale = isSalePurpose(contract.propertyPurpose)
+    const isRent = isRentalPurpose(contract.propertyPurpose)
+
+    if (isSale && isRent) {
+        return Array.from(new Set([...SALE_REQUIRED_DOCS, ...RENT_REQUIRED_DOCS]))
+    }
+
+    if (isRent) {
+        return RENT_REQUIRED_DOCS
+    }
+
+    return SALE_REQUIRED_DOCS
+}
+
+function documentLabel(documentType: ContractDocumentType | null | undefined): string {
+    return DOCUMENT_LABELS[String(documentType ?? '').trim()] ?? String(documentType ?? 'Documento')
+}
+
+function findLatestDoc(
+    docs: ContractDocument[],
+    documentType: ContractDocumentType,
+    side?: ContractSide,
+): ContractDocument | null {
+    const matched = docs.find((doc) => {
+        if (doc.documentType !== documentType) return false
+        if (side == null) return true
+        return doc.side === side
+    })
+    return matched ?? null
+}
+
+function renderChecklistStatus(doc: ContractDocument | null) {
+    return doc ? 'Enviado' : 'Pendente'
+}
+
 export function ContractDetailClient({ contract }: Props) {
+    const [currentContract, setCurrentContract] = useState<ContractDetail>(contract)
     const [documents, setDocuments] = useState<ContractDocument[]>(contract.documents)
     const [uploadingSide, setUploadingSide] = useState<ContractSide | null>(null)
     const [uploadingType, setUploadingType] = useState<ContractDocumentType | null>(null)
     const [error, setError] = useState<string | null>(null)
     const [commissions, setCommissions] = useState<Commission[] | null>(null)
     const [loadingCommissions, setLoadingCommissions] = useState(false)
+    const [refreshingContract, setRefreshingContract] = useState(false)
+
+    useEffect(() => {
+        setCurrentContract(contract)
+        setDocuments(contract.documents)
+    }, [contract])
 
     useEffect(() => {
         let cancelled = false
         const load = async () => {
             setLoadingCommissions(true)
             try {
-                const data = await getNegotiationCommissions(contract.negotiationId)
+                const data = await getNegotiationCommissions(currentContract.negotiationId)
                 if (!cancelled) {
                     setCommissions(data)
                 }
@@ -82,7 +173,18 @@ export function ContractDetailClient({ contract }: Props) {
         return () => {
             cancelled = true
         }
-    }, [contract.negotiationId])
+    }, [currentContract.negotiationId])
+
+    const refreshContract = async () => {
+        setRefreshingContract(true)
+        try {
+            const nextContract = await getContractById(currentContract.id)
+            setCurrentContract(nextContract)
+            setDocuments(nextContract.documents)
+        } finally {
+            setRefreshingContract(false)
+        }
+    }
 
     const handleUpload = async (side: ContractSide, documentType: ContractDocumentType, file: File) => {
         setError(null)
@@ -90,11 +192,12 @@ export function ContractDetailClient({ contract }: Props) {
         setUploadingType(documentType)
         try {
             await uploadContractDocument({
-                contractId: contract.id,
+                contractId: currentContract.id,
                 side,
                 documentType,
                 file,
             })
+            await refreshContract()
         } catch (err) {
             const apiErr = err as ApiError
             if ('status' in apiErr) {
@@ -115,8 +218,8 @@ export function ContractDetailClient({ contract }: Props) {
     const handleDelete = async (doc: ContractDocument) => {
         setError(null)
         try {
-            await deleteContractDocument(contract.id, doc.id)
-            setDocuments((current) => current.filter((d) => d.id !== doc.id))
+            await deleteContractDocument(currentContract.id, doc.id)
+            await refreshContract()
         } catch (err) {
             const apiErr = err as ApiError
             if ('status' in apiErr) {
@@ -128,7 +231,7 @@ export function ContractDetailClient({ contract }: Props) {
     }
 
     const renderUploadField = (side: ContractSide, documentType: ContractDocumentType, label: string) => {
-        const locked = isSideLocked(contract, side)
+        const locked = isSideLocked(currentContract, side)
         if (locked) {
             return (
                 <p className="text-xs text-slate-500">
@@ -163,14 +266,18 @@ export function ContractDetailClient({ contract }: Props) {
     const sharedDocs = filterSharedDocs(documents)
     const sellerDocs = filterDocsBySide(documents, 'seller')
     const buyerDocs = filterDocsBySide(documents, 'buyer')
-    const statusMeta = getContractStatusMeta(contract.status)
-    const sellerMeta = getApprovalStatusMeta(contract.sellerApprovalStatus)
-    const buyerMeta = getApprovalStatusMeta(contract.buyerApprovalStatus)
-    const currentStepIndex = CONTRACT_STATUS_FLOW.indexOf(contract.status)
-    const sellerReason = approvalReasonText(contract.sellerApprovalReason)
-    const buyerReason = approvalReasonText(contract.buyerApprovalReason)
-    const sellerLocked = isSideLocked(contract, 'seller')
-    const buyerLocked = isSideLocked(contract, 'buyer')
+    const statusMeta = getContractStatusMeta(currentContract.status)
+    const sellerMeta = getApprovalStatusMeta(currentContract.sellerApprovalStatus)
+    const buyerMeta = getApprovalStatusMeta(currentContract.buyerApprovalStatus)
+    const currentStepIndex = CONTRACT_STATUS_FLOW.indexOf(currentContract.status)
+    const sellerReason = approvalReasonText(currentContract.sellerApprovalReason)
+    const buyerReason = approvalReasonText(currentContract.buyerApprovalReason)
+    const sellerLocked = isSideLocked(currentContract, 'seller')
+    const buyerLocked = isSideLocked(currentContract, 'buyer')
+    const requiredDocs =
+        currentContract.status === 'AWAITING_SIGNATURES'
+            ? requiredDocTypesForContract(currentContract, true)
+            : requiredDocTypesForContract(currentContract, false)
 
     return (
         <div className="space-y-6">
@@ -189,10 +296,10 @@ export function ContractDetailClient({ contract }: Props) {
                             </span>
                         </div>
                         <h1 id="contract-header" className="text-lg font-semibold text-slate-900">
-                            {contract.propertyTitle?.trim() || `Contrato ${shortId(contract.id)}`}
+                            {currentContract.propertyTitle?.trim() || `Contrato ${shortId(currentContract.id)}`}
                         </h1>
                         <p className="text-xs text-slate-600">
-                            Contrato {shortId(contract.id)} • Negociação {shortId(contract.negotiationId)} • Imóvel #{contract.propertyId}
+                            Contrato {shortId(currentContract.id)} • Negociação {shortId(currentContract.negotiationId)} • Imóvel #{currentContract.propertyId}
                         </p>
                     </div>
                     <div className="max-w-sm rounded-xl border border-primary-100 bg-primary-50 px-4 py-3 text-sm text-primary-900">
@@ -230,7 +337,7 @@ export function ContractDetailClient({ contract }: Props) {
                     <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-4">
                         <p className="text-sm font-semibold text-slate-900">Situação do vendedor</p>
                         <div className="mt-2 flex items-center gap-2">
-                            {approvalBadge(contract.sellerApprovalStatus)}
+                            {approvalBadge(currentContract.sellerApprovalStatus)}
                         </div>
                         <p className="mt-2 text-xs text-slate-600">{sellerMeta.description}</p>
                         {sellerReason && (
@@ -242,7 +349,7 @@ export function ContractDetailClient({ contract }: Props) {
                     <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-4">
                         <p className="text-sm font-semibold text-slate-900">Situação do comprador</p>
                         <div className="mt-2 flex items-center gap-2">
-                            {approvalBadge(contract.buyerApprovalStatus)}
+                            {approvalBadge(currentContract.buyerApprovalStatus)}
                         </div>
                         <p className="mt-2 text-xs text-slate-600">{buyerMeta.description}</p>
                         {buyerReason && (
@@ -287,7 +394,7 @@ export function ContractDetailClient({ contract }: Props) {
                         </ul>
                     </section>
                 )}
-                {sharedDocs.length === 0 && contract.status === 'IN_DRAFT' && (
+                {sharedDocs.length === 0 && currentContract.status === 'IN_DRAFT' && (
                     <section className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-4 shadow-sm space-y-2 md:col-span-2" aria-labelledby="shared-documents-empty">
                         <h2 id="shared-documents-empty" className="text-sm font-semibold text-amber-900">
                             Minuta do contrato
@@ -303,7 +410,7 @@ export function ContractDetailClient({ contract }: Props) {
                         <h2 id="seller-documents" className="text-sm font-semibold text-slate-800">
                             Documentos do vendedor
                         </h2>
-                        {approvalBadge(contract.sellerApprovalStatus)}
+                        {approvalBadge(currentContract.sellerApprovalStatus)}
                     </div>
                     <p className="text-xs text-slate-500">
                         Envie e acompanhe os documentos do vendedor neste bloco. Quando este lado for aprovado, os envios ficam bloqueados para prevenir erro operacional.
@@ -342,11 +449,24 @@ export function ContractDetailClient({ contract }: Props) {
                             Leitura apenas: este lado já foi aprovado e não aceita novos envios.
                         </p>
                     ) : (
-                        <div className="space-y-1 text-xs text-slate-700">
-                            {renderUploadField('seller', 'doc_identidade', 'documento de identidade')}
-                            {renderUploadField('seller', 'comprovante_endereco', 'comprovante de endereço')}
-                            {renderUploadField('seller', 'certidao_casamento_nascimento', 'certidão casamento/nascimento')}
-                            {renderUploadField('seller', 'certidao_onus_acoes', 'certidão de ônus e ações (Venda)')}
+                        <div className="space-y-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-3">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Checklist deste lado
+                            </p>
+                            {requiredDocs.map((documentType) => {
+                                const currentDoc = findLatestDoc(sellerDocs, documentType, 'seller')
+                                return (
+                                    <div key={`seller-${documentType}`} className="flex items-center justify-between gap-3 text-xs">
+                                        <div className="min-w-0">
+                                            <p className="font-medium text-slate-800">{documentLabel(documentType)}</p>
+                                            <p className={currentDoc ? 'text-emerald-700' : 'text-slate-500'}>
+                                                {renderChecklistStatus(currentDoc)}
+                                            </p>
+                                        </div>
+                                        {renderUploadField('seller', documentType, documentLabel(documentType))}
+                                    </div>
+                                )
+                            })}
                         </div>
                     )}
                 </section>
@@ -356,7 +476,7 @@ export function ContractDetailClient({ contract }: Props) {
                         <h2 id="buyer-documents" className="text-sm font-semibold text-slate-800">
                             Documentos do comprador
                         </h2>
-                        {approvalBadge(contract.buyerApprovalStatus)}
+                        {approvalBadge(currentContract.buyerApprovalStatus)}
                     </div>
                     <p className="text-xs text-slate-500">
                         Envie e acompanhe os documentos do comprador neste bloco. A aprovação deste lado também determina o avanço do contrato.
@@ -395,12 +515,24 @@ export function ContractDetailClient({ contract }: Props) {
                             Leitura apenas: este lado já foi aprovado e não aceita novos envios.
                         </p>
                     ) : (
-                        <div className="space-y-1 text-xs text-slate-700">
-                            {renderUploadField('buyer', 'doc_identidade', 'documento de identidade')}
-                            {renderUploadField('buyer', 'comprovante_endereco', 'comprovante de endereço')}
-                            {renderUploadField('buyer', 'comprovante_renda', 'comprovante de renda (Aluguel)')}
-                            {renderUploadField('buyer', 'contrato_assinado', 'contrato assinado')}
-                            {renderUploadField('buyer', 'comprovante_pagamento', 'comprovante de pagamento')}
+                        <div className="space-y-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-3">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Checklist deste lado
+                            </p>
+                            {requiredDocs.map((documentType) => {
+                                const currentDoc = findLatestDoc(buyerDocs, documentType, 'buyer')
+                                return (
+                                    <div key={`buyer-${documentType}`} className="flex items-center justify-between gap-3 text-xs">
+                                        <div className="min-w-0">
+                                            <p className="font-medium text-slate-800">{documentLabel(documentType)}</p>
+                                            <p className={currentDoc ? 'text-emerald-700' : 'text-slate-500'}>
+                                                {renderChecklistStatus(currentDoc)}
+                                            </p>
+                                        </div>
+                                        {renderUploadField('buyer', documentType, documentLabel(documentType))}
+                                    </div>
+                                )
+                            })}
                         </div>
                     )}
                 </section>
