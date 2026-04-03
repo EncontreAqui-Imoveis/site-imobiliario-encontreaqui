@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
+import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { fetchEditableProperty, saveEditedProperty } from '@/lib/propertiesEditorService'
 import { clampAreaInput, clampCountInput, digitsOnly, LOT_TYPES, MAX_PROPERTY_AREA, MAX_PROPERTY_COUNT, PROPERTY_TYPES, PROPERTY_PURPOSES } from '@/lib/propertyCreate'
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/currencyInput'
@@ -45,6 +46,11 @@ export default function EditPropertyPage() {
     useEffect(() => {
         if (!authLoading && !session) {
             router.replace(`/auth/login?next=/meus-imoveis/${propertyId}/editar`)
+            return
+        }
+        const gateRoute = resolveOperationalGateRoute(session)
+        if (!authLoading && gateRoute) {
+            router.replace(gateRoute)
         } else if (!authLoading && session?.user?.role === 'broker' && !isBroker) {
             router.replace('/onboarding/broker')
         }

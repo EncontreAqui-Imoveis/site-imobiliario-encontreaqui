@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@/contexts/UserContext'
+import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { getFavorites, removeFavorite } from '@/lib/api/favorites'
 import type { Property } from '@/types/property'
 import PropertyCard from '@/components/property/PropertyCard'
@@ -20,6 +21,11 @@ export default function FavoritosPage() {
     useEffect(() => {
         if (!authLoading && !session) {
             router.replace('/auth/login?next=/favoritos')
+            return
+        }
+        const gateRoute = resolveOperationalGateRoute(session)
+        if (!authLoading && gateRoute) {
+            router.replace(gateRoute)
         }
     }, [authLoading, session, router])
 

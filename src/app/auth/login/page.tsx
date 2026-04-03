@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { login } from '@/lib/api/auth'
 import { loginWithGooglePopup } from '@/lib/auth/googleFlow'
+import { resolvePostAuthRoute } from '@/lib/auth/routeResolution'
 import { useUser } from '@/contexts/UserContext'
 import type { ApiError } from '@/lib/api/client'
 
@@ -27,9 +28,9 @@ export default function LoginPage() {
         setError(null)
 
         try {
-            await login({ email, password })
+            const session = await login({ email, password })
             await refresh()
-            router.push(next)
+            router.push(resolvePostAuthRoute(session, next))
         } catch (err) {
             const apiErr = err as ApiError
             if ('status' in apiErr) {
@@ -51,9 +52,9 @@ export default function LoginPage() {
         setError(null)
 
         try {
-            await loginWithGooglePopup()
+            const session = await loginWithGooglePopup()
             await refresh()
-            router.push(next)
+            router.push(resolvePostAuthRoute(session, next))
         } catch (err) {
             const apiErr = err as ApiError
             if ('status' in apiErr && apiErr.status === 401) {

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
+import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { requestBrokerUpgrade, uploadBrokerDocuments } from '@/lib/api/broker'
 import type { ApiError } from '@/lib/api/client'
 import { validateDocumentFile } from '@/lib/sanitize'
@@ -30,6 +31,11 @@ export default function BrokerOnboardingPage() {
     useEffect(() => {
         if (!loading && !session) {
             router.replace('/auth/login?next=/onboarding/broker')
+            return
+        }
+        const gateRoute = resolveOperationalGateRoute(session)
+        if (!loading && gateRoute) {
+            router.replace(gateRoute)
         }
     }, [loading, session, router])
 
@@ -138,6 +144,9 @@ export default function BrokerOnboardingPage() {
                             </h1>
                             <p className="text-sm text-slate-600">
                                 Informe seu CRECI para iniciar o processo de verificação como corretor.
+                            </p>
+                            <p className="text-xs text-slate-500">
+                                Atalho direto: <Link href="/cadastro/verificar-creci" className="font-medium text-primary-600 hover:text-primary-700">verificar CRECI</Link>
                             </p>
                         </div>
 

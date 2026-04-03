@@ -10,7 +10,7 @@ function buildCookieValue(token: string): string {
 
 export function persistAuthToken(token: string): void {
     if (typeof window === 'undefined') return
-    window.localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token)
+    window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY)
     document.cookie = buildCookieValue(token)
 }
 
@@ -23,20 +23,25 @@ export function clearAuthToken(): void {
 export function readAuthTokenFromBrowser(): string | null {
     if (typeof window === 'undefined') return null
 
-    const fromStorage = window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY)?.trim()
-    if (fromStorage) {
-        return fromStorage
-    }
-
     const cookieMatch = document.cookie
         .split(';')
         .map((entry) => entry.trim())
         .find((entry) => entry.startsWith(`${AUTH_TOKEN_COOKIE}=`))
 
-    if (!cookieMatch) return null
-    const [, value = ''] = cookieMatch.split('=')
-    const decoded = decodeURIComponent(value).trim()
-    return decoded || null
+    if (cookieMatch) {
+        const [, value = ''] = cookieMatch.split('=')
+        const decoded = decodeURIComponent(value).trim()
+        if (decoded) {
+            return decoded
+        }
+    }
+
+    const fromStorage = window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY)?.trim()
+    if (!fromStorage) return null
+
+    document.cookie = buildCookieValue(fromStorage)
+    window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY)
+    return fromStorage
 }
 
 export function hasAuthTokenInBrowser(): boolean {
@@ -55,9 +60,13 @@ export function syncAuthTokenCookieFromStorage(): void {
         .find((entry) => entry.startsWith(`${AUTH_TOKEN_COOKIE}=`))
 
     const cookieValue = cookieMatch ? decodeURIComponent(cookieMatch.split('=')[1] ?? '').trim() : ''
-    if (cookieValue === fromStorage) return
+    if (cookieValue === fromStorage) {
+        window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY)
+        return
+    }
 
     document.cookie = buildCookieValue(fromStorage)
+    window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY)
 }
 
 export async function readAuthTokenFromServer(): Promise<string | null> {

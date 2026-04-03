@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@/contexts/UserContext'
+import { resolvePostAuthRoute } from '@/lib/auth/routeResolution'
 import { updateProfile } from '@/lib/api/user'
 import type { ApiError } from '@/lib/api/client'
 import { UserCircle, CheckCircle } from 'lucide-react'
@@ -33,8 +34,16 @@ export default function OnboardingPage() {
     useEffect(() => {
         if (!loading && !session) {
             router.replace('/auth/login?next=/onboarding')
+            return
         }
-    }, [loading, session, router])
+        if (!loading && session?.user && !session.user.email_verified) {
+            router.replace('/verificacao')
+            return
+        }
+        if (!loading && session && isProfileComplete) {
+            router.replace(resolvePostAuthRoute(session, '/meus-imoveis'))
+        }
+    }, [loading, session, router, isProfileComplete])
 
     // Pre-fill from existing user data
     useEffect(() => {
@@ -95,7 +104,26 @@ export default function OnboardingPage() {
                 state: state || undefined,
             })
             await refresh()
-            router.push('/meus-imoveis')
+            if (!session) {
+                router.push('/meus-imoveis')
+                return
+            }
+            const refreshedSession = {
+                ...session,
+                profileStatus: 'complete' as const,
+                user: {
+                    ...session.user,
+                    phone: normalizePhoneDigits(phone) || session.user.phone,
+                    cep: cep.replace(/\D/g, '') || session.user.cep,
+                    street: street || session.user.street,
+                    number: number || session.user.number,
+                    complement: complement || session.user.complement,
+                    bairro: bairro || session.user.bairro,
+                    city: city || session.user.city,
+                    state: state || session.user.state,
+                },
+            }
+            router.push(resolvePostAuthRoute(refreshedSession, '/meus-imoveis'))
         } catch (err) {
             const apiErr = err as ApiError
             setError(apiErr?.message || 'Erro ao salvar perfil.')

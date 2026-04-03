@@ -6,6 +6,7 @@ import { Loader2 } from 'lucide-react'
 
 import { ContractDetailClient } from '@/components/contracts/ContractDetailClient'
 import { useUser } from '@/contexts/UserContext'
+import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { getContractById } from '@/lib/api/contracts'
 import type { ContractDetail } from '@/types/contract'
 
@@ -21,6 +22,11 @@ export default function ContractDetailPage() {
     useEffect(() => {
         if (!authLoading && !session) {
             router.replace(`/auth/login?next=/contratos/${params.id}`)
+            return
+        }
+        const gateRoute = resolveOperationalGateRoute(session)
+        if (!authLoading && gateRoute) {
+            router.replace(gateRoute)
         }
     }, [authLoading, params.id, router, session])
 

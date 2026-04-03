@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
-import { Settings, User, Shield, Bell, FileText, Loader2 } from 'lucide-react'
+import { Settings, User, Shield, Bell, FileText, Loader2, Smartphone } from 'lucide-react'
 
 export default function ConfiguracoesPage() {
     const router = useRouter()
@@ -45,6 +45,13 @@ export default function ConfiguracoesPage() {
             description: 'Verifique seu e-mail para maior segurança',
             href: '/verificacao',
             color: 'bg-blue-50 text-blue-600',
+        },
+        {
+            icon: Smartphone,
+            title: 'Verificar Telefone',
+            description: 'Confirme seu número com código por SMS',
+            href: '/cadastro/verificar-telefone',
+            color: 'bg-indigo-50 text-indigo-600',
         },
         {
             icon: FileText,

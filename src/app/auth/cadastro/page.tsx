@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { register } from '@/lib/api/auth'
 import { loginWithGooglePopup } from '@/lib/auth/googleFlow'
+import { resolvePostAuthRoute } from '@/lib/auth/routeResolution'
 import { useUser } from '@/contexts/UserContext'
 import type { ApiError } from '@/lib/api/client'
 import { formatPhoneInput, normalizePhoneDigits } from '@/lib/phoneInput'
@@ -68,7 +69,7 @@ export default function CadastroPage() {
         setError(null)
 
         try {
-            await register({
+            const session = await register({
                 name,
                 email,
                 password,
@@ -82,7 +83,7 @@ export default function CadastroPage() {
                 cep: cep.replace(/\D/g, '') || undefined,
             })
             await refresh()
-            router.push('/onboarding')
+            router.push(resolvePostAuthRoute(session, '/onboarding'))
         } catch (err) {
             const apiErr = err as ApiError
             if ('status' in apiErr) {
@@ -104,9 +105,9 @@ export default function CadastroPage() {
         setError(null)
 
         try {
-            await loginWithGooglePopup()
+            const session = await loginWithGooglePopup()
             await refresh()
-            router.push('/onboarding')
+            router.push(resolvePostAuthRoute(session, '/onboarding'))
         } catch {
             setError('Erro ao conectar com o Google. Tente novamente.')
         } finally {

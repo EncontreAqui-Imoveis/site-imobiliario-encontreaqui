@@ -42,6 +42,11 @@ export interface PasswordResetVerifyResult {
     expires_at: string
 }
 
+export interface PhoneOtpIssueResult {
+    sessionToken: string
+    expiresAt: string
+}
+
 export interface LoginPayload {
     email: string
     password: string
@@ -158,6 +163,18 @@ export async function requestPasswordReset(email: string): Promise<void> {
 
 export async function sendEmailVerificationCode(email: string): Promise<EmailSendResult> {
     return apiClient.post<EmailSendResult>('/auth/email-verification/send', { email })
+}
+
+export async function requestPhoneOtp(phone: string): Promise<PhoneOtpIssueResult> {
+    return apiClient.post<PhoneOtpIssueResult>('/auth/otp/request', { phone })
+}
+
+export async function resendPhoneOtp(sessionToken: string): Promise<PhoneOtpIssueResult> {
+    return apiClient.post<PhoneOtpIssueResult>('/auth/otp/resend', { sessionToken })
+}
+
+export async function verifyPhoneOtp(sessionToken: string, code: string): Promise<void> {
+    await apiClient.post('/auth/otp/verify', { sessionToken, code })
 }
 
 export async function verifyEmailCode(email: string, code: string): Promise<void> {

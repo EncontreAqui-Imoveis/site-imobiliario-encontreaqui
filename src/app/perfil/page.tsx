@@ -39,6 +39,29 @@ export default function PerfilPage() {
                 : brokerStatus === 'rejected'
                     ? 'Solicitação rejeitada'
                     : null
+    const nextPendingAction =
+        !user.email_verified
+            ? {
+                href: '/verificacao',
+                title: 'Verificar e-mail',
+                description: 'Confirme sua conta para liberar os próximos fluxos.',
+            }
+            : session.profileStatus !== 'complete'
+                ? {
+                    href: '/onboarding',
+                    title: 'Completar perfil',
+                    description: 'Finalize telefone e endereço para operar normalmente.',
+                }
+                : brokerStatus === 'pending_verification' || brokerStatus === 'rejected'
+                    ? {
+                        href: '/onboarding/broker',
+                        title: brokerStatus === 'rejected' ? 'Reenviar documentos' : 'Acompanhar análise de corretor',
+                        description:
+                            brokerStatus === 'rejected'
+                                ? 'Sua solicitação de corretor foi rejeitada. Revise o CRECI e os documentos.'
+                                : 'Seu cadastro de corretor ainda está em análise.',
+                    }
+                    : null
 
     return (
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 pt-24">
@@ -116,11 +139,24 @@ export default function PerfilPage() {
                 )}
             </div>
 
+            {nextPendingAction && (
+                <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
+                    <p className="text-sm font-semibold text-amber-900">{nextPendingAction.title}</p>
+                    <p className="mt-1 text-sm text-amber-800">{nextPendingAction.description}</p>
+                    <Link
+                        href={nextPendingAction.href}
+                        className="mt-3 inline-flex rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-700"
+                    >
+                        Continuar
+                    </Link>
+                </div>
+            )}
+
             {/* Quick Links */}
             <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 divide-y divide-slate-100">
                 {!isBroker && (
                     <Link
-                        href="/onboarding/broker"
+                        href="/perfil/evoluir-corretor"
                         className="flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors first:rounded-t-2xl"
                     >
                         <div className="w-10 h-10 bg-accent-50 rounded-xl flex items-center justify-center">

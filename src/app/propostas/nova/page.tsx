@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
+import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import {
     createProposal,
     fetchProposalTargetProperty,
@@ -100,8 +101,17 @@ export default function ProposalWizardPage() {
     useEffect(() => {
         if (!authLoading && !session) {
             router.replace(`/auth/login?next=/propostas/nova?propertyId=${propertyId}`)
+            return
         }
-    }, [authLoading, session, router, propertyId])
+        const gateRoute = resolveOperationalGateRoute(session)
+        if (!authLoading && gateRoute) {
+            router.replace(gateRoute)
+            return
+        }
+        if (!authLoading && session?.user?.role === 'broker' && !isBroker) {
+            router.replace('/onboarding/broker')
+        }
+    }, [authLoading, session, router, propertyId, isBroker])
 
     /* ── Load property ── */
     useEffect(() => {

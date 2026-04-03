@@ -7,9 +7,35 @@ type SentryLike = {
     captureException?: (error: unknown, context?: SentryCaptureContext) => void
 }
 
+const EMAIL_REGEX = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g
+const BEARER_REGEX = /Bearer\s+[A-Za-z0-9\-._~+/]+=*/gi
+const JWT_REGEX = /eyJ[a-zA-Z0-9_\-]+\.[a-zA-Z0-9_\-]+\.[a-zA-Z0-9_\-]+/g
+const PHONE_REGEX = /\b\d{10,13}\b/g
+
 function getSentry(): SentryLike | undefined {
     const candidate = globalThis as typeof globalThis & { Sentry?: SentryLike }
     return candidate.Sentry
+}
+
+function sanitizeText(value: string | undefined): string | undefined {
+    if (!value) return value
+    return value
+        .replace(BEARER_REGEX, 'Bearer ***')
+        .replace(JWT_REGEX, '***.***.***')
+        .replace(EMAIL_REGEX, '***@***')
+        .replace(PHONE_REGEX, '***')
+}
+
+function sanitizeUrl(value: string | undefined): string | undefined {
+    if (!value) return value
+    try {
+        const url = new URL(value)
+        url.search = ''
+        url.hash = ''
+        return url.toString()
+    } catch {
+        return sanitizeText(value)
+    }
 }
 
 export function reportObservedError(
@@ -32,8 +58,8 @@ export function reportObservedError(
         },
         extra: {
             status: context.status,
-            url: context.url,
-            message: context.message,
+            url: sanitizeUrl(context.url),
+            message: sanitizeText(context.message),
         },
     })
 }

@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useUser } from '@/contexts/UserContext'
+import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { getMyProperties, type PropertySummary } from '@/lib/api/user'
 import { Building2, Plus, Edit, Loader2, Eye, MapPin } from 'lucide-react'
 
@@ -27,6 +28,23 @@ function getStatusBadge(status: string) {
             return { label: 'Alugado', className: 'bg-blue-50 text-blue-700' }
         default:
             return { label: status, className: 'bg-slate-50 text-slate-700' }
+    }
+}
+
+function getNegotiationAction(property: PropertySummary) {
+    const status = String(property.negotiationStatus ?? '').trim().toUpperCase()
+    if (!property.negotiationId) return null
+    if (status === 'PENDING_PROPOSAL' || status === 'PROPOSAL_DRAFT' || status === 'PROPOSAL_SENT') {
+        return {
+            href: `/propostas/${encodeURIComponent(property.negotiationId)}/upload-assinada`,
+            label: 'Continuar proposta',
+            className: 'text-accent-700 border-accent-200 hover:bg-accent-50',
+        }
+    }
+    return {
+        href: '/contratos',
+        label: 'Ir para contratos',
+        className: 'text-slate-700 border-slate-200 hover:bg-slate-50',
     }
 }
 
@@ -56,6 +74,11 @@ export default function MeusImoveisPage() {
     useEffect(() => {
         if (!authLoading && !session) {
             router.replace('/auth/login?next=/meus-imoveis')
+            return
+        }
+        const gateRoute = resolveOperationalGateRoute(session)
+        if (!authLoading && gateRoute) {
+            router.replace(gateRoute)
         }
     }, [authLoading, session, router])
 
@@ -166,6 +189,7 @@ export default function MeusImoveisPage() {
                         const isJustCreated = property.id === createdId
                         const isFocused = property.id === focusId
                         const canEdit = property.status !== 'pending_approval'
+                        const negotiationAction = getNegotiationAction(property)
                         return (
                             <div id={`my-property-${property.id}`} key={property.id} className={`bg-white rounded-2xl shadow-md shadow-slate-200/50 border overflow-hidden hover:shadow-lg transition-shadow group ${(isJustCreated || isFocused) ? 'border-primary-300 ring-2 ring-primary-100' : 'border-slate-100'}`}>
                                 <div className="relative aspect-[4/3] bg-slate-100">
@@ -192,6 +216,23 @@ export default function MeusImoveisPage() {
                                 </div>
                                 <div className="p-4 space-y-2">
                                     <h3 className="font-semibold text-slate-900 line-clamp-1">{property.title}</h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${badge.className}`}>
+                                            {badge.label}
+                                        </span>
+                                        {property.hasPendingEditRequest && (
+                                            <span className="inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
+                                                Edição pendente
+                                            </span>
+                                        )}
+                                        {property.negotiationId && (
+                                            <span className="inline-flex rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700">
+                                                {property.negotiationStatus
+                                                    ? property.negotiationStatus.replaceAll('_', ' ')
+                                                    : 'Negociação ativa'}
+                                            </span>
+                                        )}
+                                    </div>
                                     <p className="flex items-center gap-1 text-xs text-slate-500">
                                         <MapPin className="w-3.5 h-3.5" />
                                         {property.city}, {property.state}
@@ -220,6 +261,14 @@ export default function MeusImoveisPage() {
                                             </div>
                                         )}
                                     </div>
+                                    {negotiationAction && (
+                                        <Link
+                                            href={negotiationAction.href}
+                                            className={`flex w-full items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium border rounded-lg transition-colors ${negotiationAction.className}`}
+                                        >
+                                            {negotiationAction.label}
+                                        </Link>
+                                    )}
                                 </div>
                             </div>
                         )

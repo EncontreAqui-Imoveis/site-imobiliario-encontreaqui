@@ -29,6 +29,10 @@ export interface PropertySummary {
     purpose: string
     imageUrl?: string
     createdAt: string
+    hasPendingEditRequest?: boolean
+    pendingEditRequestId?: number
+    negotiationId?: string
+    negotiationStatus?: string
 }
 
 export async function getMyProperties(): Promise<PropertySummary[]> {
@@ -48,6 +52,10 @@ export async function getMyProperties(): Promise<PropertySummary[]> {
             purpose: item.purpose,
             imageUrl: item.images[0],
             createdAt: item.createdAt,
+            hasPendingEditRequest: item.hasPendingEditRequest,
+            pendingEditRequestId: item.pendingEditRequestId,
+            negotiationId: item.negotiationId,
+            negotiationStatus: item.negotiation?.status,
         }))
 }
 

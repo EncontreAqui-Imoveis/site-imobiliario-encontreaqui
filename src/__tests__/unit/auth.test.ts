@@ -55,7 +55,8 @@ describe('auth API', () => {
             broker: undefined,
             profileStatus: 'incomplete',
         })
-        expect(window.localStorage.getItem('ea_auth_token')).toBe('token-123')
+        expect(window.localStorage.getItem('ea_auth_token')).toBeNull()
+        expect(document.cookie).toContain('ea_auth_token=token-123')
     })
 
     it('register() sends POST with full payload', async () => {
@@ -84,7 +85,8 @@ describe('auth API', () => {
         expect(body.email).toBe('j@test.com')
         expect(body.city).toBe('SP')
         expect(result.profileStatus).toBe('incomplete')
-        expect(window.localStorage.getItem('ea_auth_token')).toBe('token-xyz')
+        expect(window.localStorage.getItem('ea_auth_token')).toBeNull()
+        expect(document.cookie).toContain('ea_auth_token=token-xyz')
     })
 
     it('loginWithGoogle() sends idToken in body', async () => {
@@ -101,11 +103,12 @@ describe('auth API', () => {
         const body = JSON.parse(mockFetch.mock.calls[0][1].body)
         expect(body.idToken).toBe('google-token-123')
         expect(result.isBroker).toBe(false)
-        expect(window.localStorage.getItem('ea_auth_token')).toBe('google-token-session')
+        expect(window.localStorage.getItem('ea_auth_token')).toBeNull()
+        expect(document.cookie).toContain('ea_auth_token=google-token-session')
     })
 
     it('fetchCurrentSession() returns null on 401', async () => {
-        window.localStorage.setItem('ea_auth_token', 'token-401')
+        document.cookie = 'ea_auth_token=token-401; Path=/'
         mockFetch.mockResolvedValueOnce(errorResponse(401, 'Unauthorized'))
 
         const session = await auth.fetchCurrentSession()
@@ -114,7 +117,7 @@ describe('auth API', () => {
     })
 
     it('fetchCurrentSession() propagates non-401/403 errors', async () => {
-        window.localStorage.setItem('ea_auth_token', 'token-500')
+        document.cookie = 'ea_auth_token=token-500; Path=/'
         mockFetch.mockResolvedValueOnce(errorResponse(500, 'Server error'))
 
         await expect(auth.fetchCurrentSession()).rejects.toThrow()
@@ -124,6 +127,21 @@ describe('auth API', () => {
         const session = await auth.fetchCurrentSession()
         expect(session).toBeNull()
         expect(mockFetch).not.toHaveBeenCalled()
+    })
+
+    it('migrates legacy localStorage token to cookie on browser read', async () => {
+        window.localStorage.setItem('ea_auth_token', 'legacy-token')
+        mockFetch.mockResolvedValueOnce(
+            okResponse({
+                role: 'client',
+                user: { id: 1, name: 'Teste', email: 'teste@teste.com' },
+            }),
+        )
+
+        await auth.fetchCurrentSession()
+
+        expect(window.localStorage.getItem('ea_auth_token')).toBeNull()
+        expect(document.cookie).toContain('ea_auth_token=legacy-token')
     })
 
     it('logout() does not throw even on failure', async () => {

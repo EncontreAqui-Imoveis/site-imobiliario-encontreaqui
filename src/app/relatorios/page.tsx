@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
+import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { getMyCommissions, getMyPerformanceReport, type CommissionSummary, type PerformanceReport } from '@/lib/api/broker'
 import {
     BarChart3, DollarSign, TrendingUp, Building2, Loader2,
@@ -48,6 +50,12 @@ export default function RelatoriosPage() {
     useEffect(() => {
         if (!authLoading && !session) {
             router.replace('/auth/login?next=/relatorios')
+            return
+        }
+        const gateRoute = resolveOperationalGateRoute(session)
+        if (!authLoading && gateRoute) {
+            router.replace(gateRoute)
+            return
         } else if (!authLoading && session && !isBroker) {
             router.replace('/onboarding/broker')
         }
@@ -118,13 +126,41 @@ export default function RelatoriosPage() {
                 <div className="space-y-6">
                     {/* Summary Cards */}
                     {report && (
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                             <SummaryCard icon={DollarSign} label="Comissões" value={formatCurrency(report.totalCommissionEarned)} color="primary" />
                             <SummaryCard icon={TrendingUp} label="Vendas" value={String(report.totalSales)} color="primary" />
                             <SummaryCard icon={ShoppingBag} label="Aluguéis" value={String(report.totalRentals)} color="blue" />
                             <SummaryCard icon={Building2} label="Imóveis" value={String(report.totalPropertiesListed)} color="purple" />
+                            <SummaryCard icon={RefreshCw} label="Negociações ativas" value={String(report.activeNegotiations)} color="blue" />
                         </div>
                     )}
+
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                        <h2 className="text-sm font-semibold text-slate-800 mb-4">Ações rápidas</h2>
+                        <div className="flex flex-wrap gap-3">
+                            <Link
+                                href="/meus-imoveis"
+                                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                            >
+                                <Building2 className="w-4 h-4" />
+                                Meus imóveis
+                            </Link>
+                            <Link
+                                href="/propostas"
+                                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                            >
+                                <ShoppingBag className="w-4 h-4" />
+                                Propostas
+                            </Link>
+                            <Link
+                                href="/contratos"
+                                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                            >
+                                <DollarSign className="w-4 h-4" />
+                                Contratos
+                            </Link>
+                        </div>
+                    </div>
 
                     {/* Status Breakdown */}
                     {report?.statusBreakdown && Object.keys(report.statusBreakdown).length > 0 && (

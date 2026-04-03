@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
+import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { fetchMyNegotiations } from '@/lib/negotiationsService'
 import type { NegotiationSummary } from '@/types/negotiation'
 import { getStatusLabel, getStatusColor } from '@/types/negotiation'
@@ -21,6 +22,11 @@ export default function PropostasPage() {
     useEffect(() => {
         if (!authLoading && !session) {
             router.replace('/auth/login?next=/propostas')
+            return
+        }
+        const gateRoute = resolveOperationalGateRoute(session)
+        if (!authLoading && gateRoute) {
+            router.replace(gateRoute)
         }
     }, [authLoading, session, router])
 
@@ -49,9 +55,24 @@ export default function PropostasPage() {
         return true
     })
 
+    const statusSummary = {
+        waitingSignature: negotiations.filter((n) =>
+            ['PENDING_PROPOSAL', 'PROPOSAL_DRAFT', 'PROPOSAL_SENT'].includes(n.status),
+        ).length,
+        underReview: negotiations.filter((n) =>
+            ['DOCUMENTATION_PHASE', 'CONTRACT_DRAFTING', 'AWAITING_SIGNATURES'].includes(n.status),
+        ).length,
+        approved: negotiations.filter((n) =>
+            ['IN_NEGOTIATION', 'SOLD', 'RENTED', 'CONTRACT_FINALIZED'].includes(n.status),
+        ).length,
+    }
+
     const resolveNegotiationHref = (status: NegotiationSummary['status'], id: string) => {
         if (status === 'PENDING_PROPOSAL' || status === 'PROPOSAL_SENT') {
             return `/propostas/${id}/upload-assinada`
+        }
+        if (status === 'DOCUMENTATION_PHASE' || status === 'CONTRACT_DRAFTING' || status === 'AWAITING_SIGNATURES') {
+            return '/propostas'
         }
         return '/contratos'
     }
@@ -103,6 +124,24 @@ export default function PropostasPage() {
                 className="mb-6 rounded-2xl border border-slate-100 bg-white px-4 py-4 text-sm text-slate-600 shadow-sm"
             >
                 Acompanhe aqui o ciclo da proposta: envio, análise documental, minuta, assinaturas e contrato.
+            </div>
+
+            <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Aguardando assinatura</p>
+                    <p className="mt-2 text-2xl font-bold text-slate-900">{statusSummary.waitingSignature}</p>
+                    <p className="mt-1 text-sm text-slate-600">Propostas iniciadas que ainda precisam do PDF assinado.</p>
+                </div>
+                <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Em revisão</p>
+                    <p className="mt-2 text-2xl font-bold text-slate-900">{statusSummary.underReview}</p>
+                    <p className="mt-1 text-sm text-slate-600">Negociações em análise, minuta ou assinaturas.</p>
+                </div>
+                <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Aprovadas / encerradas</p>
+                    <p className="mt-2 text-2xl font-bold text-slate-900">{statusSummary.approved}</p>
+                    <p className="mt-1 text-sm text-slate-600">Negociações que já avançaram para contratos ou fecharam.</p>
+                </div>
             </div>
 
             {/* Filters */}

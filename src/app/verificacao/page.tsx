@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@/contexts/UserContext'
 import { sendEmailVerificationCode, verifyEmailCode } from '@/lib/api/auth'
+import { resolvePostAuthRoute } from '@/lib/auth/routeResolution'
 import type { ApiError } from '@/lib/api/client'
 import { ShieldCheck, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -78,7 +79,18 @@ export default function VerificacaoPage() {
             setSuccess(true)
             await refresh()
             setTimeout(() => {
-                router.push('/meus-imoveis')
+                if (!session) {
+                    router.push('/meus-imoveis')
+                    return
+                }
+                const refreshedSession = {
+                    ...session,
+                    user: {
+                        ...session.user,
+                        email_verified: true,
+                    },
+                }
+                router.push(resolvePostAuthRoute(refreshedSession, '/meus-imoveis'))
             }, 2000)
         } catch (err) {
             const apiErr = err as ApiError

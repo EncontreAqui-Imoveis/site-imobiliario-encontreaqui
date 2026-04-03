@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { unstable_batchedUpdates } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@/contexts/UserContext'
+import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import {
     getNotifications, markAsRead, markAllAsRead,
     deleteNotification, clearAllNotifications,
@@ -23,6 +24,47 @@ const entityIcons: Record<string, typeof Bell> = {
 }
 
 const MESSAGE_PREVIEW_LIMIT = 200
+
+function toStringOrNull(value: unknown): string | null {
+    const normalized = String(value ?? '').trim()
+    return normalized.length > 0 ? normalized : null
+}
+
+function resolveNotificationHref(notification: Notification): string | null {
+    const metadata = notification.metadataJson ?? {}
+    const negotiationId =
+        toStringOrNull(metadata.negotiationId) ??
+        toStringOrNull(metadata.negotiation_id)
+    const contractId =
+        toStringOrNull(metadata.contractId) ??
+        toStringOrNull(metadata.contract_id)
+
+    if (contractId) {
+        return `/contratos/${encodeURIComponent(contractId)}`
+    }
+
+    if (negotiationId) {
+        return `/propostas/${encodeURIComponent(negotiationId)}/upload-assinada`
+    }
+
+    if (notification.relatedEntityType === 'negotiation') {
+        return '/propostas'
+    }
+
+    if (notification.relatedEntityType === 'property' && notification.relatedEntityId) {
+        return `/imoveis/${notification.relatedEntityId}`
+    }
+
+    if (notification.relatedEntityType === 'broker' || notification.relatedEntityType === 'user') {
+        return '/perfil'
+    }
+
+    if (notification.relatedEntityType === 'announcement') {
+        return '/anuncie'
+    }
+
+    return null
+}
 
 function formatDate(dateStr: string) {
     const date = new Date(dateStr)
@@ -63,6 +105,11 @@ export default function NotificacoesPage() {
     useEffect(() => {
         if (!authLoading && !session) {
             router.replace('/auth/login?next=/notificacoes')
+            return
+        }
+        const gateRoute = resolveOperationalGateRoute(session)
+        if (!authLoading && gateRoute) {
+            router.replace(gateRoute)
         }
     }, [authLoading, session, router])
 
@@ -146,6 +193,20 @@ export default function NotificacoesPage() {
             })
         }
     }, [])
+
+    const handleOpenNotification = useCallback(async (notification: Notification) => {
+        const href = resolveNotificationHref(notification)
+        if (!notification.isRead) {
+            await handleMarkRead(notification.id)
+        }
+        if (href) {
+            router.push(href)
+            return
+        }
+        if (isLongMessage(notification.message)) {
+            setExpandedNotif(notification)
+        }
+    }, [handleMarkRead, router])
 
     const unreadCount = notifications.filter(n => !n.isRead).length
 
@@ -242,11 +303,7 @@ export default function NotificacoesPage() {
                                 <div
                                     className="flex-1 min-w-0 cursor-pointer"
                                     onClick={() => {
-                                        if (long) {
-                                            setExpandedNotif(notif)
-                                        } else if (!notif.isRead) {
-                                            handleMarkRead(notif.id)
-                                        }
+                                        void handleOpenNotification(notif)
                                     }}
                                 >
                                     {notif.title && (
@@ -257,6 +314,11 @@ export default function NotificacoesPage() {
                                     </p>
                                     <div className="flex items-center gap-2 mt-1">
                                         <p className="text-xs text-slate-400">{formatDate(notif.createdAt)}</p>
+                                        {resolveNotificationHref(notif) && (
+                                            <span className="text-xs font-medium text-primary-600">
+                                                Abrir
+                                            </span>
+                                        )}
                                         {long && (
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); setExpandedNotif(notif) }}
@@ -326,6 +388,20 @@ export default function NotificacoesPage() {
                             >
                                 Fechar
                             </button>
+                            {resolveNotificationHref(expandedNotif) && (
+                                <button
+                                    onClick={() => {
+                                        const href = resolveNotificationHref(expandedNotif)
+                                        setExpandedNotif(null)
+                                        if (href) {
+                                            void handleOpenNotification(expandedNotif)
+                                        }
+                                    }}
+                                    className="flex-1 py-2.5 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors"
+                                >
+                                    Abrir contexto
+                                </button>
+                            )}
                             {!expandedNotif.isRead && (
                                 <button
                                     onClick={() => {

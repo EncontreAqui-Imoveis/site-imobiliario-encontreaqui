@@ -177,21 +177,47 @@ export async function getContractById(id: string): Promise<ContractDetail> {
 export async function uploadContractDocument(options: {
     contractId: string
     documentType: ContractDocumentType
-    side: ContractSide
+    side?: ContractSide
     file: File
 }): Promise<void> {
     const formData = new FormData()
     formData.append('file', options.file)
     formData.append('documentType', options.documentType)
-    formData.append('side', options.side)
+    if (options.side) {
+        formData.append('side', options.side)
+    }
 
     await apiClient.post(`/contracts/${encodeURIComponent(options.contractId)}/documents`, formData)
+}
+
+export async function setContractSignatureMethod(
+    contractId: string,
+    method: 'in_person',
+): Promise<void> {
+    await apiClient.post(`/contracts/${encodeURIComponent(contractId)}/signature-method`, {
+        method,
+    })
 }
 
 export async function deleteContractDocument(contractId: string, documentId: number): Promise<void> {
     await apiClient.delete(
         `/contracts/${encodeURIComponent(contractId)}/documents/${encodeURIComponent(String(documentId))}`,
     )
+}
+
+export async function updateContractData(options: {
+    contractId: string
+    sellerInfo?: Record<string, unknown>
+    buyerInfo?: Record<string, unknown>
+}): Promise<void> {
+    const payload: Record<string, unknown> = {}
+    if (options.sellerInfo && Object.keys(options.sellerInfo).length > 0) {
+        payload.sellerInfo = options.sellerInfo
+    }
+    if (options.buyerInfo && Object.keys(options.buyerInfo).length > 0) {
+        payload.buyerInfo = options.buyerInfo
+    }
+    await apiClient.put(`/contracts/${encodeURIComponent(options.contractId)}/data`, payload)
 }
 
 export function buildNegotiationDocumentDownloadUrl(negotiationId: string, documentId: number): string {

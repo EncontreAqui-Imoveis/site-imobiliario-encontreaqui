@@ -45,6 +45,7 @@ import { formatCurrencyInput, parseCurrencyInput } from '@/lib/currencyInput'
 import { formatPhoneInput } from '@/lib/phoneInput'
 import { validateImageFile, validateVideoFile } from '@/lib/sanitize'
 import { useUser } from '@/contexts/UserContext'
+import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
 
 type WizardStep = 1 | 2 | 3 | 4 | 5 | 6
@@ -148,6 +149,11 @@ export default function AnunciePage() {
 
     useEffect(() => {
         if (!authLoading && !session) router.replace('/auth/login?next=/anuncie')
+        const gateRoute = resolveOperationalGateRoute(session)
+        if (!authLoading && gateRoute) {
+            router.replace(gateRoute)
+            return
+        }
         if (!authLoading && isApprovedBroker) setActorMode('broker')
         if (!authLoading && isBrokerPending) router.replace('/onboarding/broker')
     }, [authLoading, session, isApprovedBroker, isBrokerPending, router])

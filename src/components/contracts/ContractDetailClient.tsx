@@ -15,13 +15,25 @@ import {
     deleteContractDocument,
     getContractById,
     getNegotiationCommissions,
+    setContractSignatureMethod,
+    updateContractData,
     uploadContractDocument,
 } from '@/lib/api/contracts'
 import type { ApiError } from '@/lib/api/client'
 import { CONTRACT_STATUS_FLOW, getApprovalStatusMeta, getContractStatusMeta } from '@/lib/contractsUi'
+import { useUser } from '@/contexts/UserContext'
 
 interface Props {
     contract: ContractDetail
+}
+
+type ContractFormState = {
+    maritalStatus: string
+    profession: string
+    email: string
+    phone: string
+    bankDetails: string
+    guaranteeType: string
 }
 
 function shortId(value: string | null | undefined): string {
@@ -52,6 +64,14 @@ function filterDocsBySide(docs: ContractDocument[], side: ContractSide): Contrac
 
 function filterSharedDocs(docs: ContractDocument[]): ContractDocument[] {
     return docs.filter((doc) => !doc.side || doc.documentType === 'contrato_minuta')
+}
+
+function isSignatureDocumentType(documentType: ContractDocumentType | null | undefined): boolean {
+    return (
+        documentType === 'contrato_assinado' ||
+        documentType === 'comprovante_pagamento' ||
+        documentType === 'boleto_vistoria'
+    )
 }
 
 const DOCUMENT_LABELS: Record<string, string> = {
@@ -137,7 +157,63 @@ function renderChecklistStatus(doc: ContractDocument | null) {
     return doc ? 'Enviado' : 'Pendente'
 }
 
+function resolveSignatureMethod(contract: ContractDetail): string | null {
+    const raw = String(contract.workflowMetadata?.signatureMethod ?? '').trim().toLowerCase()
+    return raw || null
+}
+
+const MARITAL_STATUS_OPTIONS = [
+    'Solteiro(a)',
+    'Casado(a)',
+    'Divorciado(a)',
+    'Viúvo(a)',
+    'União Estável',
+] as const
+
+const RENT_GUARANTEE_OPTIONS = ['Fiador', 'Seguro Fiança', 'Caução'] as const
+
+function toRecord(value: unknown): Record<string, unknown> {
+    return value && typeof value === 'object' && !Array.isArray(value)
+        ? (value as Record<string, unknown>)
+        : {}
+}
+
+function readContractInfoField(source: Record<string, unknown>, keys: string[]): string {
+    for (const key of keys) {
+        const value = source[key]
+        if (value != null && String(value).trim().length > 0) {
+            return String(value).trim()
+        }
+    }
+    return ''
+}
+
+function buildSellerFormState(contract: ContractDetail): ContractFormState {
+    const source = toRecord(contract.sellerInfo)
+    return {
+        maritalStatus: readContractInfoField(source, ['estado_civil', 'estadoCivil']),
+        profession: readContractInfoField(source, ['profissao']),
+        email: readContractInfoField(source, ['email']),
+        phone: readContractInfoField(source, ['telefone', 'phone']),
+        bankDetails: readContractInfoField(source, ['dados_bancarios', 'dadosBancarios']),
+        guaranteeType: '',
+    }
+}
+
+function buildBuyerFormState(contract: ContractDetail): ContractFormState {
+    const source = toRecord(contract.buyerInfo)
+    return {
+        maritalStatus: readContractInfoField(source, ['estado_civil', 'estadoCivil']),
+        profession: readContractInfoField(source, ['profissao']),
+        email: readContractInfoField(source, ['email']),
+        phone: readContractInfoField(source, ['telefone', 'phone']),
+        bankDetails: '',
+        guaranteeType: readContractInfoField(source, ['garantia_locacao', 'garantiaLocacao']),
+    }
+}
+
 export function ContractDetailClient({ contract }: Props) {
+    const { session } = useUser()
     const [currentContract, setCurrentContract] = useState<ContractDetail>(contract)
     const [documents, setDocuments] = useState<ContractDocument[]>(contract.documents)
     const [uploadingSide, setUploadingSide] = useState<ContractSide | null>(null)
@@ -146,10 +222,16 @@ export function ContractDetailClient({ contract }: Props) {
     const [commissions, setCommissions] = useState<Commission[] | null>(null)
     const [loadingCommissions, setLoadingCommissions] = useState(false)
     const [refreshingContract, setRefreshingContract] = useState(false)
+    const [settingSignatureMethod, setSettingSignatureMethod] = useState(false)
+    const [sellerForm, setSellerForm] = useState<ContractFormState>(() => buildSellerFormState(contract))
+    const [buyerForm, setBuyerForm] = useState<ContractFormState>(() => buildBuyerFormState(contract))
+    const [savingSide, setSavingSide] = useState<ContractSide | null>(null)
 
     useEffect(() => {
         setCurrentContract(contract)
         setDocuments(contract.documents)
+        setSellerForm(buildSellerFormState(contract))
+        setBuyerForm(buildBuyerFormState(contract))
     }, [contract])
 
     useEffect(() => {
@@ -181,14 +263,20 @@ export function ContractDetailClient({ contract }: Props) {
             const nextContract = await getContractById(currentContract.id)
             setCurrentContract(nextContract)
             setDocuments(nextContract.documents)
+            setSellerForm(buildSellerFormState(nextContract))
+            setBuyerForm(buildBuyerFormState(nextContract))
         } finally {
             setRefreshingContract(false)
         }
     }
 
-    const handleUpload = async (side: ContractSide, documentType: ContractDocumentType, file: File) => {
+    const handleUpload = async (
+        side: ContractSide | undefined,
+        documentType: ContractDocumentType,
+        file: File,
+    ) => {
         setError(null)
-        setUploadingSide(side)
+        setUploadingSide(side ?? null)
         setUploadingType(documentType)
         try {
             await uploadContractDocument({
@@ -230,8 +318,74 @@ export function ContractDetailClient({ contract }: Props) {
         }
     }
 
-    const renderUploadField = (side: ContractSide, documentType: ContractDocumentType, label: string) => {
-        const locked = isSideLocked(currentContract, side)
+    const handleInPersonSignature = async () => {
+        setError(null)
+        setSettingSignatureMethod(true)
+        try {
+            await setContractSignatureMethod(currentContract.id, 'in_person')
+            await refreshContract()
+        } catch (err) {
+            const apiErr = err as ApiError
+            if ('status' in apiErr) {
+                setError(apiErr.message || 'Não foi possível registrar a assinatura presencial.')
+            } else {
+                setError('Não foi possível registrar a assinatura presencial.')
+            }
+        } finally {
+            setSettingSignatureMethod(false)
+        }
+    }
+
+    const handleSaveSide = async (side: ContractSide) => {
+        setError(null)
+        setSavingSide(side)
+        try {
+            if (side === 'seller') {
+                await updateContractData({
+                    contractId: currentContract.id,
+                    sellerInfo: {
+                        estado_civil: sellerForm.maritalStatus.trim(),
+                        profissao: sellerForm.profession.trim(),
+                        email: sellerForm.email.trim(),
+                        telefone: sellerForm.phone.trim(),
+                        dados_bancarios: sellerForm.bankDetails.trim(),
+                    },
+                })
+            } else {
+                const buyerInfo: Record<string, unknown> = {
+                    estado_civil: buyerForm.maritalStatus.trim(),
+                    profissao: buyerForm.profession.trim(),
+                    email: buyerForm.email.trim(),
+                    telefone: buyerForm.phone.trim(),
+                }
+                if (isRentalPurpose(currentContract.propertyPurpose)) {
+                    buyerInfo.garantia_locacao = buyerForm.guaranteeType.trim()
+                }
+                await updateContractData({
+                    contractId: currentContract.id,
+                    buyerInfo,
+                })
+            }
+            await refreshContract()
+        } catch (err) {
+            const apiErr = err as ApiError
+            if ('status' in apiErr) {
+                setError(apiErr.message || 'Não foi possível salvar os dados deste lado do contrato.')
+            } else {
+                setError('Não foi possível salvar os dados deste lado do contrato.')
+            }
+        } finally {
+            setSavingSide(null)
+        }
+    }
+
+    const renderUploadField = (
+        side: ContractSide | undefined,
+        documentType: ContractDocumentType,
+        label: string,
+    ) => {
+        const locked =
+            side == null ? false : isSideLocked(currentContract, side)
         if (locked) {
             return (
                 <p className="text-xs text-slate-500">
@@ -240,7 +394,8 @@ export function ContractDetailClient({ contract }: Props) {
             )
         }
 
-        const isUploading = uploadingSide === side && uploadingType === documentType
+        const isUploading =
+            uploadingSide === (side ?? null) && uploadingType === documentType
 
         return (
             <label className="block text-xs text-primary-700 cursor-pointer">
@@ -278,6 +433,142 @@ export function ContractDetailClient({ contract }: Props) {
         currentContract.status === 'AWAITING_SIGNATURES'
             ? requiredDocTypesForContract(currentContract, true)
             : requiredDocTypesForContract(currentContract, false)
+    const draftDocument = findLatestDoc(sharedDocs, 'contrato_minuta')
+    const signedContractDocument = findLatestDoc(sharedDocs, 'contrato_assinado')
+    const signatureMethod = resolveSignatureMethod(currentContract)
+    const hasAgencyReceivedSignedContract = Boolean(
+        String(currentContract.workflowMetadata?.agencySignedContractReceivedAt ?? '').trim(),
+    )
+    const isAwaitingDocs = currentContract.status === 'AWAITING_DOCS'
+    const isInDraft = currentContract.status === 'IN_DRAFT'
+    const isAwaitingSignatures = currentContract.status === 'AWAITING_SIGNATURES'
+    const isFinalized = currentContract.status === 'FINALIZED'
+    const currentUserId = Number(session?.user?.id ?? 0)
+    const canEditSellerSide =
+        isAwaitingDocs &&
+        !sellerLocked &&
+        Number.isFinite(currentUserId) &&
+        currentUserId > 0 &&
+        currentUserId === currentContract.capturingBrokerId
+    const canEditBuyerSide =
+        isAwaitingDocs &&
+        !buyerLocked &&
+        Number.isFinite(currentUserId) &&
+        currentUserId > 0 &&
+        currentUserId === currentContract.sellingBrokerId
+
+    const renderPartyForm = (
+        side: ContractSide,
+        title: string,
+        form: ContractFormState,
+        setForm: (value: ContractFormState) => void,
+        canEdit: boolean,
+        locked: boolean,
+        reason: string | null,
+        approvalStatus: ContractDetail['sellerApprovalStatus'],
+    ) => (
+        <section className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-slate-800">{title}</h2>
+                {approvalBadge(approvalStatus)}
+            </div>
+            {reason && (
+                <p className="rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                    Observação da análise: {reason}
+                </p>
+            )}
+            <div className="grid gap-3 md:grid-cols-2">
+                <label className="space-y-1 text-xs text-slate-600">
+                    <span>Estado civil</span>
+                    <select
+                        value={form.maritalStatus}
+                        onChange={(event) => setForm({ ...form, maritalStatus: event.target.value })}
+                        disabled={!canEdit}
+                        className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 disabled:bg-slate-50"
+                    >
+                        <option value="">Selecionar</option>
+                        {MARITAL_STATUS_OPTIONS.map((option) => (
+                            <option key={option} value={option}>{option}</option>
+                        ))}
+                    </select>
+                </label>
+                <label className="space-y-1 text-xs text-slate-600">
+                    <span>Profissão</span>
+                    <input
+                        value={form.profession}
+                        onChange={(event) => setForm({ ...form, profession: event.target.value })}
+                        disabled={!canEdit}
+                        className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 disabled:bg-slate-50"
+                    />
+                </label>
+                <label className="space-y-1 text-xs text-slate-600">
+                    <span>E-mail</span>
+                    <input
+                        type="email"
+                        value={form.email}
+                        onChange={(event) => setForm({ ...form, email: event.target.value })}
+                        disabled={!canEdit}
+                        className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 disabled:bg-slate-50"
+                    />
+                </label>
+                <label className="space-y-1 text-xs text-slate-600">
+                    <span>Telefone</span>
+                    <input
+                        value={form.phone}
+                        onChange={(event) => setForm({ ...form, phone: event.target.value })}
+                        disabled={!canEdit}
+                        className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 disabled:bg-slate-50"
+                    />
+                </label>
+                {side === 'seller' && (
+                    <label className="space-y-1 text-xs text-slate-600 md:col-span-2">
+                        <span>Dados bancários</span>
+                        <textarea
+                            rows={3}
+                            value={form.bankDetails}
+                            onChange={(event) => setForm({ ...form, bankDetails: event.target.value })}
+                            disabled={!canEdit}
+                            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 disabled:bg-slate-50"
+                        ></textarea>
+                    </label>
+                )}
+                {side === 'buyer' && isRentalPurpose(currentContract.propertyPurpose) && (
+                    <label className="space-y-1 text-xs text-slate-600 md:col-span-2">
+                        <span>Garantia de locação</span>
+                        <select
+                            value={form.guaranteeType}
+                            onChange={(event) => setForm({ ...form, guaranteeType: event.target.value })}
+                            disabled={!canEdit}
+                            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 disabled:bg-slate-50"
+                        >
+                            <option value="">Selecionar</option>
+                            {RENT_GUARANTEE_OPTIONS.map((option) => (
+                                <option key={option} value={option}>{option}</option>
+                            ))}
+                        </select>
+                    </label>
+                )}
+            </div>
+            {locked ? (
+                <p className="text-xs text-slate-500">
+                    Este lado foi aprovado e os dados não podem mais ser alterados.
+                </p>
+            ) : canEdit ? (
+                <button
+                    type="button"
+                    onClick={() => void handleSaveSide(side)}
+                    disabled={savingSide === side}
+                    className="inline-flex items-center rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-60"
+                >
+                    {savingSide === side ? 'Salvando...' : 'Salvar dados deste lado'}
+                </button>
+            ) : (
+                <p className="text-xs text-slate-500">
+                    Você pode acompanhar esses dados, mas não editar este lado do contrato.
+                </p>
+            )}
+        </section>
+    )
 
     return (
         <div className="space-y-6">
@@ -361,6 +652,124 @@ export function ContractDetailClient({ contract }: Props) {
                 </div>
             </section>
 
+            {refreshingContract && (
+                <div className="rounded-xl border border-primary-100 bg-primary-50 px-4 py-3 text-sm text-primary-900">
+                    Atualizando o estado do contrato...
+                </div>
+            )}
+
+            {isInDraft && (
+                <section className="rounded-2xl border border-sky-100 bg-sky-50 px-4 py-4 shadow-sm space-y-2">
+                    <h2 className="text-sm font-semibold text-sky-900">Minuta em preparação</h2>
+                    <p className="text-sm text-sky-800">
+                        A administração está preparando a minuta. Assim que o PDF estiver disponível, ele aparecerá abaixo e o fluxo seguirá para assinaturas.
+                    </p>
+                </section>
+            )}
+
+            {isAwaitingSignatures && (
+                <section className="rounded-2xl border border-violet-100 bg-violet-50 px-4 py-4 shadow-sm space-y-4">
+                    <div className="space-y-1">
+                        <h2 className="text-sm font-semibold text-violet-900">Assinaturas do contrato</h2>
+                        <p className="text-sm text-violet-800">
+                            Revise a minuta, escolha como a assinatura será entregue e acompanhe os documentos finais desta etapa.
+                        </p>
+                    </div>
+
+                    {draftDocument ? (
+                        <a
+                            href={buildNegotiationDocumentDownloadUrl(draftDocument.negotiationId, draftDocument.id)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-primary-700 shadow-sm ring-1 ring-violet-100 hover:bg-violet-50"
+                        >
+                            Baixar minuta
+                        </a>
+                    ) : (
+                        <p className="text-sm text-violet-800">
+                            A minuta ainda não foi anexada pela administração.
+                        </p>
+                    )}
+
+                    {signatureMethod === 'in_person' ? (
+                        <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                            Assinatura presencial informada. {hasAgencyReceivedSignedContract
+                                ? 'A imobiliária já registrou o recebimento do contrato assinado.'
+                                : 'Leve o contrato assinado até a imobiliária para concluir esta etapa.'}
+                        </div>
+                    ) : signedContractDocument ? (
+                        <div className="rounded-xl border border-green-100 bg-green-50 px-4 py-3 text-sm text-green-900">
+                            O contrato assinado já foi enviado online. Aguarde a conferência da administração.
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-3 sm:flex-row">
+                            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                                <p className="font-semibold text-slate-900">Envio online</p>
+                                <p className="mt-1">Envie o contrato assinado para continuar o fluxo digital.</p>
+                                <div className="mt-3">{renderUploadField(undefined, 'contrato_assinado', 'contrato assinado')}</div>
+                            </div>
+                            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                                <p className="font-semibold text-slate-900">Entrega presencial</p>
+                                <p className="mt-1">Se a assinatura acontecer presencialmente, registre isso para a administração.</p>
+                                <button
+                                    type="button"
+                                    onClick={() => void handleInPersonSignature()}
+                                    disabled={settingSignatureMethod}
+                                    className="mt-3 inline-flex items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+                                >
+                                    {settingSignatureMethod ? 'Registrando...' : 'Assinar presencialmente'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="grid gap-3 md:grid-cols-3">
+                        {[ 'contrato_assinado', 'comprovante_pagamento', 'boleto_vistoria' ].map((documentType) => {
+                            const normalizedType = documentType as ContractDocumentType
+                            const currentDoc = findLatestDoc(sharedDocs, normalizedType)
+                            const isOptional = normalizedType === 'boleto_vistoria'
+
+                            return (
+                                <div key={documentType} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
+                                    <p className="font-semibold text-slate-900">
+                                        {documentLabel(normalizedType)} {isOptional ? '(opcional)' : ''}
+                                    </p>
+                                    <p className={`mt-1 text-xs ${currentDoc ? 'text-emerald-700' : 'text-slate-500'}`}>
+                                        {renderChecklistStatus(currentDoc)}
+                                    </p>
+                                    <div className="mt-3">{renderUploadField(undefined, normalizedType, documentLabel(normalizedType))}</div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </section>
+            )}
+
+            {isAwaitingDocs && (
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    {renderPartyForm(
+                        'seller',
+                        'Dados do vendedor',
+                        sellerForm,
+                        setSellerForm,
+                        canEditSellerSide,
+                        sellerLocked,
+                        sellerReason,
+                        currentContract.sellerApprovalStatus,
+                    )}
+                    {renderPartyForm(
+                        'buyer',
+                        'Dados do comprador',
+                        buyerForm,
+                        setBuyerForm,
+                        canEditBuyerSide,
+                        buyerLocked,
+                        buyerReason,
+                        currentContract.buyerApprovalStatus,
+                    )}
+                </div>
+            )}
+
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {sharedDocs.length > 0 && (
                     <section className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm space-y-3 md:col-span-2" aria-labelledby="shared-documents">
@@ -426,7 +835,7 @@ export function ContractDetailClient({ contract }: Props) {
                                 >
                                     {doc.originalFileName || doc.documentType || 'Documento'}
                                 </a>
-                                {!isSideLocked(contract, 'seller') && (
+                                {!isSideLocked(currentContract, 'seller') && isAwaitingDocs && (
                                     <button
                                         type="button"
                                         onClick={() => void handleDelete(doc)}
@@ -447,6 +856,10 @@ export function ContractDetailClient({ contract }: Props) {
                     {sellerLocked ? (
                         <p className="text-xs text-slate-500">
                             Leitura apenas: este lado já foi aprovado e não aceita novos envios.
+                        </p>
+                    ) : !isAwaitingDocs ? (
+                        <p className="text-xs text-slate-500">
+                            Esta etapa não aceita novos documentos deste lado. Use apenas os documentos compartilhados do contrato.
                         </p>
                     ) : (
                         <div className="space-y-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-3">
@@ -492,7 +905,7 @@ export function ContractDetailClient({ contract }: Props) {
                                 >
                                     {doc.originalFileName || doc.documentType || 'Documento'}
                                 </a>
-                                {!isSideLocked(contract, 'buyer') && (
+                                {!isSideLocked(currentContract, 'buyer') && isAwaitingDocs && (
                                     <button
                                         type="button"
                                         onClick={() => void handleDelete(doc)}
@@ -513,6 +926,10 @@ export function ContractDetailClient({ contract }: Props) {
                     {buyerLocked ? (
                         <p className="text-xs text-slate-500">
                             Leitura apenas: este lado já foi aprovado e não aceita novos envios.
+                        </p>
+                    ) : !isAwaitingDocs ? (
+                        <p className="text-xs text-slate-500">
+                            Esta etapa não aceita novos documentos deste lado. Use apenas os documentos compartilhados do contrato.
                         </p>
                     ) : (
                         <div className="space-y-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-3">

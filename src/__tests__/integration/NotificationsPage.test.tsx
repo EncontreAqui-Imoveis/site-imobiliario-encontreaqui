@@ -164,6 +164,20 @@ describe('Notifications Page - Integration', () => {
         expect(screen.getByText('Fechar')).toBeInTheDocument()
     })
 
+    it('navigates to the related flow when notification has actionable context', async () => {
+        render(<NotificacoesPage />)
+
+        await waitFor(() => {
+            expect(screen.getByText('Nova proposta')).toBeInTheDocument()
+        })
+
+        fireEvent.click(screen.getByText('Nova proposta'))
+
+        await waitFor(() => {
+            expect(mockPush).toHaveBeenCalledWith('/propostas')
+        })
+    })
+
     it('clears all notifications with confirmation', async () => {
         render(<NotificacoesPage />)
 
