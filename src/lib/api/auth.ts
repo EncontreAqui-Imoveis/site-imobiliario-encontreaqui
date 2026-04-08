@@ -13,6 +13,7 @@ export interface UserSession {
     broker?: Broker
     brokerDocuments?: BrokerDocuments
     profileStatus: 'incomplete' | 'complete'
+    requiresBrokerDocuments?: boolean
 }
 
 type AuthResponse = {
@@ -28,6 +29,20 @@ type ProfileResponse = {
     status?: 'pending_verification' | 'approved' | 'rejected'
     requiresDocuments?: boolean
     user: User
+}
+
+type GooglePendingResponse = {
+    isNewUser?: boolean
+    requiresProfileChoice?: boolean
+    pending?: {
+        email?: string
+        name?: string
+        googleUid?: string
+    }
+    roleLocked?: boolean
+    needsCompletion?: boolean
+    requiresDocuments?: boolean
+    requestedProfile?: 'auto' | 'client' | 'broker'
 }
 
 export interface EmailSendResult {
@@ -56,6 +71,9 @@ export interface RegisterPayload {
     name: string
     email: string
     password: string
+    profileType?: 'client' | 'broker'
+    creci?: string
+    googleIdToken?: string
     phone?: string
     city?: string
     state?: string
@@ -65,6 +83,24 @@ export interface RegisterPayload {
     bairro?: string
     cep?: string
 }
+
+export interface GooglePendingAuthResult {
+    kind: 'google_pending'
+    isNewUser: boolean
+    requiresProfileChoice: boolean
+    roleLocked: boolean
+    needsCompletion: boolean
+    requiresDocuments: boolean
+    requestedProfile: 'auto' | 'client' | 'broker'
+    pending: {
+        email: string
+        name: string
+        googleUid: string
+        googleIdToken: string
+    }
+}
+
+export type GoogleAuthResult = UserSession | GooglePendingAuthResult
 
 function isProfileComplete(user: User): boolean {
     return Boolean(
@@ -83,6 +119,7 @@ function mapAuthResponseToSession(response: AuthResponse): UserSession {
         user: response.user,
         isBroker: response.user.role === 'broker' || response.broker?.status != null,
         broker: response.broker,
+        requiresBrokerDocuments: response.requiresDocuments === true,
         profileStatus:
             response.needsCompletion === true || !isProfileComplete(response.user)
                 ? 'incomplete'
@@ -109,8 +146,44 @@ function mapProfileResponseToSession(response: ProfileResponse): UserSession {
         } as User,
         isBroker,
         broker,
+        requiresBrokerDocuments: response.requiresDocuments === true,
         profileStatus: isProfileComplete(response.user) ? 'complete' : 'incomplete',
     }
+}
+
+function isGooglePendingResponse(response: unknown): response is GooglePendingResponse {
+    if (!response || typeof response !== 'object') return false
+    const value = response as GooglePendingResponse
+    return value.requiresProfileChoice === true || value.isNewUser === true || value.pending != null
+}
+
+function mapGooglePendingResponse(
+    response: GooglePendingResponse,
+    googleIdToken: string,
+): GooglePendingAuthResult {
+    const pending = response.pending ?? {}
+
+    return {
+        kind: 'google_pending',
+        isNewUser: response.isNewUser === true,
+        requiresProfileChoice: response.requiresProfileChoice === true,
+        roleLocked: response.roleLocked === true,
+        needsCompletion: response.needsCompletion !== false,
+        requiresDocuments: response.requiresDocuments === true,
+        requestedProfile: response.requestedProfile ?? 'auto',
+        pending: {
+            email: String(pending.email ?? '').trim(),
+            name: String(pending.name ?? '').trim(),
+            googleUid: String(pending.googleUid ?? '').trim(),
+            googleIdToken,
+        },
+    }
+}
+
+export function isGooglePendingAuthResult(
+    value: GoogleAuthResult,
+): value is GooglePendingAuthResult {
+    return 'kind' in value && value.kind === 'google_pending'
 }
 
 export async function fetchCurrentSession(): Promise<UserSession | null> {
@@ -149,8 +222,19 @@ export async function register(payload: RegisterPayload): Promise<UserSession> {
     return mapAuthResponseToSession(response)
 }
 
-export async function loginWithGoogle(idToken: string): Promise<UserSession> {
-    const response = await apiClient.post<AuthResponse>('/auth/google', { idToken })
+export async function loginWithGoogle(
+    idToken: string,
+    profileType: 'auto' | 'client' | 'broker' = 'auto',
+): Promise<GoogleAuthResult> {
+    const response = await apiClient.post<AuthResponse | GooglePendingResponse>('/auth/google', {
+        idToken,
+        profileType,
+    })
+
+    if (isGooglePendingResponse(response)) {
+        return mapGooglePendingResponse(response, idToken)
+    }
+
     if (response.token) {
         persistAuthToken(response.token)
     }

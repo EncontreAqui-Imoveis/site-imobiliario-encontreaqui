@@ -40,6 +40,12 @@ jest.mock('@/components/home/AboutSection', () => {
     }
 })
 
+jest.mock('@/components/auth/SignupDraftNotice', () => {
+    return function MockSignupDraftNotice() {
+        return null
+    }
+})
+
 jest.mock('@/components/property/PropertyCardSkeleton', () => {
     return function MockSkeleton({ count = 1 }: { count?: number }) {
         return (
@@ -82,7 +88,7 @@ describe('HomePage integration', () => {
         const fragment = page as ReactElement<{ children: ReactNode }>
         const children = Children.toArray(fragment.props.children)
 
-        expect(children).toHaveLength(4)
+        expect(children).toHaveLength(5)
     })
 
     it('loads featured properties through the server section', async () => {

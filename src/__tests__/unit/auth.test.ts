@@ -54,6 +54,7 @@ describe('auth API', () => {
             isBroker: false,
             broker: undefined,
             profileStatus: 'incomplete',
+            requiresBrokerDocuments: false,
         })
         expect(window.localStorage.getItem('ea_auth_token')).toBeNull()
         expect(document.cookie).toContain('ea_auth_token=token-123')
@@ -105,6 +106,40 @@ describe('auth API', () => {
         expect(result.isBroker).toBe(false)
         expect(window.localStorage.getItem('ea_auth_token')).toBeNull()
         expect(document.cookie).toContain('ea_auth_token=google-token-session')
+    })
+
+    it('loginWithGoogle() returns a pending payload when Google still needs profile choice', async () => {
+        mockFetch.mockResolvedValueOnce(
+            okResponse({
+                isNewUser: true,
+                requiresProfileChoice: true,
+                pending: {
+                    email: 'novo@teste.com',
+                    name: 'Novo Usuário',
+                    googleUid: 'google-uid-1',
+                },
+                requestedProfile: 'auto',
+            }),
+        )
+
+        const result = await auth.loginWithGoogle('google-token-456')
+
+        expect(result).toEqual({
+            kind: 'google_pending',
+            isNewUser: true,
+            requiresProfileChoice: true,
+            roleLocked: false,
+            needsCompletion: true,
+            requiresDocuments: false,
+            requestedProfile: 'auto',
+            pending: {
+                email: 'novo@teste.com',
+                name: 'Novo Usuário',
+                googleUid: 'google-uid-1',
+                googleIdToken: 'google-token-456',
+            },
+        })
+        expect(document.cookie).not.toContain('ea_auth_token=')
     })
 
     it('fetchCurrentSession() returns null on 401', async () => {

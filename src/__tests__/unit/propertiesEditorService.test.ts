@@ -1,7 +1,12 @@
 jest.mock('@/lib/api/client', () => ({
     apiClient: {
-        put: jest.fn(),
+        get: jest.fn(),
+        post: jest.fn(),
     },
+}))
+
+jest.mock('@/lib/propertiesApi', () => ({
+    normalizeProperty: jest.fn((value) => value),
 }))
 
 describe('propertiesEditorService', () => {
@@ -11,25 +16,24 @@ describe('propertiesEditorService', () => {
     })
 
     it('fetchEditableProperty() unwraps property payload', async () => {
+        const { apiClient } = await import('@/lib/api/client')
         const { fetchEditableProperty } = await import('@/lib/propertiesEditorService')
-        ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-            ok: true,
-            json: jest.fn().mockResolvedValue({ data: { id: 10, title: 'Imóvel' } }),
-        })
+        ;(apiClient.get as jest.Mock).mockResolvedValueOnce({ id: 10, title: 'Imóvel' })
 
         const result = await fetchEditableProperty('10')
 
         expect(result).toEqual({ id: 10, title: 'Imóvel' })
+        expect(apiClient.get).toHaveBeenCalledWith('/properties/10')
     })
 
-    it('saveEditedProperty() delegates to apiClient.put', async () => {
+    it('saveEditedProperty() delegates to edit-request endpoint', async () => {
         const { apiClient } = await import('@/lib/api/client')
         const { saveEditedProperty } = await import('@/lib/propertiesEditorService')
-        ;(apiClient.put as jest.Mock).mockResolvedValueOnce(undefined)
+        ;(apiClient.post as jest.Mock).mockResolvedValueOnce({ requestId: 42 })
 
         const payload = { title: 'Atualizado' }
-        await saveEditedProperty(10, payload)
+        await saveEditedProperty(10, payload, 'broker')
 
-        expect(apiClient.put).toHaveBeenCalledWith('/properties/10', payload)
+        expect(apiClient.post).toHaveBeenCalledWith('/properties/10/edit-requests', payload)
     })
 })

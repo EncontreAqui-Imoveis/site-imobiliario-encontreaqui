@@ -31,15 +31,7 @@ jest.mock('next/navigation', () => ({
 
 jest.mock('@/contexts/UserContext', () => ({
     useUser: () => ({
-        session: {
-            user: {
-                id: 1,
-                name: 'Pedro',
-                email: 'pedro@example.com',
-                phone: '(64)99999-9999',
-            },
-            profileStatus: 'incomplete',
-        },
+        session: null,
         loading: false,
         refresh: jest.fn(),
         isProfileComplete: false,
@@ -49,6 +41,8 @@ jest.mock('@/contexts/UserContext', () => ({
 jest.mock('@/lib/api/auth', () => ({
     login: jest.fn(),
     register: jest.fn(),
+    checkEmail: jest.fn(),
+    isGooglePendingAuthResult: jest.fn(() => false),
     sendEmailVerificationCode: jest.fn(),
     verifyEmailCode: jest.fn(),
 }))
@@ -84,12 +78,14 @@ describe('auth and verification accessibility', () => {
 
     it('renders cadastro and verification with explicit instructions', async () => {
         const cadastro = render(<CadastroPage />)
-        expect(screen.getByText('Endereço')).toBeInTheDocument()
-        expect(screen.getByText('A senha deve ter pelo menos 8 caracteres.')).toBeInTheDocument()
+        expect(screen.getByText('Quero cadastrar como cliente')).toBeInTheDocument()
+        expect(screen.getByText('Quero cadastrar como corretor')).toBeInTheDocument()
         cadastro.unmount()
 
         const verificacao = render(<VerificacaoPage />)
-        expect(screen.getByRole('button', { name: 'Enviar código de verificação' })).toBeInTheDocument()
+        expect(screen.getByText('Preparando o envio do código...')).toBeInTheDocument()
+        expect(screen.getByRole('link', { name: 'Trocar e-mail' })).toBeInTheDocument()
+        expect(screen.getByRole('link', { name: 'Pular por agora' })).toBeInTheDocument()
         verificacao.unmount()
     })
 })

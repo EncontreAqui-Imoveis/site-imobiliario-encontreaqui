@@ -1,16 +1,19 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useUser } from '@/contexts/UserContext'
 import { sendEmailVerificationCode, verifyEmailCode } from '@/lib/api/auth'
 import { resolvePostAuthRoute } from '@/lib/auth/routeResolution'
+import { loadSignupDraft, patchSignupDraft } from '@/lib/authSignupDraft'
 import type { ApiError } from '@/lib/api/client'
 import { ShieldCheck, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 export default function VerificacaoPage() {
+    const DAILY_LIMIT = 5
     const router = useRouter()
+    const searchParams = useSearchParams()
     const { session, loading, refresh } = useUser()
 
     const [code, setCode] = useState(['', '', '', '', '', ''])
@@ -19,23 +22,105 @@ export default function VerificacaoPage() {
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
     const [codeSent, setCodeSent] = useState(false)
+    const [verificationExpiresAt, setVerificationExpiresAt] = useState<Date | null>(null)
+    const [verificationExpired, setVerificationExpired] = useState(false)
+    const [cooldownRemainingSeconds, setCooldownRemainingSeconds] = useState(0)
+    const [dailySendCount, setDailySendCount] = useState(0)
+    const [dailyWindowStartedAt, setDailyWindowStartedAt] = useState<Date | null>(null)
+    const [signupDraftEmail, setSignupDraftEmail] = useState<string | null>(null)
+    const [draftReady, setDraftReady] = useState(false)
     const inputRefs = useRef<(HTMLInputElement | null)[]>([])
+    const autoSendTriggeredRef = useRef(false)
+    const autoSubmitScheduledRef = useRef(false)
 
     useEffect(() => {
-        if (!loading && !session) {
+        const signupDraft = loadSignupDraft()
+        setSignupDraftEmail(signupDraft?.data.email ?? null)
+        setDraftReady(true)
+    }, [])
+
+    const isSignupFlow = !session && (searchParams.get('flow') === 'signup' || signupDraftEmail != null)
+    const email = isSignupFlow ? signupDraftEmail ?? '' : session?.user.email || ''
+    const dailyLimitReached = (() => {
+        if (!dailyWindowStartedAt) return false
+        if (Date.now() - dailyWindowStartedAt.getTime() >= 24 * 60 * 60 * 1000) return false
+        return dailySendCount >= DAILY_LIMIT
+    })()
+
+    useEffect(() => {
+        if (!draftReady) return
+        if (!loading && !session && !isSignupFlow) {
             router.replace('/auth/login?next=/verificacao')
+            return
         }
-    }, [loading, session, router])
+        if (!loading && isSignupFlow && !email) {
+            router.replace('/auth/cadastro')
+        }
+    }, [draftReady, email, isSignupFlow, loading, router, session])
 
-    const email = session?.user.email || ''
+    useEffect(() => {
+        if (!verificationExpiresAt && cooldownRemainingSeconds === 0) return
+        const timer = window.setInterval(() => {
+            setCooldownRemainingSeconds((current) => (current > 0 ? current - 1 : 0))
+            setVerificationExpired((current) => {
+                if (!verificationExpiresAt) return current
+                return Date.now() > verificationExpiresAt.getTime()
+            })
+        }, 1000)
 
-    const handleSendCode = async () => {
+        return () => window.clearInterval(timer)
+    }, [cooldownRemainingSeconds, verificationExpiresAt])
+
+    useEffect(() => {
+        if (!draftReady || !email || autoSendTriggeredRef.current) return
+        autoSendTriggeredRef.current = true
+        void handleSendCode(true)
+    }, [draftReady, email])
+
+    useEffect(() => {
+        const isComplete = code.every((digit) => digit.trim().length === 1)
+        if (
+            !isComplete ||
+            submitting ||
+            success ||
+            verificationExpired ||
+            autoSubmitScheduledRef.current
+        ) {
+            return
+        }
+
+        autoSubmitScheduledRef.current = true
+        const timeout = window.setTimeout(() => {
+            autoSubmitScheduledRef.current = false
+            void handleVerify()
+        }, 0)
+
+        return () => window.clearTimeout(timeout)
+    }, [code, submitting, success, verificationExpired])
+
+    const handleSendCode = async (silent = false) => {
         if (!email) return
         setResending(true)
         setError(null)
         try {
-            await sendEmailVerificationCode(email)
+            const response = await sendEmailVerificationCode(email)
+            const now = new Date()
             setCodeSent(true)
+            setVerificationExpired(false)
+            setVerificationExpiresAt(response.expires_at ? new Date(response.expires_at) : null)
+            setCooldownRemainingSeconds(Number(response.cooldown_sec ?? 0))
+            setDailyWindowStartedAt((current) => current ?? now)
+            setDailySendCount(DAILY_LIMIT - Number(response.daily_remaining ?? DAILY_LIMIT))
+
+            if (response.delivery === 'already_verified') {
+                setSuccess(true)
+                if (isSignupFlow) {
+                    patchSignupDraft({ emailVerified: true, step: 'phone' })
+                    window.setTimeout(() => {
+                        router.push('/cadastro/verificar-telefone?flow=signup')
+                    }, 1200)
+                }
+            }
         } catch (err) {
             const apiErr = err as ApiError
             if ('status' in apiErr && apiErr.status === 429) {
@@ -43,18 +128,34 @@ export default function VerificacaoPage() {
             } else {
                 setError('Erro ao enviar código. Tente novamente.')
             }
+            if (!silent) {
+                setCodeSent(false)
+            }
         } finally {
             setResending(false)
         }
     }
 
     const handleCodeChange = (index: number, value: string) => {
-        if (!/^\d?$/.test(value)) return
+        const sanitized = value.replace(/\D/g, '')
+        if (sanitized.length > 1) {
+            const next = [...code]
+            for (let offset = 0; offset < sanitized.length; offset += 1) {
+                const target = index + offset
+                if (target >= next.length) break
+                next[target] = sanitized[offset]
+            }
+            setCode(next)
+            const nextIndex = Math.min(index + sanitized.length, 5)
+            inputRefs.current[nextIndex]?.focus()
+            return
+        }
+        if (!/^\d?$/.test(sanitized)) return
         const newCode = [...code]
-        newCode[index] = value
+        newCode[index] = sanitized
         setCode(newCode)
 
-        if (value && index < 5) {
+        if (sanitized && index < 5) {
             inputRefs.current[index + 1]?.focus()
         }
     }
@@ -65,7 +166,16 @@ export default function VerificacaoPage() {
         }
     }
 
+    const handlePaste = (event: React.ClipboardEvent) => {
+        const pasted = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
+        if (!pasted) return
+        event.preventDefault()
+        const next = Array.from({ length: 6 }, (_, index) => pasted[index] ?? '')
+        setCode(next)
+    }
+
     const handleVerify = async () => {
+        autoSubmitScheduledRef.current = false
         const fullCode = code.join('')
         if (fullCode.length !== 6) {
             setError('Insira o código completo de 6 dígitos.')
@@ -77,6 +187,15 @@ export default function VerificacaoPage() {
         try {
             await verifyEmailCode(email, fullCode)
             setSuccess(true)
+
+            if (isSignupFlow) {
+                patchSignupDraft({ emailVerified: true, step: 'phone' })
+                setTimeout(() => {
+                    router.push('/cadastro/verificar-telefone?flow=signup')
+                }, 1500)
+                return
+            }
+
             await refresh()
             setTimeout(() => {
                 if (!session) {
@@ -108,7 +227,7 @@ export default function VerificacaoPage() {
         }
     }
 
-    if (loading || !session) {
+    if ((loading && !isSignupFlow) || !draftReady) {
         return (
             <div className="min-h-[60vh] flex items-center justify-center">
                 <p className="text-sm text-slate-600">Carregando...</p>
@@ -128,7 +247,7 @@ export default function VerificacaoPage() {
                             Conta verificada!
                         </h1>
                         <p className="text-sm text-slate-600">
-                            Redirecionando...
+                            {isSignupFlow ? 'Seguindo para a verificação do telefone...' : 'Redirecionando...'}
                         </p>
                     </div>
                 ) : (
@@ -146,16 +265,12 @@ export default function VerificacaoPage() {
                         </div>
 
                         {!codeSent ? (
-                            <button
-                                onClick={handleSendCode}
-                                disabled={resending}
-                                className="w-full inline-flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 disabled:bg-primary-300 text-white text-sm font-semibold px-4 py-2.5 shadow-md shadow-primary-500/20 transition-colors"
-                            >
-                                {resending ? 'Enviando...' : 'Enviar código de verificação'}
-                            </button>
+                            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                                {resending ? 'Enviando o código automaticamente...' : 'Preparando o envio do código...'}
+                            </div>
                         ) : (
                             <div className="space-y-5">
-                                <div className="flex justify-center gap-2" aria-label="Código de verificação">
+                                <div className="flex justify-center gap-2" aria-label="Código de verificação" onPaste={handlePaste}>
                                     {code.map((digit, i) => (
                                         <input
                                             key={i}
@@ -187,28 +302,46 @@ export default function VerificacaoPage() {
                                 </button>
 
                                 <button
-                                    onClick={handleSendCode}
-                                    disabled={resending}
+                                    onClick={() => handleSendCode()}
+                                    disabled={resending || dailyLimitReached || cooldownRemainingSeconds > 0}
                                     className="w-full text-center text-sm text-primary-600 hover:text-primary-700 font-medium disabled:opacity-50"
                                 >
-                                    {resending ? 'Reenviando...' : 'Reenviar código'}
+                                    {resending
+                                        ? 'Reenviando...'
+                                        : dailyLimitReached
+                                            ? 'Limite diário atingido'
+                                            : cooldownRemainingSeconds > 0
+                                                ? `Reenviar em ${cooldownRemainingSeconds}s`
+                                                : verificationExpired
+                                                    ? 'Enviar novo código'
+                                                    : 'Reenviar código'}
                                 </button>
+                                {verificationExpiresAt && (
+                                    <p className="text-center text-xs text-slate-500">
+                                        {verificationExpired
+                                            ? 'Código expirado. Solicite um novo envio.'
+                                            : `Código válido até ${verificationExpiresAt.toLocaleTimeString('pt-BR', {
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                            })}.`}
+                                    </p>
+                                )}
                             </div>
                         )}
 
-                        <div className="space-y-3 text-center">
+                        <div className="flex flex-col gap-3">
                             <Link
-                                href="/perfil/editar"
-                                className="inline-flex items-center justify-center text-sm font-medium text-primary-600 hover:text-primary-700"
+                                href={isSignupFlow ? '/auth/cadastro' : '/perfil/editar'}
+                                className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-primary-600 hover:bg-slate-50 hover:text-primary-700"
                             >
-                                Trocar e-mail
+                                {isSignupFlow ? 'Voltar ao cadastro' : 'Trocar e-mail'}
                             </Link>
                             <Link
-                                href="/meus-imoveis"
-                                className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-700"
+                                href={isSignupFlow ? '/auth/cadastro' : '/meus-imoveis'}
+                                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700"
                             >
                                 <ArrowLeft className="w-4 h-4" />
-                                Pular por agora
+                                {isSignupFlow ? 'Revisar dados do cadastro' : 'Pular por agora'}
                             </Link>
                         </div>
                     </>

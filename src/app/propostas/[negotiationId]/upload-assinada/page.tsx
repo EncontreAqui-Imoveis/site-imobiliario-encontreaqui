@@ -1,19 +1,33 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { useUser } from '@/contexts/UserContext'
+import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { uploadSignedProposal } from '@/lib/api/negotiations'
 import type { ApiError } from '@/lib/api/client'
 
 export default function UploadPropostaAssinadaPage() {
     const router = useRouter()
     const params = useParams<{ negotiationId: string }>()
+    const { session, loading: authLoading } = useUser()
     const negotiationId = params.negotiationId
 
     const [file, setFile] = useState<File | null>(null)
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
+
+    useEffect(() => {
+        if (!authLoading && !session) {
+            router.replace(`/auth/login?next=/propostas/${negotiationId}/upload-assinada`)
+            return
+        }
+        const gateRoute = resolveOperationalGateRoute(session)
+        if (!authLoading && gateRoute) {
+            router.replace(gateRoute)
+        }
+    }, [authLoading, negotiationId, router, session])
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const selected = event.target.files?.[0]
@@ -40,12 +54,16 @@ export default function UploadPropostaAssinadaPage() {
         try {
             await uploadSignedProposal(negotiationId, file)
             setSuccess(true)
-            // Futuramente podemos redirecionar para detalhe da negociação/contrato.
+            window.setTimeout(() => {
+                router.replace('/propostas?signed=1')
+            }, 1200)
         } catch (err) {
             const apiErr = err as ApiError
             if ('status' in apiErr) {
                 if (apiErr.status === 403) {
                     setError('Você não participa desta negociação.')
+                } else if (apiErr.status === 404) {
+                    setError('Negociação não encontrada.')
                 } else if (apiErr.status === 400 || apiErr.status === 415) {
                     setError(apiErr.message || 'Arquivo inválido.')
                 } else {
@@ -61,6 +79,14 @@ export default function UploadPropostaAssinadaPage() {
 
     const goBackToHome = () => {
         router.push('/')
+    }
+
+    if (authLoading || !session) {
+        return (
+            <div className="min-h-[60vh] flex items-center justify-center">
+                <p className="text-sm text-slate-600">Carregando...</p>
+            </div>
+        )
     }
 
     return (

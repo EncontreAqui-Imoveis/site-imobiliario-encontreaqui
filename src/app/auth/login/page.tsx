@@ -3,10 +3,12 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { login } from '@/lib/api/auth'
+import { isGooglePendingAuthResult, login } from '@/lib/api/auth'
 import { loginWithGooglePopup } from '@/lib/auth/googleFlow'
 import { resolvePostAuthRoute } from '@/lib/auth/routeResolution'
+import SignupDraftNotice from '@/components/auth/SignupDraftNotice'
 import { useUser } from '@/contexts/UserContext'
+import { createSignupDraft, saveSignupDraft } from '@/lib/authSignupDraft'
 import type { ApiError } from '@/lib/api/client'
 
 export default function LoginPage() {
@@ -52,9 +54,27 @@ export default function LoginPage() {
         setError(null)
 
         try {
-            const session = await loginWithGooglePopup()
+            const result = await loginWithGooglePopup()
+            if (isGooglePendingAuthResult(result)) {
+                saveSignupDraft(
+                    createSignupDraft({
+                        source: 'google',
+                        step: 'profile',
+                        emailVerified: true,
+                        data: {
+                            email: result.pending.email,
+                            name: result.pending.name,
+                            googleIdToken: result.pending.googleIdToken,
+                            googleUid: result.pending.googleUid,
+                            state: 'GO',
+                        },
+                    }),
+                )
+                router.push('/auth/cadastro')
+                return
+            }
             await refresh()
-            router.push(resolvePostAuthRoute(session, next))
+            router.push(resolvePostAuthRoute(result, next))
         } catch (err) {
             const apiErr = err as ApiError
             if ('status' in apiErr && apiErr.status === 401) {
@@ -80,6 +100,8 @@ export default function LoginPage() {
                         Acesse com sua conta para gerenciar imóveis, propostas e contratos.
                     </p>
                 </div>
+
+                <SignupDraftNotice />
 
                 {/* Google Sign-In Button */}
                 <button

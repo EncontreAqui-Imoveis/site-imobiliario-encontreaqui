@@ -57,6 +57,12 @@ jest.mock('@/components/home/AboutSection', () => {
     }
 })
 
+jest.mock('@/components/auth/SignupDraftNotice', () => {
+    return function MockSignupDraftNotice() {
+        return null
+    }
+})
+
 jest.mock('@/components/search/SearchFilters', () => {
     return function MockSearchFilters() {
         return <div data-testid="search-filters">Filters</div>

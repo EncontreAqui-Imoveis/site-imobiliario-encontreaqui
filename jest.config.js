@@ -14,6 +14,7 @@ const customJestConfig = {
         '!src/**/*.d.ts',
         '!src/**/__tests__/**',
     ],
+    testPathIgnorePatterns: ['<rootDir>/e2e/'],
     coverageDirectory: '<rootDir>/coverage',
     coverageThreshold: {
         global: {

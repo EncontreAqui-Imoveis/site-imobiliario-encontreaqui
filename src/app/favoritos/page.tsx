@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useUser } from '@/contexts/UserContext'
-import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
+import { resolvePendingAction } from '@/lib/auth/routeResolution'
+import GuestAccessCard from '@/components/auth/GuestAccessCard'
 import { getFavorites, removeFavorite } from '@/lib/api/favorites'
 import type { Property } from '@/types/property'
 import PropertyCard from '@/components/property/PropertyCard'
@@ -11,28 +11,20 @@ import { Heart, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 
 export default function FavoritosPage() {
-    const router = useRouter()
     const { session, loading: authLoading } = useUser()
 
     const [favorites, setFavorites] = useState<Property[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
-    useEffect(() => {
-        if (!authLoading && !session) {
-            router.replace('/auth/login?next=/favoritos')
-            return
-        }
-        const gateRoute = resolveOperationalGateRoute(session)
-        if (!authLoading && gateRoute) {
-            router.replace(gateRoute)
-        }
-    }, [authLoading, session, router])
+    const pendingAction = resolvePendingAction(session)
 
     useEffect(() => {
         if (session) {
             loadFavorites()
+            return
         }
+        setLoading(false)
     }, [session])
 
     const loadFavorites = async () => {
@@ -57,10 +49,22 @@ export default function FavoritosPage() {
         }
     }
 
-    if (authLoading || !session) {
+    if (authLoading) {
         return (
             <div className="min-h-[60vh] flex items-center justify-center">
                 <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+            </div>
+        )
+    }
+
+    if (!session) {
+        return (
+            <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 pt-24">
+                <GuestAccessCard
+                    icon={Heart}
+                    title="Entre para guardar seus favoritos"
+                    description="Com uma conta você salva imóveis, acompanha propostas e retoma sua busca de onde parou."
+                />
             </div>
         )
     }
@@ -76,6 +80,13 @@ export default function FavoritosPage() {
                     <p className="text-sm text-slate-500">{favorites.length} imóveis salvos</p>
                 </div>
             </div>
+
+            {pendingAction && (
+                <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    <p className="font-semibold">{pendingAction.title}</p>
+                    <p className="mt-1">{pendingAction.description}</p>
+                </div>
+            )}
 
             {loading ? (
                 <div className="flex items-center justify-center py-20">

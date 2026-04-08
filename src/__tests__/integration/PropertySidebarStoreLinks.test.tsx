@@ -90,14 +90,14 @@ describe('PropertySidebar store links', () => {
         )
     })
 
-    it('renders proposal and messaging CTAs with accessible names tied to the property', () => {
+    it('renders messaging and app CTAs with accessible names tied to the property', () => {
         render(<PropertySidebar property={{ ...property, brokerPhone: '62999998888' }} />)
 
         expect(
             screen.getByRole('link', { name: /falar pelo whatsapp sobre casa modelo/i })
         ).toBeInTheDocument()
         expect(
-            screen.getByRole('link', { name: /entrar para fazer proposta para casa modelo/i })
+            screen.getByRole('link', { name: /ver casa modelo no aplicativo/i })
         ).toBeInTheDocument()
     })
 })

@@ -66,14 +66,6 @@ function filterSharedDocs(docs: ContractDocument[]): ContractDocument[] {
     return docs.filter((doc) => !doc.side || doc.documentType === 'contrato_minuta')
 }
 
-function isSignatureDocumentType(documentType: ContractDocumentType | null | undefined): boolean {
-    return (
-        documentType === 'contrato_assinado' ||
-        documentType === 'comprovante_pagamento' ||
-        documentType === 'boleto_vistoria'
-    )
-}
-
 const DOCUMENT_LABELS: Record<string, string> = {
     doc_identidade: 'Documento de identidade',
     comprovante_endereco: 'Comprovante de endereço',
@@ -442,7 +434,6 @@ export function ContractDetailClient({ contract }: Props) {
     const isAwaitingDocs = currentContract.status === 'AWAITING_DOCS'
     const isInDraft = currentContract.status === 'IN_DRAFT'
     const isAwaitingSignatures = currentContract.status === 'AWAITING_SIGNATURES'
-    const isFinalized = currentContract.status === 'FINALIZED'
     const currentUserId = Number(session?.user?.id ?? 0)
     const canEditSellerSide =
         isAwaitingDocs &&

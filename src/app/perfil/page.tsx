@@ -1,30 +1,69 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
-import { Edit, BadgeCheck, Building2, LogOut, Briefcase, BarChart3, Loader2, Bell, Settings } from 'lucide-react'
+import { resolvePendingAction } from '@/lib/auth/routeResolution'
+import GuestAccessCard from '@/components/auth/GuestAccessCard'
+import { shareOrCopy } from '@/lib/webShare'
+import { Edit, BadgeCheck, Building2, LogOut, Briefcase, BarChart3, Loader2, Bell, Settings, Share2, User } from 'lucide-react'
 
 export default function PerfilPage() {
     const router = useRouter()
     const { session, loading, isBroker, logout } = useUser()
-
-    useEffect(() => {
-        if (!loading && !session) {
-            router.replace('/auth/login?next=/perfil')
-        }
-    }, [loading, session, router])
+    const [shareMessage, setShareMessage] = useState<string | null>(null)
 
     const handleLogout = async () => {
         await logout()
         router.push('/')
     }
 
-    if (loading || !session) {
+    const handleShare = async () => {
+        const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://encontreaquiimoveis.app'
+        const result = await shareOrCopy({
+            title: 'EncontreAqui Imóveis',
+            text: 'Venha conhecer o EncontreAqui Imóveis.',
+            url: baseUrl,
+        })
+
+        setShareMessage(
+            result.kind === 'copied'
+                ? 'Link copiado para a área de transferência.'
+                : result.kind === 'shared'
+                    ? 'Link compartilhado com sucesso.'
+                    : 'Não foi possível compartilhar agora neste navegador.',
+        )
+        window.setTimeout(() => setShareMessage(null), 2500)
+    }
+
+    if (loading) {
         return (
             <div className="min-h-[60vh] flex items-center justify-center">
                 <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+            </div>
+        )
+    }
+
+    if (!session) {
+        return (
+            <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 pt-24 space-y-6">
+                <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 p-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                            <User className="w-8 h-8" />
+                        </div>
+                        <div>
+                            <h1 className="text-xl font-bold text-slate-900">Olá, visitante!</h1>
+                            <p className="text-sm text-slate-500">Entre para guardar favoritos, gerar propostas e acompanhar contratos.</p>
+                        </div>
+                    </div>
+                </div>
+                <GuestAccessCard
+                    icon={User}
+                    title="Acesse seu perfil completo"
+                    description="Crie uma conta para desbloquear favoritos, propostas, notificações e a jornada completa de negociação."
+                />
             </div>
         )
     }
@@ -39,29 +78,7 @@ export default function PerfilPage() {
                 : brokerStatus === 'rejected'
                     ? 'Solicitação rejeitada'
                     : null
-    const nextPendingAction =
-        !user.email_verified
-            ? {
-                href: '/verificacao',
-                title: 'Verificar e-mail',
-                description: 'Confirme sua conta para liberar os próximos fluxos.',
-            }
-            : session.profileStatus !== 'complete'
-                ? {
-                    href: '/onboarding',
-                    title: 'Completar perfil',
-                    description: 'Finalize telefone e endereço para operar normalmente.',
-                }
-                : brokerStatus === 'pending_verification' || brokerStatus === 'rejected'
-                    ? {
-                        href: '/onboarding/broker',
-                        title: brokerStatus === 'rejected' ? 'Reenviar documentos' : 'Acompanhar análise de corretor',
-                        description:
-                            brokerStatus === 'rejected'
-                                ? 'Sua solicitação de corretor foi rejeitada. Revise o CRECI e os documentos.'
-                                : 'Seu cadastro de corretor ainda está em análise.',
-                    }
-                    : null
+    const nextPendingAction = resolvePendingAction(session)
 
     return (
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 pt-24">
@@ -139,6 +156,12 @@ export default function PerfilPage() {
                 )}
             </div>
 
+            {shareMessage && (
+                <div className="mb-6 rounded-2xl border border-primary-100 bg-primary-50 px-5 py-4 text-sm text-primary-900">
+                    {shareMessage}
+                </div>
+            )}
+
             {nextPendingAction && (
                 <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
                     <p className="text-sm font-semibold text-amber-900">{nextPendingAction.title}</p>
@@ -210,6 +233,21 @@ export default function PerfilPage() {
                         <p className="text-xs text-slate-500">Propostas, contratos e novidades</p>
                     </div>
                 </Link>
+
+                <button
+                    onClick={() => {
+                        void handleShare()
+                    }}
+                    className="flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors w-full text-left"
+                >
+                    <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+                        <Share2 className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div>
+                        <p className="text-sm font-semibold text-slate-900">Indicar um amigo</p>
+                        <p className="text-xs text-slate-500">Compartilhe a plataforma com seus contatos</p>
+                    </div>
+                </button>
 
                 <Link
                     href="/contratos"

@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useUser } from '@/contexts/UserContext'
+import { resolvePendingAction } from '@/lib/auth/routeResolution'
 import { updateProfile } from '@/lib/api/user'
+import { savePendingPhoneUpdateDraft } from '@/lib/authSignupDraft'
 import type { ApiError } from '@/lib/api/client'
 import { ArrowLeft, Save, Loader2 } from 'lucide-react'
 import Link from 'next/link'
@@ -17,6 +19,7 @@ const BRAZILIAN_STATES = [
 
 export default function EditarPerfilPage() {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const { session, loading: authLoading, refresh } = useUser()
 
     const [name, setName] = useState('')
@@ -54,6 +57,15 @@ export default function EditarPerfilPage() {
         }
     }, [session])
 
+    useEffect(() => {
+        if (searchParams.get('saved') === '1') {
+            setSuccess(true)
+            const timer = window.setTimeout(() => setSuccess(false), 3000)
+            return () => window.clearTimeout(timer)
+        }
+        return undefined
+    }, [searchParams])
+
     const handleCepBlur = async () => {
         const cleanCep = cep.replace(/\D/g, '')
         if (cleanCep.length !== 8) return
@@ -83,7 +95,12 @@ export default function EditarPerfilPage() {
         setSuccess(false)
 
         try {
-            await updateProfile({
+            if (!session) {
+                router.replace('/auth/login?next=/perfil/editar')
+                return
+            }
+
+            const payload = {
                 name: name || undefined,
                 phone: normalizePhoneDigits(phone) || undefined,
                 cep: cep.replace(/\D/g, '') || undefined,
@@ -93,7 +110,22 @@ export default function EditarPerfilPage() {
                 bairro: bairro || undefined,
                 city: city || undefined,
                 state: state || undefined,
-            })
+            }
+
+            const originalPhone = normalizePhoneDigits(session.user.phone || '') || ''
+            const nextPhone = normalizePhoneDigits(phone) || ''
+
+            if (nextPhone && nextPhone !== originalPhone) {
+                savePendingPhoneUpdateDraft({
+                    phone: nextPhone,
+                    payload,
+                    updatedAt: new Date().toISOString(),
+                })
+                router.push(`/cadastro/verificar-telefone?mode=profile-update&phone=${encodeURIComponent(nextPhone)}`)
+                return
+            }
+
+            await updateProfile(payload)
             await refresh()
             setSuccess(true)
             setTimeout(() => setSuccess(false), 3000)
@@ -113,6 +145,8 @@ export default function EditarPerfilPage() {
         )
     }
 
+    const pendingAction = resolvePendingAction(session)
+
     return (
         <div className="max-w-lg mx-auto px-4 sm:px-6 py-8 pt-24">
             <div className="flex items-center gap-3 mb-6">
@@ -121,6 +155,13 @@ export default function EditarPerfilPage() {
                 </Link>
                 <h1 className="text-2xl font-bold text-slate-900">Editar Perfil</h1>
             </div>
+
+            {pendingAction && (
+                <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    <p className="font-semibold">{pendingAction.title}</p>
+                    <p className="mt-1">{pendingAction.description}</p>
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 p-6 space-y-4">
                 <div className="space-y-1.5">

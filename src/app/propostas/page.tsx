@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
 import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
@@ -12,6 +12,7 @@ import { FileText, Loader2, Plus, Building2 } from 'lucide-react'
 
 export default function PropostasPage() {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const { session, loading: authLoading } = useUser()
 
     const [negotiations, setNegotiations] = useState<NegotiationSummary[]>([])
@@ -57,10 +58,10 @@ export default function PropostasPage() {
 
     const statusSummary = {
         waitingSignature: negotiations.filter((n) =>
-            ['PENDING_PROPOSAL', 'PROPOSAL_DRAFT', 'PROPOSAL_SENT'].includes(n.status),
+            ['PENDING_PROPOSAL', 'PROPOSAL_SENT'].includes(n.status),
         ).length,
         underReview: negotiations.filter((n) =>
-            ['DOCUMENTATION_PHASE', 'CONTRACT_DRAFTING', 'AWAITING_SIGNATURES'].includes(n.status),
+            ['PROPOSAL_SIGNED', 'DOCUMENTATION_PHASE', 'CONTRACT_DRAFTING', 'AWAITING_SIGNATURES', 'IN_CONTRACT'].includes(n.status),
         ).length,
         approved: negotiations.filter((n) =>
             ['IN_NEGOTIATION', 'SOLD', 'RENTED', 'CONTRACT_FINALIZED'].includes(n.status),
@@ -71,7 +72,7 @@ export default function PropostasPage() {
         if (status === 'PENDING_PROPOSAL' || status === 'PROPOSAL_SENT') {
             return `/propostas/${id}/upload-assinada`
         }
-        if (status === 'DOCUMENTATION_PHASE' || status === 'CONTRACT_DRAFTING' || status === 'AWAITING_SIGNATURES') {
+        if (status === 'PROPOSAL_SIGNED' || status === 'DOCUMENTATION_PHASE' || status === 'CONTRACT_DRAFTING' || status === 'AWAITING_SIGNATURES') {
             return '/propostas'
         }
         return '/contratos'
@@ -80,6 +81,9 @@ export default function PropostasPage() {
     const resolveActionLabel = (status: NegotiationSummary['status']) => {
         if (status === 'PENDING_PROPOSAL' || status === 'PROPOSAL_SENT') {
             return 'Enviar proposta assinada'
+        }
+        if (status === 'PROPOSAL_SIGNED') {
+            return 'Proposta assinada enviada'
         }
         if (status === 'DOCUMENTATION_PHASE') {
             return 'Aguardar análise documental'
@@ -95,6 +99,8 @@ export default function PropostasPage() {
         }
         return 'Abrir contratos'
     }
+
+    const signedSuccess = searchParams.get('signed') === '1'
 
     if (authLoading || !session) {
         return (
@@ -125,6 +131,12 @@ export default function PropostasPage() {
             >
                 Acompanhe aqui o ciclo da proposta: envio, análise documental, minuta, assinaturas e contrato.
             </div>
+
+            {signedSuccess && (
+                <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900 shadow-sm">
+                    Proposta assinada enviada com sucesso. Agora acompanhe a negociação por aqui até ela avançar para contratos.
+                </div>
+            )}
 
             <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">

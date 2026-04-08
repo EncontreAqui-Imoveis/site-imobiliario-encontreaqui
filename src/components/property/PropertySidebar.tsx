@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { formatPrice, Property } from '@/types/property'
 import { Info, ShieldCheck, Smartphone, MessageCircle, Phone } from 'lucide-react'
 import { buildAppDeepLink, getStoreUrlClient } from '@/lib/appLinks'
-import Link from 'next/link'
 import { buildPhoneLink, buildWhatsappLink } from '@/lib/contactLinks'
 
 interface PropertySidebarProps {

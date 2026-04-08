@@ -1,28 +1,35 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
+import { resolvePendingAction } from '@/lib/auth/routeResolution'
+import GuestAccessCard from '@/components/auth/GuestAccessCard'
 import { Settings, User, Shield, Bell, FileText, Loader2, Smartphone } from 'lucide-react'
 
 export default function ConfiguracoesPage() {
-    const router = useRouter()
     const { session, loading } = useUser()
 
-    useEffect(() => {
-        if (!loading && !session) {
-            router.replace('/auth/login?next=/configuracoes')
-        }
-    }, [loading, session, router])
-
-    if (loading || !session) {
+    if (loading) {
         return (
             <div className="min-h-[60vh] flex items-center justify-center">
                 <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
             </div>
         )
     }
+
+    if (!session) {
+        return (
+            <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 pt-24">
+                <GuestAccessCard
+                    icon={Settings}
+                    title="Entre para configurar sua conta"
+                    description="Ao entrar, você poderá editar perfil, acessar notificações e gerenciar a segurança da sua conta."
+                />
+            </div>
+        )
+    }
+
+    const pendingAction = resolvePendingAction(session)
 
     const settingsItems = [
         {
@@ -77,6 +84,13 @@ export default function ConfiguracoesPage() {
                 </div>
                 <h1 className="text-2xl font-bold text-slate-900">Configurações</h1>
             </div>
+
+            {pendingAction && (
+                <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    <p className="font-semibold">{pendingAction.title}</p>
+                    <p className="mt-1">{pendingAction.description}</p>
+                </div>
+            )}
 
             <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 divide-y divide-slate-100">
                 {settingsItems.map((item) => {

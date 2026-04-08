@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback } from 'react'
 import { unstable_batchedUpdates } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@/contexts/UserContext'
-import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
+import { resolvePendingAction } from '@/lib/auth/routeResolution'
+import GuestAccessCard from '@/components/auth/GuestAccessCard'
 import {
     getNotifications, markAsRead, markAllAsRead,
     deleteNotification, clearAllNotifications,
@@ -103,20 +104,11 @@ export default function NotificacoesPage() {
     const [expandedNotif, setExpandedNotif] = useState<Notification | null>(null)
 
     useEffect(() => {
-        if (!authLoading && !session) {
-            router.replace('/auth/login?next=/notificacoes')
-            return
-        }
-        const gateRoute = resolveOperationalGateRoute(session)
-        if (!authLoading && gateRoute) {
-            router.replace(gateRoute)
-        }
-    }, [authLoading, session, router])
-
-    useEffect(() => {
         if (session) {
             loadNotifications()
+            return
         }
+        setLoading(false)
     }, [session])
 
     const loadNotifications = async () => {
@@ -209,11 +201,24 @@ export default function NotificacoesPage() {
     }, [handleMarkRead, router])
 
     const unreadCount = notifications.filter(n => !n.isRead).length
+    const pendingAction = resolvePendingAction(session)
 
-    if (authLoading || !session) {
+    if (authLoading) {
         return (
             <div className="min-h-[60vh] flex items-center justify-center">
                 <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+            </div>
+        )
+    }
+
+    if (!session) {
+        return (
+            <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 pt-24">
+                <GuestAccessCard
+                    icon={Bell}
+                    title="Entre para ver suas notificações"
+                    description="Com sua conta você acompanha alertas de propostas, contratos e atualizações importantes da operação."
+                />
             </div>
         )
     }
@@ -260,6 +265,13 @@ export default function NotificacoesPage() {
                     )}
                 </div>
             </div>
+
+            {pendingAction && (
+                <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    <p className="font-semibold">{pendingAction.title}</p>
+                    <p className="mt-1">{pendingAction.description}</p>
+                </div>
+            )}
 
             {/* Content */}
             {loading ? (
