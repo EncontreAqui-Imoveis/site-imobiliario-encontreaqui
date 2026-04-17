@@ -29,6 +29,10 @@ export default function HeroSection() {
     const [type, setType] = useState('')
     const [purpose, setPurpose] = useState('')
     const [city, setCity] = useState('')
+    const [bairro, setBairro] = useState('')
+    const [minPrice, setMinPrice] = useState('')
+    const [maxPrice, setMaxPrice] = useState('')
+    const [code, setCode] = useState('')
     const [isSearching, setIsSearching] = useState(false)
 
     const handleSearch = () => {
@@ -36,8 +40,13 @@ export default function HeroSection() {
         const params = new URLSearchParams()
         if (type) params.set('type', type)
         if (purpose) params.set('purpose', purpose)
-        if (city) params.set('city', city)
+        if (city.trim()) params.set('city', city.trim())
+        if (bairro.trim()) params.set('bairro', bairro.trim())
+        if (minPrice.trim()) params.set('minPrice', minPrice.trim())
+        if (maxPrice.trim()) params.set('maxPrice', maxPrice.trim())
+        if (code.trim()) params.set('code', code.trim())
         router.push(`/imoveis?${params.toString()}`)
+        setIsSearching(false)
     }
 
     return (
@@ -85,8 +94,8 @@ export default function HeroSection() {
                     </p>
 
                     {/* Search Box */}
-                    <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-6 max-w-3xl mx-auto animate-fadeIn">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-6 max-w-4xl mx-auto animate-fadeIn">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {/* Purpose */}
                             <div className="relative">
                                 <label className="block text-xs font-medium text-gray-500 mb-1.5 text-left">
@@ -145,8 +154,65 @@ export default function HeroSection() {
                                 </div>
                             </div>
 
+                            {/* Bairro */}
+                            <div className="relative">
+                                <label className="block text-xs font-medium text-gray-500 mb-1.5 text-left">
+                                    Bairro
+                                </label>
+                                <input
+                                    type="text"
+                                    value={bairro}
+                                    onChange={(e) => setBairro(e.target.value)}
+                                    maxLength={120}
+                                    placeholder="Opcional"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                />
+                            </div>
+
+                            {/* Faixa de preço */}
+                            <div className="relative sm:col-span-2 lg:col-span-1">
+                                <label className="block text-xs font-medium text-gray-500 mb-1.5 text-left">
+                                    Valor (R$)
+                                </label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="number"
+                                        inputMode="numeric"
+                                        min={0}
+                                        value={minPrice}
+                                        onChange={(e) => setMinPrice(e.target.value)}
+                                        placeholder="Mín."
+                                        className="min-w-0 flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                    />
+                                    <input
+                                        type="number"
+                                        inputMode="numeric"
+                                        min={0}
+                                        value={maxPrice}
+                                        onChange={(e) => setMaxPrice(e.target.value)}
+                                        placeholder="Máx."
+                                        className="min-w-0 flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Código / ID */}
+                            <div className="relative sm:col-span-2 lg:col-span-1">
+                                <label className="block text-xs font-medium text-gray-500 mb-1.5 text-left">
+                                    Código ou ID
+                                </label>
+                                <input
+                                    type="text"
+                                    value={code}
+                                    onChange={(e) => setCode(e.target.value)}
+                                    maxLength={80}
+                                    placeholder="Opcional"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                />
+                            </div>
+
                             {/* Search Button */}
-                            <div className="flex items-end">
+                            <div className="flex items-end sm:col-span-2 lg:col-span-1">
                                 <button
                                     onClick={handleSearch}
                                     disabled={isSearching}

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight, X, Play, Grid } from 'lucide-react'
 import FavoriteButton from '@/components/property/FavoriteButton'
+import PhotoWatermark from '@/components/property/PhotoWatermark'
 
 interface PropertyGalleryProps {
     images: string[]
@@ -61,6 +62,7 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
                         priority
                         sizes="(max-width: 1280px) 50vw, 33vw"
                     />
+                    <PhotoWatermark />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
                     {propertyId && (
                         <div className="absolute top-4 right-4 z-10">
@@ -113,6 +115,7 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
                     className="object-contain"
                     priority
                 />
+                <PhotoWatermark />
 
                 <div className="absolute inset-0 flex items-center justify-between p-2">
                     <button
@@ -195,6 +198,7 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
                                 quality={100}
                                 priority
                             />
+                            <PhotoWatermark />
                         </div>
 
                         <button

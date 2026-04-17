@@ -76,6 +76,7 @@ export default function SearchFilters() {
         areaUnit: searchParams.get('areaUnit') || 'm2',
         tipoLote: searchParams.get('tipo_lote') || '',
         sort: searchParams.get('sort') || '',
+        code: searchParams.get('code') || '',
     })
 
     const [amenities, setAmenities] = useState<Record<string, boolean>>(() => {
@@ -105,6 +106,7 @@ export default function SearchFilters() {
             areaUnit: searchParams.get('areaUnit') || 'm2',
             tipoLote: searchParams.get('tipo_lote') || '',
             sort: searchParams.get('sort') || '',
+            code: searchParams.get('code') || '',
         }))
 
         const newAmenities: Record<string, boolean> = {}
@@ -149,7 +151,7 @@ export default function SearchFilters() {
             search: '', type: '', purpose: '', city: '', bedrooms: '',
             bathrooms: '', bairro: '', minPrice: '', maxPrice: '',
             minArea: '', maxArea: '', areaUnit: 'm2',
-            tipoLote: '', sort: '',
+            tipoLote: '', sort: '', code: '',
         })
         setAmenities(amenityOptions.reduce((acc, a) => ({ ...acc, [a.key]: false }), {}))
         router.push('/imoveis')
@@ -305,6 +307,20 @@ export default function SearchFilters() {
                                         >
                                             {propertyTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                                         </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
+                                            Código ou ID do imóvel
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={filters.code}
+                                            onChange={(e) => handleChange('code', e.target.value)}
+                                            maxLength={80}
+                                            placeholder="Código interno ou UUID"
+                                            className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        />
                                     </div>
 
                                     <div>

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Home, ChevronRight } from 'lucide-react'
 import PropertyGrid from '@/components/property/PropertyGrid'
 import SearchFilters from '@/components/search/SearchFilters'
+import ListingFilterBar from '@/components/search/ListingFilterBar'
 import ActiveFilterChips from '@/components/search/ActiveFilterChips'
 import { Property } from '@/types/property'
 import { areaInputToSquareMeters, normalizeAreaUnidade } from '@/lib/areaUnits'
@@ -25,8 +26,10 @@ async function fetchProperties(params: Record<string, string | undefined>): Prom
         if (params.bairro) queryParams.set('bairro', params.bairro)
         if (params.bedrooms) queryParams.set('bedrooms', params.bedrooms)
         if (params.bathrooms) queryParams.set('bathrooms', params.bathrooms)
-        if (params.minPrice) queryParams.set('min_price', params.minPrice)
-        if (params.maxPrice) queryParams.set('max_price', params.maxPrice)
+        if (params.minPrice) queryParams.set('minPrice', params.minPrice)
+        if (params.maxPrice) queryParams.set('maxPrice', params.maxPrice)
+        if (params.code?.trim()) queryParams.set('code', params.code.trim())
+        if (params.id?.trim()) queryParams.set('id', params.id.trim())
         const areaUnit = normalizeAreaUnidade(params.areaUnit)
         if (params.minArea?.trim()) {
             const v = Number(params.minArea)
@@ -43,7 +46,7 @@ async function fetchProperties(params: Record<string, string | undefined>): Prom
             }
         }
         if (params.tipo_lote) queryParams.set('tipo_lote', params.tipo_lote)
-        if (params.sort) queryParams.set('sort', params.sort)
+        if (params.sort) queryParams.set('sortBy', params.sort)
 
         // Amenities
         if (params.has_wifi === '1') queryParams.set('has_wifi', 'true')
@@ -132,6 +135,9 @@ export default async function PropertiesPage({
 
                     {/* Results */}
                     <main className="flex-1" aria-label="Resultados de imóveis">
+                        <Suspense fallback={null}>
+                            <ListingFilterBar />
+                        </Suspense>
                         <Suspense fallback={null}>
                             <ActiveFilterChips />
                         </Suspense>

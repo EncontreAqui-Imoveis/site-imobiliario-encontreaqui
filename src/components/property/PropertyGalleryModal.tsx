@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
+import PhotoWatermark from '@/components/property/PhotoWatermark'
 
 interface PropertyGalleryModalProps {
     images: string[]
@@ -65,6 +66,7 @@ export default function PropertyGalleryModal({ images, initialIndex = 0, isOpen,
                         sizes="100vw"
                         priority
                     />
+                    <PhotoWatermark />
                 </div>
 
                 {/* Navigation */}

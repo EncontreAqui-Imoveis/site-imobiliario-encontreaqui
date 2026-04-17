@@ -19,6 +19,8 @@ const FILTER_LABELS: Record<string, string> = {
     areaUnit: 'Unid. área',
     tipo_lote: 'Tipo de lote',
     sort: 'Ordenar',
+    code: 'Código ou ID',
+    id: 'ID',
     has_wifi: 'Wi-Fi',
     tem_piscina: 'Piscina',
     tem_energia_solar: 'Energia Solar',
