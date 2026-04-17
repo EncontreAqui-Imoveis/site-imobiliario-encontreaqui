@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Search, Home, MapPin, ChevronDown, Loader2 } from 'lucide-react'
+import SignupDraftNotice from '@/components/auth/SignupDraftNotice'
 
 const HERO_IMAGE =
     'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=2400&q=82'
@@ -40,14 +41,18 @@ export default function HeroSection() {
     }
 
     return (
-        <section className="relative min-h-[600px] lg:min-h-[700px] flex items-center overflow-hidden">
-            <div className="absolute inset-0">
+        <section
+            className="relative flex min-h-[min(100svh,900px)] items-center overflow-hidden lg:min-h-[700px]"
+            aria-label="Destaque da página inicial"
+        >
+            {/* Cobre desde o topo da viewport (header fixo transparente) — sem faixa do fundo da página */}
+            <div className="absolute inset-0 min-h-full">
                 <Image
                     src={HERO_IMAGE}
                     alt=""
                     fill
                     priority
-                    className="object-cover"
+                    className="object-cover object-top"
                     sizes="100vw"
                 />
                 <div
@@ -56,8 +61,11 @@ export default function HeroSection() {
                 />
             </div>
 
-            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32 w-full">
-                <div className="max-w-4xl mx-auto text-center">
+            <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-20 pt-24 sm:px-6 sm:pt-28 lg:px-8 lg:pb-32 lg:pt-32">
+                <div className="mx-auto max-w-3xl">
+                    <SignupDraftNotice />
+                </div>
+                <div className="mx-auto max-w-4xl text-center">
                     {/* Badge */}
                     <div className="inline-flex items-center gap-2 px-4 py-2 bg-accent-500/20 backdrop-blur-sm rounded-full text-accent-300 text-sm font-medium mb-6 animate-fadeIn border border-accent-500/30">
                         <Home className="w-4 h-4" />

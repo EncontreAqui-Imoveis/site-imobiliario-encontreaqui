@@ -111,7 +111,7 @@ export default function Header() {
 
     const headerBg =
         isHomepage && !isScrolled
-            ? 'bg-primary-950/40 backdrop-blur-md border-b border-white/20 shadow-sm shadow-black/20'
+            ? 'bg-primary-950/40 backdrop-blur-md shadow-sm shadow-black/20'
             : 'bg-white/95 backdrop-blur-md shadow-sm'
     const textColor =
         isHomepage && !isScrolled

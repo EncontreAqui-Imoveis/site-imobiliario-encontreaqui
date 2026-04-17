@@ -24,7 +24,7 @@ export default function SignupDraftNotice() {
     }
 
     return (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
+        <div className="mb-8 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
             <p className="font-semibold">Continuar cadastro</p>
             <p className="mt-1">
                 Encontramos um cadastro em andamento. Você pode retomar de onde parou ou descartar esse rascunho.
