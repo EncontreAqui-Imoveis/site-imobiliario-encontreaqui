@@ -14,8 +14,8 @@ export default function PhotoWatermark({ compact }: PhotoWatermarkProps) {
         <div
             className={`pointer-events-none absolute left-1/2 z-[8] -translate-x-1/2 select-none ${
                 compact
-                    ? 'bottom-1 w-[42%] max-w-[100px] min-w-[56px]'
-                    : 'bottom-2 w-[min(280px,55%)] max-w-[90vw] min-w-[120px]'
+                    ? 'bottom-1 w-[22%] max-w-[100px] min-w-[36px]'
+                    : 'bottom-2 w-[min(180px,35%)] max-w-[60vw] min-w-[90px]'
             }`}
             aria-hidden
         >
