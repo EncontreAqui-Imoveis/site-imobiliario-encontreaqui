@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
 import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
+import { checkCreci } from '@/lib/api/auth'
 import { requestBrokerUpgrade, uploadBrokerDocuments } from '@/lib/api/broker'
 import type { ApiError } from '@/lib/api/client'
 import { validateDocumentFile } from '@/lib/sanitize'
@@ -90,6 +91,15 @@ export default function BrokerOnboardingPage() {
         setSubmitting(true)
         setError(null)
         try {
+            const normalizedCreci = creci.trim().toUpperCase()
+            const currentCreci = (session?.broker?.creci ?? '').trim().toUpperCase()
+            if (normalizedCreci && normalizedCreci !== currentCreci) {
+                const creciStatus = await checkCreci(normalizedCreci)
+                if (creciStatus.exists) {
+                    setError('Já existe um corretor com este CRECI.')
+                    return
+                }
+            }
             await requestBrokerUpgrade({ creci: creci.trim() })
             await refresh()
             setStep('documents')

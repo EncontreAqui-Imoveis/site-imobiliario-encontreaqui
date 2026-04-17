@@ -300,6 +300,14 @@ export async function checkEmail(email: string): Promise<{
     }>(`/auth/check-email?email=${encodeURIComponent(email)}`)
 }
 
+export async function checkCreci(creci: string): Promise<{
+    exists: boolean
+}> {
+    return apiClient.get<{
+        exists: boolean
+    }>(`/auth/check-creci?creci=${encodeURIComponent(creci)}`)
+}
+
 export async function logout(): Promise<void> {
     try {
         await apiClient.post('/auth/logout', undefined, { skipThrowOnError: true })

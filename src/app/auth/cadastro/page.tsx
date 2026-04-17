@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
     checkEmail,
+    checkCreci,
     isGooglePendingAuthResult,
 } from '@/lib/api/auth'
 import { loginWithGooglePopup } from '@/lib/auth/googleFlow'
@@ -232,6 +233,15 @@ export default function CadastroPage() {
                 const emailStatus = await checkEmail(email.trim())
                 if (emailStatus.exists) {
                     setError('Já existe uma conta com este e-mail.')
+                    setSubmitting(false)
+                    return
+                }
+            }
+
+            if (draft.userType === 'broker') {
+                const creciStatus = await checkCreci(creci.trim().toUpperCase())
+                if (creciStatus.exists) {
+                    setError('Já existe um corretor com este CRECI.')
                     setSubmitting(false)
                     return
                 }
