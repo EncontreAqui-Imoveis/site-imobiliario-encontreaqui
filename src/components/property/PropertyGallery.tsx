@@ -62,8 +62,8 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
                         priority
                         sizes="(max-width: 1280px) 50vw, 33vw"
                     />
-                    <PhotoWatermark />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                    <PhotoWatermark />
                     {propertyId && (
                         <div className="absolute top-4 right-4 z-10">
                             <FavoriteButton propertyId={propertyId} size="md" />
@@ -85,6 +85,7 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
                             className="object-cover transition-transform duration-700 group-hover:scale-105"
                             sizes="25vw"
                         />
+                        <PhotoWatermark compact />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
 
                         {/* Overlay for "Show More" on the last grid item if there are more images */}
@@ -115,7 +116,6 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
                     className="object-contain"
                     priority
                 />
-                <PhotoWatermark />
 
                 <div className="absolute inset-0 flex items-center justify-between p-2">
                     <button
@@ -137,6 +137,7 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
                 <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-lg text-white text-xs font-semibold">
                     {photoIndex + 1} / {validImages.length}
                 </div>
+                <PhotoWatermark />
                 {propertyId && (
                     <div className="absolute top-4 right-4 z-10">
                         <FavoriteButton propertyId={propertyId} size="md" />

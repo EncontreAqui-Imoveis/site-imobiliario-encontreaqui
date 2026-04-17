@@ -33,9 +33,9 @@ export default function Footer() {
                             <img
                                 src="/branding/7.svg"
                                 alt="Encontre Aqui Imóveis"
-                                width={168}
-                                height={80}
-                                className="h-16 w-auto"
+                                width={504}
+                                height={240}
+                                className="h-48 w-auto"
                             />
                         </Link>
                         <p className="text-slate-400 text-sm leading-relaxed">

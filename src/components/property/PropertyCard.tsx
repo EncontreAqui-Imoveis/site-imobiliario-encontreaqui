@@ -59,10 +59,11 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                     className="object-cover group-hover:scale-105 transition-transform duration-700"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 />
-                <PhotoWatermark />
 
                 {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-60 group-hover:opacity-70 transition-opacity" />
+
+                <PhotoWatermark />
 
                 {/* Navigation Arrows */}
                 {hasMultipleImages && (
