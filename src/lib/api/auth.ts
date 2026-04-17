@@ -79,6 +79,7 @@ export interface RegisterPayload {
     state?: string
     street?: string
     number?: string
+    withoutNumber?: boolean
     complement?: string
     bairro?: string
     cep?: string

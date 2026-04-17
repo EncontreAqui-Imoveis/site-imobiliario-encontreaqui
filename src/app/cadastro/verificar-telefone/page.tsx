@@ -205,6 +205,7 @@ export default function VerificarTelefonePage() {
             cep: nextDraft.data.cep.replace(/\D/g, '') || undefined,
             street: nextDraft.data.street.trim() || undefined,
             number: nextDraft.data.number.trim() || undefined,
+            withoutNumber: nextDraft.data.semNumero ? true : undefined,
             complement: nextDraft.data.complement.trim() || undefined,
             bairro: nextDraft.data.bairro.trim() || undefined,
             city: nextDraft.data.city.trim() || undefined,
