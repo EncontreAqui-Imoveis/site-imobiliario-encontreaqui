@@ -53,7 +53,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
         loading,
         error,
         isAuthenticated: !!session,
-        isBroker: !!session?.isBroker && session?.broker?.status === 'approved',
+        // Paridade com o app: corretor pendente ainda vê fluxo de corretor (menu, anunciar, etc.).
+        isBroker: Boolean(session?.isBroker || session?.user.role === 'broker'),
         isProfileComplete: session?.profileStatus === 'complete',
         refresh: loadSession,
         logout: handleLogout,

@@ -216,11 +216,33 @@ export async function login(payload: LoginPayload): Promise<UserSession> {
 }
 
 export async function register(payload: RegisterPayload): Promise<UserSession> {
-    const response = await apiClient.post<AuthResponse>('/auth/register', payload)
-    if (response.token) {
-        persistAuthToken(response.token)
+    try {
+        const response = await apiClient.post<AuthResponse>('/auth/register', payload)
+        if (response.token) {
+            persistAuthToken(response.token)
+        }
+        return mapAuthResponseToSession(response)
+    } catch (error) {
+        if (
+            error instanceof ApiError &&
+            error.status === 409 &&
+            payload.email &&
+            payload.password &&
+            !payload.googleIdToken
+        ) {
+            const { loginWithEmailHybrid } = await import('@/lib/auth/hybridEmailLogin')
+            try {
+                const session = await loginWithEmailHybrid({
+                    email: payload.email.trim().toLowerCase(),
+                    password: payload.password,
+                })
+                return session
+            } catch {
+                throw error
+            }
+        }
+        throw error
     }
-    return mapAuthResponseToSession(response)
 }
 
 export async function loginWithGoogle(

@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { isGooglePendingAuthResult, login } from '@/lib/api/auth'
+import { isGooglePendingAuthResult } from '@/lib/api/auth'
+import { loginWithEmailHybrid } from '@/lib/auth/hybridEmailLogin'
 import { loginWithGooglePopup } from '@/lib/auth/googleFlow'
 import { resolvePostAuthRoute } from '@/lib/auth/routeResolution'
 import SignupDraftNotice from '@/components/auth/SignupDraftNotice'
@@ -30,7 +31,7 @@ export default function LoginPage() {
         setError(null)
 
         try {
-            const session = await login({ email, password })
+            const session = await loginWithEmailHybrid({ email, password })
             await refresh()
             router.push(resolvePostAuthRoute(session, next))
         } catch (err) {

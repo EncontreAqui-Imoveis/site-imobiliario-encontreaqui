@@ -90,6 +90,30 @@ describe('auth API', () => {
         expect(document.cookie).toContain('ea_auth_token=token-xyz')
     })
 
+    it('register() on 409 retries via login híbrido (POST /auth/login)', async () => {
+        mockFetch
+            .mockResolvedValueOnce(errorResponse(409, 'Este email ja esta em uso.'))
+            .mockResolvedValueOnce(
+                okResponse({
+                    user: { id: 2, role: 'client' },
+                    token: 'token-after-409',
+                    needsCompletion: false,
+                }),
+            )
+
+        const result = await auth.register({
+            name: 'Maria',
+            email: 'maria@test.com',
+            password: 'secret12',
+        })
+
+        expect(mockFetch).toHaveBeenCalledTimes(2)
+        expect(String(mockFetch.mock.calls[0][0])).toContain('/auth/register')
+        expect(String(mockFetch.mock.calls[1][0])).toContain('/auth/login')
+        expect(result.user.id).toBe(2)
+        expect(document.cookie).toContain('ea_auth_token=token-after-409')
+    })
+
     it('loginWithGoogle() sends idToken in body', async () => {
         mockFetch.mockResolvedValueOnce(
             okResponse({
