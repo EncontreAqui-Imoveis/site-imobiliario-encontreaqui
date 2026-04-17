@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation'
 import { Search, Home, MapPin, ChevronDown, Loader2 } from 'lucide-react'
 import SignupDraftNotice from '@/components/auth/SignupDraftNotice'
 
-const HERO_IMAGE =
-    'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=2400&q=82'
+/** Arte local (pasta `public/marketing/`) — alinhada ao app móvel. */
+const HERO_IMAGE = '/marketing/home-hero.png'
 
 const propertyTypes = [
     { value: '', label: 'Todos os tipos' },

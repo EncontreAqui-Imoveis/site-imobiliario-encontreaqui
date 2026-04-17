@@ -159,6 +159,15 @@ export function normalizeProperty(raw: unknown): Property | null {
         bedrooms: toNumber(item.bedrooms ?? item.quartos),
         bathrooms: toNumber(item.bathrooms ?? item.banheiros),
         areaConstruida: toNumber(item.areaConstruida ?? item.area_construida),
+        areaConstruidaUnidade: (() => {
+            const raw = item.areaConstruidaUnidade ?? item.area_construida_unidade
+            const s = String(raw ?? 'm2').trim().toLowerCase()
+            if (s === 'hectare' || s === 'ha') return 'hectare' as const
+            if (s === 'alqueire' || s === 'alq') return 'alqueire' as const
+            return 'm2' as const
+        })(),
+        semQuadra: toBoolean(item.semQuadra ?? item.sem_quadra) ?? false,
+        semLote: toBoolean(item.semLote ?? item.sem_lote) ?? false,
         areaTerreno: toNumber(item.areaTerreno ?? item.area_terreno),
         garageSpots: toNumber(item.garageSpots ?? item.garage_spots),
         hasWifi: toBoolean(item.hasWifi ?? item.has_wifi),

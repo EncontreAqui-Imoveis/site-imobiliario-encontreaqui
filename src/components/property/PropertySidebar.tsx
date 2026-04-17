@@ -1,16 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { formatPrice, Property } from '@/types/property'
-import { Info, ShieldCheck, Smartphone, MessageCircle, Phone } from 'lucide-react'
+import { Info, ShieldCheck, Smartphone, MessageCircle, Phone, FileText } from 'lucide-react'
 import { buildAppDeepLink, getStoreUrlClient } from '@/lib/appLinks'
 import { buildPhoneLink, buildWhatsappLink } from '@/lib/contactLinks'
 
 interface PropertySidebarProps {
     property: Property
+    /** Logado (cliente/corretor) vendo imóvel de outro — iniciar proposta. */
+    visitorProposalHref?: string | null
 }
 
-export default function PropertySidebar({ property }: PropertySidebarProps) {
+export default function PropertySidebar({ property, visitorProposalHref }: PropertySidebarProps) {
     const [storeUrl, setStoreUrl] = useState('https://play.google.com/store')
 
     useEffect(() => {
@@ -87,6 +90,17 @@ export default function PropertySidebar({ property }: PropertySidebarProps) {
                                     <MessageCircle className="w-5 h-5" />
                                     Falar pelo WhatsApp
                                 </a>
+                            )}
+
+                            {visitorProposalHref && (
+                                <Link
+                                    href={visitorProposalHref}
+                                    aria-label={`Gerar proposta para o imóvel ${property.title}`}
+                                    className="w-full flex items-center justify-center gap-2 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
+                                >
+                                    <FileText className="w-5 h-5" />
+                                    Gerar proposta
+                                </Link>
                             )}
 
                             {/* Phone CTA */}

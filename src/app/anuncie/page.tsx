@@ -61,8 +61,9 @@ const REVIEW_VALUE = 'mt-2 text-sm text-slate-800 whitespace-pre-wrap break-word
 const INITIAL: CreatePropertyDraftData = {
     actorMode: null, propertyType: '', purpose: '', title: '', description: '', ownerName: '', ownerPhone: '',
     priceSale: '', priceRent: '', cep: '', state: 'GO', city: '', bairro: '', address: '', numero: '', complemento: '',
-    quadra: '', lote: '', tipoLote: '', semNumero: false, bedrooms: '', bathrooms: '', garageSpots: '',
-    areaConstruida: '', areaTerreno: '', hasWifi: false, temPiscina: false, temAutomacao: false,
+    quadra: '', lote: '', tipoLote: '', semNumero: false, semQuadra: false, semLote: false,
+    bedrooms: '', bathrooms: '', garageSpots: '',
+    areaConstruida: '', areaConstruidaUnidade: 'm2', areaTerreno: '', hasWifi: false, temPiscina: false, temAutomacao: false,
     temArCondicionado: false, ehMobiliada: false,
 }
 
@@ -321,7 +322,8 @@ export default function AnunciePage() {
                         form.state.trim() &&
                         (form.semNumero || form.numero.trim()) &&
                         form.tipoLote.trim() &&
-                        (!needsLotFields || (form.quadra.trim() && form.lote.trim())),
+                        (!needsLotFields ||
+                            ((form.semQuadra || form.quadra.trim()) && (form.semLote || form.lote.trim()))),
                 )
             case 3:
                 return (
@@ -474,10 +476,7 @@ export default function AnunciePage() {
                         </div>
                         <div><label className={LABEL}>Título *</label><input value={form.title} onChange={(e) => updateField('title', e.target.value)} maxLength={120} className={INPUT} /></div>
                         <div>
-                            <div className="flex items-center justify-between">
-                                <label className={LABEL}>Descrição *</label>
-                                <span className={`text-xs ${form.description.length > 500 ? 'text-red-600' : 'text-slate-500'}`}>{form.description.length}/500</span>
-                            </div>
+                            <label className={LABEL}>Descrição *</label>
                             <textarea value={form.description} onChange={(e) => updateField('description', e.target.value.slice(0, 500))} rows={4} maxLength={500} className={INPUT} />
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2">
@@ -507,8 +506,22 @@ export default function AnunciePage() {
                             <div><label className={LABEL}>Complemento</label><input value={form.complemento} onChange={(e) => updateField('complemento', e.target.value)} maxLength={120} className={INPUT} /></div>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-3">
-                            <div><label className={LABEL}>{needsLotFields ? 'Quadra *' : 'Quadra'}</label><input value={form.quadra} onChange={(e) => updateField('quadra', e.target.value)} maxLength={25} className={INPUT} /></div>
-                            <div><label className={LABEL}>{needsLotFields ? 'Lote *' : 'Lote'}</label><input value={form.lote} onChange={(e) => updateField('lote', e.target.value)} maxLength={25} className={INPUT} /></div>
+                            <div>
+                                <label className={LABEL}>{needsLotFields && !form.semQuadra ? 'Quadra *' : 'Quadra'}</label>
+                                <input value={form.quadra} disabled={form.semQuadra} onChange={(e) => updateField('quadra', e.target.value)} maxLength={25} className={`${INPUT} disabled:bg-slate-50 disabled:text-slate-500`} />
+                                <label className="mt-2 inline-flex items-center gap-2 text-sm text-slate-600">
+                                    <input type="checkbox" checked={form.semQuadra} onChange={(e) => { updateField('semQuadra', e.target.checked); if (e.target.checked) updateField('quadra', '') }} className="rounded border-slate-300 text-primary-600 focus:ring-primary-500" />
+                                    Sem quadra
+                                </label>
+                            </div>
+                            <div>
+                                <label className={LABEL}>{needsLotFields && !form.semLote ? 'Lote *' : 'Lote'}</label>
+                                <input value={form.lote} disabled={form.semLote} onChange={(e) => updateField('lote', e.target.value)} maxLength={25} className={`${INPUT} disabled:bg-slate-50 disabled:text-slate-500`} />
+                                <label className="mt-2 inline-flex items-center gap-2 text-sm text-slate-600">
+                                    <input type="checkbox" checked={form.semLote} onChange={(e) => { updateField('semLote', e.target.checked); if (e.target.checked) updateField('lote', '') }} className="rounded border-slate-300 text-primary-600 focus:ring-primary-500" />
+                                    Sem lote
+                                </label>
+                            </div>
                             <div><label className={LABEL}>Tipo de lote *</label><select value={form.tipoLote} onChange={(e) => updateField('tipoLote', e.target.value)} className={INPUT}><option value="">Selecionar</option>{LOT_TYPES.map((o) => <option key={o} value={o}>{o}</option>)}</select></div>
                         </div>
                     </>
@@ -517,7 +530,18 @@ export default function AnunciePage() {
                 {step === 3 && (
                     <>
                         <div className="grid gap-3 sm:grid-cols-2">
-                            <div><label className={LABEL}>Área construída (m²) *</label><input type="number" min="0" max={MAX_PROPERTY_AREA} step="0.01" value={form.areaConstruida} onChange={(e) => updateField('areaConstruida', clampAreaInput(e.target.value))} className={INPUT} /></div>
+                            <div>
+                                <label className={LABEL}>Área construída *</label>
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+                                    <input type="number" min="0" max={MAX_PROPERTY_AREA} step="0.01" value={form.areaConstruida} onChange={(e) => updateField('areaConstruida', clampAreaInput(e.target.value))} className={`${INPUT} min-w-0 flex-1`} />
+                                    <select value={form.areaConstruidaUnidade} onChange={(e) => updateField('areaConstruidaUnidade', e.target.value as CreatePropertyDraftData['areaConstruidaUnidade'])} className={`${INPUT} sm:w-40 shrink-0`}>
+                                        <option value="m2">m²</option>
+                                        <option value="hectare">Hectare (ha)</option>
+                                        <option value="alqueire">Alqueire</option>
+                                    </select>
+                                </div>
+                                <p className="mt-1 text-xs text-slate-500">Armazenado em m² no sistema; a unidade escolhida fica registrada.</p>
+                            </div>
                             <div><label className={LABEL}>Área do terreno (m²) *</label><input type="number" min="0" max={MAX_PROPERTY_AREA} step="0.01" value={form.areaTerreno} onChange={(e) => updateField('areaTerreno', clampAreaInput(e.target.value))} className={INPUT} /></div>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-3">
@@ -640,11 +664,11 @@ export default function AnunciePage() {
                                     </div>
                                     <div className="min-w-0">
                                         <p className={REVIEW_LABEL}>Quadra</p>
-                                        <p className={REVIEW_VALUE}>{form.quadra || '—'}</p>
+                                        <p className={REVIEW_VALUE}>{form.semQuadra ? 'Sem quadra' : form.quadra || '—'}</p>
                                     </div>
                                     <div className="min-w-0">
                                         <p className={REVIEW_LABEL}>Lote</p>
-                                        <p className={REVIEW_VALUE}>{form.lote || '—'}</p>
+                                        <p className={REVIEW_VALUE}>{form.semLote ? 'Sem lote' : form.lote || '—'}</p>
                                     </div>
                                     <div className="min-w-0">
                                         <p className={REVIEW_LABEL}>Tipo de lote</p>
@@ -659,7 +683,14 @@ export default function AnunciePage() {
                                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
                                         <div className="min-w-0">
                                             <p className={REVIEW_LABEL}>Área construída</p>
-                                            <p className={REVIEW_VALUE}>{form.areaConstruida || '—'} m²</p>
+                                            <p className={REVIEW_VALUE}>
+                                                {form.areaConstruida || '—'}{' '}
+                                                {form.areaConstruidaUnidade === 'hectare'
+                                                    ? 'ha'
+                                                    : form.areaConstruidaUnidade === 'alqueire'
+                                                      ? 'alqueire'
+                                                      : 'm²'}
+                                            </p>
                                         </div>
                                         <div className="min-w-0">
                                             <p className={REVIEW_LABEL}>Área do terreno</p>

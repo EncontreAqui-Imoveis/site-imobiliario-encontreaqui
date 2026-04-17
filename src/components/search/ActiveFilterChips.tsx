@@ -2,6 +2,7 @@
 
 import { useSearchParams, useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
+import { areaUnitLabel, normalizeAreaUnidade } from '@/lib/areaUnits'
 
 const FILTER_LABELS: Record<string, string> = {
     search: 'Busca',
@@ -13,6 +14,9 @@ const FILTER_LABELS: Record<string, string> = {
     bathrooms: 'Banheiros',
     minPrice: 'Preço mín.',
     maxPrice: 'Preço máx.',
+    minArea: 'Área mín.',
+    maxArea: 'Área máx.',
+    areaUnit: 'Unid. área',
     tipo_lote: 'Tipo de lote',
     sort: 'Ordenar',
     has_wifi: 'Wi-Fi',
@@ -23,11 +27,16 @@ const FILTER_LABELS: Record<string, string> = {
     eh_mobiliada: 'Mobiliada',
 }
 
-function formatValue(key: string, value: string): string {
+function formatValue(key: string, value: string, searchParams: URLSearchParams): string {
     if (key === 'minPrice' || key === 'maxPrice') {
         const n = Number(value)
         if (!isNaN(n)) return `R$ ${n.toLocaleString('pt-BR')}`
     }
+    if (key === 'minArea' || key === 'maxArea') {
+        const unit = normalizeAreaUnidade(searchParams.get('areaUnit'))
+        return `${value} ${areaUnitLabel(unit)}`.trim()
+    }
+    if (key === 'areaUnit') return areaUnitLabel(normalizeAreaUnidade(value))
     if (key === 'bedrooms' || key === 'bathrooms') return `${value}+`
     if (value === '1') return '' // amenity toggles
     return value
@@ -44,7 +53,7 @@ export default function ActiveFilterChips() {
     searchParams.forEach((value, key) => {
         if (!value || ignoredKeys.has(key)) return
         const label = FILTER_LABELS[key] || key
-        const displayValue = formatValue(key, value)
+        const displayValue = formatValue(key, value, searchParams)
         activeFilters.push({ key, label, value: displayValue })
     })
 

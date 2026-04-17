@@ -1,12 +1,29 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
 import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { fetchEditableProperty, saveEditedProperty } from '@/lib/propertiesEditorService'
-import { clampAreaInput, clampCountInput, digitsOnly, LOT_TYPES, MAX_PROPERTY_AREA, MAX_PROPERTY_COUNT, PROPERTY_TYPES, PROPERTY_PURPOSES } from '@/lib/propertyCreate'
+import {
+    clampAreaInput,
+    clampCountInput,
+    digitsOnly,
+    LOT_TYPES,
+    MAX_PROPERTY_AREA,
+    MAX_PROPERTY_COUNT,
+    PROPERTY_TYPES,
+    PROPERTY_PURPOSES,
+    normalizeDecimalInput,
+    requiresLotFields,
+} from '@/lib/propertyCreate'
+import {
+    areaInputToSquareMeters,
+    normalizeAreaUnidade,
+    squareMetersToAreaInput,
+    type AreaConstruidaUnidade,
+} from '@/lib/areaUnits'
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/currencyInput'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
 import { Property } from '@/types/property'
@@ -38,6 +55,8 @@ export default function EditPropertyPage() {
         complemento: '', tipoLote: '', city: '', state: 'GO', cep: '',
         bedrooms: '', bathrooms: '', garageSpots: '',
         areaConstruida: '', areaTerreno: '',
+        areaConstruidaUnidade: 'm2' as AreaConstruidaUnidade,
+        semQuadra: false, semLote: false,
         hasWifi: false, temPiscina: false, temEnergiaSolar: false,
         temAutomacao: false, temArCondicionado: false, ehMobiliada: false,
     })
@@ -61,6 +80,7 @@ export default function EditPropertyPage() {
         try {
             const p: Property = await fetchEditableProperty(propertyId)
             setProperty(p)
+            const unit = normalizeAreaUnidade(p.areaConstruidaUnidade)
             setForm({
                 title: p.title || '',
                 description: p.description || '',
@@ -81,8 +101,14 @@ export default function EditPropertyPage() {
                 bedrooms: p.bedrooms ? String(p.bedrooms) : '',
                 bathrooms: p.bathrooms ? String(p.bathrooms) : '',
                 garageSpots: p.garageSpots ? String(p.garageSpots) : '',
-                areaConstruida: p.areaConstruida ? String(p.areaConstruida) : '',
+                areaConstruida:
+                    p.areaConstruida != null
+                        ? squareMetersToAreaInput(p.areaConstruida, unit)
+                        : '',
                 areaTerreno: p.areaTerreno ? String(p.areaTerreno) : '',
+                areaConstruidaUnidade: unit,
+                semQuadra: p.semQuadra ?? false,
+                semLote: p.semLote ?? false,
                 hasWifi: p.hasWifi || false,
                 temPiscina: p.temPiscina || false,
                 temEnergiaSolar: p.temEnergiaSolar || false,
@@ -94,6 +120,8 @@ export default function EditPropertyPage() {
             setLoadError('Não foi possível carregar o imóvel.')
         }
     }, [propertyId])
+
+    const needsLotFields = useMemo(() => requiresLotFields(form.type), [form.type])
 
     useEffect(() => { if (propertyId) loadProperty() }, [propertyId, loadProperty])
 
@@ -118,6 +146,9 @@ export default function EditPropertyPage() {
         setSaved(false)
 
         try {
+            const unit = normalizeAreaUnidade(form.areaConstruidaUnidade)
+            const areaInputVal = normalizeDecimalInput(form.areaConstruida)
+            const areaConstruidaM2 = areaInputToSquareMeters(areaInputVal, unit)
             const payload = {
                 title: form.title.trim(),
                 description: form.description.trim(),
@@ -138,8 +169,11 @@ export default function EditPropertyPage() {
                 bedrooms: parseInt(form.bedrooms) || 0,
                 bathrooms: parseInt(form.bathrooms) || 0,
                 garageSpots: parseInt(form.garageSpots) || 0,
-                areaConstruida: parseFloat(form.areaConstruida) || 0,
-                areaTerreno: parseFloat(form.areaTerreno) || 0,
+                areaConstruida: Number.isFinite(areaConstruidaM2) ? areaConstruidaM2 : 0,
+                areaConstruidaUnidade: unit,
+                semQuadra: form.semQuadra,
+                semLote: form.semLote,
+                areaTerreno: normalizeDecimalInput(form.areaTerreno) || 0,
                 hasWifi: form.hasWifi,
                 temPiscina: form.temPiscina,
                 temEnergiaSolar: form.temEnergiaSolar,
@@ -279,7 +313,6 @@ export default function EditPropertyPage() {
                         </div>
                         <div>
                             <label className={labelClass}>Descrição</label>
-                            <div className="mb-1 text-right text-xs text-slate-500">{form.description.length}/500</div>
                             <textarea value={form.description} onChange={e => updateField('description', e.target.value.slice(0, 500))} maxLength={500} className={`${inputClass} min-h-[120px] resize-y`} />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -320,18 +353,26 @@ export default function EditPropertyPage() {
                             <label className={labelClass}>Endereço</label>
                             <input type="text" value={form.address} onChange={e => updateField('address', e.target.value)} maxLength={120} className={inputClass} />
                         </div>
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
                                 <label className={labelClass}>Número</label>
                                 <input type="text" value={form.numero} onChange={e => updateField('numero', digitsOnly(e.target.value).slice(0, 25))} maxLength={25} inputMode="numeric" className={inputClass} />
                             </div>
                             <div>
-                                <label className={labelClass}>Quadra</label>
-                                <input type="text" value={form.quadra} onChange={e => updateField('quadra', e.target.value)} maxLength={25} className={inputClass} />
+                                <label className={labelClass}>{needsLotFields && !form.semQuadra ? 'Quadra *' : 'Quadra'}</label>
+                                <input type="text" value={form.quadra} disabled={form.semQuadra} onChange={e => updateField('quadra', e.target.value)} maxLength={25} className={`${inputClass} disabled:bg-slate-50 disabled:text-slate-500`} />
+                                <label className="mt-2 inline-flex items-center gap-2 text-sm text-gray-600">
+                                    <input type="checkbox" checked={form.semQuadra} onChange={(e) => { updateField('semQuadra', e.target.checked); if (e.target.checked) updateField('quadra', '') }} className="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                                    Sem quadra
+                                </label>
                             </div>
                             <div>
-                                <label className={labelClass}>Lote</label>
-                                <input type="text" value={form.lote} onChange={e => updateField('lote', e.target.value)} maxLength={25} className={inputClass} />
+                                <label className={labelClass}>{needsLotFields && !form.semLote ? 'Lote *' : 'Lote'}</label>
+                                <input type="text" value={form.lote} disabled={form.semLote} onChange={e => updateField('lote', e.target.value)} maxLength={25} className={`${inputClass} disabled:bg-slate-50 disabled:text-slate-500`} />
+                                <label className="mt-2 inline-flex items-center gap-2 text-sm text-gray-600">
+                                    <input type="checkbox" checked={form.semLote} onChange={(e) => { updateField('semLote', e.target.checked); if (e.target.checked) updateField('lote', '') }} className="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                                    Sem lote
+                                </label>
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -385,9 +426,28 @@ export default function EditPropertyPage() {
                                 <label className={labelClass}>Vagas</label>
                                 <input type="number" value={form.garageSpots} onChange={e => updateField('garageSpots', clampCountInput(e.target.value))} className={inputClass} min="0" max={MAX_PROPERTY_COUNT} />
                             </div>
-                            <div>
-                                <label className={labelClass}>Área Útil (m²)</label>
-                                <input type="number" value={form.areaConstruida} onChange={e => updateField('areaConstruida', clampAreaInput(e.target.value))} className={inputClass} step="0.01" min="0" max={MAX_PROPERTY_AREA} />
+                            <div className="col-span-2 sm:col-span-1 sm:col-start-4">
+                                <label className={labelClass}>Área construída</label>
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+                                    <input
+                                        type="text"
+                                        inputMode="decimal"
+                                        value={form.areaConstruida}
+                                        onChange={e => updateField('areaConstruida', clampAreaInput(e.target.value))}
+                                        className={`${inputClass} sm:flex-1`}
+                                    />
+                                    <select
+                                        value={form.areaConstruidaUnidade}
+                                        onChange={e => updateField('areaConstruidaUnidade', e.target.value as AreaConstruidaUnidade)}
+                                        className={`${inputClass} sm:w-36 sm:shrink-0`}
+                                        aria-label="Unidade da área construída"
+                                    >
+                                        <option value="m2">m²</option>
+                                        <option value="hectare">Hectare (ha)</option>
+                                        <option value="alqueire">Alqueire paulista</option>
+                                    </select>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">O valor é convertido para m² no cadastro.</p>
                             </div>
                         </div>
                         <div>

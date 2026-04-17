@@ -50,10 +50,14 @@ export type CreatePropertyDraftData = {
     lote: string
     tipoLote: string
     semNumero: boolean
+    semQuadra: boolean
+    semLote: boolean
     bedrooms: string
     bathrooms: string
     garageSpots: string
     areaConstruida: string
+    /** m2 | hectare | alqueire — o backend converte para m² em `area_construida`. */
+    areaConstruidaUnidade: 'm2' | 'hectare' | 'alqueire'
     areaTerreno: string
     hasWifi: boolean
     temPiscina: boolean
@@ -200,11 +204,14 @@ export function buildCreatePropertyFormData(payload: CreatePropertyPayload): For
     appendIfPresent(formData, 'lote', normalizeText(payload.lote))
     appendIfPresent(formData, 'tipo_lote', normalizeText(payload.tipoLote))
     formData.append('sem_numero', payload.semNumero ? '1' : '0')
+    formData.append('sem_quadra', payload.semQuadra ? '1' : '0')
+    formData.append('sem_lote', payload.semLote ? '1' : '0')
 
     appendIfPresent(formData, 'bedrooms', bedrooms)
     appendIfPresent(formData, 'bathrooms', bathrooms)
     appendIfPresent(formData, 'garage_spots', garageSpots)
     appendIfPresent(formData, 'area_construida', areaConstruida)
+    formData.append('area_construida_unidade', payload.areaConstruidaUnidade)
     appendIfPresent(formData, 'area_terreno', areaTerreno)
 
     formData.append('has_wifi', payload.hasWifi ? '1' : '0')

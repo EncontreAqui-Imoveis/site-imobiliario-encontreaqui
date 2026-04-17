@@ -5,6 +5,7 @@ import PropertyGrid from '@/components/property/PropertyGrid'
 import SearchFilters from '@/components/search/SearchFilters'
 import ActiveFilterChips from '@/components/search/ActiveFilterChips'
 import { Property } from '@/types/property'
+import { areaInputToSquareMeters, normalizeAreaUnidade } from '@/lib/areaUnits'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://backend-production-6acc.up.railway.app'
 
@@ -26,6 +27,21 @@ async function fetchProperties(params: Record<string, string | undefined>): Prom
         if (params.bathrooms) queryParams.set('bathrooms', params.bathrooms)
         if (params.minPrice) queryParams.set('min_price', params.minPrice)
         if (params.maxPrice) queryParams.set('max_price', params.maxPrice)
+        const areaUnit = normalizeAreaUnidade(params.areaUnit)
+        if (params.minArea?.trim()) {
+            const v = Number(params.minArea)
+            if (!Number.isNaN(v) && v >= 0) {
+                const m2 = areaInputToSquareMeters(v, areaUnit)
+                if (!Number.isNaN(m2)) queryParams.set('min_area_construida', String(m2))
+            }
+        }
+        if (params.maxArea?.trim()) {
+            const v = Number(params.maxArea)
+            if (!Number.isNaN(v) && v >= 0) {
+                const m2 = areaInputToSquareMeters(v, areaUnit)
+                if (!Number.isNaN(m2)) queryParams.set('max_area_construida', String(m2))
+            }
+        }
         if (params.tipo_lote) queryParams.set('tipo_lote', params.tipo_lote)
         if (params.sort) queryParams.set('sort', params.sort)
 

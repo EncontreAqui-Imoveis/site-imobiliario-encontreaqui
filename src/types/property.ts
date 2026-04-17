@@ -16,6 +16,10 @@ export interface Property {
     bedrooms?: number
     bathrooms?: number
     areaConstruida?: number
+    /** Unidade em que o usuário cadastrou a área construída; `areaConstruida` no API é sempre m². */
+    areaConstruidaUnidade?: 'm2' | 'alqueire' | 'hectare'
+    semQuadra?: boolean
+    semLote?: boolean
     areaTerreno?: number
     garageSpots?: number
     hasWifi?: boolean

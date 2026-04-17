@@ -12,6 +12,8 @@ export type ApprovalStatus =
 
 export type ContractSide = 'seller' | 'buyer'
 
+export type ClienteOutroDocumentType = `cliente_outro_${string}`
+
 export type ContractDocumentType =
     | 'doc_identidade'
     | 'comprovante_endereco'
@@ -23,6 +25,10 @@ export type ContractDocumentType =
     | 'contrato_assinado'
     | 'comprovante_pagamento'
     | 'boleto_vistoria'
+    | 'cliente_cnh'
+    | 'cliente_identidade'
+    | 'cliente_cpf'
+    | ClienteOutroDocumentType
 
 export interface ContractDocument {
     id: number

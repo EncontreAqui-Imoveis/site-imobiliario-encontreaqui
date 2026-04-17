@@ -54,6 +54,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: #fafafa;
   color: #262626;
+  background-image: url('/imagem_hero.png');
+  background-size: cover;
+  background-position: center top;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
 /* Headings with Display Font */

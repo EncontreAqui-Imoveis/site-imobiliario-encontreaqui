@@ -1,9 +1,11 @@
 'use client'
 
+import Image from 'next/image'
 import { Property } from '@/types/property'
 import PropertyCard from './PropertyCard'
-import { Home } from 'lucide-react'
 import Link from 'next/link'
+
+const EMPTY_SEARCH_IMAGE = '/marketing/empty-search-encontre.jpeg'
 
 interface PropertyGridProps {
     properties: Property[]
@@ -52,10 +54,16 @@ export default function PropertyGrid({
         return (
             <section
                 aria-label="Estado vazio da busca"
-                className="text-center py-16 bg-white rounded-3xl border border-gray-100 shadow-sm"
+                className="text-center py-12 sm:py-16 px-4 bg-white rounded-3xl border border-gray-100 shadow-sm"
             >
-                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Home className="w-10 h-10 text-gray-300" />
+                <div className="relative mx-auto mb-6 h-40 w-full max-w-sm sm:h-48">
+                    <Image
+                        src={EMPTY_SEARCH_IMAGE}
+                        alt=""
+                        fill
+                        className="object-contain"
+                        sizes="(max-width: 640px) 100vw, 24rem"
+                    />
                 </div>
                 <div role="status" aria-live="polite" aria-atomic="true">
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">

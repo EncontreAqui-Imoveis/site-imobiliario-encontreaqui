@@ -187,6 +187,20 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
         )
     }
 
+    const blockVisitorProposalDueToDeal =
+        statusLower === 'negociacao' ||
+        (negotiationStatus === 'IN_NEGOTIATION' && statusLower === 'negociacao')
+    const userRole = (session?.user?.role ?? '').toLowerCase()
+    const visitorProposalHref =
+        session &&
+        !isOwner &&
+        (userRole === 'client' || userRole === 'broker') &&
+        statusLower === 'approved' &&
+        !negotiationId &&
+        !blockVisitorProposalDueToDeal
+            ? `/propostas/nova?propertyId=${property.id}`
+            : null
+
     const deepLink = buildAppDeepLink(property.id)
     const promoSale = getPromoSalePrice(property)
     const promoRent = getPromoRentPrice(property)
@@ -400,7 +414,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                                 </div>
                             </aside>
                         ) : (
-                            <PropertySidebar property={property} />
+                            <PropertySidebar property={property} visitorProposalHref={visitorProposalHref} />
                         )}
                     </div>
                 </div>
@@ -471,6 +485,17 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                             className="flex items-center gap-1.5 px-3 py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl text-sm transition-colors shadow-md"
                         >
                             <FileText className="w-4 h-4" />
+                        </Link>
+                    )}
+
+                    {!isOwner && visitorProposalHref && (
+                        <Link
+                            href={visitorProposalHref}
+                            className="flex items-center gap-1.5 px-3 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm transition-colors shadow-md"
+                            aria-label="Gerar proposta para este imóvel"
+                        >
+                            <FileText className="w-4 h-4" />
+                            <span className="max-[380px]:hidden">Proposta</span>
                         </Link>
                     )}
 

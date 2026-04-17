@@ -49,10 +49,13 @@ describe('propertyCreate helpers', () => {
             lote: 'L2',
             tipoLote: 'inteiro',
             semNumero: true,
+            semQuadra: false,
+            semLote: false,
             bedrooms: '0',
             bathrooms: '0',
             garageSpots: '0',
             areaConstruida: '0',
+            areaConstruidaUnidade: 'm2',
             areaTerreno: '360',
             hasWifi: false,
             temPiscina: false,
@@ -72,6 +75,9 @@ describe('propertyCreate helpers', () => {
         expect(formData.get('owner_phone')).toBe('64999999999')
         expect(formData.get('tipo_lote')).toBe('inteiro')
         expect(formData.get('sem_numero')).toBe('1')
+        expect(formData.get('sem_quadra')).toBe('0')
+        expect(formData.get('sem_lote')).toBe('0')
+        expect(formData.get('area_construida_unidade')).toBe('m2')
         expect(formData.get('tem_automacao')).toBe('1')
         expect(formData.get('video')).toBe(video)
         expect(formData.getAll('images')).toHaveLength(1)
@@ -102,10 +108,13 @@ describe('propertyCreate helpers', () => {
             lote: '',
             tipoLote: 'inteiro',
             semNumero: false,
+            semQuadra: false,
+            semLote: false,
             bedrooms: '3',
             bathrooms: '2',
             garageSpots: '2',
             areaConstruida: '180',
+            areaConstruidaUnidade: 'm2',
             areaTerreno: '250',
             hasWifi: false,
             temPiscina: false,

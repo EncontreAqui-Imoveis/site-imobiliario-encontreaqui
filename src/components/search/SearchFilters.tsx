@@ -53,6 +53,7 @@ export default function SearchFilters() {
         location: true,
         details: true,
         price: true,
+        area: true,
         amenities: false
     })
 
@@ -70,6 +71,9 @@ export default function SearchFilters() {
         bairro: searchParams.get('bairro') || '',
         minPrice: searchParams.get('minPrice') || '',
         maxPrice: searchParams.get('maxPrice') || '',
+        minArea: searchParams.get('minArea') || '',
+        maxArea: searchParams.get('maxArea') || '',
+        areaUnit: searchParams.get('areaUnit') || 'm2',
         tipoLote: searchParams.get('tipo_lote') || '',
         sort: searchParams.get('sort') || '',
     })
@@ -96,6 +100,9 @@ export default function SearchFilters() {
             bairro: searchParams.get('bairro') || '',
             minPrice: searchParams.get('minPrice') || '',
             maxPrice: searchParams.get('maxPrice') || '',
+            minArea: searchParams.get('minArea') || '',
+            maxArea: searchParams.get('maxArea') || '',
+            areaUnit: searchParams.get('areaUnit') || 'm2',
             tipoLote: searchParams.get('tipo_lote') || '',
             sort: searchParams.get('sort') || '',
         }))
@@ -121,7 +128,12 @@ export default function SearchFilters() {
         const params = new URLSearchParams()
 
         Object.entries(filters).forEach(([key, value]) => {
-            if (value) params.set(key === 'tipoLote' ? 'tipo_lote' : key, value)
+            if (!value) return
+            if (key === 'tipoLote') {
+                params.set('tipo_lote', value)
+                return
+            }
+            params.set(key, value)
         })
 
         amenityOptions.forEach(a => {
@@ -136,6 +148,7 @@ export default function SearchFilters() {
         setFilters({
             search: '', type: '', purpose: '', city: '', bedrooms: '',
             bathrooms: '', bairro: '', minPrice: '', maxPrice: '',
+            minArea: '', maxArea: '', areaUnit: 'm2',
             tipoLote: '', sort: '',
         })
         setAmenities(amenityOptions.reduce((acc, a) => ({ ...acc, [a.key]: false }), {}))
@@ -369,9 +382,66 @@ export default function SearchFilters() {
                             )}
                         </div>
 
+                        {/* Área construída (valor na unidade escolhida; API filtra em m²) */}
+                        <div className="bg-white lg:border lg:border-gray-200 lg:rounded-xl overflow-hidden">
+                            <button
+                                type="button"
+                                onClick={() => toggleSection('area')}
+                                className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors"
+                            >
+                                <span className="font-semibold text-gray-900 flex items-center gap-2">
+                                    <Home className="w-4 h-4 text-gray-500" />
+                                    Área construída
+                                </span>
+                                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${expandedSections.area ? 'rotate-180' : ''}`} />
+                            </button>
+                            {expandedSections.area && (
+                                <div className="p-4 pt-0 space-y-3 border-t border-gray-50 lg:border-none">
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Unidade</label>
+                                    <select
+                                        value={filters.areaUnit}
+                                        onChange={(e) => handleChange('areaUnit', e.target.value)}
+                                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                    >
+                                        <option value="m2">m²</option>
+                                        <option value="hectare">Hectare (ha)</option>
+                                        <option value="alqueire">Alqueire</option>
+                                    </select>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-xs text-gray-500">Mín.</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="any"
+                                                value={filters.minArea}
+                                                onChange={(e) => handleChange('minArea', e.target.value)}
+                                                placeholder="0"
+                                                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-gray-500">Máx.</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="any"
+                                                value={filters.maxArea}
+                                                onChange={(e) => handleChange('maxArea', e.target.value)}
+                                                placeholder="—"
+                                                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            />
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-gray-500">Os limites são convertidos para m² na busca (valor canônico no servidor).</p>
+                                </div>
+                            )}
+                        </div>
+
                         {/* Amenities & Extras */}
                         <div className="bg-white lg:border lg:border-gray-200 lg:rounded-xl overflow-hidden">
                             <button
+                                type="button"
                                 onClick={() => toggleSection('amenities')}
                                 className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors"
                             >
