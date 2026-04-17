@@ -8,7 +8,14 @@ const MAX_DRAFT_AGE_MS = 7 * 24 * 60 * 60 * 1000
 
 export type SignupSource = 'email' | 'google'
 export type SignupProfileType = 'client' | 'broker'
-export type SignupStep = 'profile' | 'basic' | 'address' | 'email' | 'phone' | 'documents'
+export type SignupStep =
+    | 'profile'
+    | 'basic'
+    | 'address'
+    | 'verify_method'
+    | 'email'
+    | 'phone'
+    | 'documents'
 
 export interface SignupDraftData {
     name: string
@@ -156,6 +163,7 @@ export function hasSignupDraft() {
 
 export function resolveSignupDraftHref(draft: SignupDraft | null | undefined) {
     if (!draft) return '/auth/cadastro'
+    if (draft.step === 'verify_method') return '/cadastro/verificar-metodo'
     if (draft.step === 'email') return '/verificacao?flow=signup'
     if (draft.step === 'phone') return '/cadastro/verificar-telefone?flow=signup'
     if (draft.step === 'documents') return '/onboarding/broker?mode=signup'

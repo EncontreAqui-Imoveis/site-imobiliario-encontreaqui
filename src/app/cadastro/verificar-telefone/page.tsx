@@ -73,6 +73,13 @@ export default function VerificarTelefonePage() {
     }, [draftReady, isProfileUpdateFlow, isSignupFlow, loading, pendingPhoneUpdateState, router, session, signupDraftState])
 
     useEffect(() => {
+        if (!draftReady || !isSignupFlow || !signupDraftState) return
+        if (signupDraftState.step === 'verify_method') {
+            router.replace('/cadastro/verificar-metodo')
+        }
+    }, [draftReady, isSignupFlow, router, signupDraftState])
+
+    useEffect(() => {
         const phoneFromQuery = searchParams.get('phone')
         if (phoneFromQuery) {
             setPhone(formatPhoneInput(phoneFromQuery))
@@ -372,11 +379,21 @@ export default function VerificarTelefonePage() {
 
                         <div className="text-center">
                             <Link
-                                href={isProfileUpdateFlow ? '/perfil/editar' : isSignupFlow ? '/auth/cadastro' : '/onboarding'}
+                                href={
+                                    isProfileUpdateFlow
+                                        ? '/perfil/editar'
+                                        : isSignupFlow
+                                            ? '/cadastro/verificar-metodo'
+                                            : '/onboarding'
+                                }
                                 className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-700"
                             >
                                 <ArrowLeft className="w-4 h-4" />
-                                {isProfileUpdateFlow ? 'Voltar ao perfil' : isSignupFlow ? 'Voltar ao cadastro' : 'Voltar ao onboarding'}
+                                {isProfileUpdateFlow
+                                    ? 'Voltar ao perfil'
+                                    : isSignupFlow
+                                        ? 'Trocar método de verificação'
+                                        : 'Voltar ao onboarding'}
                             </Link>
                         </div>
                     </>

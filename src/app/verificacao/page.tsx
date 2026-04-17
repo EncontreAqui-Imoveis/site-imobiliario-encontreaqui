@@ -59,6 +59,14 @@ export default function VerificacaoPage() {
     }, [draftReady, email, isSignupFlow, loading, router, session])
 
     useEffect(() => {
+        if (!draftReady || !isSignupFlow) return
+        const d = loadSignupDraft()
+        if (d?.step === 'verify_method') {
+            router.replace('/cadastro/verificar-metodo')
+        }
+    }, [draftReady, isSignupFlow, router])
+
+    useEffect(() => {
         if (!verificationExpiresAt && cooldownRemainingSeconds === 0) return
         const timer = window.setInterval(() => {
             setCooldownRemainingSeconds((current) => (current > 0 ? current - 1 : 0))
@@ -331,10 +339,10 @@ export default function VerificacaoPage() {
 
                         <div className="flex flex-col gap-3">
                             <Link
-                                href={isSignupFlow ? '/auth/cadastro' : '/perfil/editar'}
+                                href={isSignupFlow ? '/cadastro/verificar-metodo' : '/perfil/editar'}
                                 className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-primary-600 hover:bg-slate-50 hover:text-primary-700"
                             >
-                                {isSignupFlow ? 'Voltar ao cadastro' : 'Trocar e-mail'}
+                                {isSignupFlow ? 'Trocar método de verificação' : 'Trocar e-mail'}
                             </Link>
                             <Link
                                 href={isSignupFlow ? '/auth/cadastro' : '/meus-imoveis'}

@@ -183,3 +183,17 @@ h3 {
     transform: translateY(0);
   }
 }
+
+/* Botões: mão ao passar o mouse; durante loading (ícone girando) cursor de espera */
+button:not(:disabled),
+[role='button']:not([aria-disabled='true']),
+input[type='submit']:not(:disabled),
+input[type='button']:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled:has(.animate-spin),
+[role='button'][aria-disabled='true']:has(.animate-spin),
+button[aria-busy='true'] {
+  cursor: wait;
+}

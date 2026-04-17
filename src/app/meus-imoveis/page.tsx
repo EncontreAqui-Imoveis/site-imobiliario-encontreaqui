@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -60,10 +60,22 @@ export default function MeusImoveisPage() {
     const [properties, setProperties] = useState<PropertySummary[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [archiveTab, setArchiveTab] = useState<'all' | 'sold' | 'rented'>('all')
     const createdProperty = useMemo(
         () => properties.find((property) => property.id === createdId),
         [properties, createdId],
     )
+
+    const filteredProperties = useMemo(() => {
+        if (archiveTab === 'all') return properties
+        return properties.filter((p) => p.status === archiveTab)
+    }, [properties, archiveTab])
+
+    const archiveTabLabel = useCallback((tab: typeof archiveTab) => {
+        if (tab === 'sold') return 'Vendidos'
+        if (tab === 'rented') return 'Alugados'
+        return 'Todos'
+    }, [])
 
     useEffect(() => {
         if (!focusId || properties.length === 0) return
@@ -118,7 +130,11 @@ export default function MeusImoveisPage() {
                     </div>
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900">Meus Imóveis</h1>
-                        <p className="text-sm text-slate-500">{properties.length} imóveis cadastrados</p>
+                        <p className="text-sm text-slate-500">
+                            {filteredProperties.length === properties.length
+                                ? `${properties.length} imóveis cadastrados`
+                                : `${filteredProperties.length} de ${properties.length} neste filtro`}
+                        </p>
                     </div>
                 </div>
                 {canCreateProperty && (
@@ -156,7 +172,26 @@ export default function MeusImoveisPage() {
                         Tentar novamente
                     </button>
                 </div>
-            ) : properties.length === 0 ? (
+            ) : (
+                <>
+                <div className="flex flex-wrap gap-2 mb-6">
+                    {(['all', 'sold', 'rented'] as const).map((tab) => (
+                        <button
+                            key={tab}
+                            type="button"
+                            onClick={() => setArchiveTab(tab)}
+                            className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                                archiveTab === tab
+                                    ? 'bg-primary-600 text-white shadow-sm'
+                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                            }`}
+                        >
+                            {archiveTabLabel(tab)}
+                        </button>
+                    ))}
+                </div>
+                {filteredProperties.length === 0 ? (
+                properties.length === 0 ? (
                 <div className="text-center py-20 space-y-4">
                     <Building2 className="w-16 h-16 mx-auto text-slate-200" />
                     <h2 className="text-lg font-semibold text-slate-700">Nenhum imóvel cadastrado</h2>
@@ -182,9 +217,23 @@ export default function MeusImoveisPage() {
                         </Link>
                     )}
                 </div>
-            ) : (
+                ) : (
+                <div className="text-center py-16 space-y-3">
+                    <p className="text-sm text-slate-600">
+                        Nenhum imóvel em <strong>{archiveTabLabel(archiveTab).toLowerCase()}</strong> nesta lista.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => setArchiveTab('all')}
+                        className="text-sm font-medium text-primary-600 hover:underline"
+                    >
+                        Ver todos os imóveis
+                    </button>
+                </div>
+                )
+                ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {properties.map((property) => {
+                    {filteredProperties.map((property) => {
                         const badge = getStatusBadge(property.status)
                         const isJustCreated = property.id === createdId
                         const isFocused = property.id === focusId
@@ -274,6 +323,8 @@ export default function MeusImoveisPage() {
                         )
                     })}
                 </div>
+                )}
+                </>
             )}
         </div>
     )

@@ -78,7 +78,12 @@ export default function CadastroPage() {
 
         const existing = loadSignupDraft()
         if (existing) {
-            if (existing.step === 'email' || existing.step === 'phone' || existing.step === 'documents') {
+            if (
+                existing.step === 'verify_method' ||
+                existing.step === 'email' ||
+                existing.step === 'phone' ||
+                existing.step === 'documents'
+            ) {
                 router.replace(resolveSignupDraftHref(existing))
                 return
             }
@@ -273,7 +278,7 @@ export default function CadastroPage() {
 
         const next = createSignupDraft({
             ...draft,
-                step: isGoogleFlow ? 'phone' : 'email',
+            step: 'verify_method',
             data: {
                 ...draft.data,
                 cep: draft.data.cep.replace(/\D/g, ''),
