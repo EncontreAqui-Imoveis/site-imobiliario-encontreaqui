@@ -1,8 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Search, Home, MapPin, ChevronDown, Loader2 } from 'lucide-react'
+
+const HERO_IMAGE =
+    'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=2400&q=82'
 
 const propertyTypes = [
     { value: '', label: 'Todos os tipos' },
@@ -36,12 +40,20 @@ export default function HeroSection() {
     }
 
     return (
-        <section className="relative min-h-[600px] lg:min-h-[700px] flex items-center gradient-hero overflow-hidden">
-            {/* Decorative elements */}
-            <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute -top-40 -right-40 w-96 h-96 bg-accent-400/10 rounded-full blur-3xl" />
-                <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-primary-300/10 rounded-full blur-3xl" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-accent-500/5 rounded-full blur-3xl" />
+        <section className="relative min-h-[600px] lg:min-h-[700px] flex items-center overflow-hidden">
+            <div className="absolute inset-0">
+                <Image
+                    src={HERO_IMAGE}
+                    alt=""
+                    fill
+                    priority
+                    className="object-cover"
+                    sizes="100vw"
+                />
+                <div
+                    className="absolute inset-0 bg-gradient-to-b from-primary-950/88 via-primary-900/78 to-primary-950/90"
+                    aria-hidden
+                />
             </div>
 
             <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32 w-full">

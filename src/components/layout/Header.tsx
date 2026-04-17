@@ -109,8 +109,14 @@ export default function Header() {
         router.push('/')
     }
 
-    const headerBg = isHomepage && !isScrolled ? 'bg-transparent' : 'bg-white/95 backdrop-blur-md shadow-sm'
-    const textColor = isHomepage && !isScrolled ? 'text-white' : 'text-gray-600'
+    const headerBg =
+        isHomepage && !isScrolled
+            ? 'bg-primary-950/40 backdrop-blur-md border-b border-white/20 shadow-sm shadow-black/20'
+            : 'bg-white/95 backdrop-blur-md shadow-sm'
+    const textColor =
+        isHomepage && !isScrolled
+            ? 'text-white drop-shadow-sm [text-shadow:0_1px_2px_rgba(0,0,0,0.45)]'
+            : 'text-gray-600'
     const logoFilter = isHomepage && !isScrolled ? 'brightness-0 invert' : ''
     const userName = session?.user?.name?.split(' ')[0] || 'Usuário'
     const userInitial = userName.charAt(0).toUpperCase()
