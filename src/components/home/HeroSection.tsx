@@ -83,7 +83,7 @@ export default function HeroSection() {
 
                     {/* Title */}
                     <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6 animate-fadeIn">
-                        Encontre os imóveis mais desejados de{' '}
+                        Encontre os imóveis mais desejados do{' '}
                         <span className="text-accent-400">Brasil</span>
                     </h1>
 
