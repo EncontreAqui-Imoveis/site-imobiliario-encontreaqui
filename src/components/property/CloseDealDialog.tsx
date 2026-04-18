@@ -135,7 +135,7 @@ export default function CloseDealDialog({ property, open, onClose, onDealClosed 
         <dialog
             ref={dialogRef}
             onCancel={onClose}
-            className="fixed inset-0 z-50 m-0 p-0 w-full h-full max-w-none max-h-none bg-transparent backdrop:bg-black/50"
+            className="fixed inset-0 z-[60] m-0 p-0 w-full h-full max-w-none max-h-none bg-transparent backdrop:bg-black/50"
         >
             {/* Overlay click to close */}
             <div className="absolute inset-0" onClick={onClose} />

@@ -157,9 +157,9 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
 
             {/* Lightbox Modal */}
             {isOpen && (
-                <div className="fixed inset-0 z-50 bg-black flex flex-col">
+                <div className="fixed inset-0 z-[60] bg-black flex flex-col">
                     {/* Toolbar */}
-                    <div className="flex items-center justify-between p-4 text-white z-50 bg-gradient-to-b from-black/80 to-transparent">
+                    <div className="flex items-center justify-between p-4 text-white z-[61] bg-gradient-to-b from-black/80 to-transparent">
                         <span className="font-medium text-lg">{photoIndex + 1} / {validImages.length}</span>
                         <div className="flex items-center gap-4">
                             {videoUrl && (

@@ -161,6 +161,19 @@ export function hasSignupDraft() {
     return loadSignupDraft() !== null
 }
 
+/** Volta o rascunho para a etapa de endereço (ex.: após “verificar método”). */
+export function rewindSignupDraftToAddress(): SignupDraft | null {
+    const d = loadSignupDraft()
+    if (!d) return null
+    const next: SignupDraft = {
+        ...d,
+        step: 'address',
+        updatedAt: new Date().toISOString(),
+    }
+    saveSignupDraft(next)
+    return next
+}
+
 export function resolveSignupDraftHref(draft: SignupDraft | null | undefined) {
     if (!draft) return '/auth/cadastro'
     if (draft.step === 'verify_method') return '/cadastro/verificar-metodo'

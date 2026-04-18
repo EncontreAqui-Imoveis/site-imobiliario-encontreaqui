@@ -1,11 +1,16 @@
 'use client'
 
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { ArrowLeft, Mail, Smartphone } from 'lucide-react'
 
-import { loadSignupDraft, resolveSignupDraftHref, saveSignupDraft, type SignupDraft } from '@/lib/authSignupDraft'
+import {
+    loadSignupDraft,
+    resolveSignupDraftHref,
+    rewindSignupDraftToAddress,
+    saveSignupDraft,
+    type SignupDraft,
+} from '@/lib/authSignupDraft'
 
 export default function VerificarMetodoPage() {
     const router = useRouter()
@@ -56,6 +61,15 @@ export default function VerificarMetodoPage() {
         router.push(resolveSignupDraftHref(next))
     }
 
+    const goBackToAddress = () => {
+        const next = rewindSignupDraftToAddress()
+        if (!next) {
+            router.push('/auth/cadastro')
+            return
+        }
+        router.push('/auth/cadastro')
+    }
+
     if (!draft) {
         return (
             <div className="min-h-[40vh] flex items-center justify-center text-slate-600 text-sm">
@@ -99,13 +113,14 @@ export default function VerificarMetodoPage() {
                         </div>
                     </button>
                 </div>
-                <Link
-                    href="/auth/cadastro"
-                    className="flex items-center justify-center gap-2 text-sm text-slate-600 hover:text-slate-900"
+                <button
+                    type="button"
+                    onClick={goBackToAddress}
+                    className="flex w-full items-center justify-center gap-2 text-sm text-slate-600 hover:text-slate-900"
                 >
                     <ArrowLeft className="h-4 w-4" />
                     Voltar e revisar endereço
-                </Link>
+                </button>
             </div>
         </div>
     )

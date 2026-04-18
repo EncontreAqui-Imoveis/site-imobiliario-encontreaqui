@@ -129,7 +129,7 @@ export default function Header() {
         : userMenuLinks.filter((link) => link.href !== '/propostas')
 
     return (
-        <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${headerBg} ${!isHomepage || isScrolled ? 'border-b border-gray-100' : ''}`}>
+        <header className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${headerBg} ${!isHomepage || isScrolled ? 'border-b border-gray-100' : ''}`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16 lg:h-20">
                     {/* Logo */}
@@ -217,7 +217,7 @@ export default function Header() {
                                 </button>
 
                                 {isUserMenuOpen && (
-                                    <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 animate-fadeIn z-50">
+                                    <div className="absolute right-0 top-full mt-2 z-50 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 animate-fadeIn">
                                         {/* User info */}
                                         <div className="px-4 py-3 border-b border-gray-100">
                                             <p className="font-semibold text-gray-900 text-sm">{session?.user?.name}</p>

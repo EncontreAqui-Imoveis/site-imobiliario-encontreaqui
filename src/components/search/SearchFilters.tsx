@@ -194,14 +194,14 @@ export default function SearchFilters() {
             {/* Backdrop for Mobile */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
+                    className="fixed inset-0 z-[45] bg-black/40 backdrop-blur-sm lg:hidden"
                     onClick={() => setIsOpen(false)}
                 />
             )}
 
             {/* Sidebar Container */}
             <div className={`
-                fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-white shadow-2xl transform transition-transform duration-300 ease-in-out
+                fixed inset-y-0 right-0 z-[55] w-full max-w-sm bg-white shadow-2xl transform transition-transform duration-300 ease-in-out
                 lg:translate-x-0 lg:static lg:w-full lg:max-w-none lg:shadow-none lg:bg-transparent lg:z-0
                 ${isOpen ? 'translate-x-0' : 'translate-x-full'}
             `}>
