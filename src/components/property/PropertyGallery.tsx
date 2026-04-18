@@ -85,7 +85,8 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
                             className="object-cover transition-transform duration-700 group-hover:scale-105"
                             sizes="25vw"
                         />
-                        <PhotoWatermark compact />
+                        {/* Última miniatura: canto inferior direito do bloco partilha o botão «Ver todas as fotos» — marca no topo */}
+                        <PhotoWatermark compact placement={idx === 3 ? 'top' : 'bottom'} />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
 
                         {/* Overlay for "Show More" on the last grid item if there are more images */}

@@ -3,20 +3,31 @@
 type PhotoWatermarkProps = {
     /** Miniaturas da grelha — marca mais pequena */
     compact?: boolean
+    /**
+     * `bottom` (padrão): centro-inferior.
+     * `top`: centro-superior — evita o botão «Ver todas as fotos» na última célula da grelha desktop.
+     */
+    placement?: 'bottom' | 'top'
 }
 
 /**
  * Marca d'água nas fotos de imóveis (listagem, detalhe, galeria).
  * Imagem estática em `/public/branding/marcadagua.png`.
  */
-export default function PhotoWatermark({ compact }: PhotoWatermarkProps) {
+export default function PhotoWatermark({ compact, placement = 'bottom' }: PhotoWatermarkProps) {
+    const isTop = placement === 'top'
+    const vertical =
+        isTop
+            ? compact
+                ? 'top-0.5 w-[11%] max-w-[44px] min-w-[22px]'
+                : 'top-1.5 w-[min(72px,16%)] max-w-[20vw] min-w-[40px]'
+            : compact
+              ? 'bottom-0.5 w-[11%] max-w-[44px] min-w-[22px]'
+              : 'bottom-1.5 w-[min(72px,16%)] max-w-[20vw] min-w-[40px]'
+
     return (
         <div
-            className={`pointer-events-none absolute left-1/2 z-[8] -translate-x-1/2 select-none ${
-                compact
-                    ? 'bottom-0.5 w-[11%] max-w-[44px] min-w-[22px]'
-                    : 'bottom-1.5 w-[min(72px,16%)] max-w-[20vw] min-w-[40px]'
-            }`}
+            className={`pointer-events-none absolute left-1/2 z-[8] -translate-x-1/2 select-none ${vertical}`}
             aria-hidden
         >
             <img
