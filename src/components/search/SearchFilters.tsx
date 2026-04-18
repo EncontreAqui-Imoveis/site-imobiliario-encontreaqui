@@ -122,6 +122,16 @@ export default function SearchFilters() {
         setFilters(prev => ({ ...prev, [key]: value }))
     }
 
+    /** Finalidade: aplica na URL na hora (sem depender de “Ver resultados”). */
+    const applyPurposeToUrl = (purposeValue: string) => {
+        const params = new URLSearchParams(searchParams.toString())
+        if (purposeValue) params.set('purpose', purposeValue)
+        else params.delete('purpose')
+        const qs = params.toString()
+        router.push(qs ? `/imoveis?${qs}` : '/imoveis')
+        setFilters((prev) => ({ ...prev, purpose: purposeValue }))
+    }
+
     const toggleAmenity = (key: string) => {
         setAmenities(prev => ({ ...prev, [key]: !prev[key] }))
     }
@@ -239,7 +249,8 @@ export default function SearchFilters() {
                             {purposes.map((p) => (
                                 <button
                                     key={p.value}
-                                    onClick={() => handleChange('purpose', p.value)}
+                                    type="button"
+                                    onClick={() => applyPurposeToUrl(p.value)}
                                     className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${filters.purpose === p.value
                                             ? 'bg-white text-gray-900 shadow-sm'
                                             : 'text-gray-500 hover:text-gray-700'

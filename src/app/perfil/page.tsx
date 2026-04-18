@@ -7,7 +7,7 @@ import { useUser } from '@/contexts/UserContext'
 import { resolvePendingAction } from '@/lib/auth/routeResolution'
 import GuestAccessCard from '@/components/auth/GuestAccessCard'
 import { shareOrCopy } from '@/lib/webShare'
-import { Edit, BadgeCheck, Building2, LogOut, Briefcase, BarChart3, Loader2, Bell, Settings, Share2, User } from 'lucide-react'
+import { BadgeCheck, Building2, LogOut, Briefcase, BarChart3, Loader2, Bell, Settings, Share2, User } from 'lucide-react'
 
 export default function PerfilPage() {
     const router = useRouter()
@@ -80,6 +80,12 @@ export default function PerfilPage() {
                     : null
     const nextPendingAction = resolvePendingAction(session)
 
+    const formatCep = (cep: string | undefined) => {
+        const d = cep?.replace(/\D/g, '') ?? ''
+        if (d.length === 8) return `${d.slice(0, 5)}-${d.slice(5)}`
+        return cep?.trim() || ''
+    }
+
     return (
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 pt-24">
             {/* Profile Header */}
@@ -88,11 +94,11 @@ export default function PerfilPage() {
                     <div className="w-16 h-16 rounded-full bg-primary-500 flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
                         {user.name?.charAt(0).toUpperCase() || 'U'}
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 pr-2">
                         <h1 className="text-xl font-bold text-slate-900">{user.name}</h1>
                         <p className="text-sm text-slate-500">{user.email}</p>
                         {user.phone && <p className="text-sm text-slate-500">{user.phone}</p>}
-                        <div className="flex items-center gap-2 mt-2">
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
                             {isBroker && (
                                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary-50 text-primary-700">
                                     <BadgeCheck className="w-3.5 h-3.5" />
@@ -132,26 +138,31 @@ export default function PerfilPage() {
                             )}
                         </div>
                     </div>
-                    <Link
-                        href="/perfil/editar"
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-600 border border-primary-200 rounded-xl hover:bg-primary-50 transition-colors"
-                    >
-                        <Edit className="w-4 h-4" />
-                        Editar
-                    </Link>
                 </div>
 
                 {/* Address Info */}
                 {(user.street || user.city) && (
                     <div className="mt-4 pt-4 border-t border-slate-100">
-                        <p className="text-xs font-semibold text-slate-400 uppercase mb-1">Endereço</p>
-                        <p className="text-sm text-slate-600">
-                            {[user.street, user.number, user.complement, user.bairro].filter(Boolean).join(', ')}
-                        </p>
-                        <p className="text-sm text-slate-600">
-                            {[user.city, user.state].filter(Boolean).join(' — ')}
-                            {user.cep && ` • CEP ${user.cep}`}
-                        </p>
+                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Endereço</p>
+                        <address className="not-italic text-sm text-slate-700 space-y-1">
+                            {(user.street || user.number) && (
+                                <p className="leading-relaxed">
+                                    {[user.street, user.number].filter(Boolean).join(', ')}
+                                    {user.complement ? ` — ${user.complement}` : ''}
+                                </p>
+                            )}
+                            {user.bairro && <p className="text-slate-600">{user.bairro}</p>}
+                            {(user.city || user.state) && (
+                                <p className="font-medium text-slate-800">
+                                    {[user.city, user.state].filter(Boolean).join(user.city && user.state ? ' / ' : '')}
+                                </p>
+                            )}
+                            {user.cep && (
+                                <p className="text-slate-500 text-xs sm:text-sm">
+                                    CEP {formatCep(user.cep)}
+                                </p>
+                            )}
+                        </address>
                     </div>
                 )}
             </div>

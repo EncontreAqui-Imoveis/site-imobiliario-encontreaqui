@@ -184,11 +184,22 @@ export default function Header() {
                     </nav>
 
                     {/* Desktop Auth Section */}
-                    <div className="hidden lg:flex items-center gap-3 flex-shrink-0">
+                    <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
                         {authLoading ? (
                             <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
                         ) : isAuthenticated ? (
-                            /* Logged-in: Avatar + Dropdown */
+                            <>
+                                <Link
+                                    href="/notificacoes"
+                                    className={`p-2.5 rounded-xl transition-all ${isHomepage && !isScrolled
+                                        ? 'text-white hover:bg-white/10'
+                                        : 'text-gray-600 hover:bg-gray-100 hover:text-primary-600'
+                                        } ${pathname === '/notificacoes' ? (isHomepage && !isScrolled ? 'ring-2 ring-white/40' : 'text-primary-600 bg-primary-50') : ''}`}
+                                    aria-label="Notificações"
+                                >
+                                    <Bell className="w-5 h-5" />
+                                </Link>
+                            {/* Logged-in: Avatar + Dropdown */}
                             <div className="relative" ref={userMenuRef}>
                                 <button
                                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -283,6 +294,7 @@ export default function Header() {
                                     </div>
                                 )}
                             </div>
+                            </>
                         ) : (
                             /* Not logged in: Login + Register buttons */
                             <>
@@ -305,19 +317,35 @@ export default function Header() {
                         )}
                     </div>
 
-                    {/* Mobile Menu Button */}
-                    <button
-                        onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className={`lg:hidden p-2 ${textColor} hover:bg-white/10 rounded-lg transition-colors`}
-                        aria-label="Menu"
-                    >
-                        {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                    </button>
+                    <div className="flex items-center gap-0.5 lg:hidden">
+                        {!authLoading && isAuthenticated && (
+                            <Link
+                                href="/notificacoes"
+                                onClick={() => setIsMenuOpen(false)}
+                                className={`p-2 rounded-lg transition-colors ${isHomepage && !isScrolled
+                                    ? `${textColor} hover:bg-white/10`
+                                    : 'text-gray-600 hover:bg-gray-100'
+                                    } ${pathname === '/notificacoes' ? 'text-primary-600' : ''}`}
+                                aria-label="Notificações"
+                            >
+                                <Bell className="w-6 h-6" />
+                            </Link>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => setIsMenuOpen(!isMenuOpen)}
+                            className={`p-2 ${textColor} hover:bg-white/10 rounded-lg transition-colors`}
+                            aria-label="Menu"
+                        >
+                            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                        </button>
+                    </div>
                 </div>
 
                 {/* ===================== Mobile Menu ===================== */}
                 {isMenuOpen && (
-                    <div className="lg:hidden py-4 border-t border-gray-100 animate-fadeIn bg-white rounded-b-2xl shadow-lg">
+                    <div className="lg:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-y-contain border-t border-gray-100 animate-fadeIn bg-white rounded-b-2xl shadow-lg [touch-action:pan-y]">
+                        <div className="py-4">
                         {/* Mobile Search */}
                         <form onSubmit={handleSearch} className="px-4 mb-4">
                             <div className="relative">
@@ -475,6 +503,7 @@ export default function Header() {
                                 </a>
                             </div>
                         </nav>
+                        </div>
                     </div>
                 )}
             </div>

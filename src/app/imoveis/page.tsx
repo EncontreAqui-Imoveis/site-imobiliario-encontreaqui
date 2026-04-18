@@ -7,6 +7,7 @@ import ListingFilterBar from '@/components/search/ListingFilterBar'
 import ActiveFilterChips from '@/components/search/ActiveFilterChips'
 import { Property } from '@/types/property'
 import { areaInputToSquareMeters, normalizeAreaUnidade } from '@/lib/areaUnits'
+import { hasActiveListingFilters } from '@/lib/listingFilterUtils'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://backend-production-6acc.up.railway.app'
 
@@ -96,6 +97,7 @@ export default async function PropertiesPage({
 
     // Fetch properties from real API
     const properties = await fetchProperties(params)
+    const showEmptySearchIllustration = hasActiveListingFilters(params)
 
     return (
         <div className="min-h-screen bg-gray-50 pt-16 lg:pt-20">
@@ -142,7 +144,10 @@ export default async function PropertiesPage({
                             <ActiveFilterChips />
                         </Suspense>
                         <Suspense fallback={<PropertyGrid properties={[]} isLoading={true} />}>
-                            <PropertyGrid properties={properties} />
+                            <PropertyGrid
+                                properties={properties}
+                                illustrateEmptySearch={showEmptySearchIllustration}
+                            />
                         </Suspense>
                     </main>
                 </div>

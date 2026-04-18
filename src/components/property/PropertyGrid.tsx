@@ -11,12 +11,15 @@ interface PropertyGridProps {
     properties: Property[]
     isLoading?: boolean
     emptyMessage?: string
+    /** Se false e não houver resultados, não mostra a ilustração grande (apenas texto). */
+    illustrateEmptySearch?: boolean
 }
 
 export default function PropertyGrid({
     properties,
     isLoading = false,
     emptyMessage = 'Nenhum imóvel encontrado.',
+    illustrateEmptySearch = true,
 }: PropertyGridProps) {
 
     if (isLoading) {
@@ -56,21 +59,25 @@ export default function PropertyGrid({
                 aria-label="Estado vazio da busca"
                 className="text-center py-12 sm:py-16 px-4 bg-white rounded-3xl border border-gray-100 shadow-sm"
             >
-                <div className="relative mx-auto mb-6 h-40 w-full max-w-sm sm:h-48">
-                    <Image
-                        src={EMPTY_SEARCH_IMAGE}
-                        alt=""
-                        fill
-                        className="object-contain"
-                        sizes="(max-width: 640px) 100vw, 24rem"
-                    />
-                </div>
+                {illustrateEmptySearch && (
+                    <div className="relative mx-auto mb-6 h-40 w-full max-w-sm sm:h-48">
+                        <Image
+                            src={EMPTY_SEARCH_IMAGE}
+                            alt=""
+                            fill
+                            className="object-contain"
+                            sizes="(max-width: 640px) 100vw, 24rem"
+                        />
+                    </div>
+                )}
                 <div role="status" aria-live="polite" aria-atomic="true">
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
                         {emptyMessage}
                     </h3>
                     <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                        Tente ajustar os filtros, buscar em outra região ou limpar os critérios para ver mais resultados.
+                        {illustrateEmptySearch
+                            ? 'Tente ajustar os filtros, buscar em outra região ou limpar os critérios para ver mais resultados.'
+                            : 'Novos imóveis aparecem aqui assim que forem publicados. Enquanto isso, explore outras páginas ou volte mais tarde.'}
                     </p>
                 </div>
                 <Link
