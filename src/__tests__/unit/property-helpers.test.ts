@@ -32,8 +32,8 @@ describe('formatPrice', () => {
         expect(formatPrice(250000)).toMatch(/250\.000/)
     })
 
-    it('formats zero', () => {
-        expect(formatPrice(0)).toMatch(/0/)
+    it('formats zero with centavos', () => {
+        expect(formatPrice(0)).toMatch(/0[,.]00/)
     })
 })
 

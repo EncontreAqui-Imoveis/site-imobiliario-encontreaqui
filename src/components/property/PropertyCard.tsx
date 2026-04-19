@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Bed, Bath, Car, Maximize, MapPin, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Property, formatPrice, getPromoSalePrice, getPromoRentPrice } from '@/types/property'
+import { capitalizePropertyTitle } from '@/lib/propertyTitleDisplay'
 import FavoriteButton from '@/components/property/FavoriteButton'
 import PhotoWatermark from '@/components/property/PhotoWatermark'
 
@@ -98,7 +99,7 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                     </>
                 )}
 
-                <div className="absolute top-4 left-4 right-14 flex flex-wrap gap-2">
+                <div className="absolute left-3 top-3 z-10 flex max-w-[calc(100%-1.5rem)] flex-wrap gap-2 sm:left-4 sm:top-4">
                     <div className={`${purposeBadge.className} shadow-lg backdrop-blur-sm bg-opacity-95`}>
                         {purposeBadge.label}
                     </div>
@@ -113,8 +114,8 @@ export default function PropertyCard({ property, variant = 'default' }: Property
             <div className="p-6">
                 {/* Title */}
                 <div className="mb-3 flex items-start justify-between gap-3">
-                    <h3 className="font-display font-bold text-gray-900 text-xl leading-tight line-clamp-2 group-hover:text-primary-600 transition-colors">
-                        {property.title}
+                    <h3 className="font-display text-xl font-bold leading-tight text-gray-900 line-clamp-2 transition-colors group-hover:text-primary-600">
+                        {capitalizePropertyTitle(property.title)}
                     </h3>
                     <div className="shrink-0 rounded-full bg-white shadow-sm">
                         <FavoriteButton propertyId={property.id} size="sm" />
@@ -126,52 +127,16 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                 </p>
 
                 {/* Location */}
-                <div className="flex items-center gap-1.5 text-gray-500 text-sm mb-5">
-                    <MapPin className="w-4 h-4 flex-shrink-0 text-primary-500" />
+                <div className="mb-4 flex items-center gap-1.5 text-sm text-gray-600">
+                    <MapPin className="h-4 w-4 shrink-0 text-primary-500" />
                     <span className="line-clamp-1 font-medium">
                         {property.bairro ? `${property.bairro}, ` : ''}{property.city}
                     </span>
                 </div>
 
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 gap-3 mb-5">
-                    {property.bedrooms != null && property.bedrooms > 0 && (
-                        <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-sm text-gray-700">
-                            <div className="flex items-center gap-2">
-                                <Bed className="w-4 h-4 text-gray-400" />
-                                <span className="font-medium">{property.bedrooms} quartos</span>
-                            </div>
-                        </div>
-                    )}
-                    {property.bathrooms != null && property.bathrooms > 0 && (
-                        <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-sm text-gray-700">
-                            <div className="flex items-center gap-2">
-                                <Bath className="w-4 h-4 text-gray-400" />
-                                <span className="font-medium">{property.bathrooms} banheiros</span>
-                            </div>
-                        </div>
-                    )}
-                    {property.garageSpots != null && property.garageSpots > 0 && (
-                        <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-sm text-gray-700">
-                            <div className="flex items-center gap-2">
-                                <Car className="w-4 h-4 text-gray-400" />
-                                <span className="font-medium">{property.garageSpots} vagas</span>
-                            </div>
-                        </div>
-                    )}
-                    {property.areaConstruida != null && property.areaConstruida > 0 && (
-                        <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-sm text-gray-700">
-                            <div className="flex items-center gap-2">
-                                <Maximize className="w-4 h-4 text-gray-400" />
-                                <span className="font-medium">{property.areaConstruida} m²</span>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Price */}
-                <div className="pt-4 border-t border-gray-100">
-                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">
+                {/* Price — hierarquia principal */}
+                <div className="mb-5 border-b border-gray-100 pb-5">
+                    <p className="mb-1 text-xs font-medium uppercase tracking-wider text-gray-400">
                         {property.priceSale ? 'Venda' : (property.priceRent ? 'Aluguel' : 'Valor')}
                     </p>
                     {(() => {
@@ -182,27 +147,56 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                         if (promo) {
                             return (
                                 <>
-                                    <p className="text-sm text-gray-400 line-through font-medium">
+                                    <p className="text-base font-medium text-gray-400 line-through">
                                         {formatPrice(basePrice)}
                                     </p>
-                                    <p className="text-2xl font-display font-bold text-primary-700">
+                                    <p className="font-display text-3xl font-bold tracking-tight text-primary-700 sm:text-4xl">
                                         {formatPrice(promo)}
-                                        {property.priceRent && <span className="text-sm font-normal text-gray-500">/mês</span>}
+                                        {property.priceRent && <span className="text-base font-normal text-gray-500">/mês</span>}
                                     </p>
                                 </>
                             )
                         }
                         return (
-                            <p className="text-2xl font-display font-bold text-primary-700">
+                            <p className="font-display text-3xl font-bold tracking-tight text-primary-700 sm:text-4xl">
                                 {formatPrice(basePrice)}
-                                {property.priceRent && <span className="text-sm font-normal text-gray-500">/mês</span>}
+                                {property.priceRent && <span className="text-base font-normal text-gray-500">/mês</span>}
                             </p>
                         )
                     })()}
-                    <p className="mt-2 text-xs text-slate-500">
-                        Abra para ver fotos, localização detalhada e informações completas.
-                    </p>
                 </div>
+
+                {/* Stats Grid */}
+                <div className="mb-4 grid grid-cols-2 gap-3">
+                    {property.bedrooms != null && property.bedrooms > 0 && (
+                        <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-3 py-3 text-center text-sm text-gray-700">
+                            <Bed className="h-4 w-4 shrink-0 text-gray-400" />
+                            <span className="font-medium leading-tight">{property.bedrooms} quartos</span>
+                        </div>
+                    )}
+                    {property.bathrooms != null && property.bathrooms > 0 && (
+                        <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-3 py-3 text-center text-sm text-gray-700">
+                            <Bath className="h-4 w-4 shrink-0 text-gray-400" />
+                            <span className="font-medium leading-tight">{property.bathrooms} banheiros</span>
+                        </div>
+                    )}
+                    {property.garageSpots != null && property.garageSpots > 0 && (
+                        <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-3 py-3 text-center text-sm text-gray-700">
+                            <Car className="h-4 w-4 shrink-0 text-gray-400" />
+                            <span className="font-medium leading-tight">{property.garageSpots} vagas</span>
+                        </div>
+                    )}
+                    {property.areaConstruida != null && property.areaConstruida > 0 && (
+                        <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-3 py-3 text-center text-sm text-gray-700">
+                            <Maximize className="h-4 w-4 shrink-0 text-gray-400" />
+                            <span className="font-medium leading-tight">{property.areaConstruida} m²</span>
+                        </div>
+                    )}
+                </div>
+
+                <p className="text-xs text-slate-500">
+                    Abra para ver fotos, localização detalhada e informações completas.
+                </p>
             </div>
         </Link>
     )

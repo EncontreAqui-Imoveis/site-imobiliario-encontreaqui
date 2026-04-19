@@ -1,5 +1,7 @@
 'use client'
 
+import Image from 'next/image'
+
 type PhotoWatermarkProps = {
     /** Miniaturas da grelha — marca mais pequena */
     compact?: boolean
@@ -30,12 +32,12 @@ export default function PhotoWatermark({ compact, placement = 'bottom' }: PhotoW
             className={`pointer-events-none absolute left-1/2 z-[8] -translate-x-1/2 select-none ${vertical}`}
             aria-hidden
         >
-            <img
+            <Image
                 src="/branding/marcadagua.png"
                 alt=""
+                width={160}
+                height={48}
                 className="h-auto w-full object-contain opacity-[0.28] drop-shadow-[0_0.5px_2px_rgba(0,0,0,0.18)] dark:opacity-[0.34]"
-                loading="lazy"
-                decoding="async"
             />
         </div>
     )

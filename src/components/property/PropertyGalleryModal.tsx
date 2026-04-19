@@ -64,7 +64,6 @@ export default function PropertyGalleryModal({ images, initialIndex = 0, isOpen,
                         fill
                         className="object-contain"
                         sizes="100vw"
-                        priority
                     />
                     <PhotoWatermark />
                 </div>

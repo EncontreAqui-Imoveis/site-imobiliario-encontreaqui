@@ -29,19 +29,19 @@ export default function Footer() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
                     <div>
-                        <Link href="/" className="inline-block mb-4">
-                            <img
+                        <Link href="/" className="relative mb-4 inline-block h-48 w-[201px]">
+                            <Image
                                 src="/branding/7.svg"
                                 alt="Encontre Aqui Imóveis"
-                                width={504}
-                                height={240}
-                                className="h-48 w-auto"
+                                fill
+                                className="object-contain object-left"
+                                sizes="201px"
                             />
                         </Link>
-                        <p className="text-slate-400 text-sm leading-relaxed">
+                        <p className="mb-8 text-sm leading-relaxed text-slate-400">
                             Vitrine oficial de imóveis. Para interações completas, utilize o aplicativo da imobiliária.
                         </p>
-                        <div className="mt-4 flex items-center gap-3">
+                        <div className="flex items-center gap-3">
                             <a
                                 href={INSTAGRAM_URL}
                                 target="_blank"
@@ -103,18 +103,18 @@ export default function Footer() {
                                 href={APP_LINKS.androidStore}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex w-full items-center justify-center gap-2 px-4 py-3 bg-accent-500 hover:bg-accent-600 text-primary-900 rounded-xl text-sm font-semibold transition-colors"
+                                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-600 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100 transition-colors hover:border-accent-500/50 hover:bg-slate-800"
                             >
-                                <Download className="w-4 h-4" />
+                                <Download className="h-4 w-4" />
                                 Baixar no Android
                             </a>
                             <a
                                 href={APP_LINKS.iosStore}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex w-full items-center justify-center gap-2 px-4 py-3 border border-slate-700 bg-slate-900 hover:bg-slate-800 rounded-xl text-sm font-semibold transition-colors"
+                                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-600 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100 transition-colors hover:border-accent-500/50 hover:bg-slate-800"
                             >
-                                <Download className="w-4 h-4" />
+                                <Download className="h-4 w-4" />
                                 Baixar no iOS
                             </a>
                         </div>
@@ -128,11 +128,17 @@ export default function Footer() {
                         <p className="text-sm text-slate-500">
                             © {currentYear} Encontre Aqui Imóveis. Todos os direitos reservados.
                         </p>
-                        <div className="flex gap-6">
-                            <Link href="/termos" className="text-sm text-slate-500 hover:text-slate-300 transition-colors">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+                            <Link
+                                href="/termos"
+                                className="inline-flex min-h-[44px] items-center rounded-lg px-3 text-sm text-slate-500 transition-colors hover:bg-slate-800/80 hover:text-slate-200"
+                            >
                                 Termos de Uso
                             </Link>
-                            <Link href="/privacidade" className="text-sm text-slate-500 hover:text-slate-300 transition-colors">
+                            <Link
+                                href="/privacidade"
+                                className="inline-flex min-h-[44px] items-center rounded-lg px-3 text-sm text-slate-500 transition-colors hover:bg-slate-800/80 hover:text-slate-200"
+                            >
                                 Privacidade
                             </Link>
                         </div>

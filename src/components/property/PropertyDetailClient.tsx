@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Home, ChevronRight, ArrowRight, MessageCircle, Edit, FileText, ScrollText } from 'lucide-react'
+import { Home, ChevronRight, ChevronLeft, ArrowRight, Edit, FileText, ScrollText } from 'lucide-react'
+import WhatsAppIcon from '@/components/icons/WhatsAppIcon'
+import { capitalizePropertyTitle } from '@/lib/propertyTitleDisplay'
 import {
     PropertyCard,
     PropertyGallery,
@@ -232,21 +234,30 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
             aria-label={`Detalhes do imóvel ${property.title}`}
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                {/* Breadcrumbs */}
-                <nav
-                    aria-label="Breadcrumb"
-                    className="flex items-center gap-2 text-sm text-gray-500 mb-6 overflow-hidden"
-                >
-                    <Link href="/" className="hover:text-primary-600 transition-colors flex-shrink-0">
-                        <Home className="w-4 h-4" />
+                {/* Mobile: voltar | Desktop: breadcrumb completo */}
+                <div className="mb-6 flex items-center gap-2">
+                    <Link
+                        href="/imoveis"
+                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-gray-600 transition-colors hover:bg-gray-200/80 hover:text-primary-700 lg:hidden"
+                        aria-label="Voltar aos imóveis"
+                    >
+                        <ChevronLeft className="h-6 w-6" aria-hidden />
                     </Link>
-                    <ChevronRight className="w-4 h-4 flex-shrink-0" />
-                    <Link href="/imoveis" className="hover:text-primary-600 transition-colors flex-shrink-0">
-                        Imóveis
-                    </Link>
-                    <ChevronRight className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-gray-900 font-medium truncate">{property.title}</span>
-                </nav>
+                    <nav
+                        aria-label="Breadcrumb"
+                        className="hidden min-w-0 flex-1 items-center gap-2 overflow-hidden text-sm text-gray-500 lg:flex"
+                    >
+                        <Link href="/" className="shrink-0 transition-colors hover:text-primary-600">
+                            <Home className="h-4 w-4" />
+                        </Link>
+                        <ChevronRight className="h-4 w-4 shrink-0" aria-hidden />
+                        <Link href="/imoveis" className="shrink-0 transition-colors hover:text-primary-600">
+                            Imóveis
+                        </Link>
+                        <ChevronRight className="h-4 w-4 shrink-0" aria-hidden />
+                        <span className="truncate font-medium text-gray-900">{capitalizePropertyTitle(property.title)}</span>
+                    </nav>
+                </div>
 
                 {/* Owner Actions Panel */}
                 {isOwner && (
@@ -468,84 +479,87 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
 
             {/* ================== Mobile Sticky Bottom Bar ================== */}
             <div
-                className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]"
+                className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.08)] dark:border-slate-700 dark:bg-slate-900 lg:hidden"
                 role="region"
                 aria-label="Ações rápidas do imóvel"
             >
-                <div className="flex items-center gap-2 px-3 py-2 max-w-7xl mx-auto">
-                    <div className="flex-1 min-w-0">
+                <div className="mx-auto max-w-7xl space-y-2 px-3 py-2.5">
+                    <div className="min-w-0">
                         {mobileSaleLine && (
                             <>
-                                <p className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold">Venda</p>
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Venda</p>
                                 {originalPrice && promoSale && (
-                                    <p className="text-[10px] text-gray-400 line-through">{originalPrice}</p>
+                                    <p className="text-xs text-gray-400 line-through">{originalPrice}</p>
                                 )}
-                                <p className="text-sm font-bold leading-tight truncate text-primary-700">
+                                <p className="truncate text-lg font-bold leading-tight text-primary-800">
                                     {mobileSaleLine}
                                 </p>
                             </>
                         )}
                         {!mobileSaleLine && mobileRentLine && (
                             <>
-                                <p className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold">Aluguel</p>
-                                <p className="text-sm font-bold leading-tight truncate text-primary-700">
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Aluguel</p>
+                                <p className="truncate text-lg font-bold leading-tight text-primary-800">
                                     {mobileRentLine}
                                 </p>
                             </>
                         )}
                         {!mobileSaleLine && !mobileRentLine && (
                             <>
-                                <p className="text-[10px] text-gray-500 font-medium">Valor</p>
-                                <p className="text-sm font-bold truncate text-primary-700">{displayPrice}</p>
+                                <p className="text-[10px] font-medium text-gray-500">Valor</p>
+                                <p className="truncate text-lg font-bold text-primary-800">{displayPrice}</p>
                             </>
                         )}
                         {mobileSaleLine && mobileRentLine && (
-                            <p className="text-[10px] text-gray-500 mt-0.5 truncate">Aluguel {mobileRentLine}</p>
+                            <p className="mt-0.5 truncate text-xs text-gray-600">Aluguel {mobileRentLine}</p>
                         )}
                     </div>
 
-                    {isOwner && proposalAction && (
-                        <Link
-                            href={proposalAction.href}
-                            className="flex items-center justify-center gap-1 px-2.5 py-2 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg text-xs transition-colors shadow-sm shrink-0"
-                        >
-                            <FileText className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline max-w-[5.5rem] truncate">{proposalAction.label}</span>
-                        </Link>
-                    )}
+                    <div className="flex flex-wrap items-stretch justify-end gap-2">
+                        {isOwner && proposalAction && (
+                            <Link
+                                href={proposalAction.href}
+                                className="inline-flex min-h-[44px] min-w-[44px] flex-1 items-center justify-center gap-1 rounded-xl bg-primary-600 px-3 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-700 sm:flex-initial"
+                            >
+                                <FileText className="h-4 w-4 shrink-0" />
+                                <span className="hidden max-w-[6rem] truncate sm:inline">{proposalAction.label}</span>
+                            </Link>
+                        )}
 
-                    {!isOwner && visitorProposalHref && (
-                        <Link
-                            href={visitorProposalHref}
-                            className="flex items-center justify-center gap-1 px-2.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs transition-colors shadow-sm shrink-0"
-                            aria-label="Gerar proposta para este imóvel"
-                        >
-                            <FileText className="w-3.5 h-3.5 shrink-0" />
-                            <span>Proposta</span>
-                        </Link>
-                    )}
+                        {!isOwner && visitorProposalHref && (
+                            <Link
+                                href={visitorProposalHref}
+                                className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-1 rounded-xl bg-emerald-600 px-3 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 sm:max-w-[11rem] sm:flex-initial"
+                                aria-label="Gerar proposta para este imóvel"
+                            >
+                                <FileText className="h-4 w-4 shrink-0" />
+                                <span>Proposta</span>
+                            </Link>
+                        )}
 
-                    {!isOwner && whatsappLink && (
-                        <a
-                            href={whatsappLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center gap-1 px-2.5 py-2 bg-primary-700 hover:bg-primary-800 text-white font-semibold rounded-lg text-xs transition-colors shadow-sm shrink-0"
-                        >
-                            <MessageCircle className="w-3.5 h-3.5 shrink-0" />
-                            <span>Contatar</span>
-                        </a>
-                    )}
+                        {!isOwner && whatsappLink && (
+                            <a
+                                href={whatsappLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#25D366] px-3 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#20BD5A] sm:max-w-[11rem] sm:flex-initial"
+                            >
+                                <WhatsAppIcon className="h-4 w-4 shrink-0" />
+                                <span>WhatsApp</span>
+                            </a>
+                        )}
 
-                    {isOwner && (
-                        <Link
-                            href="/meus-imoveis"
-                            className="flex items-center justify-center gap-1 px-2.5 py-2 bg-slate-700 hover:bg-slate-800 text-white font-semibold rounded-lg text-xs transition-colors shadow-sm shrink-0"
-                        >
-                            <ScrollText className="w-3.5 h-3.5" />
-                            <span>Meus</span>
-                        </Link>
-                    )}
+                        {isOwner && (
+                            <Link
+                                href="/meus-imoveis"
+                                aria-label="Meus imóveis"
+                                className="inline-flex min-h-[44px] items-center justify-center gap-1 rounded-xl bg-slate-700 px-3 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-slate-800"
+                            >
+                                <ScrollText className="h-4 w-4 shrink-0" />
+                                <span>Meus</span>
+                            </Link>
+                        )}
+                    </div>
                 </div>
             </div>
         </main>

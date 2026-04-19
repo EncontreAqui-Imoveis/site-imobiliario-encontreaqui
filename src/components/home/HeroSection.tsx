@@ -65,7 +65,11 @@ export default function HeroSection() {
                     sizes="100vw"
                 />
                 <div
-                    className="absolute inset-0 bg-gradient-to-b from-primary-950/88 via-primary-900/78 to-primary-950/90"
+                    className="absolute inset-0 bg-black/35"
+                    aria-hidden
+                />
+                <div
+                    className="absolute inset-0 bg-gradient-to-b from-primary-950/92 via-primary-900/84 to-primary-950/94"
                     aria-hidden
                 />
             </div>
@@ -95,9 +99,9 @@ export default function HeroSection() {
 
                     {/* Search Box */}
                     <div className="bg-white rounded-2xl shadow-2xl p-3 sm:p-6 max-w-4xl mx-auto animate-fadeIn">
-                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                             {/* Purpose */}
-                            <div className="relative col-span-2 sm:col-span-1">
+                            <div className="relative">
                                 <label htmlFor="hero-purpose" className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-1 text-left">
                                     Finalidade
                                 </label>
@@ -108,7 +112,7 @@ export default function HeroSection() {
                                         value={purpose}
                                         onChange={(e) => setPurpose(e.target.value)}
                                         aria-label="Finalidade do imóvel"
-                                        className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 pr-8 sm:pr-10 text-gray-700 text-sm sm:text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                        className="w-full min-h-[44px] appearance-none bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 pr-8 sm:pr-10 text-gray-700 text-sm sm:text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                     >
                                         {purposes.map((p) => (
                                             <option key={p.value} value={p.value}>{p.label}</option>
@@ -119,7 +123,7 @@ export default function HeroSection() {
                             </div>
 
                             {/* Type */}
-                            <div className="relative col-span-2 sm:col-span-1">
+                            <div className="relative">
                                 <label htmlFor="hero-type" className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-1 text-left">
                                     Tipo
                                 </label>
@@ -130,7 +134,7 @@ export default function HeroSection() {
                                         value={type}
                                         onChange={(e) => setType(e.target.value)}
                                         aria-label="Tipo de imóvel"
-                                        className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 pr-8 sm:pr-10 text-gray-700 text-sm sm:text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                        className="w-full min-h-[44px] appearance-none bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 pr-8 sm:pr-10 text-gray-700 text-sm sm:text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                     >
                                         {propertyTypes.map((t) => (
                                             <option key={t.value} value={t.value}>{t.label}</option>
@@ -141,7 +145,7 @@ export default function HeroSection() {
                             </div>
 
                             {/* City */}
-                            <div className="relative col-span-2 sm:col-span-1">
+                            <div className="relative">
                                 <label htmlFor="hero-city" className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-1 text-left">
                                     Cidade
                                 </label>
@@ -155,13 +159,13 @@ export default function HeroSection() {
                                         onChange={(e) => setCity(e.target.value)}
                                         maxLength={120}
                                         placeholder="Cidade"
-                                        className="w-full bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl pl-8 sm:pl-10 pr-2 sm:pr-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                        className="w-full min-h-[44px] bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl pl-8 sm:pl-10 pr-2 sm:pr-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                     />
                                 </div>
                             </div>
 
                             {/* Bairro */}
-                            <div className="relative col-span-2 sm:col-span-1">
+                            <div className="relative">
                                 <label htmlFor="hero-bairro" className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-1 text-left">
                                     Bairro
                                 </label>
@@ -173,12 +177,12 @@ export default function HeroSection() {
                                     onChange={(e) => setBairro(e.target.value)}
                                     maxLength={120}
                                     placeholder="Opcional"
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                    className="w-full min-h-[44px] bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                 />
                             </div>
 
                             {/* Faixa de preço */}
-                            <div className="relative col-span-2 sm:col-span-2 lg:col-span-1">
+                            <div className="relative sm:col-span-2 lg:col-span-1">
                                 <label className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-1 text-left">
                                     Valor (R$)
                                 </label>
@@ -192,7 +196,7 @@ export default function HeroSection() {
                                         value={minPrice}
                                         onChange={(e) => setMinPrice(e.target.value)}
                                         placeholder="Mín."
-                                        className="min-w-0 flex-1 bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2 sm:px-3 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                        className="min-w-0 min-h-[44px] flex-1 bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2 sm:px-3 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                     />
                                     <input
                                         id="hero-max-price"
@@ -203,13 +207,13 @@ export default function HeroSection() {
                                         value={maxPrice}
                                         onChange={(e) => setMaxPrice(e.target.value)}
                                         placeholder="Máx."
-                                        className="min-w-0 flex-1 bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2 sm:px-3 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                        className="min-w-0 min-h-[44px] flex-1 bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2 sm:px-3 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                     />
                                 </div>
                             </div>
 
                             {/* Código / ID */}
-                            <div className="relative col-span-2 sm:col-span-2 lg:col-span-1">
+                            <div className="relative sm:col-span-2 lg:col-span-1">
                                 <label htmlFor="hero-code" className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-1 text-left">
                                     Código ou ID
                                 </label>
@@ -221,17 +225,17 @@ export default function HeroSection() {
                                     onChange={(e) => setCode(e.target.value)}
                                     maxLength={80}
                                     placeholder="Opcional"
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                    className="w-full min-h-[44px] bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                 />
                             </div>
 
                             {/* Search Button */}
-                            <div className="flex items-end col-span-2 sm:col-span-2 lg:col-span-1">
+                            <div className="flex items-end sm:col-span-2 lg:col-span-1">
                                 <button
                                     type="button"
                                     onClick={handleSearch}
                                     disabled={isSearching}
-                                    className="w-full bg-accent-500 hover:bg-accent-600 disabled:opacity-70 text-primary-900 font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl shadow-lg shadow-accent-500/25 hover:shadow-accent-500/40 transition-all duration-200 flex items-center justify-center gap-2 text-sm sm:text-base"
+                                    className="w-full min-h-[44px] bg-accent-500 hover:bg-accent-600 disabled:opacity-70 text-primary-900 font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl shadow-lg shadow-accent-500/25 hover:shadow-accent-500/40 transition-all duration-200 flex items-center justify-center gap-2 text-sm sm:text-base"
                                 >
                                     {isSearching ? (
                                         <Loader2 className="w-5 h-5 animate-spin" />

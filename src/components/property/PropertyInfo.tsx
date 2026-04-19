@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { formatPrice, Property } from '@/types/property'
+import { capitalizePropertyTitle } from '@/lib/propertyTitleDisplay'
 import {
     MapPin, Bed, Bath, Car, Maximize,
     Wifi, Waves, Sun, Cpu, Wind, Sofa, Building2, type LucideIcon,
@@ -115,14 +116,14 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                 )}
 
                 {/* Title */}
-                <h1 className="font-display text-3xl sm:text-4xl font-bold text-gray-900 mb-4 leading-tight">
-                    {property.title}
+                <h1 className="font-display mb-4 text-3xl font-bold leading-tight text-gray-900 sm:text-4xl">
+                    {capitalizePropertyTitle(property.title)}
                 </h1>
 
                 {/* Location */}
-                <div className="flex items-center gap-2 text-gray-600 mb-8">
-                    <MapPin className="w-5 h-5 text-primary-500 flex-shrink-0" />
-                    <span className="text-lg font-medium">
+                <div className="mb-8 flex items-center gap-2 text-gray-800">
+                    <MapPin className="h-5 w-5 shrink-0 text-primary-600" />
+                    <span className="text-lg font-semibold sm:text-xl">
                         {property.bairro}
                         {property.city && ` • ${property.city}`}
                         {property.state && ` • ${property.state}`}
@@ -130,26 +131,26 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                 </div>
 
                 {/* Key Stats Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-gray-50 rounded-2xl border border-gray-100">
-                    <div className="flex flex-col items-center justify-center text-center">
-                        <Bed className="w-6 h-6 text-primary-500 mb-2" />
+                <div className="grid grid-cols-2 gap-4 rounded-2xl border border-gray-100 bg-gray-50 p-6 md:grid-cols-4">
+                    <div className="flex flex-col items-center justify-center gap-2 text-center">
+                        <Bed className="h-6 w-6 shrink-0 text-primary-600" />
                         <span className="text-xl font-bold text-gray-900">{property.bedrooms || 0}</span>
-                        <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Quartos</span>
+                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">Quartos</span>
                     </div>
-                    <div className="flex flex-col items-center justify-center text-center">
-                        <Bath className="w-6 h-6 text-primary-500 mb-2" />
+                    <div className="flex flex-col items-center justify-center gap-2 text-center">
+                        <Bath className="h-6 w-6 shrink-0 text-primary-600" />
                         <span className="text-xl font-bold text-gray-900">{property.bathrooms || 0}</span>
-                        <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Banheiros</span>
+                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">Banheiros</span>
                     </div>
-                    <div className="flex flex-col items-center justify-center text-center">
-                        <Car className="w-6 h-6 text-primary-500 mb-2" />
+                    <div className="flex flex-col items-center justify-center gap-2 text-center">
+                        <Car className="h-6 w-6 shrink-0 text-primary-600" />
                         <span className="text-xl font-bold text-gray-900">{property.garageSpots || 0}</span>
-                        <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Vagas</span>
+                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">Vagas</span>
                     </div>
-                    <div className="flex flex-col items-center justify-center text-center">
-                        <Maximize className="w-6 h-6 text-primary-500 mb-2" />
+                    <div className="flex flex-col items-center justify-center gap-2 text-center">
+                        <Maximize className="h-6 w-6 shrink-0 text-primary-600" />
                         <span className="text-xl font-bold text-gray-900">{property.areaConstruida || 0} m²</span>
-                        <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Área Útil</span>
+                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">Área Útil</span>
                     </div>
                 </div>
 

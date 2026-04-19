@@ -44,10 +44,10 @@ export default function AboutSection() {
                         return (
                             <div
                                 key={index}
-                                className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100 hover:shadow-lg hover:border-accent-200 transition-all duration-300 group"
+                                className="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:border-accent-200 hover:shadow-lg"
                             >
-                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center mb-5 shadow-lg shadow-primary-500/20 group-hover:scale-110 transition-transform">
-                                    <Icon className="w-7 h-7 text-white" />
+                                <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 shadow-lg shadow-primary-500/20 transition-all duration-300 group-hover:scale-110 group-hover:from-accent-500 group-hover:to-primary-600 group-hover:shadow-accent-500/25">
+                                    <Icon className="h-7 w-7 text-white transition-transform duration-300 group-hover:scale-105" />
                                 </div>
                                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                                     {feature.title}
@@ -60,10 +60,10 @@ export default function AboutSection() {
                     })}
                 </div>
 
-                <div className="mt-12 lg:mt-16 text-center">
+                <div className="mt-8 text-center lg:mt-10">
                     <Link
                         href="/imoveis"
-                        className="inline-flex items-center gap-2 px-8 py-4 bg-accent-500 hover:bg-accent-600 text-primary-900 font-semibold rounded-xl shadow-lg shadow-accent-500/25 transition-all duration-200"
+                        className="inline-flex items-center gap-2 rounded-xl bg-accent-500 px-8 py-4 font-semibold text-primary-900 shadow-lg shadow-accent-500/25 transition-all duration-200 hover:bg-accent-600"
                     >
                         <Building2 className="w-5 h-5" />
                         Explorar imóveis

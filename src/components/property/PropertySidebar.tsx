@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { formatPrice, Property } from '@/types/property'
-import { Info, ShieldCheck, Smartphone, MessageCircle, Phone, FileText } from 'lucide-react'
+import { Info, ShieldCheck, Smartphone, Phone, FileText } from 'lucide-react'
+import WhatsAppIcon from '@/components/icons/WhatsAppIcon'
 import { buildAppDeepLink, getStoreUrlClient } from '@/lib/appLinks'
 import { buildPhoneLink, buildWhatsappLink } from '@/lib/contactLinks'
 
@@ -85,9 +86,9 @@ export default function PropertySidebar({ property, visitorProposalHref }: Prope
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label={`Falar pelo WhatsApp sobre ${property.title}`}
-                                    className="w-full flex items-center justify-center gap-2 py-4 bg-primary-700 hover:bg-primary-800 text-white font-bold rounded-xl transition-all shadow-lg shadow-primary-900/25 active:scale-[0.98]"
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] py-4 font-bold text-white shadow-lg shadow-emerald-900/20 transition-all hover:bg-[#20BD5A] active:scale-[0.98]"
                                 >
-                                    <MessageCircle className="w-5 h-5" />
+                                    <WhatsAppIcon className="h-5 w-5 shrink-0" />
                                     Falar pelo WhatsApp
                                 </a>
                             )}

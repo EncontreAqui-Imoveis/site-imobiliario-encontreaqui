@@ -59,13 +59,12 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
                         alt={`${title} - Principal`}
                         fill
                         className="object-cover transition-transform duration-700 group-hover:scale-105"
-                        priority
                         sizes="(max-width: 1280px) 50vw, 33vw"
                     />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
                     <PhotoWatermark />
                     {propertyId && (
-                        <div className="absolute top-4 right-4 z-10">
+                        <div className="absolute top-5 right-5 z-10 p-1">
                             <FavoriteButton propertyId={propertyId} size="md" />
                         </div>
                     )}
@@ -108,17 +107,26 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
                 */}
             </div>
 
-            {/* Mobile/Tablet Carousel */}
-            <div className="lg:hidden relative h-[40vh] bg-gray-900 group">
+            {/* Mobile/Tablet — fundo desfocado; sem `priority` duplicado (evita aviso de preload no Chrome) */}
+            <div className="lg:hidden relative h-[40vh] overflow-hidden bg-slate-950 group">
+                <div className="pointer-events-none absolute inset-0 scale-110" aria-hidden>
+                    <Image
+                        src={validImages[photoIndex]}
+                        alt=""
+                        fill
+                        className="object-cover opacity-40 blur-2xl saturate-125"
+                        sizes="100vw"
+                    />
+                </div>
                 <Image
                     src={validImages[photoIndex]}
                     alt={`${title} - ${photoIndex + 1}`}
                     fill
-                    className="object-contain"
-                    priority
+                    className="relative z-[1] object-contain"
+                    sizes="100vw"
                 />
 
-                <div className="absolute inset-0 flex items-center justify-between p-2">
+                <div className="absolute inset-0 z-[2] flex items-center justify-between p-2">
                     <button
                         onClick={(e) => { e.stopPropagation(); prevPhoto(); }}
                         className="p-2 rounded-full bg-black/20 text-white hover:bg-black/40 backdrop-blur-sm transition-colors"
@@ -135,12 +143,13 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
                     </button>
                 </div>
 
-                <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-lg text-white text-xs font-semibold">
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-20 bg-gradient-to-t from-black/75 to-transparent" aria-hidden />
+                <div className="absolute bottom-4 right-4 z-[3] rounded-lg bg-black/65 px-3 py-1.5 text-xs font-semibold text-white shadow-sm backdrop-blur-sm ring-1 ring-white/10">
                     {photoIndex + 1} / {validImages.length}
                 </div>
                 <PhotoWatermark />
                 {propertyId && (
-                    <div className="absolute top-4 right-4 z-10">
+                    <div className="absolute top-5 right-5 z-[3] p-1">
                         <FavoriteButton propertyId={propertyId} size="md" />
                     </div>
                 )}
@@ -198,7 +207,6 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
                                 fill
                                 className="object-contain"
                                 quality={100}
-                                priority
                             />
                             <PhotoWatermark />
                         </div>
