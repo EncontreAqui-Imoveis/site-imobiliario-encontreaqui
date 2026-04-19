@@ -688,7 +688,7 @@ export default function CadastroPage() {
                                 disabled={isLoading}
                                 className="flex-1 inline-flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 disabled:bg-primary-300 text-white text-sm font-semibold px-4 py-2.5 shadow-md shadow-primary-500/20 transition-colors"
                             >
-                                {submitting ? 'Continuando...' : isGoogleFlow ? 'Ir para verificação do telefone' : 'Ir para verificação do e-mail'}
+                                {submitting ? 'Continuando...' : 'Ir para a página de verificação'}
                             </button>
                         </div>
                     </form>

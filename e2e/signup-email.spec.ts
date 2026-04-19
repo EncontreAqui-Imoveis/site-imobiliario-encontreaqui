@@ -25,13 +25,12 @@ test('cadastro cliente por e-mail conclui e redireciona para meus imóveis', asy
     await page.getByLabel('Bairro *').fill('Centro')
     await page.getByLabel('Rua *').fill('Rua Teste')
     await page.getByLabel('Número *').fill('100')
-    await page.getByRole('button', { name: /ir para verificação do e-mail/i }).click()
+    await page.getByRole('button', { name: /ir para a página de verificação/i }).click()
+
+    await expect(page).toHaveURL(/\/cadastro\/verificar-metodo/)
+    await page.getByRole('button', { name: /E-mail/i }).first().click()
 
     await expect(page).toHaveURL(/\/verificacao\?flow=signup/)
-    await page.locator('input[inputmode="numeric"]').first().waitFor()
-    await fillSixDigitCode(page)
-
-    await expect(page).toHaveURL(/\/cadastro\/verificar-telefone\?flow=signup/)
     await page.locator('input[inputmode="numeric"]').first().waitFor()
     await fillSixDigitCode(page)
 

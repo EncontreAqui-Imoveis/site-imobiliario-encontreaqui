@@ -79,6 +79,7 @@ export default function VerificarMetodoPage() {
     }
 
     const fromGoogle = draft.source === 'google'
+    const canChooseEmail = !draft.emailVerified
 
     return (
         <div className="min-h-[70vh] flex items-center justify-center px-4 py-12 bg-gradient-to-b from-slate-50 to-slate-100">
@@ -90,17 +91,19 @@ export default function VerificarMetodoPage() {
                         : 'Escolha receber o código por e-mail ou por SMS no telefone informado.'}
                 </p>
                 <div className="space-y-3">
-                    <button
-                        type="button"
-                        onClick={goEmail}
-                        className="w-full flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-4 text-left hover:bg-slate-50 transition"
-                    >
-                        <Mail className="h-6 w-6 text-amber-600 shrink-0" />
-                        <div>
-                            <div className="font-semibold text-slate-900">E-mail</div>
-                            <div className="text-xs text-slate-600">Código de 6 dígitos no seu e-mail</div>
-                        </div>
-                    </button>
+                    {canChooseEmail && (
+                        <button
+                            type="button"
+                            onClick={goEmail}
+                            className="w-full flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-4 text-left hover:bg-slate-50 transition"
+                        >
+                            <Mail className="h-6 w-6 text-amber-600 shrink-0" />
+                            <div>
+                                <div className="font-semibold text-slate-900">E-mail</div>
+                                <div className="text-xs text-slate-600">Código de 6 dígitos no seu e-mail</div>
+                            </div>
+                        </button>
+                    )}
                     <button
                         type="button"
                         onClick={goPhone}

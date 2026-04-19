@@ -94,129 +94,144 @@ export default function HeroSection() {
                     </p>
 
                     {/* Search Box */}
-                    <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-6 max-w-4xl mx-auto animate-fadeIn">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="bg-white rounded-2xl shadow-2xl p-3 sm:p-6 max-w-4xl mx-auto animate-fadeIn">
+                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
                             {/* Purpose */}
-                            <div className="relative">
-                                <label className="block text-xs font-medium text-gray-500 mb-1.5 text-left">
+                            <div className="relative col-span-2 sm:col-span-1">
+                                <label htmlFor="hero-purpose" className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-1 text-left">
                                     Finalidade
                                 </label>
                                 <div className="relative">
                                     <select
+                                        id="hero-purpose"
+                                        name="purpose"
                                         value={purpose}
                                         onChange={(e) => setPurpose(e.target.value)}
                                         aria-label="Finalidade do imóvel"
-                                        className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 pr-10 text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                        className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 pr-8 sm:pr-10 text-gray-700 text-sm sm:text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                     >
                                         {purposes.map((p) => (
                                             <option key={p.value} value={p.value}>{p.label}</option>
                                         ))}
                                     </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                                    <ChevronDown className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400 pointer-events-none" />
                                 </div>
                             </div>
 
                             {/* Type */}
-                            <div className="relative">
-                                <label className="block text-xs font-medium text-gray-500 mb-1.5 text-left">
+                            <div className="relative col-span-2 sm:col-span-1">
+                                <label htmlFor="hero-type" className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-1 text-left">
                                     Tipo
                                 </label>
                                 <div className="relative">
                                     <select
+                                        id="hero-type"
+                                        name="type"
                                         value={type}
                                         onChange={(e) => setType(e.target.value)}
                                         aria-label="Tipo de imóvel"
-                                        className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 pr-10 text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                        className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 pr-8 sm:pr-10 text-gray-700 text-sm sm:text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                     >
                                         {propertyTypes.map((t) => (
                                             <option key={t.value} value={t.value}>{t.label}</option>
                                         ))}
                                     </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                                    <ChevronDown className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400 pointer-events-none" />
                                 </div>
                             </div>
 
                             {/* City */}
-                            <div className="relative">
-                                <label className="block text-xs font-medium text-gray-500 mb-1.5 text-left">
+                            <div className="relative col-span-2 sm:col-span-1">
+                                <label htmlFor="hero-city" className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-1 text-left">
                                     Cidade
                                 </label>
                                 <div className="relative">
-                                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <MapPin className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                                     <input
+                                        id="hero-city"
+                                        name="city"
                                         type="text"
                                         value={city}
                                         onChange={(e) => setCity(e.target.value)}
                                         maxLength={120}
-                                        placeholder="Ex: São Paulo"
-                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                        placeholder="Cidade"
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl pl-8 sm:pl-10 pr-2 sm:pr-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                     />
                                 </div>
                             </div>
 
                             {/* Bairro */}
-                            <div className="relative">
-                                <label className="block text-xs font-medium text-gray-500 mb-1.5 text-left">
+                            <div className="relative col-span-2 sm:col-span-1">
+                                <label htmlFor="hero-bairro" className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-1 text-left">
                                     Bairro
                                 </label>
                                 <input
+                                    id="hero-bairro"
+                                    name="bairro"
                                     type="text"
                                     value={bairro}
                                     onChange={(e) => setBairro(e.target.value)}
                                     maxLength={120}
                                     placeholder="Opcional"
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                 />
                             </div>
 
                             {/* Faixa de preço */}
-                            <div className="relative sm:col-span-2 lg:col-span-1">
-                                <label className="block text-xs font-medium text-gray-500 mb-1.5 text-left">
+                            <div className="relative col-span-2 sm:col-span-2 lg:col-span-1">
+                                <label className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-1 text-left">
                                     Valor (R$)
                                 </label>
-                                <div className="flex gap-2">
+                                <div className="flex gap-1.5 sm:gap-2">
                                     <input
+                                        id="hero-min-price"
+                                        name="minPrice"
                                         type="number"
                                         inputMode="numeric"
                                         min={0}
                                         value={minPrice}
                                         onChange={(e) => setMinPrice(e.target.value)}
                                         placeholder="Mín."
-                                        className="min-w-0 flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                        className="min-w-0 flex-1 bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2 sm:px-3 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                     />
                                     <input
+                                        id="hero-max-price"
+                                        name="maxPrice"
                                         type="number"
                                         inputMode="numeric"
                                         min={0}
                                         value={maxPrice}
                                         onChange={(e) => setMaxPrice(e.target.value)}
                                         placeholder="Máx."
-                                        className="min-w-0 flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                        className="min-w-0 flex-1 bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2 sm:px-3 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                     />
                                 </div>
                             </div>
 
                             {/* Código / ID */}
-                            <div className="relative sm:col-span-2 lg:col-span-1">
-                                <label className="block text-xs font-medium text-gray-500 mb-1.5 text-left">
+                            <div className="relative col-span-2 sm:col-span-2 lg:col-span-1">
+                                <label htmlFor="hero-code" className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-1 text-left">
                                     Código ou ID
                                 </label>
                                 <input
+                                    id="hero-code"
+                                    name="code"
                                     type="text"
                                     value={code}
                                     onChange={(e) => setCode(e.target.value)}
                                     maxLength={80}
                                     placeholder="Opcional"
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                 />
                             </div>
 
                             {/* Search Button */}
-                            <div className="flex items-end sm:col-span-2 lg:col-span-1">
+                            <div className="flex items-end col-span-2 sm:col-span-2 lg:col-span-1">
                                 <button
+                                    type="button"
                                     onClick={handleSearch}
                                     disabled={isSearching}
-                                    className="w-full bg-accent-500 hover:bg-accent-600 disabled:opacity-70 text-primary-900 font-semibold py-3 px-6 rounded-xl shadow-lg shadow-accent-500/25 hover:shadow-accent-500/40 transition-all duration-200 flex items-center justify-center gap-2"
+                                    className="w-full bg-accent-500 hover:bg-accent-600 disabled:opacity-70 text-primary-900 font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl shadow-lg shadow-accent-500/25 hover:shadow-accent-500/40 transition-all duration-200 flex items-center justify-center gap-2 text-sm sm:text-base"
                                 >
                                     {isSearching ? (
                                         <Loader2 className="w-5 h-5 animate-spin" />

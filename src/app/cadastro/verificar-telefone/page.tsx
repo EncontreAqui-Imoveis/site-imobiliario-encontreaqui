@@ -1,16 +1,15 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ShieldCheck, ArrowLeft, Smartphone } from 'lucide-react'
 
 import { useUser } from '@/contexts/UserContext'
-import { register, requestPhoneOtp, resendPhoneOtp, verifyPhoneOtp } from '@/lib/api/auth'
+import { requestPhoneOtp, resendPhoneOtp, verifyPhoneOtp } from '@/lib/api/auth'
 import { resolvePostAuthRoute } from '@/lib/auth/routeResolution'
 import {
     clearPendingPhoneUpdateDraft,
-    clearSignupDraft,
     loadPendingPhoneUpdateDraft,
     loadSignupDraft,
     patchSignupDraft,
@@ -18,6 +17,10 @@ import {
 import { updateProfile } from '@/lib/api/user'
 import type { ApiError } from '@/lib/api/client'
 import { formatPhoneInput, normalizePhoneDigits } from '@/lib/phoneInput'
+import { registerUserFromSignupDraft } from '@/lib/registerFromSignupDraft'
+
+const VERIFY_ERROR_COOLDOWN_MS = 2000
+const MIN_PHONE_RESEND_GAP_MS = 30_000
 
 export default function VerificarTelefonePage() {
     const cooldownSteps = [20, 60, 180, 300, 600, 1800, 3600, 10800]
@@ -39,7 +42,9 @@ export default function VerificarTelefonePage() {
     const [cooldownRemainingSeconds, setCooldownRemainingSeconds] = useState(0)
     const inputRefs = useRef<(HTMLInputElement | null)[]>([])
     const autoSendTriggeredRef = useRef(false)
-    const autoSubmitScheduledRef = useRef(false)
+    const verifyCooldownUntilRef = useRef(0)
+    const lastAutoSubmittedCodeRef = useRef<string | null>(null)
+    const autoVerifyBlockedForCodeRef = useRef<string | null>(null)
 
     useEffect(() => {
         setSignupDraftState(loadSignupDraft())
@@ -100,19 +105,6 @@ export default function VerificarTelefonePage() {
     }, [isProfileUpdateFlow, isSignupFlow, pendingPhoneUpdateState, searchParams, session, signupDraftState])
 
     useEffect(() => {
-        const isComplete = code.every((digit) => digit.trim().length === 1)
-        if (!isComplete || verifying || success || autoSubmitScheduledRef.current) {
-            return
-        }
-        autoSubmitScheduledRef.current = true
-        const timeout = window.setTimeout(() => {
-            autoSubmitScheduledRef.current = false
-            void handleVerify()
-        }, 0)
-        return () => window.clearTimeout(timeout)
-    }, [code, verifying, success])
-
-    useEffect(() => {
         if (!draftReady || autoSendTriggeredRef.current) return
         const normalizedPhone = normalizePhoneDigits(phone)
         if (!normalizedPhone || normalizedPhone.length < 10) return
@@ -145,6 +137,18 @@ export default function VerificarTelefonePage() {
         }
         if (cooldownRemainingSeconds > 0 && isResend) return
 
+        if (isResend && typeof window !== 'undefined') {
+            const raw = window.sessionStorage.getItem(`ea_phone_otp_${normalizedPhone}`)
+            if (raw) {
+                const ts = Number(raw)
+                if (Number.isFinite(ts) && Date.now() - ts < MIN_PHONE_RESEND_GAP_MS) {
+                    const wait = Math.ceil((MIN_PHONE_RESEND_GAP_MS - (Date.now() - ts)) / 1000)
+                    setError(`Aguarde ${wait}s antes de reenviar o SMS.`)
+                    return
+                }
+            }
+        }
+
         setSending(true)
         setError(null)
         try {
@@ -157,6 +161,9 @@ export default function VerificarTelefonePage() {
                 : cooldownIndex
             setCooldownIndex(nextIndex)
             setCooldownRemainingSeconds(cooldownSteps[nextIndex])
+            if (typeof window !== 'undefined') {
+                window.sessionStorage.setItem(`ea_phone_otp_${normalizedPhone}`, String(Date.now()))
+            }
         } catch (err) {
             const apiErr = err as ApiError
             setError(apiErr?.message || 'Não foi possível enviar o código por SMS.')
@@ -176,7 +183,7 @@ export default function VerificarTelefonePage() {
         setCode(next)
     }
 
-    const finishProfileUpdate = async () => {
+    const finishProfileUpdate = useCallback(async () => {
         if (!pendingPhoneUpdateState) {
             router.push('/perfil/editar')
             return
@@ -186,40 +193,30 @@ export default function VerificarTelefonePage() {
         clearPendingPhoneUpdateDraft()
         await refresh()
         router.push('/perfil/editar?saved=1')
-    }
+    }, [pendingPhoneUpdateState, refresh, router])
 
-    const finishSignup = async () => {
-        if (!signupDraftState || !signupDraftState.userType) {
+    const finishSignup = useCallback(async () => {
+        const d = loadSignupDraft()
+        if (!d?.userType) {
             router.push('/auth/cadastro')
             return
         }
 
-        const normalizedPhone = normalizePhoneDigits(phone)
-        const nextDraft = patchSignupDraft({
+        patchSignupDraft({
             phoneVerified: true,
             data: { phone: formatPhoneInput(phone) },
         })
-        const signupProfileType = nextDraft.userType === 'broker' ? 'broker' : 'client'
+        const fresh = loadSignupDraft()
+        if (!fresh) {
+            router.push('/auth/cadastro')
+            return
+        }
 
-        const result = await register({
-            name: nextDraft.data.name.trim(),
-            email: nextDraft.data.email.trim().toLowerCase(),
-            password: nextDraft.data.password,
-            profileType: signupProfileType,
-            creci: signupProfileType === 'broker' ? nextDraft.data.creci.trim().toUpperCase() : undefined,
-            googleIdToken: nextDraft.source === 'google' ? nextDraft.data.googleIdToken : undefined,
-            phone: normalizedPhone || undefined,
-            cep: nextDraft.data.cep.replace(/\D/g, '') || undefined,
-            street: nextDraft.data.street.trim() || undefined,
-            number: nextDraft.data.number.trim() || undefined,
-            withoutNumber: nextDraft.data.semNumero ? true : undefined,
-            complement: nextDraft.data.complement.trim() || undefined,
-            bairro: nextDraft.data.bairro.trim() || undefined,
-            city: nextDraft.data.city.trim() || undefined,
-            state: nextDraft.data.state.trim().toUpperCase() || undefined,
+        const result = await registerUserFromSignupDraft({
+            ...fresh,
+            phoneVerified: true,
+            data: { ...fresh.data, phone: formatPhoneInput(phone) },
         })
-
-        clearSignupDraft()
         await refresh()
 
         if (result.isBroker && result.requiresBrokerDocuments) {
@@ -228,50 +225,94 @@ export default function VerificarTelefonePage() {
         }
 
         router.push(resolvePostAuthRoute(result, '/meus-imoveis'))
-    }
+    }, [phone, refresh, router])
 
-    const handleVerify = async () => {
-        autoSubmitScheduledRef.current = false
-        const fullCode = code.join('')
-        if (!sessionToken || fullCode.length !== 6) {
-            setError('Informe o código completo de 6 dígitos.')
-            return
-        }
+    const handleVerify = useCallback(
+        async (fromAuto = false) => {
+            if (!fromAuto) {
+                autoVerifyBlockedForCodeRef.current = null
+                lastAutoSubmittedCodeRef.current = null
+            }
 
-        setVerifying(true)
-        setError(null)
-        try {
-            await verifyPhoneOtp(sessionToken, fullCode)
-            setSuccess(true)
-
-            if (isProfileUpdateFlow) {
-                await finishProfileUpdate()
+            const fullCode = code.join('')
+            if (!sessionToken || fullCode.length !== 6) {
+                setError('Informe o código completo de 6 dígitos.')
                 return
             }
 
-            if (isSignupFlow) {
-                await finishSignup()
-                return
-            }
+            setVerifying(true)
+            setError(null)
+            try {
+                await verifyPhoneOtp(sessionToken, fullCode)
+                setSuccess(true)
 
-            setTimeout(() => {
-                if (!session) {
-                    router.push('/onboarding')
+                if (isProfileUpdateFlow) {
+                    await finishProfileUpdate()
                     return
                 }
-                router.push(resolvePostAuthRoute(session, '/onboarding'))
-            }, 1500)
-        } catch (err) {
-            const apiErr = err as ApiError
-            if ('status' in apiErr && apiErr.status === 409) {
-                setError('Já existe uma conta usando este telefone.')
-            } else {
-                setError(apiErr?.message || 'Não foi possível validar o código informado.')
+
+                if (isSignupFlow) {
+                    await finishSignup()
+                    return
+                }
+
+                window.setTimeout(() => {
+                    if (!session) {
+                        router.push('/onboarding')
+                        return
+                    }
+                    router.push(resolvePostAuthRoute(session, '/onboarding'))
+                }, 1500)
+            } catch (err) {
+                const apiErr = err as ApiError
+                if ('status' in apiErr && apiErr.status === 409) {
+                    setError('Já existe uma conta usando este telefone.')
+                } else {
+                    setError(apiErr?.message || 'Não foi possível validar o código informado.')
+                }
+                verifyCooldownUntilRef.current = Date.now() + VERIFY_ERROR_COOLDOWN_MS
+                lastAutoSubmittedCodeRef.current = null
+                autoVerifyBlockedForCodeRef.current = fullCode
+            } finally {
+                setVerifying(false)
             }
-        } finally {
-            setVerifying(false)
+        },
+        [
+            code,
+            finishProfileUpdate,
+            finishSignup,
+            isProfileUpdateFlow,
+            isSignupFlow,
+            router,
+            session,
+            sessionToken,
+        ],
+    )
+
+    useEffect(() => {
+        const full = code.join('')
+        if (full !== autoVerifyBlockedForCodeRef.current) {
+            autoVerifyBlockedForCodeRef.current = null
         }
-    }
+    }, [code])
+
+    useEffect(() => {
+        const isComplete = code.every((digit) => digit.trim().length === 1)
+        if (!isComplete || verifying || success || !sessionToken) {
+            if (!isComplete) lastAutoSubmittedCodeRef.current = null
+            return
+        }
+        if (Date.now() < verifyCooldownUntilRef.current) return
+        const fullCode = code.join('')
+        if (autoVerifyBlockedForCodeRef.current === fullCode) return
+        if (lastAutoSubmittedCodeRef.current === fullCode) return
+
+        lastAutoSubmittedCodeRef.current = fullCode
+        const id = window.setTimeout(() => {
+            void handleVerify(true)
+        }, 0)
+        return () => window.clearTimeout(id)
+    }, [code, handleVerify, sessionToken, success, verifying])
 
     if ((loading && !isSignupFlow) || !draftReady) {
         return (
@@ -316,13 +357,24 @@ export default function VerificarTelefonePage() {
                             </label>
                             <input
                                 id="phone"
+                                name="phone"
                                 type="tel"
+                                readOnly={isSignupFlow}
+                                aria-readonly={isSignupFlow}
                                 value={phone}
-                                onChange={(event) => setPhone(formatPhoneInput(event.target.value))}
+                                onChange={(event) => {
+                                    if (isSignupFlow) return
+                                    setPhone(formatPhoneInput(event.target.value))
+                                }}
                                 maxLength={19}
-                                className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${isSignupFlow ? 'bg-slate-50 text-slate-700' : ''}`}
                                 placeholder="+55 (00) 00000-0000"
                             />
+                            {isSignupFlow && (
+                                <p className="text-xs text-slate-500">
+                                    O número foi definido no cadastro. Para alterá-lo, volte e revise os dados.
+                                </p>
+                            )}
                         </div>
 
                         <button
@@ -346,12 +398,16 @@ export default function VerificarTelefonePage() {
                                     {code.map((digit, index) => (
                                         <input
                                             key={index}
+                                            id={`phone-otp-${index}`}
+                                            name={`phoneOtp${index}`}
                                             ref={(element) => {
                                                 inputRefs.current[index] = element
                                             }}
                                             type="text"
                                             inputMode="numeric"
                                             maxLength={1}
+                                            autoComplete="one-time-code"
+                                            aria-label={`Dígito ${index + 1} do código SMS`}
                                             value={digit}
                                             onChange={(event) => handleCodeChange(index, event.target.value)}
                                             onKeyDown={(event) => handleKeyDown(index, event)}
@@ -362,7 +418,7 @@ export default function VerificarTelefonePage() {
 
                                 <button
                                     type="button"
-                                    onClick={handleVerify}
+                                    onClick={() => void handleVerify(false)}
                                     disabled={verifying}
                                     className="w-full inline-flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 disabled:bg-primary-300 text-white text-sm font-semibold px-4 py-2.5 shadow-md shadow-primary-500/20 transition-colors"
                                 >
@@ -392,7 +448,7 @@ export default function VerificarTelefonePage() {
                                 {isProfileUpdateFlow
                                     ? 'Voltar ao perfil'
                                     : isSignupFlow
-                                        ? 'Trocar método de verificação'
+                                        ? 'Voltar ao método de verificação'
                                         : 'Voltar ao onboarding'}
                             </Link>
                         </div>

@@ -344,7 +344,7 @@ export default function Header() {
 
                 {/* ===================== Mobile Menu ===================== */}
                 {isMenuOpen && (
-                    <div className="lg:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-y-contain border-t border-gray-100 animate-fadeIn bg-white rounded-b-2xl shadow-lg [touch-action:pan-y]">
+                    <div className="lg:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-y-contain border-t border-gray-100 animate-fadeIn bg-white rounded-b-2xl shadow-lg [touch-action:pan-y] scrollbar-none">
                         <div className="py-4">
                         {/* Mobile Search */}
                         <form onSubmit={handleSearch} className="px-4 mb-4">

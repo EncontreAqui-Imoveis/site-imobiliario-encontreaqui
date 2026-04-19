@@ -66,13 +66,13 @@ export default function MeusContratosPage() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto px-4 py-24 space-y-6">
-            <div className="space-y-1">
-                <h1 className="text-2xl font-bold text-slate-900">
-                    Meus contratos
+        <div className="max-w-xl mx-auto px-4 py-20 sm:py-24 space-y-6">
+            <div>
+                <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                    Contratos
                 </h1>
-                <p className="text-sm text-slate-600">
-                    Acompanhe aqui os contratos em que você participa como cliente ou corretor.
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    Toque para abrir o detalhe.
                 </p>
             </div>
 

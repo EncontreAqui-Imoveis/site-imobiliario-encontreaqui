@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Home, ChevronRight, ArrowRight, MessageCircle, Smartphone, Edit, FileText, ScrollText } from 'lucide-react'
+import { Home, ChevronRight, ArrowRight, MessageCircle, Edit, FileText, ScrollText } from 'lucide-react'
 import {
     PropertyCard,
     PropertyGallery,
@@ -10,7 +10,6 @@ import {
     PropertySidebar,
 } from '@/components/property'
 import { Property, formatPrice, getPromoSalePrice, getPromoRentPrice } from '@/types/property'
-import { buildAppDeepLink } from '@/lib/appLinks'
 import { useUser } from '@/contexts/UserContext'
 import { buildWhatsappLink } from '@/lib/contactLinks'
 import { fetchEditableProperty } from '@/lib/propertiesEditorService'
@@ -201,7 +200,6 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
             ? `/propostas/nova?propertyId=${property.id}`
             : null
 
-    const deepLink = buildAppDeepLink(property.id)
     const promoSale = getPromoSalePrice(property)
     const promoRent = getPromoRentPrice(property)
     const promoPrice = promoSale ?? promoRent
@@ -218,6 +216,15 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
     const originalPrice = promoPrice
         ? formatPrice(property.priceSale ?? property.priceRent ?? property.price)
         : null
+
+    const mobileSaleLine =
+        property.priceSale != null
+            ? formatPrice(promoSale ?? property.priceSale)
+            : null
+    const mobileRentLine =
+        property.priceRent != null
+            ? `${formatPrice(promoRent ?? property.priceRent)}/mês`
+            : null
 
     return (
         <main
@@ -461,73 +468,83 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
 
             {/* ================== Mobile Sticky Bottom Bar ================== */}
             <div
-                className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]"
+                className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]"
                 role="region"
                 aria-label="Ações rápidas do imóvel"
             >
-                <div className="flex items-center gap-3 px-4 py-3 max-w-7xl mx-auto">
-                    {/* Price */}
+                <div className="flex items-center gap-2 px-3 py-2 max-w-7xl mx-auto">
                     <div className="flex-1 min-w-0">
-                        <p className="text-xs text-gray-500 font-medium">
-                            {property.priceSale ? 'Venda' : property.priceRent ? 'Aluguel' : 'Valor'}
-                        </p>
-                        {originalPrice && (
-                            <p className="text-xs text-gray-400 line-through">{originalPrice}</p>
+                        {mobileSaleLine && (
+                            <>
+                                <p className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold">Venda</p>
+                                {originalPrice && promoSale && (
+                                    <p className="text-[10px] text-gray-400 line-through">{originalPrice}</p>
+                                )}
+                                <p className="text-sm font-bold leading-tight truncate text-primary-700">
+                                    {mobileSaleLine}
+                                </p>
+                            </>
                         )}
-                        <p className="text-lg font-bold truncate text-primary-700">
-                            {displayPrice}
-                        </p>
+                        {!mobileSaleLine && mobileRentLine && (
+                            <>
+                                <p className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold">Aluguel</p>
+                                <p className="text-sm font-bold leading-tight truncate text-primary-700">
+                                    {mobileRentLine}
+                                </p>
+                            </>
+                        )}
+                        {!mobileSaleLine && !mobileRentLine && (
+                            <>
+                                <p className="text-[10px] text-gray-500 font-medium">Valor</p>
+                                <p className="text-sm font-bold truncate text-primary-700">{displayPrice}</p>
+                            </>
+                        )}
+                        {mobileSaleLine && mobileRentLine && (
+                            <p className="text-[10px] text-gray-500 mt-0.5 truncate">Aluguel {mobileRentLine}</p>
+                        )}
                     </div>
 
                     {isOwner && proposalAction && (
                         <Link
                             href={proposalAction.href}
-                            className="flex items-center gap-1.5 px-3 py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl text-sm transition-colors shadow-md"
+                            className="flex items-center justify-center gap-1 px-2.5 py-2 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg text-xs transition-colors shadow-sm shrink-0"
                         >
-                            <FileText className="w-4 h-4" />
+                            <FileText className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline max-w-[5.5rem] truncate">{proposalAction.label}</span>
                         </Link>
                     )}
 
                     {!isOwner && visitorProposalHref && (
                         <Link
                             href={visitorProposalHref}
-                            className="flex items-center gap-1.5 px-3 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm transition-colors shadow-md"
+                            className="flex items-center justify-center gap-1 px-2.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs transition-colors shadow-sm shrink-0"
                             aria-label="Gerar proposta para este imóvel"
                         >
-                            <FileText className="w-4 h-4" />
-                            <span className="max-[380px]:hidden">Proposta</span>
+                            <FileText className="w-3.5 h-3.5 shrink-0" />
+                            <span>Proposta</span>
                         </Link>
                     )}
 
-                    {/* WhatsApp */}
                     {!isOwner && whatsappLink && (
                         <a
                             href={whatsappLink}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 px-4 py-3 bg-primary-700 hover:bg-primary-800 text-white font-bold rounded-xl text-sm transition-colors shadow-md"
+                            className="flex items-center justify-center gap-1 px-2.5 py-2 bg-primary-700 hover:bg-primary-800 text-white font-semibold rounded-lg text-xs transition-colors shadow-sm shrink-0"
                         >
-                            <MessageCircle className="w-4 h-4" />
-                            Contatar
+                            <MessageCircle className="w-3.5 h-3.5 shrink-0" />
+                            <span>Contatar</span>
                         </a>
                     )}
 
-                    {isOwner ? (
+                    {isOwner && (
                         <Link
                             href="/meus-imoveis"
-                            className="flex items-center gap-1.5 px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl text-sm transition-colors shadow-md"
+                            className="flex items-center justify-center gap-1 px-2.5 py-2 bg-slate-700 hover:bg-slate-800 text-white font-semibold rounded-lg text-xs transition-colors shadow-sm shrink-0"
                         >
-                            <ScrollText className="w-4 h-4" />
-                            Meus imóveis
+                            <ScrollText className="w-3.5 h-3.5" />
+                            <span>Meus</span>
                         </Link>
-                    ) : (
-                        <a
-                            href={deepLink}
-                            className="flex items-center gap-1.5 px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl text-sm transition-colors shadow-md"
-                        >
-                            <Smartphone className="w-4 h-4" />
-                            App
-                        </a>
                     )}
                 </div>
             </div>

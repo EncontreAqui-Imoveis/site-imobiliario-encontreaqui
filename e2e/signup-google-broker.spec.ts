@@ -52,7 +52,10 @@ test('cadastro corretor em fluxo Google pendente segue para onboarding de docume
     await page.getByLabel('Bairro *').fill('Centro')
     await page.getByLabel('Rua *').fill('Rua Broker')
     await page.getByLabel('Número *').fill('200')
-    await page.getByRole('button', { name: /ir para verificação do telefone/i }).click()
+    await page.getByRole('button', { name: /ir para a página de verificação/i }).click()
+
+    await expect(page).toHaveURL(/\/cadastro\/verificar-metodo/)
+    await page.getByRole('button', { name: /telefone \(sms\)/i }).click()
 
     await expect(page).toHaveURL(/\/cadastro\/verificar-telefone\?flow=signup/)
     await page.locator('input[inputmode="numeric"]').first().waitFor()

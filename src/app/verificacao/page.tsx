@@ -1,14 +1,23 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useUser } from '@/contexts/UserContext'
 import { sendEmailVerificationCode, verifyEmailCode } from '@/lib/api/auth'
 import { resolvePostAuthRoute } from '@/lib/auth/routeResolution'
-import { loadSignupDraft, patchSignupDraft } from '@/lib/authSignupDraft'
+import { loadSignupDraft } from '@/lib/authSignupDraft'
+import { registerUserFromSignupDraft } from '@/lib/registerFromSignupDraft'
 import type { ApiError } from '@/lib/api/client'
 import { ShieldCheck, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+
+const VERIFY_ERROR_COOLDOWN_MS = 2000
+const EMAIL_OTP_CACHE_MS = 60_000
+const MIN_CLIENT_RESEND_GAP_MS = 30_000
+
+function emailOtpCacheKey(emailAddr: string) {
+    return `ea_email_otp_sent_${emailAddr.toLowerCase()}`
+}
 
 export default function VerificacaoPage() {
     const DAILY_LIMIT = 5
@@ -21,6 +30,7 @@ export default function VerificacaoPage() {
     const [resending, setResending] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
+    const [successMessage, setSuccessMessage] = useState('Redirecionando...')
     const [codeSent, setCodeSent] = useState(false)
     const [verificationExpiresAt, setVerificationExpiresAt] = useState<Date | null>(null)
     const [verificationExpired, setVerificationExpired] = useState(false)
@@ -31,7 +41,11 @@ export default function VerificacaoPage() {
     const [draftReady, setDraftReady] = useState(false)
     const inputRefs = useRef<(HTMLInputElement | null)[]>([])
     const autoSendTriggeredRef = useRef(false)
-    const autoSubmitScheduledRef = useRef(false)
+    const verifyCooldownUntilRef = useRef(0)
+    const lastAutoSubmittedCodeRef = useRef<string | null>(null)
+    /** Evita reenvio automático infinito com o mesmo código após erro. */
+    const autoVerifyBlockedForCodeRef = useRef<string | null>(null)
+    const isSignupFlowRef = useRef(false)
 
     useEffect(() => {
         const signupDraft = loadSignupDraft()
@@ -40,12 +54,37 @@ export default function VerificacaoPage() {
     }, [])
 
     const isSignupFlow = !session && (searchParams.get('flow') === 'signup' || signupDraftEmail != null)
+    isSignupFlowRef.current = isSignupFlow
+
     const email = isSignupFlow ? signupDraftEmail ?? '' : session?.user.email || ''
+
+    useEffect(() => {
+        const full = code.join('')
+        if (full !== autoVerifyBlockedForCodeRef.current) {
+            autoVerifyBlockedForCodeRef.current = null
+        }
+    }, [code])
     const dailyLimitReached = (() => {
         if (!dailyWindowStartedAt) return false
         if (Date.now() - dailyWindowStartedAt.getTime() >= 24 * 60 * 60 * 1000) return false
         return dailySendCount >= DAILY_LIMIT
     })()
+
+    const completeSignupAfterEmail = useCallback(async () => {
+        const draft = loadSignupDraft()
+        if (!draft?.userType) {
+            router.replace('/auth/cadastro')
+            return
+        }
+        const merged = { ...draft, emailVerified: true }
+        const result = await registerUserFromSignupDraft(merged)
+        await refresh()
+        if (result.isBroker && result.requiresBrokerDocuments) {
+            router.push('/onboarding/broker?mode=signup')
+            return
+        }
+        router.push(resolvePostAuthRoute(result, '/meus-imoveis'))
+    }, [refresh, router])
 
     useEffect(() => {
         if (!draftReady) return
@@ -79,70 +118,169 @@ export default function VerificacaoPage() {
         return () => window.clearInterval(timer)
     }, [cooldownRemainingSeconds, verificationExpiresAt])
 
+    const handleSendCode = useCallback(
+        async (silent = false) => {
+            if (!email) return
+
+            if (!silent && typeof window !== 'undefined') {
+                const raw = window.sessionStorage.getItem(emailOtpCacheKey(email))
+                if (raw) {
+                    const ts = Number(raw)
+                    if (Number.isFinite(ts) && Date.now() - ts < MIN_CLIENT_RESEND_GAP_MS) {
+                        const wait = Math.ceil((MIN_CLIENT_RESEND_GAP_MS - (Date.now() - ts)) / 1000)
+                        setError(`Aguarde ${wait}s antes de solicitar outro envio.`)
+                        return
+                    }
+                }
+            }
+
+            if (silent && typeof window !== 'undefined') {
+                const raw = window.sessionStorage.getItem(emailOtpCacheKey(email))
+                if (raw) {
+                    const ts = Number(raw)
+                    if (Number.isFinite(ts) && Date.now() - ts < EMAIL_OTP_CACHE_MS) {
+                        setCodeSent(true)
+                        setVerificationExpired(false)
+                        return
+                    }
+                }
+            }
+
+            setResending(true)
+            setError(null)
+            try {
+                const response = await sendEmailVerificationCode(email)
+                const now = new Date()
+                setCodeSent(true)
+                setVerificationExpired(false)
+                setVerificationExpiresAt(response.expires_at ? new Date(response.expires_at) : null)
+                setCooldownRemainingSeconds(Number(response.cooldown_sec ?? 0))
+                setDailyWindowStartedAt((current) => current ?? now)
+                setDailySendCount(DAILY_LIMIT - Number(response.daily_remaining ?? DAILY_LIMIT))
+
+                if (typeof window !== 'undefined') {
+                    window.sessionStorage.setItem(emailOtpCacheKey(email), String(Date.now()))
+                }
+
+                if (response.delivery === 'already_verified') {
+                    setSuccess(true)
+                    if (isSignupFlowRef.current) {
+                        setSuccessMessage('E-mail já confirmado. Finalizando cadastro...')
+                        try {
+                            await completeSignupAfterEmail()
+                        } catch {
+                            setSuccess(false)
+                            setCodeSent(true)
+                            setError('Não foi possível concluir o cadastro. Tente novamente.')
+                        }
+                    }
+                }
+            } catch (err) {
+                const apiErr = err as ApiError
+                if ('status' in apiErr && apiErr.status === 429) {
+                    setError('Muitas tentativas. Aguarde e tente novamente.')
+                } else {
+                    setError('Erro ao enviar código. Tente novamente.')
+                }
+                if (!silent) {
+                    setCodeSent(false)
+                }
+            } finally {
+                setResending(false)
+            }
+        },
+        [completeSignupAfterEmail, email],
+    )
+
     useEffect(() => {
         if (!draftReady || !email || autoSendTriggeredRef.current) return
         autoSendTriggeredRef.current = true
         void handleSendCode(true)
-    }, [draftReady, email])
+    }, [draftReady, email, handleSendCode])
 
-    useEffect(() => {
-        const isComplete = code.every((digit) => digit.trim().length === 1)
-        if (
-            !isComplete ||
-            submitting ||
-            success ||
-            verificationExpired ||
-            autoSubmitScheduledRef.current
-        ) {
+    const handleVerify = useCallback(async (fromAuto = false) => {
+        if (!fromAuto) {
+            autoVerifyBlockedForCodeRef.current = null
+            lastAutoSubmittedCodeRef.current = null
+        }
+
+        const fullCode = code.join('')
+        if (fullCode.length !== 6) {
+            setError('Insira o código completo de 6 dígitos.')
             return
         }
 
-        autoSubmitScheduledRef.current = true
-        const timeout = window.setTimeout(() => {
-            autoSubmitScheduledRef.current = false
-            void handleVerify()
-        }, 0)
-
-        return () => window.clearTimeout(timeout)
-    }, [code, submitting, success, verificationExpired])
-
-    const handleSendCode = async (silent = false) => {
-        if (!email) return
-        setResending(true)
+        setSubmitting(true)
         setError(null)
         try {
-            const response = await sendEmailVerificationCode(email)
-            const now = new Date()
-            setCodeSent(true)
-            setVerificationExpired(false)
-            setVerificationExpiresAt(response.expires_at ? new Date(response.expires_at) : null)
-            setCooldownRemainingSeconds(Number(response.cooldown_sec ?? 0))
-            setDailyWindowStartedAt((current) => current ?? now)
-            setDailySendCount(DAILY_LIMIT - Number(response.daily_remaining ?? DAILY_LIMIT))
+            await verifyEmailCode(email, fullCode)
 
-            if (response.delivery === 'already_verified') {
-                setSuccess(true)
-                if (isSignupFlow) {
-                    patchSignupDraft({ emailVerified: true, step: 'phone' })
-                    window.setTimeout(() => {
-                        router.push('/cadastro/verificar-telefone?flow=signup')
-                    }, 1200)
+            if (isSignupFlowRef.current) {
+                setSuccessMessage('Conta criada! Redirecionando...')
+                try {
+                    await completeSignupAfterEmail()
+                    setSuccess(true)
+                } catch {
+                    setError('Não foi possível concluir o cadastro. Tente novamente.')
                 }
+                return
             }
+
+            setSuccess(true)
+
+            await refresh()
+            setTimeout(() => {
+                if (!session) {
+                    router.push('/meus-imoveis')
+                    return
+                }
+                const refreshedSession = {
+                    ...session,
+                    user: {
+                        ...session.user,
+                        email_verified: true,
+                    },
+                }
+                router.push(resolvePostAuthRoute(refreshedSession, '/meus-imoveis'))
+            }, 2000)
         } catch (err) {
             const apiErr = err as ApiError
-            if ('status' in apiErr && apiErr.status === 429) {
-                setError('Muitas tentativas. Aguarde e tente novamente.')
+            if ('status' in apiErr && apiErr.status === 410) {
+                setError('Código expirado. Solicite um novo.')
+            } else if ('status' in apiErr && apiErr.status === 423) {
+                setError('Você atingiu o limite de tentativas. Solicite um novo código.')
+            } else if ('status' in apiErr && apiErr.status === 400) {
+                setError('Código inválido. Revise os 6 dígitos e tente novamente.')
             } else {
-                setError('Erro ao enviar código. Tente novamente.')
+                setError('Erro ao verificar código. Tente novamente.')
             }
-            if (!silent) {
-                setCodeSent(false)
-            }
+            verifyCooldownUntilRef.current = Date.now() + VERIFY_ERROR_COOLDOWN_MS
+            lastAutoSubmittedCodeRef.current = null
+            autoVerifyBlockedForCodeRef.current = fullCode
         } finally {
-            setResending(false)
+            setSubmitting(false)
         }
-    }
+    }, [code, completeSignupAfterEmail, email, refresh, router, session])
+
+    useEffect(() => {
+        const isComplete = code.every((digit) => digit.trim().length === 1)
+        if (!isComplete || submitting || success || verificationExpired) {
+            if (!isComplete) lastAutoSubmittedCodeRef.current = null
+            return
+        }
+
+        if (Date.now() < verifyCooldownUntilRef.current) return
+
+        const fullCode = code.join('')
+        if (autoVerifyBlockedForCodeRef.current === fullCode) return
+        if (lastAutoSubmittedCodeRef.current === fullCode) return
+
+        lastAutoSubmittedCodeRef.current = fullCode
+        const id = window.setTimeout(() => {
+            void handleVerify(true)
+        }, 0)
+        return () => window.clearTimeout(id)
+    }, [code, handleVerify, submitting, success, verificationExpired])
 
     const handleCodeChange = (index: number, value: string) => {
         const sanitized = value.replace(/\D/g, '')
@@ -182,59 +320,6 @@ export default function VerificacaoPage() {
         setCode(next)
     }
 
-    const handleVerify = async () => {
-        autoSubmitScheduledRef.current = false
-        const fullCode = code.join('')
-        if (fullCode.length !== 6) {
-            setError('Insira o código completo de 6 dígitos.')
-            return
-        }
-
-        setSubmitting(true)
-        setError(null)
-        try {
-            await verifyEmailCode(email, fullCode)
-            setSuccess(true)
-
-            if (isSignupFlow) {
-                patchSignupDraft({ emailVerified: true, step: 'phone' })
-                setTimeout(() => {
-                    router.push('/cadastro/verificar-telefone?flow=signup')
-                }, 1500)
-                return
-            }
-
-            await refresh()
-            setTimeout(() => {
-                if (!session) {
-                    router.push('/meus-imoveis')
-                    return
-                }
-                const refreshedSession = {
-                    ...session,
-                    user: {
-                        ...session.user,
-                        email_verified: true,
-                    },
-                }
-                router.push(resolvePostAuthRoute(refreshedSession, '/meus-imoveis'))
-            }, 2000)
-        } catch (err) {
-            const apiErr = err as ApiError
-            if ('status' in apiErr && apiErr.status === 410) {
-                setError('Código expirado. Solicite um novo.')
-            } else if ('status' in apiErr && apiErr.status === 423) {
-                setError('Você atingiu o limite de tentativas. Solicite um novo código.')
-            } else if ('status' in apiErr && apiErr.status === 400) {
-                setError('Código inválido. Revise os 6 dígitos e tente novamente.')
-            } else {
-                setError('Erro ao verificar código. Tente novamente.')
-            }
-        } finally {
-            setSubmitting(false)
-        }
-    }
-
     if ((loading && !isSignupFlow) || !draftReady) {
         return (
             <div className="min-h-[60vh] flex items-center justify-center">
@@ -255,7 +340,7 @@ export default function VerificacaoPage() {
                             Conta verificada!
                         </h1>
                         <p className="text-sm text-slate-600">
-                            {isSignupFlow ? 'Seguindo para a verificação do telefone...' : 'Redirecionando...'}
+                            {successMessage}
                         </p>
                     </div>
                 ) : (
@@ -282,11 +367,16 @@ export default function VerificacaoPage() {
                                     {code.map((digit, i) => (
                                         <input
                                             key={i}
-                                            ref={el => { inputRefs.current[i] = el }}
+                                            id={`email-otp-${i}`}
+                                            name={`emailOtp${i}`}
+                                            ref={(el) => {
+                                                inputRefs.current[i] = el
+                                            }}
                                             type="text"
                                             inputMode="numeric"
                                             maxLength={1}
-                                            aria-label={`Dígito ${i + 1} do código`}
+                                            autoComplete="one-time-code"
+                                            aria-label={`Dígito ${i + 1} do código de e-mail`}
                                             value={digit}
                                             onChange={(e) => handleCodeChange(i, e.target.value)}
                                             onKeyDown={(e) => handleKeyDown(i, e)}
@@ -302,7 +392,8 @@ export default function VerificacaoPage() {
                                 )}
 
                                 <button
-                                    onClick={handleVerify}
+                                    type="button"
+                                    onClick={() => void handleVerify(false)}
                                     disabled={submitting}
                                     className="w-full inline-flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 disabled:bg-primary-300 text-white text-sm font-semibold px-4 py-2.5 shadow-md shadow-primary-500/20 transition-colors"
                                 >
@@ -310,7 +401,8 @@ export default function VerificacaoPage() {
                                 </button>
 
                                 <button
-                                    onClick={() => handleSendCode()}
+                                    type="button"
+                                    onClick={() => void handleSendCode(false)}
                                     disabled={resending || dailyLimitReached || cooldownRemainingSeconds > 0}
                                     className="w-full text-center text-sm text-primary-600 hover:text-primary-700 font-medium disabled:opacity-50"
                                 >
@@ -342,7 +434,7 @@ export default function VerificacaoPage() {
                                 href={isSignupFlow ? '/cadastro/verificar-metodo' : '/perfil/editar'}
                                 className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-primary-600 hover:bg-slate-50 hover:text-primary-700"
                             >
-                                {isSignupFlow ? 'Trocar método de verificação' : 'Trocar e-mail'}
+                                {isSignupFlow ? 'Voltar e escolher outro método' : 'Trocar e-mail'}
                             </Link>
                             <Link
                                 href={isSignupFlow ? '/auth/cadastro' : '/meus-imoveis'}
