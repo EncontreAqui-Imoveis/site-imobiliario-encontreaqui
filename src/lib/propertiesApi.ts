@@ -1,6 +1,7 @@
 import { Property } from '@/types/property'
 import { reportObservedError } from '@/lib/observability'
 import { apiClient, ApiError } from '@/lib/api/client'
+import { hasAuthTokenInBrowser, hasAuthTokenInServer } from '@/lib/auth/tokenStore'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://backend-production-6acc.up.railway.app'
 
@@ -298,15 +299,23 @@ export async function fetchRecentProperties(limit = 8): Promise<Property[]> {
 }
 
 export async function fetchPropertyById(id: string | number): Promise<Property | null> {
+    const normalizedId = encodeURIComponent(String(id))
     try {
-        const response = await fetch(`${API_BASE_URL}/public/properties/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/public/properties/${normalizedId}`, {
             cache: 'no-store',
         })
 
         if (!response.ok) {
             await logFailedResponse('Error fetching property details:', response)
+            const hasSessionToken =
+                typeof window !== 'undefined'
+                    ? hasAuthTokenInBrowser()
+                    : await hasAuthTokenInServer()
+            if (!hasSessionToken) {
+                return null
+            }
             try {
-                const privatePayload = await apiClient.get<unknown>(`/properties/${encodeURIComponent(String(id))}`)
+                const privatePayload = await apiClient.get<unknown>(`/properties/${normalizedId}`)
                 return normalizeProperty(privatePayload)
             } catch (error) {
                 if (error instanceof ApiError && (error.status === 401 || error.status === 403 || error.status === 404)) {

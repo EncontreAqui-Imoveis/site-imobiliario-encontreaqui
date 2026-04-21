@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -81,7 +81,7 @@ export default function MeusContratosPage() {
                     <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
                 </div>
             ) : error ? (
-                <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
                     {error}
                 </div>
             ) : (

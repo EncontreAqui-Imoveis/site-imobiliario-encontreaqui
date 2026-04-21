@@ -4,7 +4,6 @@ import type {
     ContractSummary,
     ContractDocumentType,
     ContractSide,
-    Commission,
     ContractApprovalReason,
 } from '@/types/contract'
 
@@ -225,11 +224,4 @@ export function buildNegotiationDocumentDownloadUrl(negotiationId: string, docum
         negotiationId,
     )}/documents/${encodeURIComponent(String(documentId))}/download`
 }
-
-export async function getNegotiationCommissions(negotiationId: string): Promise<Commission[]> {
-    return apiClient.get<Commission[]>(
-        `/negotiations/${encodeURIComponent(negotiationId)}/commissions`,
-    )
-}
-
 

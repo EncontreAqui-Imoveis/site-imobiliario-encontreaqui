@@ -12,8 +12,6 @@ export type ApprovalStatus =
 
 export type ContractSide = 'seller' | 'buyer'
 
-export type ClienteOutroDocumentType = `cliente_outro_${string}`
-
 export type ContractDocumentType =
     | 'doc_identidade'
     | 'comprovante_endereco'
@@ -28,7 +26,7 @@ export type ContractDocumentType =
     | 'cliente_cnh'
     | 'cliente_identidade'
     | 'cliente_cpf'
-    | ClienteOutroDocumentType
+    | 'cliente_outros'
 
 export interface ContractDocument {
     id: number
@@ -75,19 +73,4 @@ export interface ContractDetail extends ContractSummary {
     agencyAddress?: string | null
     documents: ContractDocument[]
 }
-
-export type CommissionRole = 'CAPTURING' | 'SELLING'
-
-export type CommissionStatus = 'PENDING' | 'PAID' | 'CANCELLED'
-
-export interface Commission {
-    id: string
-    negotiationId: string
-    brokerId: number
-    role: CommissionRole
-    amount: number
-    status: CommissionStatus
-    createdAt: string
-}
-
 
