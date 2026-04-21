@@ -13,7 +13,7 @@ interface ContractListProps {
 export function ContractList({ contracts }: ContractListProps) {
     if (!contracts.length) {
         return (
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/60 px-6 py-10 text-center text-sm text-slate-600 dark:text-slate-400">
+            <div className="rounded-2xl border border-slate-200 bg-white px-6 py-10 text-center text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
                 Nenhum contrato ainda. Quando uma negociação avançar, aparece aqui.
             </div>
         )
@@ -29,17 +29,17 @@ export function ContractList({ contracts }: ContractListProps) {
                     <li key={contract.id}>
                         <Link
                             href={`/contratos/${encodeURIComponent(contract.id)}`}
-                            className="group flex items-center justify-between gap-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/60 px-4 py-3.5 shadow-sm transition hover:border-primary-300 dark:hover:border-primary-700"
+                            className="group flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm ring-1 ring-white/70 transition hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/60 dark:ring-0 dark:hover:border-primary-700"
                         >
                             <div className="min-w-0 text-left">
-                                <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{title}</p>
-                                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                <p className="truncate text-sm font-semibold text-slate-950 dark:text-slate-100">{title}</p>
+                                <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
                                     <span className={`inline-flex rounded-full px-2 py-0.5 font-medium ${statusMeta.chipClass}`}>
                                         {statusMeta.label}
                                     </span>
                                 </p>
                             </div>
-                            <ChevronRight className="h-5 w-5 shrink-0 text-slate-300 group-hover:text-primary-500" aria-hidden />
+                            <ChevronRight className="h-5 w-5 shrink-0 text-slate-400 group-hover:text-primary-500 dark:text-slate-500" aria-hidden />
                         </Link>
                     </li>
                 )

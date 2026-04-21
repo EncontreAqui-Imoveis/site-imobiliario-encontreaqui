@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react'
 import { useUser } from '@/contexts/UserContext'
 import GuestAccessCard from '@/components/auth/GuestAccessCard'
 import { Loader2, Moon, Settings } from 'lucide-react'
-
-const STORAGE_KEY = 'ea_site_theme'
+import { persistTheme, syncThemeFromStorage } from '@/lib/theme'
 
 export default function ConfiguracoesPage() {
     const { session, loading } = useUser()
@@ -13,19 +12,14 @@ export default function ConfiguracoesPage() {
     const [ready, setReady] = useState(false)
 
     useEffect(() => {
-        const stored = typeof window !== 'undefined' ? window.localStorage.getItem(STORAGE_KEY) : null
-        const prefersDark =
-            stored === 'dark' ||
-            (stored !== 'light' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
-        setDark(Boolean(prefersDark))
-        document.documentElement.classList.toggle('dark', Boolean(prefersDark))
+        const prefersDark = syncThemeFromStorage()
+        setDark(prefersDark)
         setReady(true)
     }, [])
 
     const setMode = (next: boolean) => {
         setDark(next)
-        document.documentElement.classList.toggle('dark', next)
-        window.localStorage.setItem(STORAGE_KEY, next ? 'dark' : 'light')
+        persistTheme(next ? 'dark' : 'light')
     }
 
     if (loading) {

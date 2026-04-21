@@ -4,6 +4,7 @@ import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import { UserProvider } from '@/contexts/UserContext'
 import { FavoritesProvider } from '@/contexts/FavoritesContext'
+import ThemeBootstrap from '@/components/theme/ThemeBootstrap'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,6 +32,7 @@ export default function RootLayout({
     return (
         <html lang="pt-BR" data-scroll-behavior="smooth">
             <body className="min-h-screen flex flex-col">
+                <ThemeBootstrap />
                 <UserProvider>
                     <FavoritesProvider>
                         <Header />
