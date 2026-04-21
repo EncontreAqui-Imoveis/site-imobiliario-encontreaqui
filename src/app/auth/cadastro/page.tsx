@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
@@ -319,7 +319,7 @@ export default function CadastroPage() {
 
     return (
         <div className="min-h-[70vh] flex items-center justify-center px-3 pt-20 pb-10 sm:px-4 sm:pt-32 sm:pb-16 bg-gradient-to-b from-slate-50/95 to-slate-100/95">
-            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-4 sm:p-8 space-y-5 sm:space-y-6">
+            <div className="w-full max-w-2xl bg-white dark:bg-slate-900 dark:bg-slate-900 rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-4 sm:p-8 space-y-5 sm:space-y-6">
                 <div className="space-y-2 text-center">
                     <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Criar conta</h1>
                     <p className="text-xs sm:text-sm text-slate-600 px-1">
@@ -351,7 +351,7 @@ export default function CadastroPage() {
                         <button
                             type="button"
                             onClick={handleDiscardDraft}
-                            className="mt-3 inline-flex rounded-xl border border-amber-300 bg-white px-4 py-2 font-semibold text-amber-900 hover:bg-amber-100"
+                            className="mt-3 inline-flex rounded-xl border border-amber-300 bg-white dark:bg-slate-900 dark:bg-slate-900 px-4 py-2 font-semibold text-amber-900 hover:bg-amber-100"
                         >
                             Descartar cadastro
                         </button>
@@ -367,7 +367,7 @@ export default function CadastroPage() {
                                 className={`rounded-2xl border p-4 sm:p-5 text-left transition-colors ${
                                     draft.userType === 'client'
                                         ? 'border-primary-500 bg-primary-50'
-                                        : 'border-slate-200 bg-white hover:border-primary-300'
+                                        : 'border-slate-200 bg-white dark:bg-slate-900 dark:bg-slate-900 hover:border-primary-300'
                                 }`}
                             >
                                 <p className="text-sm font-semibold text-slate-900">Quero cadastrar como cliente</p>
@@ -381,7 +381,7 @@ export default function CadastroPage() {
                                 className={`rounded-2xl border p-4 sm:p-5 text-left transition-colors ${
                                     draft.userType === 'broker'
                                         ? 'border-primary-500 bg-primary-50'
-                                        : 'border-slate-200 bg-white hover:border-primary-300'
+                                        : 'border-slate-200 bg-white dark:bg-slate-900 dark:bg-slate-900 hover:border-primary-300'
                                 }`}
                             >
                                 <p className="text-sm font-semibold text-slate-900">Quero cadastrar como corretor</p>
@@ -398,7 +398,7 @@ export default function CadastroPage() {
                                         <div className="w-full border-t border-slate-200" />
                                     </div>
                                     <div className="relative flex justify-center text-[10px] sm:text-xs uppercase tracking-wide">
-                                        <span className="bg-white px-3 text-slate-400">ou continue com</span>
+                                        <span className="bg-white dark:bg-slate-900 dark:bg-slate-900 px-3 text-slate-400">ou continue com</span>
                                     </div>
                                 </div>
 
@@ -406,7 +406,7 @@ export default function CadastroPage() {
                                     type="button"
                                     onClick={handleGoogleRegister}
                                     disabled={isLoading}
-                                    className="w-full flex items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-50 transition-colors min-h-[44px]"
+                                    className="w-full flex items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:bg-slate-900 px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-50 transition-colors min-h-[44px]"
                                 >
                                     <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden>
                                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />

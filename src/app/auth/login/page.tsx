@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
@@ -94,7 +94,7 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-[70vh] flex items-center justify-center px-4 pt-28 pb-16 sm:pt-32 bg-gradient-to-b from-slate-50/95 to-slate-100/95">
-            <div className="w-full max-w-md bg-white rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-8 space-y-6">
+            <div className="w-full max-w-md bg-white dark:bg-slate-900 dark:bg-slate-900 rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-8 space-y-6">
                 <div className="space-y-2 text-center">
                     <h1 className="text-2xl font-bold text-slate-900">
                         Entrar na plataforma
@@ -184,7 +184,7 @@ export default function LoginPage() {
                         <div className="w-full border-t border-slate-200" />
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-white px-3 text-slate-400">ou entre com Google</span>
+                        <span className="bg-white dark:bg-slate-900 dark:bg-slate-900 px-3 text-slate-400">ou entre com Google</span>
                     </div>
                 </div>
 
@@ -193,7 +193,7 @@ export default function LoginPage() {
                     type="button"
                     onClick={handleGoogleLogin}
                     disabled={isLoading}
-                    className="w-full flex items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-50 transition-colors"
+                    className="w-full flex items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:bg-slate-900 px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-50 transition-colors"
                 >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />

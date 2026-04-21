@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import './globals.css'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
@@ -31,6 +32,23 @@ export default function RootLayout({
 }) {
     return (
         <html lang="pt-BR" data-scroll-behavior="smooth">
+            <head>
+                <Script
+                    id="theme-init"
+                    strategy="beforeInteractive"
+                    dangerouslySetInnerHTML={{
+                        __html: `
+                            (function() {
+                                try {
+                                    var stored = localStorage.getItem('ea_site_theme');
+                                    var dark = stored === 'dark' || (!stored && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                                    document.documentElement.classList.toggle('dark', !!dark);
+                                } catch (e) {}
+                            })();
+                        `,
+                    }}
+                />
+            </head>
             <body className="min-h-screen flex flex-col">
                 <ThemeBootstrap />
                 <UserProvider>

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Image from 'next/image'
@@ -48,11 +48,11 @@ export default function PropertyCard({ property, variant = 'default' }: Property
     return (
         <Link
             href={`/imoveis/${property.id}`}
-            className={`group block bg-white rounded-[28px] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${isFeatured ? 'ring-2 ring-accent-400' : 'border border-gray-100'
+            className={`group block bg-white dark:bg-slate-900 rounded-[28px] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${isFeatured ? 'ring-2 ring-accent-400' : 'border border-gray-100 dark:border-slate-700'
                 }`}
         >
             {/* Image Container */}
-            <div className="relative aspect-[5/4] overflow-hidden bg-gray-100">
+            <div className="relative aspect-[5/4] overflow-hidden bg-gray-100 dark:bg-slate-800">
                 <Image
                     src={images[currentImageIndex]}
                     alt={property.title}
@@ -71,14 +71,14 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                     <>
                         <button
                             onClick={goToPrevious}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-30 group-hover:opacity-100 focus:opacity-100 transition-all duration-300 z-10 hover:scale-110"
+                            className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white dark:bg-slate-900/20 hover:bg-white dark:bg-slate-900/40 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-30 group-hover:opacity-100 focus:opacity-100 transition-all duration-300 z-10 hover:scale-110"
                             aria-label="Imagem anterior"
                         >
                             <ChevronLeft className="w-5 h-5 drop-shadow-md" />
                         </button>
                         <button
                             onClick={goToNext}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-30 group-hover:opacity-100 focus:opacity-100 transition-all duration-300 z-10 hover:scale-110"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white dark:bg-slate-900/20 hover:bg-white dark:bg-slate-900/40 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-30 group-hover:opacity-100 focus:opacity-100 transition-all duration-300 z-10 hover:scale-110"
                             aria-label="Próxima imagem"
                         >
                             <ChevronRight className="w-5 h-5 drop-shadow-md" />
@@ -90,8 +90,8 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                                 <span
                                     key={idx}
                                     className={`h-1.5 rounded-full transition-all duration-300 shadow-sm ${idx === currentImageIndex
-                                        ? 'bg-white w-4'
-                                        : 'bg-white/40 w-1.5'
+                                        ? 'bg-white dark:bg-slate-900 w-4'
+                                        : 'bg-white dark:bg-slate-900/40 w-1.5'
                                         }`}
                                 />
                             ))}
@@ -114,10 +114,10 @@ export default function PropertyCard({ property, variant = 'default' }: Property
             <div className="p-6">
                 {/* Title */}
                 <div className="mb-3 flex items-start justify-between gap-3">
-                    <h3 className="font-display text-xl font-bold leading-tight text-gray-900 line-clamp-2 transition-colors group-hover:text-primary-600">
+                    <h3 className="font-display text-xl font-bold leading-tight text-gray-900 dark:text-slate-100 line-clamp-2 transition-colors group-hover:text-primary-600">
                         {capitalizePropertyTitle(property.title)}
                     </h3>
-                    <div className="shrink-0 rounded-full bg-white shadow-sm">
+                    <div className="shrink-0 rounded-full bg-white dark:bg-slate-900 shadow-sm">
                         <FavoriteButton propertyId={property.id} size="sm" />
                     </div>
                 </div>
@@ -127,7 +127,7 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                 </p>
 
                 {/* Location */}
-                <div className="mb-4 flex items-center gap-1.5 text-sm text-gray-600">
+                <div className="mb-4 flex items-center gap-1.5 text-sm text-gray-600 dark:text-slate-300">
                     <MapPin className="h-4 w-4 shrink-0 text-primary-500" />
                     <span className="line-clamp-1 font-medium">
                         {property.bairro ? `${property.bairro}, ` : ''}{property.city}
@@ -135,8 +135,8 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                 </div>
 
                 {/* Price — hierarquia principal */}
-                <div className="mb-5 border-b border-gray-100 pb-5">
-                    <p className="mb-1 text-xs font-medium uppercase tracking-wider text-gray-400">
+                <div className="mb-5 border-b border-gray-100 dark:border-slate-700 pb-5">
+                    <p className="mb-1 text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-slate-500">
                         {property.priceSale ? 'Venda' : (property.priceRent ? 'Aluguel' : 'Valor')}
                     </p>
                     {(() => {
@@ -147,12 +147,12 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                         if (promo) {
                             return (
                                 <>
-                                    <p className="text-base font-medium text-gray-400 line-through">
+                                    <p className="text-base font-medium text-gray-400 dark:text-slate-500 line-through">
                                         {formatPrice(basePrice)}
                                     </p>
                                     <p className="font-display text-3xl font-bold tracking-tight text-primary-700 sm:text-4xl">
                                         {formatPrice(promo)}
-                                        {property.priceRent && <span className="text-base font-normal text-gray-500">/mês</span>}
+                                        {property.priceRent && <span className="text-base font-normal text-gray-500 dark:text-slate-400">/mês</span>}
                                     </p>
                                 </>
                             )
@@ -160,7 +160,7 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                         return (
                             <p className="font-display text-3xl font-bold tracking-tight text-primary-700 sm:text-4xl">
                                 {formatPrice(basePrice)}
-                                {property.priceRent && <span className="text-base font-normal text-gray-500">/mês</span>}
+                                {property.priceRent && <span className="text-base font-normal text-gray-500 dark:text-slate-400">/mês</span>}
                             </p>
                         )
                     })()}
@@ -169,26 +169,26 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                 {/* Stats Grid */}
                 <div className="mb-4 grid grid-cols-2 gap-3">
                     {property.bedrooms != null && property.bedrooms > 0 && (
-                        <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-3 py-3 text-center text-sm text-gray-700">
-                            <Bed className="h-4 w-4 shrink-0 text-gray-400" />
+                        <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-3 py-3 text-center text-sm text-gray-700 dark:text-slate-300">
+                            <Bed className="h-4 w-4 shrink-0 text-gray-400 dark:text-slate-500" />
                             <span className="font-medium leading-tight">{property.bedrooms} quartos</span>
                         </div>
                     )}
                     {property.bathrooms != null && property.bathrooms > 0 && (
-                        <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-3 py-3 text-center text-sm text-gray-700">
-                            <Bath className="h-4 w-4 shrink-0 text-gray-400" />
+                        <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-3 py-3 text-center text-sm text-gray-700 dark:text-slate-300">
+                            <Bath className="h-4 w-4 shrink-0 text-gray-400 dark:text-slate-500" />
                             <span className="font-medium leading-tight">{property.bathrooms} banheiros</span>
                         </div>
                     )}
                     {property.garageSpots != null && property.garageSpots > 0 && (
-                        <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-3 py-3 text-center text-sm text-gray-700">
-                            <Car className="h-4 w-4 shrink-0 text-gray-400" />
+                        <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-3 py-3 text-center text-sm text-gray-700 dark:text-slate-300">
+                            <Car className="h-4 w-4 shrink-0 text-gray-400 dark:text-slate-500" />
                             <span className="font-medium leading-tight">{property.garageSpots} vagas</span>
                         </div>
                     )}
                     {property.areaConstruida != null && property.areaConstruida > 0 && (
-                        <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-3 py-3 text-center text-sm text-gray-700">
-                            <Maximize className="h-4 w-4 shrink-0 text-gray-400" />
+                        <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-3 py-3 text-center text-sm text-gray-700 dark:text-slate-300">
+                            <Maximize className="h-4 w-4 shrink-0 text-gray-400 dark:text-slate-500" />
                             <span className="font-medium leading-tight">{property.areaConstruida} m²</span>
                         </div>
                     )}

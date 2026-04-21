@@ -12,6 +12,21 @@
   --color-primary-light: #7f92ab;
   --color-accent: #ffca45;
   --color-accent-light: #ffe57f;
+  --surface-bg: #f4f6f9;
+  --surface-card: #ffffff;
+  --surface-muted: #f8fafc;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --border-default: #e2e8f0;
+}
+
+html.dark {
+  --surface-bg: #0f141c;
+  --surface-card: #111827;
+  --surface-muted: #1f2937;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --border-default: #334155;
 }
 
 @theme {
@@ -66,6 +81,28 @@ html.dark body {
   color: #e8edf4;
   background-color: #0f141c;
   background-image: linear-gradient(165deg, #121822 0%, #1a2230 42%, #0f141c 100%);
+}
+
+@utility surface {
+  background-color: var(--surface-card);
+  color: var(--text-primary);
+}
+
+@utility surface-muted {
+  background-color: var(--surface-muted);
+  color: var(--text-primary);
+}
+
+@utility text-primary-theme {
+  color: var(--text-primary);
+}
+
+@utility text-secondary-theme {
+  color: var(--text-secondary);
+}
+
+@utility border-default-theme {
+  border-color: var(--border-default);
 }
 
 .scrollbar-none {

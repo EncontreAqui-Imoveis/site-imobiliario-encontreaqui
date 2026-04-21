@@ -1,10 +1,10 @@
-export default function PropertyCardSkeleton({ count = 4 }: { count?: number }) {
+﻿export default function PropertyCardSkeleton({ count = 4 }: { count?: number }) {
     return (
         <>
             {Array.from({ length: count }).map((_, i) => (
                 <div
                     key={i}
-                    className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 animate-pulse"
+                    className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-sm border border-gray-100 dark:border-slate-700 animate-pulse"
                 >
                     {/* Image skeleton */}
                     <div className="aspect-[4/3] bg-gray-200" />
@@ -29,7 +29,7 @@ export default function PropertyCardSkeleton({ count = 4 }: { count?: number }) 
                         </div>
 
                         {/* Price */}
-                        <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+                        <div className="pt-4 border-t border-gray-100 dark:border-slate-700 flex items-center justify-between">
                             <div>
                                 <div className="h-3 bg-gray-200 rounded w-12 mb-1" />
                                 <div className="h-6 bg-gray-200 rounded-lg w-32" />

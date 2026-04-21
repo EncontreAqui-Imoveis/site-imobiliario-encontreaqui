@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -178,7 +178,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
 
     if (!property) {
         return (
-            <main className="min-h-screen bg-gray-50 pt-16 lg:pt-20 pb-24 lg:pb-12">
+            <main className="min-h-screen bg-gray-50 dark:bg-slate-900 pt-16 lg:pt-20 pb-24 lg:pb-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex items-center justify-center">
                     <div className="text-sm text-slate-600">
                         {loadError ?? (!authLoading && !session ? 'Imóvel não encontrado.' : 'Carregando imóvel...')}
@@ -230,7 +230,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
 
     return (
         <main
-            className="min-h-screen bg-gray-50 pt-16 lg:pt-20 pb-24 lg:pb-12"
+            className="min-h-screen bg-gray-50 dark:bg-slate-900 pt-16 lg:pt-20 pb-24 lg:pb-12"
             aria-label={`Detalhes do imóvel ${property.title}`}
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -238,14 +238,14 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                 <div className="mb-6 flex items-center gap-2">
                     <Link
                         href="/imoveis"
-                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-gray-600 transition-colors hover:bg-gray-200/80 hover:text-primary-700 lg:hidden"
+                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-gray-600 dark:text-slate-300 transition-colors hover:bg-gray-200/80 hover:text-primary-700 lg:hidden"
                         aria-label="Voltar aos imóveis"
                     >
                         <ChevronLeft className="h-6 w-6" aria-hidden />
                     </Link>
                     <nav
                         aria-label="Breadcrumb"
-                        className="hidden min-w-0 flex-1 items-center gap-2 overflow-hidden text-sm text-gray-500 lg:flex"
+                        className="hidden min-w-0 flex-1 items-center gap-2 overflow-hidden text-sm text-gray-500 dark:text-slate-400 lg:flex"
                     >
                         <Link href="/" className="shrink-0 transition-colors hover:text-primary-600">
                             <Home className="h-4 w-4" />
@@ -255,7 +255,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                             Imóveis
                         </Link>
                         <ChevronRight className="h-4 w-4 shrink-0" aria-hidden />
-                        <span className="truncate font-medium text-gray-900">{capitalizePropertyTitle(property.title)}</span>
+                        <span className="truncate font-medium text-gray-900 dark:text-slate-100">{capitalizePropertyTitle(property.title)}</span>
                     </nav>
                 </div>
 
@@ -263,7 +263,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                 {isOwner && (
                     <section
                         aria-label="Painel do corretor"
-                        className="mb-6 bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden"
+                        className="mb-6 bg-white dark:bg-slate-900 rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 dark:border-slate-700 overflow-hidden"
                     >
                         {/* Header */}
                         <div className="bg-gradient-to-r from-primary-50 to-accent-50 px-5 py-4 border-b border-primary-100">
@@ -278,7 +278,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                                     statusLower === 'sold' ? 'bg-blue-100 text-blue-700' :
                                         statusLower === 'rented' ? 'bg-purple-100 text-purple-700' :
                                             statusLower === 'pending_approval' ? 'bg-amber-100 text-amber-700' :
-                                                'bg-gray-100 text-gray-600'
+                                                'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300'
                                     }`}>
                                     {statusLower === 'approved' ? 'Disponível' :
                                         statusLower === 'sold' ? 'Vendido' :
@@ -296,12 +296,12 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                             {canEditProperty ? (
                                 <Link
                                     href={`/meus-imoveis/${property.id}/editar`}
-                                    className="flex flex-col items-center gap-2 px-4 py-5 hover:bg-gray-50 transition-colors text-center group"
+                                    className="flex flex-col items-center gap-2 px-4 py-5 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-900 transition-colors text-center group"
                                 >
                                     <div className="w-10 h-10 rounded-xl bg-primary-100 group-hover:bg-primary-200 flex items-center justify-center transition-colors">
                                         <Edit className="w-5 h-5 text-primary-600" />
                                     </div>
-                                    <span className="text-xs font-semibold text-gray-700 group-hover:text-primary-700">Editar imóvel</span>
+                                    <span className="text-xs font-semibold text-gray-700 dark:text-slate-300 group-hover:text-primary-700">Editar imóvel</span>
                                 </Link>
                             ) : (
                                 <div className="flex flex-col items-center gap-2 px-4 py-5 text-center">
@@ -318,7 +318,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                             {proposalAction && (
                                 <Link
                                     href={proposalAction.href}
-                                    className="flex flex-col items-center gap-2 px-4 py-5 hover:bg-gray-50 transition-colors text-center group"
+                                    className="flex flex-col items-center gap-2 px-4 py-5 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-900 transition-colors text-center group"
                                 >
                                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
                                         proposalAction.tone === 'success'
@@ -339,7 +339,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                                                         : 'text-indigo-600'
                                         }`} />
                                     </div>
-                                    <span className="text-xs font-semibold text-gray-700">
+                                    <span className="text-xs font-semibold text-gray-700 dark:text-slate-300">
                                         {proposalAction.label}
                                     </span>
                                 </Link>
@@ -348,23 +348,23 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                             {/* View Proposals */}
                             <Link
                                 href="/propostas"
-                                className="flex flex-col items-center gap-2 px-4 py-5 hover:bg-gray-50 transition-colors text-center group"
+                                className="flex flex-col items-center gap-2 px-4 py-5 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-900 transition-colors text-center group"
                             >
                                 <div className="w-10 h-10 rounded-xl bg-indigo-100 group-hover:bg-indigo-200 flex items-center justify-center transition-colors">
                                     <ScrollText className="w-5 h-5 text-indigo-600" />
                                 </div>
-                                <span className="text-xs font-semibold text-gray-700 group-hover:text-indigo-700">Ver propostas</span>
+                                <span className="text-xs font-semibold text-gray-700 dark:text-slate-300 group-hover:text-indigo-700">Ver propostas</span>
                             </Link>
 
                             {/* View Contracts */}
                             <Link
                                 href="/contratos"
-                                className="flex flex-col items-center gap-2 px-4 py-5 hover:bg-gray-50 transition-colors text-center group"
+                                className="flex flex-col items-center gap-2 px-4 py-5 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-900 transition-colors text-center group"
                             >
                                 <div className="w-10 h-10 rounded-xl bg-slate-100 group-hover:bg-slate-200 flex items-center justify-center transition-colors">
                                     <ScrollText className="w-5 h-5 text-slate-600" />
                                 </div>
-                                <span className="text-xs font-semibold text-gray-700 group-hover:text-slate-700">Ver contratos</span>
+                                <span className="text-xs font-semibold text-gray-700 dark:text-slate-300 group-hover:text-slate-700">Ver contratos</span>
                             </Link>
                         </div>
                     </section>
@@ -383,7 +383,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                     <div className="lg:col-span-1">
                         {isOwner ? (
                             <aside className="space-y-6">
-                                <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-lg shadow-gray-200/50">
+                                <div className="rounded-2xl border border-slate-100 bg-white dark:bg-slate-900 p-6 shadow-lg shadow-gray-200/50">
                                     <h2 className="text-lg font-bold text-slate-900">Visão do proprietário</h2>
                                     <p className="mt-2 text-sm text-slate-600">
                                         Você está vendo este imóvel como proprietário/captador.
@@ -439,13 +439,13 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
 
                 {/* Similar Properties */}
                 {similarProperties.length > 0 && property.bairro && (
-                    <div className="mt-16 pt-12 border-t border-gray-200">
+                    <div className="mt-16 pt-12 border-t border-gray-200 dark:border-slate-700">
                         <div className="flex items-center justify-between mb-8">
                             <div>
-                                <h2 className="text-2xl font-display font-bold text-gray-900 mb-2">
+                                <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-slate-100 mb-2">
                                     Similares na região
                                 </h2>
-                                <p className="text-gray-500">
+                                <p className="text-gray-500 dark:text-slate-400">
                                     Outras oportunidades em {property.bairro}
                                 </p>
                             </div>
@@ -467,7 +467,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                         <div className="mt-8 sm:hidden text-center">
                             <Link
                                 href={`/imoveis?bairro=${encodeURIComponent(property.bairro)}`}
-                                className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-900 font-semibold rounded-xl transition-colors"
+                                className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-900 text-gray-900 dark:text-slate-100 font-semibold rounded-xl transition-colors"
                             >
                                 Ver todos
                                 <ArrowRight className="w-5 h-5" />
@@ -479,7 +479,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
 
             {/* ================== Mobile Sticky Bottom Bar ================== */}
             <div
-                className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.08)] dark:border-slate-700 dark:bg-slate-900 lg:hidden"
+                className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] dark:border-slate-700 dark:bg-slate-900 lg:hidden"
                 role="region"
                 aria-label="Ações rápidas do imóvel"
             >
@@ -487,9 +487,9 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                     <div className="min-w-0">
                         {mobileSaleLine && (
                             <>
-                                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Venda</p>
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">Venda</p>
                                 {originalPrice && promoSale && (
-                                    <p className="text-xs text-gray-400 line-through">{originalPrice}</p>
+                                    <p className="text-xs text-gray-400 dark:text-slate-500 line-through">{originalPrice}</p>
                                 )}
                                 <p className="truncate text-lg font-bold leading-tight text-primary-800">
                                     {mobileSaleLine}
@@ -498,7 +498,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                         )}
                         {!mobileSaleLine && mobileRentLine && (
                             <>
-                                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Aluguel</p>
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">Aluguel</p>
                                 <p className="truncate text-lg font-bold leading-tight text-primary-800">
                                     {mobileRentLine}
                                 </p>
@@ -506,12 +506,12 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                         )}
                         {!mobileSaleLine && !mobileRentLine && (
                             <>
-                                <p className="text-[10px] font-medium text-gray-500">Valor</p>
+                                <p className="text-[10px] font-medium text-gray-500 dark:text-slate-400">Valor</p>
                                 <p className="truncate text-lg font-bold text-primary-800">{displayPrice}</p>
                             </>
                         )}
                         {mobileSaleLine && mobileRentLine && (
-                            <p className="mt-0.5 truncate text-xs text-gray-600">Aluguel {mobileRentLine}</p>
+                            <p className="mt-0.5 truncate text-xs text-gray-600 dark:text-slate-300">Aluguel {mobileRentLine}</p>
                         )}
                     </div>
 

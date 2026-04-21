@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
@@ -46,13 +46,13 @@ export default function PropertyGalleryModal({ images, initialIndex = 0, isOpen,
                 {/* Close */}
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
+                    className="absolute top-4 right-4 z-10 w-10 h-10 bg-white dark:bg-slate-900 dark:bg-slate-900/10 hover:bg-white dark:bg-slate-900 dark:bg-slate-900/20 rounded-full flex items-center justify-center text-white transition-colors"
                 >
                     <X className="w-5 h-5" />
                 </button>
 
                 {/* Counter */}
-                <div className="absolute top-4 left-4 z-10 px-3 py-1.5 bg-white/10 rounded-full text-sm text-white font-medium">
+                <div className="absolute top-4 left-4 z-10 px-3 py-1.5 bg-white dark:bg-slate-900 dark:bg-slate-900/10 rounded-full text-sm text-white font-medium">
                     {currentIndex + 1} / {images.length}
                 </div>
 
@@ -73,13 +73,13 @@ export default function PropertyGalleryModal({ images, initialIndex = 0, isOpen,
                     <>
                         <button
                             onClick={goPrev}
-                            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
+                            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white dark:bg-slate-900 dark:bg-slate-900/10 hover:bg-white dark:bg-slate-900 dark:bg-slate-900/20 rounded-full flex items-center justify-center text-white transition-colors"
                         >
                             <ChevronLeft className="w-6 h-6" />
                         </button>
                         <button
                             onClick={goNext}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white dark:bg-slate-900 dark:bg-slate-900/10 hover:bg-white dark:bg-slate-900 dark:bg-slate-900/20 rounded-full flex items-center justify-center text-white transition-colors"
                         >
                             <ChevronRight className="w-6 h-6" />
                         </button>

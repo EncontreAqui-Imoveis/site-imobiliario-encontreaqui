@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { formatPrice, Property } from '@/types/property'
@@ -76,7 +76,7 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
     return (
         <div className="space-y-8">
             {/* Header Section */}
-            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-slate-700">
                 {/* Status + Actions */}
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex flex-wrap items-center gap-3">
@@ -96,7 +96,7 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                     <div className="flex items-center gap-2">
                         <button
                             onClick={handleShare}
-                            className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-colors"
+                            className="p-2 text-gray-400 dark:text-slate-500 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-colors"
                             title="Compartilhar"
                             aria-label="Compartilhar imóvel"
                         >
@@ -116,12 +116,12 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                 )}
 
                 {/* Title */}
-                <h1 className="font-display mb-4 text-3xl font-bold leading-tight text-gray-900 sm:text-4xl">
+                <h1 className="font-display mb-4 text-3xl font-bold leading-tight text-gray-900 dark:text-slate-100 sm:text-4xl">
                     {capitalizePropertyTitle(property.title)}
                 </h1>
 
                 {/* Location */}
-                <div className="mb-8 flex items-center gap-2 text-gray-800">
+                <div className="mb-8 flex items-center gap-2 text-gray-800 dark:text-slate-200">
                     <MapPin className="h-5 w-5 shrink-0 text-primary-600" />
                     <span className="text-lg font-semibold sm:text-xl">
                         {property.bairro}
@@ -131,36 +131,36 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                 </div>
 
                 {/* Key Stats Grid */}
-                <div className="grid grid-cols-2 gap-4 rounded-2xl border border-gray-100 bg-gray-50 p-6 md:grid-cols-4">
+                <div className="grid grid-cols-2 gap-4 rounded-2xl border border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 p-6 md:grid-cols-4">
                     <div className="flex flex-col items-center justify-center gap-2 text-center">
                         <Bed className="h-6 w-6 shrink-0 text-primary-600" />
-                        <span className="text-xl font-bold text-gray-900">{property.bedrooms || 0}</span>
-                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">Quartos</span>
+                        <span className="text-xl font-bold text-gray-900 dark:text-slate-100">{property.bedrooms || 0}</span>
+                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-slate-300">Quartos</span>
                     </div>
                     <div className="flex flex-col items-center justify-center gap-2 text-center">
                         <Bath className="h-6 w-6 shrink-0 text-primary-600" />
-                        <span className="text-xl font-bold text-gray-900">{property.bathrooms || 0}</span>
-                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">Banheiros</span>
+                        <span className="text-xl font-bold text-gray-900 dark:text-slate-100">{property.bathrooms || 0}</span>
+                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-slate-300">Banheiros</span>
                     </div>
                     <div className="flex flex-col items-center justify-center gap-2 text-center">
                         <Car className="h-6 w-6 shrink-0 text-primary-600" />
-                        <span className="text-xl font-bold text-gray-900">{property.garageSpots || 0}</span>
-                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">Vagas</span>
+                        <span className="text-xl font-bold text-gray-900 dark:text-slate-100">{property.garageSpots || 0}</span>
+                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-slate-300">Vagas</span>
                     </div>
                     <div className="flex flex-col items-center justify-center gap-2 text-center">
                         <Maximize className="h-6 w-6 shrink-0 text-primary-600" />
-                        <span className="text-xl font-bold text-gray-900">{property.areaConstruida || 0} m²</span>
-                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">Área Útil</span>
+                        <span className="text-xl font-bold text-gray-900 dark:text-slate-100">{property.areaConstruida || 0} m²</span>
+                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-slate-300">Área Útil</span>
                     </div>
                 </div>
 
                 {/* Additional costs */}
                 {((property.valorCondominio || 0) > 0) && (
-                    <div className="mt-6 flex flex-wrap gap-4 pt-6 border-t border-gray-100">
+                    <div className="mt-6 flex flex-wrap gap-4 pt-6 border-t border-gray-100 dark:border-slate-700">
                         {property.valorCondominio && property.valorCondominio > 0 && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                                <Building2 className="w-4 h-4 text-gray-400" />
-                                <span>Condomínio: <span className="font-semibold text-gray-900">{formatPrice(property.valorCondominio)}</span></span>
+                            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300">
+                                <Building2 className="w-4 h-4 text-gray-400 dark:text-slate-500" />
+                                <span>Condomínio: <span className="font-semibold text-gray-900 dark:text-slate-100">{formatPrice(property.valorCondominio)}</span></span>
                             </div>
                         )}
                     </div>
@@ -169,10 +169,10 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
 
             {/* Description Section */}
             {property.description && (
-                <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100">
-                    <h2 className="font-display text-xl font-bold text-gray-900 mb-4">Sobre o imóvel</h2>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-slate-700">
+                    <h2 className="font-display text-xl font-bold text-gray-900 dark:text-slate-100 mb-4">Sobre o imóvel</h2>
                     <div className="prose prose-gray max-w-none">
-                        <p className="text-gray-600 whitespace-pre-line break-words [overflow-wrap:anywhere] leading-relaxed text-base">
+                        <p className="text-gray-600 dark:text-slate-300 whitespace-pre-line break-words [overflow-wrap:anywhere] leading-relaxed text-base">
                             {property.description}
                         </p>
                     </div>
@@ -181,88 +181,88 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
 
             {/* Detailed Location Section */}
             {(property.address || property.numero || property.quadra || property.lote || property.bairro) && (
-                <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100">
-                    <h2 className="font-display text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-slate-700">
+                    <h2 className="font-display text-xl font-bold text-gray-900 dark:text-slate-100 mb-6 flex items-center gap-2">
                         <Map className="w-5 h-5 text-primary-500" />
                         Localização
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {property.address && (
-                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-900 rounded-xl">
                                 <MapPin className="w-4 h-4 text-primary-500 flex-shrink-0" />
                                 <div className="min-w-0">
-                                    <p className="text-xs text-gray-500">Endereço</p>
-                                    <p className="text-sm font-semibold text-gray-900 truncate">{property.address}</p>
+                                    <p className="text-xs text-gray-500 dark:text-slate-400">Endereço</p>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-slate-100 truncate">{property.address}</p>
                                 </div>
                             </div>
                         )}
                         {property.numero && (
-                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-900 rounded-xl">
                                 <HomeIcon className="w-4 h-4 text-primary-500 flex-shrink-0" />
                                 <div>
-                                    <p className="text-xs text-gray-500">Número</p>
-                                    <p className="text-sm font-semibold text-gray-900">{property.numero || 'S/N'}</p>
+                                    <p className="text-xs text-gray-500 dark:text-slate-400">Número</p>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">{property.numero || 'S/N'}</p>
                                 </div>
                             </div>
                         )}
                         {property.quadra && (
-                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-900 rounded-xl">
                                 <Signpost className="w-4 h-4 text-primary-500 flex-shrink-0" />
                                 <div>
-                                    <p className="text-xs text-gray-500">Quadra</p>
-                                    <p className="text-sm font-semibold text-gray-900">{property.quadra}</p>
+                                    <p className="text-xs text-gray-500 dark:text-slate-400">Quadra</p>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">{property.quadra}</p>
                                 </div>
                             </div>
                         )}
                         {property.lote && (
-                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-900 rounded-xl">
                                 <Layers className="w-4 h-4 text-primary-500 flex-shrink-0" />
                                 <div>
-                                    <p className="text-xs text-gray-500">Lote</p>
-                                    <p className="text-sm font-semibold text-gray-900">{property.lote}</p>
+                                    <p className="text-xs text-gray-500 dark:text-slate-400">Lote</p>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">{property.lote}</p>
                                 </div>
                             </div>
                         )}
                         {property.bairro && (
-                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-900 rounded-xl">
                                 <Building2 className="w-4 h-4 text-primary-500 flex-shrink-0" />
                                 <div>
-                                    <p className="text-xs text-gray-500">Bairro</p>
-                                    <p className="text-sm font-semibold text-gray-900">{property.bairro}</p>
+                                    <p className="text-xs text-gray-500 dark:text-slate-400">Bairro</p>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">{property.bairro}</p>
                                 </div>
                             </div>
                         )}
                         {property.complemento && (
-                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-900 rounded-xl">
                                 <Hash className="w-4 h-4 text-primary-500 flex-shrink-0" />
                                 <div>
-                                    <p className="text-xs text-gray-500">Complemento</p>
-                                    <p className="text-sm font-semibold text-gray-900">{property.complemento}</p>
+                                    <p className="text-xs text-gray-500 dark:text-slate-400">Complemento</p>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">{property.complemento}</p>
                                 </div>
                             </div>
                         )}
                         {property.tipoLote && (
-                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-900 rounded-xl">
                                 <Map className="w-4 h-4 text-primary-500 flex-shrink-0" />
                                 <div>
-                                    <p className="text-xs text-gray-500">Tipo de Lote</p>
-                                    <p className="text-sm font-semibold text-gray-900 capitalize">{property.tipoLote}</p>
+                                    <p className="text-xs text-gray-500 dark:text-slate-400">Tipo de Lote</p>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-slate-100 capitalize">{property.tipoLote}</p>
                                 </div>
                             </div>
                         )}
-                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-900 rounded-xl">
                             <MapPin className="w-4 h-4 text-primary-500 flex-shrink-0" />
                             <div>
-                                <p className="text-xs text-gray-500">Cidade</p>
-                                <p className="text-sm font-semibold text-gray-900">{property.city}{property.state && ` • ${property.state}`}</p>
+                                <p className="text-xs text-gray-500 dark:text-slate-400">Cidade</p>
+                                <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">{property.city}{property.state && ` • ${property.state}`}</p>
                             </div>
                         </div>
                         {property.cep && (
-                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-900 rounded-xl">
                                 <Mail className="w-4 h-4 text-primary-500 flex-shrink-0" />
                                 <div>
-                                    <p className="text-xs text-gray-500">CEP</p>
-                                    <p className="text-sm font-semibold text-gray-900">{property.cep}</p>
+                                    <p className="text-xs text-gray-500 dark:text-slate-400">CEP</p>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">{property.cep}</p>
                                 </div>
                             </div>
                         )}
@@ -272,8 +272,8 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
 
             {/* Agency Section */}
             {property.agencyName && (
-                <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100">
-                    <h2 className="font-display text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-slate-700">
+                    <h2 className="font-display text-xl font-bold text-gray-900 dark:text-slate-100 mb-6 flex items-center gap-2">
                         <Building2 className="w-5 h-5 text-primary-500" />
                         Imobiliária Responsável
                     </h2>
@@ -282,28 +282,28 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                             <Building2 className="w-7 h-7 text-primary-600" />
                         </div>
                         <div className="flex-1 min-w-0 space-y-2">
-                            <h3 className="text-lg font-bold text-gray-900">{property.agencyName}</h3>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100">{property.agencyName}</h3>
                             {property.agencyAddress && (
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                    <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300">
+                                    <MapPin className="w-4 h-4 text-gray-400 dark:text-slate-500 flex-shrink-0" />
                                     <span>{property.agencyAddress}</span>
                                 </div>
                             )}
                             {property.agencyPhone && (
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                    <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300">
+                                    <Phone className="w-4 h-4 text-gray-400 dark:text-slate-500 flex-shrink-0" />
                                     <a href={`tel:${property.agencyPhone}`} className="hover:text-primary-600 transition-colors">{property.agencyPhone}</a>
                                 </div>
                             )}
                             {property.agencyEmail && (
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                    <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300">
+                                    <Mail className="w-4 h-4 text-gray-400 dark:text-slate-500 flex-shrink-0" />
                                     <a href={`mailto:${property.agencyEmail}`} className="hover:text-primary-600 transition-colors">{property.agencyEmail}</a>
                                 </div>
                             )}
                             {property.agencyWebsite && (
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                    <Globe className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300">
+                                    <Globe className="w-4 h-4 text-gray-400 dark:text-slate-500 flex-shrink-0" />
                                     <a href={property.agencyWebsite.startsWith('http') ? property.agencyWebsite : `https://${property.agencyWebsite}`} target="_blank" rel="noopener noreferrer" className="hover:text-primary-600 transition-colors">{property.agencyWebsite}</a>
                                 </div>
                             )}
@@ -313,18 +313,18 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
             )}
 
             {/* Amenities Section */}
-            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100">
-                <h2 className="font-display text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-slate-700">
+                <h2 className="font-display text-xl font-bold text-gray-900 dark:text-slate-100 mb-6 flex items-center gap-2">
                     <Waves className="w-5 h-5 text-primary-500" />
                     Comodidades e Lazer
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {comfortAmenities.map((item, index) => (
-                        <div key={index} className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${item.active ? 'bg-primary-50/50 border border-primary-100' : 'bg-gray-50 border border-gray-100 opacity-60'}`}>
-                            <div className={`p-2 rounded-lg ${item.active ? 'bg-primary-100 text-primary-700' : 'bg-gray-200 text-gray-500'}`}>
+                        <div key={index} className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${item.active ? 'bg-primary-50/50 border border-primary-100' : 'bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-700 opacity-60'}`}>
+                            <div className={`p-2 rounded-lg ${item.active ? 'bg-primary-100 text-primary-700' : 'bg-gray-200 text-gray-500 dark:text-slate-400'}`}>
                                 <item.icon className="w-5 h-5" />
                             </div>
-                            <span className={`text-sm font-medium ${item.active ? 'text-gray-900' : 'text-gray-500'}`}>
+                            <span className={`text-sm font-medium ${item.active ? 'text-gray-900 dark:text-slate-100' : 'text-gray-500 dark:text-slate-400'}`}>
                                 {item.label}
                             </span>
                             {item.active && <CheckCircle className="w-4 h-4 text-primary-500 ml-auto" />}
@@ -334,32 +334,32 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
             </div>
 
             {/* Extra Details (Lot Type, Total Area, etc) */}
-            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100">
-                <h2 className="font-display text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-slate-700">
+                <h2 className="font-display text-xl font-bold text-gray-900 dark:text-slate-100 mb-6 flex items-center gap-2">
                     <Hash className="w-5 h-5 text-primary-500" />
                     Detalhes Técnicos
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                        <span className="text-gray-600">Área Total</span>
-                        <span className="font-bold text-gray-900">{property.areaTerreno || 0} m²</span>
+                    <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-900 rounded-xl">
+                        <span className="text-gray-600 dark:text-slate-300">Área Total</span>
+                        <span className="font-bold text-gray-900 dark:text-slate-100">{property.areaTerreno || 0} m²</span>
                     </div>
                     {property.tipoLote && (
-                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                            <span className="text-gray-600">Tipo de Lote</span>
-                            <span className="font-bold text-gray-900 capitalize">{property.tipoLote}</span>
+                        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-900 rounded-xl">
+                            <span className="text-gray-600 dark:text-slate-300">Tipo de Lote</span>
+                            <span className="font-bold text-gray-900 dark:text-slate-100 capitalize">{property.tipoLote}</span>
                         </div>
                     )}
                     {(additionalInfo.length > 0) && additionalInfo.map((info, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                            <span className="text-gray-600">{info.label}</span>
-                            <span className="font-bold text-gray-900">{info.value}</span>
+                        <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-900 rounded-xl">
+                            <span className="text-gray-600 dark:text-slate-300">{info.label}</span>
+                            <span className="font-bold text-gray-900 dark:text-slate-100">{info.value}</span>
                         </div>
                     ))}
                     {property.createdAt && (
-                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                            <span className="text-gray-600">Publicado em</span>
-                            <span className="font-bold text-gray-900">{formatDate(property.createdAt)}</span>
+                        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-900 rounded-xl">
+                            <span className="text-gray-600 dark:text-slate-300">Publicado em</span>
+                            <span className="font-bold text-gray-900 dark:text-slate-100">{formatDate(property.createdAt)}</span>
                         </div>
                     )}
                 </div>
@@ -367,8 +367,8 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
 
             {/* Video Section */}
             {property.videoUrl && (
-                <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100">
-                    <h2 className="font-display text-xl font-bold text-gray-900 mb-4">Vídeo do Imóvel</h2>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-slate-700">
+                    <h2 className="font-display text-xl font-bold text-gray-900 dark:text-slate-100 mb-4">Vídeo do Imóvel</h2>
                     <div className="aspect-video rounded-xl overflow-hidden bg-black relative group cursor-pointer">
                         <video
                             controls

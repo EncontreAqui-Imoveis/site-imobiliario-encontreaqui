@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter, useParams } from 'next/navigation'
@@ -202,7 +202,7 @@ export default function EditPropertyPage() {
             <div className="min-h-screen flex items-center justify-center pt-20">
                 <div className="text-center space-y-4 max-w-md">
                     <AlertTriangle className="w-16 h-16 mx-auto text-amber-400" />
-                    <h1 className="text-xl font-bold text-gray-900">Acesso restrito a corretores</h1>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-slate-100">Acesso restrito a corretores</h1>
                     <Link href="/" className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors">Voltar ao início</Link>
                 </div>
             </div>
@@ -214,7 +214,7 @@ export default function EditPropertyPage() {
             <div className="min-h-screen flex items-center justify-center pt-20">
                 <div className="text-center space-y-4">
                     <AlertTriangle className="w-16 h-16 mx-auto text-red-400" />
-                    <h1 className="text-xl font-bold text-gray-900">{loadError || 'Imóvel não especificado'}</h1>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-slate-100">{loadError || 'Imóvel não especificado'}</h1>
                     <Link href="/meus-imoveis" className="text-primary-600 font-semibold hover:underline">Ir para meus imóveis</Link>
                 </div>
             </div>
@@ -225,7 +225,7 @@ export default function EditPropertyPage() {
         return (
             <div className="min-h-screen flex items-center justify-center pt-20">
                 <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
-                <p className="text-sm text-gray-500 ml-2">Carregando...</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400 ml-2">Carregando...</p>
             </div>
         )
     }
@@ -234,28 +234,28 @@ export default function EditPropertyPage() {
         return (
             <div className="min-h-screen flex items-center justify-center pt-20">
                 <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
-                <p className="text-sm text-gray-500 ml-2">Redirecionando...</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400 ml-2">Redirecionando...</p>
             </div>
         )
     }
 
     if (property.hasPendingEditRequest) {
         return (
-            <div className="min-h-screen bg-gray-50 pt-16 lg:pt-20">
+            <div className="min-h-screen bg-gray-50 dark:bg-slate-800 pt-16 lg:pt-20">
                 <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
-                    <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
+                    <nav className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400 mb-6">
                         <Link href="/" className="hover:text-primary-600"><Home className="w-4 h-4" /></Link>
                         <ChevronRight className="w-4 h-4" />
                         <Link href="/meus-imoveis" className="hover:text-primary-600">Meus Imóveis</Link>
                         <ChevronRight className="w-4 h-4" />
-                        <span className="text-gray-900 font-medium truncate max-w-[200px]">{property.title}</span>
+                        <span className="text-gray-900 dark:text-slate-100 font-medium truncate max-w-[200px]">{property.title}</span>
                     </nav>
 
                     <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
                         <div className="flex items-start gap-3">
                             <AlertTriangle className="w-6 h-6 text-amber-600 mt-0.5" />
                             <div className="space-y-2">
-                                <h1 className="text-2xl font-bold text-gray-900">Edição já enviada para análise</h1>
+                                <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Edição já enviada para análise</h1>
                                 <p className="text-sm text-amber-900">
                                     Já existe uma solicitação de edição pendente para este imóvel.
                                     Enquanto o admin não revisar, a versão pública atual continua valendo.
@@ -276,37 +276,37 @@ export default function EditPropertyPage() {
         )
     }
 
-    const inputClass = "w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
-    const labelClass = "block text-sm font-medium text-gray-700 mb-1"
+    const inputClass = "w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+    const labelClass = "block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1"
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-16 lg:pt-20">
+        <div className="min-h-screen bg-gray-50 dark:bg-slate-800 pt-16 lg:pt-20">
             <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
                 {/* Breadcrumbs */}
-                <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
+                <nav className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400 mb-6">
                     <Link href="/" className="hover:text-primary-600"><Home className="w-4 h-4" /></Link>
                     <ChevronRight className="w-4 h-4" />
                     <Link href="/meus-imoveis" className="hover:text-primary-600">Meus Imóveis</Link>
                     <ChevronRight className="w-4 h-4" />
-                    <span className="text-gray-900 font-medium truncate max-w-[200px]">{property.title}</span>
+                    <span className="text-gray-900 dark:text-slate-100 font-medium truncate max-w-[200px]">{property.title}</span>
                     <ChevronRight className="w-4 h-4" />
-                    <span className="text-gray-900 font-medium">Editar</span>
+                    <span className="text-gray-900 dark:text-slate-100 font-medium">Editar</span>
                 </nav>
 
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-3">
-                        <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
-                            <ArrowLeft className="w-5 h-5 text-gray-600" />
+                        <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 dark:bg-slate-800 rounded-xl transition-colors">
+                            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-slate-300" />
                         </button>
-                        <h1 className="text-2xl font-bold text-gray-900">Editar Imóvel</h1>
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Editar Imóvel</h1>
                     </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-8">
                     {/* Basic Info */}
-                    <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-4">
-                        <h2 className="text-lg font-bold text-gray-900">Informações Básicas</h2>
+                    <section className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-700 space-y-4">
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">Informações Básicas</h2>
                         <div>
                             <label className={labelClass}>Título *</label>
                             <input type="text" value={form.title} onChange={e => updateField('title', e.target.value)} maxLength={120} className={inputClass} />
@@ -332,8 +332,8 @@ export default function EditPropertyPage() {
                     </section>
 
                     {/* Pricing */}
-                    <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-4">
-                        <h2 className="text-lg font-bold text-gray-900">Preços</h2>
+                    <section className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-700 space-y-4">
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">Preços</h2>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className={labelClass}>Preço de Venda (R$)</label>
@@ -347,8 +347,8 @@ export default function EditPropertyPage() {
                     </section>
 
                     {/* Location */}
-                    <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-4">
-                        <h2 className="text-lg font-bold text-gray-900">Localização</h2>
+                    <section className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-700 space-y-4">
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">Localização</h2>
                         <div>
                             <label className={labelClass}>Endereço</label>
                             <input type="text" value={form.address} onChange={e => updateField('address', e.target.value)} maxLength={120} className={inputClass} />
@@ -361,7 +361,7 @@ export default function EditPropertyPage() {
                             <div>
                                 <label className={labelClass}>{needsLotFields && !form.semQuadra ? 'Quadra *' : 'Quadra'}</label>
                                 <input type="text" value={form.quadra} disabled={form.semQuadra} onChange={e => updateField('quadra', e.target.value)} maxLength={25} className={`${inputClass} disabled:bg-slate-50 disabled:text-slate-500`} />
-                                <label className="mt-2 inline-flex items-center gap-2 text-sm text-gray-600">
+                                <label className="mt-2 inline-flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300">
                                     <input type="checkbox" checked={form.semQuadra} onChange={(e) => { updateField('semQuadra', e.target.checked); if (e.target.checked) updateField('quadra', '') }} className="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
                                     Sem quadra
                                 </label>
@@ -369,7 +369,7 @@ export default function EditPropertyPage() {
                             <div>
                                 <label className={labelClass}>{needsLotFields && !form.semLote ? 'Lote *' : 'Lote'}</label>
                                 <input type="text" value={form.lote} disabled={form.semLote} onChange={e => updateField('lote', e.target.value)} maxLength={25} className={`${inputClass} disabled:bg-slate-50 disabled:text-slate-500`} />
-                                <label className="mt-2 inline-flex items-center gap-2 text-sm text-gray-600">
+                                <label className="mt-2 inline-flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300">
                                     <input type="checkbox" checked={form.semLote} onChange={(e) => { updateField('semLote', e.target.checked); if (e.target.checked) updateField('lote', '') }} className="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
                                     Sem lote
                                 </label>
@@ -411,8 +411,8 @@ export default function EditPropertyPage() {
                     </section>
 
                     {/* Characteristics */}
-                    <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-4">
-                        <h2 className="text-lg font-bold text-gray-900">Características</h2>
+                    <section className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-700 space-y-4">
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">Características</h2>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                             <div>
                                 <label className={labelClass}>Quartos</label>
@@ -447,7 +447,7 @@ export default function EditPropertyPage() {
                                         <option value="alqueire">Alqueire paulista</option>
                                     </select>
                                 </div>
-                                <p className="text-xs text-gray-500 mt-1">O valor é convertido para m² no cadastro.</p>
+                                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">O valor é convertido para m² no cadastro.</p>
                             </div>
                         </div>
                         <div>
@@ -457,8 +457,8 @@ export default function EditPropertyPage() {
                     </section>
 
                     {/* Amenities */}
-                    <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-4">
-                        <h2 className="text-lg font-bold text-gray-900">Comodidades</h2>
+                    <section className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-700 space-y-4">
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">Comodidades</h2>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             {([
                                 ['hasWifi', 'Wi-Fi'],
@@ -468,14 +468,14 @@ export default function EditPropertyPage() {
                                 ['temArCondicionado', 'Ar Condicionado'],
                                 ['ehMobiliada', 'Mobiliada'],
                             ] as const).map(([key, label]) => (
-                                <label key={key} className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
+                                <label key={key} className="flex items-center gap-3 p-3 border border-gray-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-800 transition-colors">
                                     <input
                                         type="checkbox"
                                         checked={form[key]}
                                         onChange={e => updateField(key, e.target.checked)}
                                         className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                                     />
-                                    <span className="text-sm font-medium text-gray-700">{label}</span>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-slate-300">{label}</span>
                                 </label>
                             ))}
                         </div>

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
@@ -240,7 +240,7 @@ export default function MeusImoveisPage() {
                         const canEdit = property.status !== 'pending_approval'
                         const negotiationAction = getNegotiationAction(property)
                         return (
-                            <div id={`my-property-${property.id}`} key={property.id} className={`bg-white rounded-2xl shadow-md shadow-slate-200/50 border overflow-hidden hover:shadow-lg transition-shadow group ${(isJustCreated || isFocused) ? 'border-primary-300 ring-2 ring-primary-100' : 'border-slate-100'}`}>
+                            <div id={`my-property-${property.id}`} key={property.id} className={`bg-white dark:bg-slate-900 rounded-2xl shadow-md shadow-slate-200/50 border overflow-hidden hover:shadow-lg transition-shadow group ${(isJustCreated || isFocused) ? 'border-primary-300 ring-2 ring-primary-100' : 'border-slate-100'}`}>
                                 <div className="relative aspect-[4/3] bg-slate-100">
                                     {property.imageUrl ? (
                                         <Image

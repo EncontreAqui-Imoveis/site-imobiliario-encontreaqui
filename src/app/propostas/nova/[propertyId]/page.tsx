@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation'
+﻿import { notFound } from 'next/navigation'
 import { fetchPropertyById } from '@/lib/propertiesApi'
 import { ProposalWizard } from '@/components/proposals/ProposalWizard'
 

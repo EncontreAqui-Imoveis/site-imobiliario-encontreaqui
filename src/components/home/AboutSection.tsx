@@ -1,4 +1,4 @@
-import { Building2, Shield, Clock, Award } from 'lucide-react'
+﻿import { Building2, Shield, Clock, Award } from 'lucide-react'
 import Link from 'next/link'
 
 const features = [
@@ -26,13 +26,13 @@ const features = [
 
 export default function AboutSection() {
     return (
-        <section className="py-16 lg:py-24 bg-gradient-to-b from-white to-gray-50">
+        <section className="py-16 lg:py-24 bg-gradient-to-b from-white to-gray-50 dark:from-slate-900 dark:to-slate-950">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center max-w-3xl mx-auto mb-12 lg:mb-16">
-                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-slate-100 mb-4">
                         Por que escolher a <span className="text-primary-500">Encontre Aqui</span>?
                     </h2>
-                    <p className="text-gray-600 text-lg">
+                    <p className="text-gray-600 dark:text-slate-300 text-lg">
                         Somos uma imobiliária comprometida com a missão de oferecer um serviço confiável
                         e transparente, proporcionando experiências únicas para nossos clientes.
                     </p>
@@ -44,15 +44,15 @@ export default function AboutSection() {
                         return (
                             <div
                                 key={index}
-                                className="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:border-accent-200 hover:shadow-lg"
+                                className="group rounded-2xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm transition-all duration-300 hover:border-accent-200 hover:shadow-lg"
                             >
                                 <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 shadow-lg shadow-primary-500/20 transition-all duration-300 group-hover:scale-110 group-hover:from-accent-500 group-hover:to-primary-600 group-hover:shadow-accent-500/25">
                                     <Icon className="h-7 w-7 text-white transition-transform duration-300 group-hover:scale-105" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">
                                     {feature.title}
                                 </h3>
-                                <p className="text-gray-600 text-sm leading-relaxed">
+                                <p className="text-gray-600 dark:text-slate-300 text-sm leading-relaxed">
                                     {feature.description}
                                 </p>
                             </div>

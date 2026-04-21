@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -83,7 +83,7 @@ export default function VerificarMetodoPage() {
 
     return (
         <div className="min-h-[70vh] flex items-center justify-center px-4 py-12 bg-gradient-to-b from-slate-50 to-slate-100">
-            <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-100 p-8 space-y-6">
+            <div className="w-full max-w-lg bg-white dark:bg-slate-900 dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 p-8 space-y-6">
                 <h1 className="text-2xl font-bold text-slate-900 text-center">Verificação da conta</h1>
                 <p className="text-sm text-slate-600 text-center">
                     {fromGoogle

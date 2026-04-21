@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -48,7 +48,7 @@ export default function PerfilPage() {
     if (!session) {
         return (
             <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 pt-24 space-y-6">
-                <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 p-6">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 p-6">
                     <div className="flex items-center gap-4">
                         <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
                             <User className="w-8 h-8" />
@@ -89,7 +89,7 @@ export default function PerfilPage() {
     return (
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 pt-24">
             {/* Profile Header */}
-            <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 p-6 mb-6">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 p-6 mb-6">
                 <div className="flex items-start gap-4">
                     <div className="w-16 h-16 rounded-full bg-primary-500 flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
                         {user.name?.charAt(0).toUpperCase() || 'U'}
@@ -187,7 +187,7 @@ export default function PerfilPage() {
             )}
 
             {/* Quick Links */}
-            <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 divide-y divide-slate-100">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 divide-y divide-slate-100">
                 {!isBroker && (
                     <Link
                         href="/perfil/evoluir-corretor"

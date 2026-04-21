@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -31,11 +31,11 @@ export default function PropertySidebar({ property, visitorProposalHref }: Prope
         <aside className="lg:col-span-1" aria-label="Resumo e ações do imóvel">
             <div className="sticky top-24 space-y-6">
                 {/* Price Card */}
-                <div className="bg-white rounded-2xl p-6 shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden">
+                <div className="bg-white dark:bg-slate-900 dark:bg-slate-900 rounded-2xl p-6 shadow-lg shadow-gray-200/50 border border-gray-100 dark:border-slate-700 dark:border-slate-700 overflow-hidden">
                     <div className="space-y-4">
                         {/* Price */}
                         <div className="space-y-1">
-                            <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Valor do Imóvel</p>
+                            <p className="text-sm font-medium text-gray-500 dark:text-slate-400 dark:text-slate-400 uppercase tracking-wide">Valor do Imóvel</p>
                             {property.priceSale && property.priceSale > 0 && (
                                 <div className="flex flex-col">
                                     <span className="text-3xl font-bold text-primary-600">
@@ -45,10 +45,10 @@ export default function PropertySidebar({ property, visitorProposalHref }: Prope
                             )}
                             {property.priceRent && property.priceRent > 0 && (
                                 <div className="flex flex-col mt-2">
-                                    <span className="text-sm text-gray-500">Aluguel</span>
+                                    <span className="text-sm text-gray-500 dark:text-slate-400 dark:text-slate-400">Aluguel</span>
                                     <span className="text-3xl font-bold text-amber-600">
                                         {formatPrice(property.priceRent)}
-                                        <span className="text-lg font-normal text-gray-500">/mês</span>
+                                        <span className="text-lg font-normal text-gray-500 dark:text-slate-400 dark:text-slate-400">/mês</span>
                                     </span>
                                 </div>
                             )}
@@ -59,7 +59,7 @@ export default function PropertySidebar({ property, visitorProposalHref }: Prope
                             )}
                         </div>
 
-                        <hr className="border-gray-100" />
+                        <hr className="border-gray-100 dark:border-slate-700 dark:border-slate-700" />
 
                         {/* Broker Info */}
                         <div className="flex items-center gap-3">
@@ -67,7 +67,7 @@ export default function PropertySidebar({ property, visitorProposalHref }: Prope
                                 {property.brokerName ? property.brokerName.charAt(0).toUpperCase() : 'C'}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="font-bold text-gray-900 leading-tight truncate">
+                                <p className="font-bold text-gray-900 dark:text-slate-100 dark:text-slate-100 leading-tight truncate">
                                     {property.brokerName || 'Corretor'}
                                 </p>
                                 <div className="flex items-center gap-1 text-xs text-primary-600 font-medium">
@@ -121,7 +121,7 @@ export default function PropertySidebar({ property, visitorProposalHref }: Prope
                             <a
                                 href={deepLink}
                                 aria-label={`Ver ${property.title} no aplicativo`}
-                                className="w-full relative overflow-hidden group flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-primary-200 hover:border-primary-300 hover:bg-primary-50 text-primary-700 font-bold rounded-xl transition-all"
+                                className="w-full relative overflow-hidden group flex items-center justify-center gap-2 py-3.5 bg-white dark:bg-slate-900 dark:bg-slate-900 border-2 border-primary-200 hover:border-primary-300 hover:bg-primary-50 text-primary-700 font-bold rounded-xl transition-all"
                             >
                                 <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-primary-100/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                                 <Smartphone className="w-5 h-5" />
@@ -144,7 +144,7 @@ export default function PropertySidebar({ property, visitorProposalHref }: Prope
                     {property.code && (
                         <div className="mt-4 pt-4 border-t border-primary-100 flex items-center justify-between text-sm">
                             <span className="text-primary-700 font-medium">Código do Imóvel</span>
-                            <span className="font-bold text-primary-900 bg-white px-2 py-1 rounded-md border border-primary-100 shadow-sm">
+                            <span className="font-bold text-primary-900 bg-white dark:bg-slate-900 dark:bg-slate-900 px-2 py-1 rounded-md border border-primary-100 shadow-sm">
                                 {property.code}
                             </span>
                         </div>
@@ -158,7 +158,7 @@ export default function PropertySidebar({ property, visitorProposalHref }: Prope
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label="Baixar o aplicativo Encontre Aqui Imóveis"
-                        className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                        className="inline-flex items-center gap-1.5 text-xs text-gray-400 dark:text-slate-500 dark:text-slate-500 hover:text-gray-600 dark:text-slate-300 dark:text-slate-300 transition-colors"
                     >
                         <Smartphone className="w-3.5 h-3.5" />
                         Baixar o app para acompanhar propostas e favoritos

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Image from 'next/image'
@@ -23,8 +23,8 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
 
     if (validImages.length === 0) {
         return (
-            <div className="bg-gray-100 aspect-[16/9] lg:aspect-[21/9] flex items-center justify-center rounded-xl overflow-hidden">
-                <div className="flex flex-col items-center text-gray-400">
+            <div className="bg-gray-100 dark:bg-slate-800 dark:bg-slate-800 aspect-[16/9] lg:aspect-[21/9] flex items-center justify-center rounded-xl overflow-hidden">
+                <div className="flex flex-col items-center text-gray-400 dark:text-slate-500 dark:text-slate-500">
                     <Grid className="w-12 h-12 mb-2" />
                     <span className="font-medium">Sem fotos disponíveis</span>
                 </div>
@@ -158,7 +158,7 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
             {/* "Show All" Button (Desktop) */}
             <button
                 onClick={() => setIsOpen(true)}
-                className="hidden lg:flex absolute bottom-4 right-4 items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-lg text-gray-900 font-semibold hover:bg-gray-50 transition-transform active:scale-95"
+                className="hidden lg:flex absolute bottom-4 right-4 items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 dark:bg-slate-900 rounded-lg shadow-lg text-gray-900 dark:text-slate-100 dark:text-slate-100 font-semibold hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-800 dark:bg-slate-900 transition-transform active:scale-95"
             >
                 <Grid className="w-4 h-4" />
                 Ver todas as fotos ({validImages.length})
@@ -182,7 +182,7 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
                             )}
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                                className="p-2 hover:bg-white dark:bg-slate-900 dark:bg-slate-900/10 rounded-full transition-colors"
                                 aria-label="Fechar galeria"
                             >
                                 <X className="w-8 h-8" />
@@ -194,7 +194,7 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
                     <div className="flex-1 relative flex items-center justify-center p-4">
                         <button
                             onClick={(e) => { e.stopPropagation(); prevPhoto(); }}
-                            className="absolute left-4 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10"
+                            className="absolute left-4 p-3 rounded-full bg-white dark:bg-slate-900 dark:bg-slate-900/10 hover:bg-white dark:bg-slate-900 dark:bg-slate-900/20 text-white transition-colors z-10"
                             aria-label="Foto anterior"
                         >
                             <ChevronLeft className="w-8 h-8" />
@@ -213,7 +213,7 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
 
                         <button
                             onClick={(e) => { e.stopPropagation(); nextPhoto(); }}
-                            className="absolute right-4 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10"
+                            className="absolute right-4 p-3 rounded-full bg-white dark:bg-slate-900 dark:bg-slate-900/10 hover:bg-white dark:bg-slate-900 dark:bg-slate-900/20 text-white transition-colors z-10"
                             aria-label="Próxima foto"
                         >
                             <ChevronRight className="w-8 h-8" />
@@ -246,7 +246,7 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
                 <div className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4">
                     <button
                         onClick={() => setShowVideo(false)}
-                        className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+                        className="absolute top-6 right-6 p-2 bg-white dark:bg-slate-900 dark:bg-slate-900/10 hover:bg-white dark:bg-slate-900 dark:bg-slate-900/20 rounded-full text-white transition-colors"
                         aria-label="Fechar vídeo"
                     >
                         <X className="w-6 h-6" />
