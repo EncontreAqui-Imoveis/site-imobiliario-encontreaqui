@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
@@ -93,8 +93,8 @@ export default function LoginPage() {
     const isLoading = submitting || googleLoading
 
     return (
-        <div className="min-h-[70vh] flex items-center justify-center px-4 pt-28 pb-16 sm:pt-32 bg-gradient-to-b from-slate-50/95 to-slate-100/95">
-            <div className="w-full max-w-md bg-white dark:bg-slate-900 dark:bg-slate-900 rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-8 space-y-6">
+        <div className="min-h-[70vh] flex items-center justify-center bg-gradient-to-b from-slate-50/95 to-slate-100/95 px-4 pb-16 pt-28 sm:pt-32">
+            <div className="w-full max-w-md space-y-6 rounded-2xl border border-slate-100 bg-white p-8 shadow-xl shadow-slate-200/70">
                 <div className="space-y-2 text-center">
                     <h1 className="text-2xl font-bold text-slate-900">
                         Entrar na plataforma
@@ -119,7 +119,7 @@ export default function LoginPage() {
                             maxLength={120}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
                             placeholder="voce@exemplo.com"
                         />
                     </div>
@@ -131,7 +131,7 @@ export default function LoginPage() {
                             </label>
                             <Link
                                 href="/recuperar-senha"
-                                className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                                className="text-xs font-medium text-primary-600 hover:text-primary-700"
                             >
                                 Esqueceu a senha?
                             </Link>
@@ -146,7 +146,7 @@ export default function LoginPage() {
                                 aria-describedby="login-password-hint"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full rounded-xl border border-slate-200 pl-3 pr-11 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-3 pr-11 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
                                 placeholder="••••••••"
                             />
                             <button
@@ -164,7 +164,7 @@ export default function LoginPage() {
                     </div>
 
                     {error && (
-                        <p id="login-error" role="alert" className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+                        <p id="login-error" role="alert" className="rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-600">
                             {error}
                         </p>
                     )}
@@ -184,7 +184,7 @@ export default function LoginPage() {
                         <div className="w-full border-t border-slate-200" />
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-white dark:bg-slate-900 dark:bg-slate-900 px-3 text-slate-400">ou entre com Google</span>
+                        <span className="bg-white px-3 text-slate-400">ou entre com Google</span>
                     </div>
                 </div>
 
@@ -193,7 +193,7 @@ export default function LoginPage() {
                     type="button"
                     onClick={handleGoogleLogin}
                     disabled={isLoading}
-                    className="w-full flex items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:bg-slate-900 px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-50 transition-colors"
+                    className="w-full flex items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:opacity-50"
                 >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -204,7 +204,7 @@ export default function LoginPage() {
                     {googleLoading ? 'Conectando...' : 'Entrar com Google'}
                 </button>
 
-                <div className="text-center text-sm text-slate-600 space-y-1.5">
+                <div className="space-y-1.5 text-center text-sm text-slate-600">
                     <p>
                         Ainda não tem conta?{' '}
                         <Link

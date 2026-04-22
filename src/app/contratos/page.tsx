@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -67,20 +67,20 @@ export default function MeusContratosPage() {
 
     return (
         <div className="max-w-xl mx-auto px-4 py-20 sm:py-24">
-            <div className="rounded-2xl border border-slate-200 bg-white/95 px-5 py-5 shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/70">
-                <h1 className="text-xl font-bold tracking-tight text-slate-950 dark:text-slate-100">
+            <div className="rounded-2xl border border-slate-200 bg-white/95 px-5 py-5 shadow-sm backdrop-blur-sm">
+                <h1 className="text-xl font-bold tracking-tight text-slate-950">
                     Contratos
                 </h1>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                <p className="mt-1 text-sm text-slate-600">
                     Toque para abrir o detalhe.
                 </p>
                 <div className="mt-5">
                     {loading ? (
-                        <div className="flex items-center justify-center rounded-2xl border border-slate-200 bg-white py-14 shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
+                        <div className="flex items-center justify-center rounded-2xl border border-slate-200 bg-white py-14 shadow-sm">
                             <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
                         </div>
                     ) : error ? (
-                        <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
+                        <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
                             {error}
                         </div>
                     ) : (

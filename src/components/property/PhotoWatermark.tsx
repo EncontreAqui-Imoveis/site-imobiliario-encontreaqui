@@ -37,7 +37,7 @@ export default function PhotoWatermark({ compact, placement = 'bottom' }: PhotoW
                 alt=""
                 width={160}
                 height={48}
-                className="h-auto w-full object-contain opacity-[0.28] drop-shadow-[0_0.5px_2px_rgba(0,0,0,0.18)] dark:opacity-[0.34]"
+                className="h-auto w-full object-contain opacity-[0.28] drop-shadow-[0_0.5px_2px_rgba(0,0,0,0.18)]"
             />
         </div>
     )

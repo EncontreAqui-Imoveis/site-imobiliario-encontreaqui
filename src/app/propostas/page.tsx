@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -127,7 +127,7 @@ export default function PropostasPage() {
             <div
                 role="status"
                 aria-live="polite"
-                className="mb-6 rounded-2xl border border-slate-100 bg-white dark:bg-slate-900 px-4 py-4 text-sm text-slate-600 shadow-sm"
+                className="mb-6 rounded-2xl border border-slate-100 bg-white px-4 py-4 text-sm text-slate-600 shadow-sm"
             >
                 Acompanhe aqui o ciclo da proposta: envio, análise documental, minuta, assinaturas e contrato.
             </div>
@@ -139,17 +139,17 @@ export default function PropostasPage() {
             )}
 
             <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-slate-100 bg-white dark:bg-slate-900 px-4 py-4 shadow-sm">
+                <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Aguardando assinatura</p>
                     <p className="mt-2 text-2xl font-bold text-slate-900">{statusSummary.waitingSignature}</p>
                     <p className="mt-1 text-sm text-slate-600">Propostas iniciadas que ainda precisam do PDF assinado.</p>
                 </div>
-                <div className="rounded-2xl border border-slate-100 bg-white dark:bg-slate-900 px-4 py-4 shadow-sm">
+                <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Em revisão</p>
                     <p className="mt-2 text-2xl font-bold text-slate-900">{statusSummary.underReview}</p>
                     <p className="mt-1 text-sm text-slate-600">Negociações em análise, minuta ou assinaturas.</p>
                 </div>
-                <div className="rounded-2xl border border-slate-100 bg-white dark:bg-slate-900 px-4 py-4 shadow-sm">
+                <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Aprovadas / encerradas</p>
                     <p className="mt-2 text-2xl font-bold text-slate-900">{statusSummary.approved}</p>
                     <p className="mt-1 text-sm text-slate-600">Negociações que já avançaram para contratos ou fecharam.</p>
@@ -211,7 +211,7 @@ export default function PropostasPage() {
                         <Link
                             key={neg.id}
                             href={resolveNegotiationHref(neg.status, neg.id)}
-                            className="block bg-white dark:bg-slate-900 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-4"
+                            className="block bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-4"
                         >
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">

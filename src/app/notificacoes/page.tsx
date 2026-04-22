@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState, useCallback } from 'react'
 import { unstable_batchedUpdates } from 'react-dom'
@@ -304,7 +304,7 @@ export default function NotificacoesPage() {
                             <div
                                 key={notif.id}
                                 className={`group flex items-start gap-4 p-4 rounded-xl border transition-colors ${notif.isRead
-                                    ? 'bg-white dark:bg-slate-900 border-slate-100'
+                                    ? 'bg-white border-slate-100'
                                     : 'bg-primary-50/30 border-primary-100 hover:bg-primary-50/50'
                                     }`}
                             >
@@ -371,7 +371,7 @@ export default function NotificacoesPage() {
                     onClick={() => setExpandedNotif(null)}
                 >
                     <div
-                        className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-lg w-full max-h-[80vh] flex flex-col"
+                        className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[80vh] flex flex-col"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex items-center justify-between p-5 border-b border-slate-100">

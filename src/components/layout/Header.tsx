@@ -16,6 +16,7 @@ import { resolvePendingAction } from '@/lib/auth/routeResolution'
 const navLinks = [
     { href: '/', label: 'Início', icon: Home },
     { href: '/imoveis', label: 'Imóveis', icon: Building2 },
+    { href: '/configuracoes', label: 'Configurações', icon: Settings },
 ]
 
 const authNavLinks = [
@@ -111,13 +112,13 @@ export default function Header() {
 
     const headerBg =
         isHomepage && !isScrolled
-            ? 'bg-white/85 dark:bg-primary-950/40 backdrop-blur-md shadow-sm shadow-black/10 dark:shadow-black/20'
-            : 'bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-sm'
+            ? 'bg-white/85 backdrop-blur-md shadow-sm shadow-black/10'
+            : 'bg-white/95 backdrop-blur-md shadow-sm'
     const textColor =
         isHomepage && !isScrolled
-            ? 'text-slate-700 dark:text-white drop-shadow-sm dark:[text-shadow:0_1px_2px_rgba(0,0,0,0.45)]'
-            : 'text-gray-600 dark:text-slate-300'
-    const logoFilter = isHomepage && !isScrolled ? 'dark:brightness-0 dark:invert' : ''
+            ? 'text-slate-700 drop-shadow-sm'
+            : 'text-gray-600'
+    const logoFilter = isHomepage && !isScrolled ? '' : ''
     const userName = session?.user?.name?.split(' ')[0] || 'Usuário'
     const userInitial = userName.charAt(0).toUpperCase()
     const pendingAction = resolvePendingAction(session)
@@ -129,7 +130,7 @@ export default function Header() {
         : userMenuLinks.filter((link) => link.href !== '/propostas')
 
     return (
-        <header className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${headerBg} ${!isHomepage || isScrolled ? 'border-b border-gray-100 dark:border-slate-700' : ''}`}>
+        <header className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${headerBg} ${!isHomepage || isScrolled ? 'border-b border-gray-100' : ''}`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16 lg:h-20">
                     {/* Logo */}
@@ -147,7 +148,7 @@ export default function Header() {
                     {/* Desktop Search */}
                     <form onSubmit={handleSearch} className="hidden lg:flex flex-1 max-w-md mx-8">
                         <div className="relative w-full">
-                            <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isHomepage && !isScrolled ? 'text-slate-500 dark:text-white/60' : 'text-gray-400 dark:text-slate-500'}`} />
+                            <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isHomepage && !isScrolled ? 'text-slate-500' : 'text-gray-400'}`} />
                             <input
                                 type="text"
                                 value={searchQuery}
@@ -155,8 +156,8 @@ export default function Header() {
                                 maxLength={120}
                                 placeholder="Buscar imóveis..."
                                 className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-accent-500 ${isHomepage && !isScrolled
-                                    ? 'bg-white/80 dark:bg-white/10 border-slate-200 dark:border-white/20 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-white/60 focus:bg-white dark:focus:bg-white/20'
-                                    : 'bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500'
+                                    ? 'bg-white/80 border-slate-200 text-slate-900 placeholder-slate-500 focus:bg-white'
+                                    : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'
                                     }`}
                             />
                         </div>
@@ -168,7 +169,7 @@ export default function Header() {
                             <Link
                                 key={link.href}
                                 href={link.href}
-                                className={`px-4 py-2 ${textColor} hover:text-accent-500 font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-200 ${pathname === link.href ? 'text-accent-500' : ''}`}
+                                className={`px-4 py-2 ${textColor} hover:text-accent-500 font-medium rounded-lg hover:bg-slate-100 transition-all duration-200 ${pathname === link.href ? 'text-accent-500' : ''}`}
                             >
                                 {link.label}
                             </Link>
@@ -176,7 +177,7 @@ export default function Header() {
                         {isBroker && (
                             <Link
                                 href="/anuncie"
-                                className={`px-4 py-2 ${textColor} hover:text-accent-500 font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-200 ${pathname === '/anuncie' ? 'text-accent-500' : ''}`}
+                                className={`px-4 py-2 ${textColor} hover:text-accent-500 font-medium rounded-lg hover:bg-slate-100 transition-all duration-200 ${pathname === '/anuncie' ? 'text-accent-500' : ''}`}
                             >
                                 Anuncie
                             </Link>
@@ -192,9 +193,9 @@ export default function Header() {
                                 <Link
                                     href="/notificacoes"
                                     className={`p-2.5 rounded-xl transition-all ${isHomepage && !isScrolled
-                                        ? 'text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-white/10'
-                                        : 'text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-primary-600'
-                                        } ${pathname === '/notificacoes' ? (isHomepage && !isScrolled ? 'ring-2 ring-slate-300 dark:ring-white/40' : 'text-primary-600 bg-primary-50 dark:bg-primary-900/30') : ''}`}
+                                        ? 'text-slate-700 hover:bg-slate-100'
+                                        : 'text-gray-600 hover:bg-gray-100 hover:text-primary-600'
+                                        } ${pathname === '/notificacoes' ? (isHomepage && !isScrolled ? 'ring-2 ring-slate-300' : 'text-primary-600 bg-primary-50') : ''}`}
                                     aria-label="Notificações"
                                 >
                                     <Bell className="w-5 h-5" />
@@ -204,8 +205,8 @@ export default function Header() {
                                 <button
                                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                                     className={`flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all ${isHomepage && !isScrolled
-                                        ? 'hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-white'
-                                        : 'hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-100'
+                                        ? 'hover:bg-slate-100 text-slate-700'
+                                        : 'hover:bg-gray-50 text-gray-700'
                                         }`}
                                     aria-label="Menu do usuário"
                                 >
@@ -217,11 +218,11 @@ export default function Header() {
                                 </button>
 
                                 {isUserMenuOpen && (
-                                    <div className="absolute right-0 top-full mt-2 z-50 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 py-2 animate-fadeIn">
+                                    <div className="absolute right-0 top-full mt-2 z-50 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 animate-fadeIn">
                                         {/* User info */}
-                                        <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-700">
-                                            <p className="font-semibold text-gray-900 dark:text-slate-100 text-sm">{session?.user?.name}</p>
-                                            <p className="text-xs text-gray-500 dark:text-slate-400 truncate">{session?.user?.email}</p>
+                                        <div className="px-4 py-3 border-b border-gray-100">
+                                            <p className="font-semibold text-gray-900 text-sm">{session?.user?.name}</p>
+                                            <p className="text-xs text-gray-500 truncate">{session?.user?.email}</p>
                                             {isBroker && (
                                                 <span className="inline-block mt-1 px-2 py-0.5 bg-accent-100 text-accent-700 text-[10px] font-bold rounded-full uppercase">
                                                     Corretor
@@ -230,7 +231,7 @@ export default function Header() {
                                         </div>
 
                                         {pendingAction && (
-                                            <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-700 bg-amber-50/70 dark:bg-amber-900/20">
+                                            <div className="px-4 py-3 border-b border-gray-100 bg-amber-50/70">
                                                 <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
                                                     Pendência da conta
                                                 </p>
@@ -253,9 +254,9 @@ export default function Header() {
                                                     key={link.href}
                                                     href={link.href}
                                                     onClick={() => setIsUserMenuOpen(false)}
-                                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-primary-600 transition-colors"
+                                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors"
                                                 >
-                                                    <Icon className="w-4 h-4 text-gray-400 dark:text-slate-500" />
+                                                    <Icon className="w-4 h-4 text-gray-400" />
                                                     {link.label}
                                                 </Link>
                                             )
@@ -264,7 +265,7 @@ export default function Header() {
                                         {/* Broker links */}
                                         {isBroker && (
                                             <>
-                                                <div className="my-1 border-t border-gray-100 dark:border-slate-700" />
+                                                <div className="my-1 border-t border-gray-100" />
                                                 {brokerMenuLinks.map((link) => {
                                                     const Icon = link.icon
                                                     return (
@@ -272,9 +273,9 @@ export default function Header() {
                                                             key={link.href}
                                                             href={link.href}
                                                             onClick={() => setIsUserMenuOpen(false)}
-                                                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-primary-600 transition-colors"
+                                                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors"
                                                         >
-                                                            <Icon className="w-4 h-4 text-gray-400 dark:text-slate-500" />
+                                                            <Icon className="w-4 h-4 text-gray-400" />
                                                             {link.label}
                                                         </Link>
                                                     )
@@ -283,7 +284,7 @@ export default function Header() {
                                         )}
 
                                         {/* Logout */}
-                                        <div className="mt-1 border-t border-gray-100 dark:border-slate-700" />
+                                        <div className="mt-1 border-t border-gray-100" />
                                         <button
                                             onClick={handleLogout}
                                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors w-full"
@@ -301,8 +302,8 @@ export default function Header() {
                                 <Link
                                     href="/auth/login"
                                     className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${isHomepage && !isScrolled
-                                        ? 'text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-300 dark:border-white/30'
-                                        : 'text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 border border-gray-200 dark:border-slate-700'
+                                        ? 'text-slate-700 hover:bg-slate-100 border border-slate-300'
+                                        : 'text-gray-700 hover:bg-gray-50 border border-gray-200'
                                         }`}
                                 >
                                     Entrar
@@ -323,8 +324,8 @@ export default function Header() {
                                 href="/notificacoes"
                                 onClick={() => setIsMenuOpen(false)}
                                 className={`p-2 rounded-lg transition-colors ${isHomepage && !isScrolled
-                                    ? `${textColor} hover:bg-slate-100 dark:hover:bg-white/10`
-                                    : 'text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800'
+                                    ? `${textColor} hover:bg-slate-100`
+                                    : 'text-gray-600 hover:bg-gray-100'
                                     } ${pathname === '/notificacoes' ? 'text-primary-600' : ''}`}
                                 aria-label="Notificações"
                             >
@@ -334,7 +335,7 @@ export default function Header() {
                         <button
                             type="button"
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            className={`p-2 ${textColor} hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors`}
+                            className={`p-2 ${textColor} hover:bg-slate-100 rounded-lg transition-colors`}
                             aria-label="Menu"
                         >
                             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -344,19 +345,19 @@ export default function Header() {
 
                 {/* ===================== Mobile Menu ===================== */}
                 {isMenuOpen && (
-                    <div className="lg:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-y-contain border-t border-gray-100 dark:border-slate-700 animate-fadeIn bg-white dark:bg-slate-900 rounded-b-2xl shadow-lg [touch-action:pan-y] scrollbar-none">
+                    <div className="lg:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-y-contain border-t border-gray-100 animate-fadeIn bg-white rounded-b-2xl shadow-lg [touch-action:pan-y] scrollbar-none">
                         <div className="py-4">
                         {/* Mobile Search */}
                         <form onSubmit={handleSearch} className="px-4 mb-4">
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-slate-500" />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                 <input
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     maxLength={120}
                                     placeholder="Buscar imóveis..."
-                                    className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-3 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
                                 />
                             </div>
                         </form>
@@ -372,7 +373,7 @@ export default function Header() {
                                         onClick={() => setIsMenuOpen(false)}
                                         className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${pathname === link.href
                                             ? 'text-primary-600 bg-primary-50 font-semibold'
-                                            : 'text-gray-700 dark:text-slate-200 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-slate-800'
+                                            : 'text-gray-700 hover:text-primary-500 hover:bg-primary-50'
                                             }`}
                                     >
                                         <Icon className="w-5 h-5" />
@@ -384,7 +385,7 @@ export default function Header() {
                             {/* Auth-specific links */}
                             {isAuthenticated && (
                                 <>
-                                    <div className="my-2 border-t border-gray-100 dark:border-slate-700" />
+                                    <div className="my-2 border-t border-gray-100" />
                                     {resolvedAuthNavLinks.map((link) => {
                                         const Icon = link.icon
                                         return (
@@ -394,7 +395,7 @@ export default function Header() {
                                                 onClick={() => setIsMenuOpen(false)}
                                                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${pathname === link.href
                                                     ? 'text-primary-600 bg-primary-50 font-semibold'
-                                                    : 'text-gray-700 dark:text-slate-200 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-slate-800'
+                                                    : 'text-gray-700 hover:text-primary-500 hover:bg-primary-50'
                                                     }`}
                                             >
                                                 <Icon className="w-5 h-5" />
@@ -404,7 +405,7 @@ export default function Header() {
                                     })}
                                     {isBroker && (
                                         <>
-                                            <div className="my-2 border-t border-gray-100 dark:border-slate-700" />
+                                            <div className="my-2 border-t border-gray-100" />
                                             {brokerMenuLinks.map((link) => {
                                                 const Icon = link.icon
                                                 return (
@@ -414,7 +415,7 @@ export default function Header() {
                                                         onClick={() => setIsMenuOpen(false)}
                                                         className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${pathname === link.href
                                                             ? 'text-primary-600 bg-primary-50 font-semibold'
-                                                            : 'text-gray-700 dark:text-slate-200 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-slate-800'
+                                                            : 'text-gray-700 hover:text-primary-500 hover:bg-primary-50'
                                                             }`}
                                                     >
                                                         <Icon className="w-5 h-5" />
@@ -427,12 +428,12 @@ export default function Header() {
                                 </>
                             )}
 
-                            <div className="my-2 border-t border-gray-100 dark:border-slate-700" />
+                            <div className="my-2 border-t border-gray-100" />
 
                             {/* Auth buttons or Profile/Logout */}
                             {authLoading ? (
                                     <div className="px-4 py-3">
-                                    <div className="h-10 bg-gray-100 dark:bg-slate-800 rounded-xl animate-pulse" />
+                                    <div className="h-10 bg-gray-100 rounded-xl animate-pulse" />
                                 </div>
                             ) : isAuthenticated ? (
                                 <>
@@ -441,7 +442,7 @@ export default function Header() {
                                             <Link
                                                 href={pendingAction.href}
                                                 onClick={() => setIsMenuOpen(false)}
-                                                className="block rounded-xl bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-900 dark:text-amber-100 border border-amber-100 dark:border-amber-800"
+                                                className="block rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900 border border-amber-100"
                                             >
                                                 <p className="font-semibold">{pendingAction.title}</p>
                                                 <p className="mt-1 text-xs">{pendingAction.description}</p>
@@ -451,14 +452,14 @@ export default function Header() {
                                     <Link
                                         href="/perfil"
                                         onClick={() => setIsMenuOpen(false)}
-                                        className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-slate-200 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-slate-800 rounded-lg transition-all"
+                                        className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:text-primary-500 hover:bg-primary-50 rounded-lg transition-all"
                                     >
                                         <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white text-sm font-bold">
                                             {userInitial}
                                         </div>
                                         <div>
                                             <p className="font-medium text-sm">{userName}</p>
-                                            <p className="text-xs text-gray-400 dark:text-slate-500">Ver perfil</p>
+                                            <p className="text-xs text-gray-400">Ver perfil</p>
                                         </div>
                                     </Link>
                                     <button
@@ -474,7 +475,7 @@ export default function Header() {
                                     <Link
                                         href="/auth/login"
                                         onClick={() => setIsMenuOpen(false)}
-                                        className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                                        className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
                                     >
                                         <User className="w-4 h-4" />
                                         Entrar
@@ -496,7 +497,7 @@ export default function Header() {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     onClick={() => setIsMenuOpen(false)}
-                                    className="flex items-center justify-center gap-2 px-4 py-2.5 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 text-xs font-medium rounded-xl transition-colors"
+                                    className="flex items-center justify-center gap-2 px-4 py-2.5 text-gray-400 hover:text-gray-600 text-xs font-medium rounded-xl transition-colors"
                                 >
                                     <Smartphone className="w-3.5 h-3.5" />
                                     Baixar App

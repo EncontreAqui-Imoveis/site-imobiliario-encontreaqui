@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useMemo, useState } from 'react'
 import type { Property } from '@/types/property'
@@ -129,14 +129,14 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
 
     return (
         !canGenerateProposal ? (
-            <div className="max-w-3xl mx-auto bg-white dark:bg-slate-900 rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-6 md:p-8 space-y-4">
+            <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-6 md:p-8 space-y-4">
                 <p className="text-sm text-slate-600">
                     Apenas o corretor captador de um imóvel aprovado pode gerar proposta.
                 </p>
                 <p className="text-sm text-slate-500">Redirecionando para o imóvel...</p>
             </div>
         ) : (
-        <div className="max-w-3xl mx-auto bg-white dark:bg-slate-900 rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-6 md:p-8 space-y-6">
+        <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-6 md:p-8 space-y-6">
             <div className="space-y-1">
                 <h1 className="text-2xl font-bold text-slate-900">
                     Gerar proposta para {property.title}

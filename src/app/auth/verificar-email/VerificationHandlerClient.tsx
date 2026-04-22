@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
@@ -15,7 +15,7 @@ export default function VerificationHandlerClient() {
 
     return (
         <div className="min-h-[70vh] flex items-center justify-center px-4 py-12 bg-gradient-to-b from-slate-50 to-slate-100">
-            <div className="w-full max-w-lg bg-white dark:bg-slate-900 dark:bg-slate-900 rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-8 space-y-6">
+            <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-8 space-y-6">
                 <div className="space-y-3 text-center">
                     <div className="w-16 h-16 mx-auto rounded-full bg-amber-50 flex items-center justify-center">
                         <AlertTriangle className="w-8 h-8 text-amber-600" />

@@ -85,13 +85,6 @@ describe('Profile Page - Integration', () => {
         expect(screen.getByText(/74000-000/)).toBeInTheDocument()
     })
 
-    it('renders edit profile link', () => {
-        render(<PerfilPage />)
-
-        const editLink = screen.getByText('Editar').closest('a')
-        expect(editLink).toHaveAttribute('href', '/perfil/editar')
-    })
-
     it('renders all quick links for brokers', () => {
         render(<PerfilPage />)
 

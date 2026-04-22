@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -48,31 +48,31 @@ export default function ListingFilterBar() {
 
     return (
         <div
-            className="mb-6 rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm"
+            className="mb-6 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
             aria-label="Filtros rápidos na listagem"
         >
-            <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-slate-200">
+            <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-800">
                 <Filter className="h-4 w-4 text-primary-600" />
                 Filtros rápidos
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6 lg:items-end">
                 <div className="lg:col-span-1">
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-slate-400">Bairro</label>
+                    <label className="mb-1 block text-xs font-medium text-gray-500">Bairro</label>
                     <input
                         type="text"
                         value={bairro}
                         onChange={(e) => setBairro(e.target.value)}
                         maxLength={120}
                         placeholder="Ex: Setor Bueno"
-                        className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
                     />
                 </div>
                 <div className="lg:col-span-1">
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-slate-400">Categoria</label>
+                    <label className="mb-1 block text-xs font-medium text-gray-500">Categoria</label>
                     <select
                         value={type}
                         onChange={(e) => setType(e.target.value)}
-                        className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
                     >
                         {propertyTypes.map((t) => (
                             <option key={t.value || 'all'} value={t.value}>
@@ -82,7 +82,7 @@ export default function ListingFilterBar() {
                     </select>
                 </div>
                 <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-slate-400">Valor mín. (R$)</label>
+                    <label className="mb-1 block text-xs font-medium text-gray-500">Valor mín. (R$)</label>
                     <input
                         type="number"
                         inputMode="numeric"
@@ -90,11 +90,11 @@ export default function ListingFilterBar() {
                         value={minPrice}
                         onChange={(e) => setMinPrice(e.target.value)}
                         placeholder="0"
-                        className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
                     />
                 </div>
                 <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-slate-400">Valor máx. (R$)</label>
+                    <label className="mb-1 block text-xs font-medium text-gray-500">Valor máx. (R$)</label>
                     <input
                         type="number"
                         inputMode="numeric"
@@ -102,18 +102,18 @@ export default function ListingFilterBar() {
                         value={maxPrice}
                         onChange={(e) => setMaxPrice(e.target.value)}
                         placeholder="Sem limite"
-                        className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
                     />
                 </div>
                 <div className="lg:col-span-1">
-                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-slate-400">Código ou ID</label>
+                    <label className="mb-1 block text-xs font-medium text-gray-500">Código ou ID</label>
                     <input
                         type="text"
                         value={code}
                         onChange={(e) => setCode(e.target.value)}
                         maxLength={80}
                         placeholder="Código ou UUID"
-                        className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
                     />
                 </div>
                 <div className="flex sm:col-span-2 lg:col-span-1">

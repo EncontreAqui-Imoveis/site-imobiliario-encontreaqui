@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
@@ -91,7 +91,7 @@ export default function UploadPropostaAssinadaPage() {
 
     return (
         <div className="min-h-[70vh] flex items-center justify-center px-4 py-12 bg-slate-50">
-            <div className="w-full max-w-xl bg-white dark:bg-slate-900 rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-8 space-y-6">
+            <div className="w-full max-w-xl bg-white rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-8 space-y-6">
                 <div className="space-y-2">
                     <h1 className="text-2xl font-bold text-slate-900">
                         Upload de proposta assinada

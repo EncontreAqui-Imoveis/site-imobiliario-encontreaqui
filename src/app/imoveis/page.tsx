@@ -100,26 +100,26 @@ export default async function PropertiesPage({
     const showEmptySearchIllustration = hasActiveListingFilters(params)
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pt-16 lg:pt-20">
+        <div className="min-h-screen bg-gray-50 pt-16 lg:pt-20">
             {/* Header */}
-            <div className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-700">
+            <div className="bg-white border-b border-gray-100">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     {/* Breadcrumb */}
                     <nav
                         aria-label="Breadcrumb"
-                        className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400 mb-4"
+                        className="flex items-center gap-2 text-sm text-gray-500 mb-4"
                     >
                         <Link href="/" className="hover:text-primary-600 transition-colors">
                             <Home className="w-4 h-4" />
                         </Link>
                         <ChevronRight className="w-4 h-4" />
-                        <span className="text-gray-900 dark:text-slate-100 font-medium">Imóveis</span>
+                        <span className="text-gray-900 font-medium">Imóveis</span>
                     </nav>
 
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                         Encontre seu imóvel ideal
                     </h1>
-                    <p className="text-gray-500 dark:text-slate-400 mt-1">
+                    <p className="text-gray-500 mt-1">
                         {properties.length} {properties.length === 1 ? 'imóvel encontrado' : 'imóveis encontrados'}
                     </p>
                 </div>

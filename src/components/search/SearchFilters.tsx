@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -176,13 +176,13 @@ export default function SearchFilters() {
             {/* Mobile Toggle Button */}
             <button
                 onClick={() => setIsOpen(true)}
-                className="lg:hidden w-full flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm mb-6 group hover:border-primary-500 transition-all"
+                className="lg:hidden w-full flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200 shadow-sm mb-6 group hover:border-primary-500 transition-all"
             >
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gray-50 dark:bg-slate-800 rounded-lg group-hover:bg-primary-50 transition-colors">
-                        <SlidersHorizontal className="w-5 h-5 text-gray-600 dark:text-slate-300 group-hover:text-primary-600" />
+                    <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-primary-50 transition-colors">
+                        <SlidersHorizontal className="w-5 h-5 text-gray-600 group-hover:text-primary-600" />
                     </div>
-                    <span className="font-semibold text-gray-900 dark:text-slate-100">Filtrar Imóveis</span>
+                    <span className="font-semibold text-gray-900">Filtrar Imóveis</span>
                 </div>
                 {hasActiveFilters && (
                     <span className="bg-primary-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">
@@ -201,17 +201,17 @@ export default function SearchFilters() {
 
             {/* Sidebar Container */}
             <div className={`
-                fixed inset-y-0 right-0 z-[55] w-full max-w-sm bg-white dark:bg-slate-900 shadow-2xl transform transition-transform duration-300 ease-in-out
+                fixed inset-y-0 right-0 z-[55] w-full max-w-sm bg-white shadow-2xl transform transition-transform duration-300 ease-in-out
                 lg:translate-x-0 lg:static lg:w-full lg:max-w-none lg:shadow-none lg:bg-transparent lg:z-0
                 ${isOpen ? 'translate-x-0' : 'translate-x-full'}
             `}>
-                <div className="h-full flex flex-col lg:h-auto lg:block bg-white dark:bg-slate-900 lg:bg-transparent lg:rounded-2xl">
+                <div className="h-full flex flex-col lg:h-auto lg:block bg-white lg:bg-transparent lg:rounded-2xl">
 
                     {/* Header (Mobile Only) */}
-                    <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-slate-700 lg:hidden">
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">Filtros</h3>
-                        <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 dark:bg-slate-800 rounded-full">
-                            <X className="w-6 h-6 text-gray-500 dark:text-slate-400" />
+                    <div className="flex items-center justify-between p-5 border-b border-gray-100 lg:hidden">
+                        <h3 className="text-xl font-bold text-gray-900">Filtros</h3>
+                        <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
+                            <X className="w-6 h-6 text-gray-500" />
                         </button>
                     </div>
 
@@ -220,7 +220,7 @@ export default function SearchFilters() {
 
                         {/* Desktop Header */}
                         <div className="hidden lg:flex items-center justify-between mb-2">
-                            <h3 className="font-display font-bold text-lg text-gray-900 dark:text-slate-100 flex items-center gap-2">
+                            <h3 className="font-display font-bold text-lg text-gray-900 flex items-center gap-2">
                                 <Filter className="w-5 h-5" />
                                 Filtros
                             </h3>
@@ -233,27 +233,27 @@ export default function SearchFilters() {
 
                         {/* Search Input */}
                         <div className="relative">
-                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             <input
                                 type="text"
                                 value={filters.search}
                                 onChange={(e) => handleChange('search', e.target.value)}
                                 maxLength={120}
                                 placeholder="Buscar por termo..."
-                                className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
+                                className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
                             />
                         </div>
 
                         {/* Purpose Toggle */}
-                        <div className="bg-gray-100 dark:bg-slate-800 p-1 rounded-xl flex">
+                        <div className="bg-gray-100 p-1 rounded-xl flex">
                             {purposes.map((p) => (
                                 <button
                                     key={p.value}
                                     type="button"
                                     onClick={() => applyPurposeToUrl(p.value)}
                                     className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${filters.purpose === p.value
-                                            ? 'bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-sm'
-                                            : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:text-slate-300'
+                                            ? 'bg-white text-gray-900 shadow-sm'
+                                            : 'text-gray-500 hover:text-gray-700'
                                         }`}
                                 >
                                     {p.label || 'Todos'}
@@ -262,16 +262,16 @@ export default function SearchFilters() {
                         </div>
 
                         {/* Section: Location */}
-                        <div className="bg-white dark:bg-slate-900 lg:border lg:border-gray-200 dark:border-slate-700 lg:rounded-xl overflow-hidden">
+                        <div className="bg-white lg:border lg:border-gray-200 lg:rounded-xl overflow-hidden">
                             <button
                                 onClick={() => toggleSection('location')}
-                                className="w-full flex items-center justify-between p-4 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-800 transition-colors"
+                                className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors"
                             >
-                                <span className="font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2">
-                                    <MapPin className="w-4 h-4 text-gray-500 dark:text-slate-400" />
+                                <span className="font-semibold text-gray-900 flex items-center gap-2">
+                                    <MapPin className="w-4 h-4 text-gray-500" />
                                     Localização
                                 </span>
-                                <ChevronDown className={`w-4 h-4 text-gray-400 dark:text-slate-500 transition-transform ${expandedSections.location ? 'rotate-180' : ''}`} />
+                                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${expandedSections.location ? 'rotate-180' : ''}`} />
                             </button>
                             {expandedSections.location && (
                                 <div className="p-4 pt-0 space-y-3 border-t border-gray-50 lg:border-none">
@@ -281,7 +281,7 @@ export default function SearchFilters() {
                                         onChange={(e) => handleChange('city', e.target.value)}
                                         maxLength={120}
                                         placeholder="Cidade"
-                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                                     />
                                     <input
                                         type="text"
@@ -289,39 +289,39 @@ export default function SearchFilters() {
                                         onChange={(e) => handleChange('bairro', e.target.value)}
                                         maxLength={120}
                                         placeholder="Bairro"
-                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                                     />
                                 </div>
                             )}
                         </div>
 
                         {/* Section: Details */}
-                        <div className="bg-white dark:bg-slate-900 lg:border lg:border-gray-200 dark:border-slate-700 lg:rounded-xl overflow-hidden">
+                        <div className="bg-white lg:border lg:border-gray-200 lg:rounded-xl overflow-hidden">
                             <button
                                 onClick={() => toggleSection('details')}
-                                className="w-full flex items-center justify-between p-4 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-800 transition-colors"
+                                className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors"
                             >
-                                <span className="font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2">
-                                    <Home className="w-4 h-4 text-gray-500 dark:text-slate-400" />
+                                <span className="font-semibold text-gray-900 flex items-center gap-2">
+                                    <Home className="w-4 h-4 text-gray-500" />
                                     Detalhes
                                 </span>
-                                <ChevronDown className={`w-4 h-4 text-gray-400 dark:text-slate-500 transition-transform ${expandedSections.details ? 'rotate-180' : ''}`} />
+                                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${expandedSections.details ? 'rotate-180' : ''}`} />
                             </button>
                             {expandedSections.details && (
                                 <div className="p-4 pt-0 space-y-4 border-t border-gray-50 lg:border-none">
                                     <div>
-                                        <label className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-2 block">Tipo</label>
+                                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Tipo</label>
                                         <select
                                             value={filters.type}
                                             onChange={(e) => handleChange('type', e.target.value)}
-                                            className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                                         >
                                             {propertyTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                                         </select>
                                     </div>
 
                                     <div>
-                                        <label className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-2 block">
+                                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
                                             Código ou ID do imóvel
                                         </label>
                                         <input
@@ -330,12 +330,12 @@ export default function SearchFilters() {
                                             onChange={(e) => handleChange('code', e.target.value)}
                                             maxLength={80}
                                             placeholder="Código interno ou UUID"
-                                            className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
                                             <Bed className="w-3 h-3" /> Quartos
                                         </label>
                                         <div className="flex flex-wrap gap-2">
@@ -345,7 +345,7 @@ export default function SearchFilters() {
                                                     onClick={() => handleChange('bedrooms', b.value)}
                                                     className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-all ${filters.bedrooms === b.value
                                                             ? 'bg-primary-50 border-primary-200 text-primary-700'
-                                                            : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:border-gray-300'
+                                                            : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
                                                         }`}
                                                 >
                                                     {b.label}
@@ -355,7 +355,7 @@ export default function SearchFilters() {
                                     </div>
 
                                     <div>
-                                        <label className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
                                             <Bath className="w-3 h-3" /> Banheiros
                                         </label>
                                         <div className="flex flex-wrap gap-2">
@@ -365,7 +365,7 @@ export default function SearchFilters() {
                                                     onClick={() => handleChange('bathrooms', b.value)}
                                                     className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-all ${filters.bathrooms === b.value
                                                             ? 'bg-primary-50 border-primary-200 text-primary-700'
-                                                            : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:border-gray-300'
+                                                            : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
                                                         }`}
                                                 >
                                                     {b.label}
@@ -378,16 +378,16 @@ export default function SearchFilters() {
                         </div>
 
                         {/* Section: Price */}
-                        <div className="bg-white dark:bg-slate-900 lg:border lg:border-gray-200 dark:border-slate-700 lg:rounded-xl overflow-hidden">
+                        <div className="bg-white lg:border lg:border-gray-200 lg:rounded-xl overflow-hidden">
                             <button
                                 onClick={() => toggleSection('price')}
-                                className="w-full flex items-center justify-between p-4 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-800 transition-colors"
+                                className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors"
                             >
-                                <span className="font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2">
-                                    <DollarSign className="w-4 h-4 text-gray-500 dark:text-slate-400" />
+                                <span className="font-semibold text-gray-900 flex items-center gap-2">
+                                    <DollarSign className="w-4 h-4 text-gray-500" />
                                     Valores
                                 </span>
-                                <ChevronDown className={`w-4 h-4 text-gray-400 dark:text-slate-500 transition-transform ${expandedSections.price ? 'rotate-180' : ''}`} />
+                                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${expandedSections.price ? 'rotate-180' : ''}`} />
                             </button>
                             {expandedSections.price && (
                                 <div className="p-4 pt-0 grid grid-cols-2 gap-3 border-t border-gray-50 lg:border-none">
@@ -396,39 +396,39 @@ export default function SearchFilters() {
                                         value={filters.minPrice}
                                         onChange={(e) => handleChange('minPrice', e.target.value)}
                                         placeholder="Mínimo"
-                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                                     />
                                     <input
                                         type="number"
                                         value={filters.maxPrice}
                                         onChange={(e) => handleChange('maxPrice', e.target.value)}
                                         placeholder="Máximo"
-                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                                     />
                                 </div>
                             )}
                         </div>
 
                         {/* Área construída (valor na unidade escolhida; API filtra em m²) */}
-                        <div className="bg-white dark:bg-slate-900 lg:border lg:border-gray-200 dark:border-slate-700 lg:rounded-xl overflow-hidden">
+                        <div className="bg-white lg:border lg:border-gray-200 lg:rounded-xl overflow-hidden">
                             <button
                                 type="button"
                                 onClick={() => toggleSection('area')}
-                                className="w-full flex items-center justify-between p-4 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-800 transition-colors"
+                                className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors"
                             >
-                                <span className="font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2">
-                                    <Home className="w-4 h-4 text-gray-500 dark:text-slate-400" />
+                                <span className="font-semibold text-gray-900 flex items-center gap-2">
+                                    <Home className="w-4 h-4 text-gray-500" />
                                     Área construída
                                 </span>
-                                <ChevronDown className={`w-4 h-4 text-gray-400 dark:text-slate-500 transition-transform ${expandedSections.area ? 'rotate-180' : ''}`} />
+                                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${expandedSections.area ? 'rotate-180' : ''}`} />
                             </button>
                             {expandedSections.area && (
                                 <div className="p-4 pt-0 space-y-3 border-t border-gray-50 lg:border-none">
-                                    <label className="block text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Unidade</label>
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Unidade</label>
                                     <select
                                         value={filters.areaUnit}
                                         onChange={(e) => handleChange('areaUnit', e.target.value)}
-                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                                     >
                                         <option value="m2">m²</option>
                                         <option value="hectare">Hectare (ha)</option>
@@ -436,7 +436,7 @@ export default function SearchFilters() {
                                     </select>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label className="text-xs text-gray-500 dark:text-slate-400">Mín.</label>
+                                            <label className="text-xs text-gray-500">Mín.</label>
                                             <input
                                                 type="number"
                                                 min="0"
@@ -444,11 +444,11 @@ export default function SearchFilters() {
                                                 value={filters.minArea}
                                                 onChange={(e) => handleChange('minArea', e.target.value)}
                                                 placeholder="0"
-                                                className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs text-gray-500 dark:text-slate-400">Máx.</label>
+                                            <label className="text-xs text-gray-500">Máx.</label>
                                             <input
                                                 type="number"
                                                 min="0"
@@ -456,33 +456,33 @@ export default function SearchFilters() {
                                                 value={filters.maxArea}
                                                 onChange={(e) => handleChange('maxArea', e.target.value)}
                                                 placeholder="—"
-                                                className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                                             />
                                         </div>
                                     </div>
-                                    <p className="text-xs text-gray-500 dark:text-slate-400">Os limites são convertidos para m² na busca (valor canônico no servidor).</p>
+                                    <p className="text-xs text-gray-500">Os limites são convertidos para m² na busca (valor canônico no servidor).</p>
                                 </div>
                             )}
                         </div>
 
                         {/* Amenities & Extras */}
-                        <div className="bg-white dark:bg-slate-900 lg:border lg:border-gray-200 dark:border-slate-700 lg:rounded-xl overflow-hidden">
+                        <div className="bg-white lg:border lg:border-gray-200 lg:rounded-xl overflow-hidden">
                             <button
                                 type="button"
                                 onClick={() => toggleSection('amenities')}
-                                className="w-full flex items-center justify-between p-4 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-800 transition-colors"
+                                className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors"
                             >
-                                <span className="font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2">
-                                    <Check className="w-4 h-4 text-gray-500 dark:text-slate-400" />
+                                <span className="font-semibold text-gray-900 flex items-center gap-2">
+                                    <Check className="w-4 h-4 text-gray-500" />
                                     Comodidades
                                 </span>
-                                <ChevronDown className={`w-4 h-4 text-gray-400 dark:text-slate-500 transition-transform ${expandedSections.amenities ? 'rotate-180' : ''}`} />
+                                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${expandedSections.amenities ? 'rotate-180' : ''}`} />
                             </button>
                             {expandedSections.amenities && (
                                 <div className="p-4 pt-0 space-y-2 border-t border-gray-50 lg:border-none">
                                     {amenityOptions.map(a => (
-                                        <label key={a.key} className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-800 rounded-lg cursor-pointer">
-                                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${amenities[a.key] ? 'bg-primary-600 border-primary-600 text-white' : 'border-gray-300 bg-white dark:bg-slate-900'
+                                        <label key={a.key} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
+                                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${amenities[a.key] ? 'bg-primary-600 border-primary-600 text-white' : 'border-gray-300 bg-white'
                                                 }`}>
                                                 {amenities[a.key] && <Check className="w-3 h-3" />}
                                             </div>
@@ -492,7 +492,7 @@ export default function SearchFilters() {
                                                 onChange={() => toggleAmenity(a.key)}
                                                 className="hidden"
                                             />
-                                            <span className="text-sm text-gray-700 dark:text-slate-300">{a.label}</span>
+                                            <span className="text-sm text-gray-700">{a.label}</span>
                                         </label>
                                     ))}
                                 </div>
@@ -502,7 +502,7 @@ export default function SearchFilters() {
                     </div>
 
                     {/* Footer Actions */}
-                    <div className="p-5 border-t border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-900 lg:bg-transparent lg:border-none lg:p-0 lg:mt-4">
+                    <div className="p-5 border-t border-gray-100 bg-white lg:bg-transparent lg:border-none lg:p-0 lg:mt-4">
                         <button
                             onClick={applyFilters}
                             className="w-full py-3.5 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl shadow-lg shadow-primary-600/20 transition-all active:scale-[0.98]"
@@ -511,7 +511,7 @@ export default function SearchFilters() {
                         </button>
                         <button
                             onClick={clearFilters}
-                            className="lg:hidden w-full mt-3 py-3 text-gray-600 dark:text-slate-300 font-semibold"
+                            className="lg:hidden w-full mt-3 py-3 text-gray-600 font-semibold"
                         >
                             Limpar filtros
                         </button>

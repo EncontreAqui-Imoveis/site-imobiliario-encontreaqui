@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -135,7 +135,7 @@ export default function RelatoriosPage() {
                         </div>
                     )}
 
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 shadow-sm p-5">
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
                         <h2 className="text-sm font-semibold text-slate-800 mb-4">Ações rápidas</h2>
                         <div className="flex flex-wrap gap-3">
                             <Link
@@ -164,7 +164,7 @@ export default function RelatoriosPage() {
 
                     {/* Status Breakdown */}
                     {report?.statusBreakdown && Object.keys(report.statusBreakdown).length > 0 && (
-                        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 shadow-sm p-5">
+                        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
                             <h2 className="text-sm font-semibold text-slate-800 mb-4">Status dos imóveis</h2>
                             <div className="flex flex-wrap gap-2">
                                 {Object.entries(report.statusBreakdown).map(([key, count]) => {
@@ -187,7 +187,7 @@ export default function RelatoriosPage() {
 
                     {/* Monthly Breakdown */}
                     {report?.monthlyBreakdown && report.monthlyBreakdown.length > 0 && (
-                        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 shadow-sm p-5">
+                        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
                             <h2 className="text-sm font-semibold text-slate-800 mb-4">VGV Mensal</h2>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-sm">
@@ -217,7 +217,7 @@ export default function RelatoriosPage() {
                     )}
 
                     {/* Commission History — Detailed */}
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 shadow-sm p-5">
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
                         <h2 className="text-sm font-semibold text-slate-800 mb-4">Histórico de comissões</h2>
                         {commissions.length > 0 ? (
                             <div className="space-y-3">

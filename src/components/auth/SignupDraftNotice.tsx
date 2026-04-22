@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -40,7 +40,7 @@ export default function SignupDraftNotice() {
                 <button
                     type="button"
                     onClick={handleDiscard}
-                    className="inline-flex rounded-xl border border-amber-300 bg-white dark:bg-slate-900 px-4 py-2 font-semibold text-amber-900 hover:bg-amber-100"
+                    className="inline-flex rounded-xl border border-amber-300 bg-white px-4 py-2 font-semibold text-amber-900 hover:bg-amber-100"
                 >
                     Descartar cadastro
                 </button>

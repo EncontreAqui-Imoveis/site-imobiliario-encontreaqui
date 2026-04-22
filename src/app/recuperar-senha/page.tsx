@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useRef, useState } from 'react'
 import Link from 'next/link'
@@ -149,7 +149,7 @@ export default function RecuperarSenhaPage() {
 
     return (
         <div className="min-h-[70vh] flex items-center justify-center px-4 py-12 bg-gradient-to-b from-slate-50 to-slate-100">
-            <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-8 space-y-6">
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-8 space-y-6">
                 {renderHeader()}
 
                 {error && (

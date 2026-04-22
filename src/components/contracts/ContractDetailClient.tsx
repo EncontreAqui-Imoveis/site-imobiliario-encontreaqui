@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 
@@ -433,7 +433,7 @@ export function ContractDetailClient({ contract }: Props) {
             side == null ? false : isSideLocked(currentContract, side)
         if (locked) {
             return (
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-500">
                     Este lado já foi aprovado. O envio e a remoção de documentos ficam bloqueados.
                 </p>
             )
@@ -519,9 +519,9 @@ export function ContractDetailClient({ contract }: Props) {
         approvalStatus: ContractDetail['sellerApprovalStatus'],
         compactBrokerMode: boolean,
     ) => (
-        <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-4 shadow-sm space-y-3">
+        <section className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm space-y-3">
             <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">{title}</h2>
+                <h2 className="text-sm font-semibold text-slate-800">{title}</h2>
                 {approvalBadge(approvalStatus)}
             </div>
             {reason && (
@@ -530,13 +530,13 @@ export function ContractDetailClient({ contract }: Props) {
                 </p>
             )}
             <div className="grid gap-3 md:grid-cols-2">
-                <label className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
+                <label className="space-y-1 text-xs text-slate-600">
                     <span>Estado civil</span>
                     <select
                         value={form.maritalStatus}
                         onChange={(event) => setForm({ ...form, maritalStatus: event.target.value })}
                         disabled={!canEdit}
-                        className="w-full rounded-xl border border-slate-200 dark:border-slate-600 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 disabled:bg-slate-50 dark:bg-slate-800/60 dark:disabled:bg-slate-800"
+                        className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 disabled:bg-slate-50"
                     >
                         <option value="">Selecionar</option>
                         {MARITAL_STATUS_OPTIONS.map((option) => (
@@ -545,59 +545,59 @@ export function ContractDetailClient({ contract }: Props) {
                     </select>
                 </label>
                 {!compactBrokerMode && (
-                    <label className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
+                    <label className="space-y-1 text-xs text-slate-600">
                         <span>Profissão</span>
                         <input
                             value={form.profession}
                             onChange={(event) => setForm({ ...form, profession: event.target.value })}
                             disabled={!canEdit}
-                            className="w-full rounded-xl border border-slate-200 dark:border-slate-600 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 disabled:bg-slate-50 dark:bg-slate-800/60 dark:disabled:bg-slate-800"
+                            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 disabled:bg-slate-50"
                         />
                     </label>
                 )}
                 {!compactBrokerMode && (
-                    <label className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
+                    <label className="space-y-1 text-xs text-slate-600">
                         <span>E-mail</span>
                         <input
                             type="email"
                             value={form.email}
                             onChange={(event) => setForm({ ...form, email: event.target.value })}
                             disabled={!canEdit}
-                            className="w-full rounded-xl border border-slate-200 dark:border-slate-600 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 disabled:bg-slate-50 dark:bg-slate-800/60 dark:disabled:bg-slate-800"
+                            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 disabled:bg-slate-50"
                         />
                     </label>
                 )}
                 {!compactBrokerMode && (
-                    <label className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
+                    <label className="space-y-1 text-xs text-slate-600">
                         <span>Telefone</span>
                         <input
                             value={form.phone}
                             onChange={(event) => setForm({ ...form, phone: event.target.value })}
                             disabled={!canEdit}
-                            className="w-full rounded-xl border border-slate-200 dark:border-slate-600 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 disabled:bg-slate-50 dark:bg-slate-800/60 dark:disabled:bg-slate-800"
+                            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 disabled:bg-slate-50"
                         />
                     </label>
                 )}
                 {side === 'seller' && !compactBrokerMode && (
-                    <label className="space-y-1 text-xs text-slate-600 dark:text-slate-300 md:col-span-2">
+                    <label className="space-y-1 text-xs text-slate-600 md:col-span-2">
                         <span>Dados bancários</span>
                         <textarea
                             rows={3}
                             value={form.bankDetails}
                             onChange={(event) => setForm({ ...form, bankDetails: event.target.value })}
                             disabled={!canEdit}
-                            className="w-full rounded-xl border border-slate-200 dark:border-slate-600 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 disabled:bg-slate-50 dark:bg-slate-800/60 dark:disabled:bg-slate-800"
+                            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 disabled:bg-slate-50"
                         ></textarea>
                     </label>
                 )}
                 {side === 'buyer' && isRentalPurpose(currentContract.propertyPurpose) && !compactBrokerMode && (
-                    <label className="space-y-1 text-xs text-slate-600 dark:text-slate-300 md:col-span-2">
+                    <label className="space-y-1 text-xs text-slate-600 md:col-span-2">
                         <span>Garantia de locação</span>
                         <select
                             value={form.guaranteeType}
                             onChange={(event) => setForm({ ...form, guaranteeType: event.target.value })}
                             disabled={!canEdit}
-                            className="w-full rounded-xl border border-slate-200 dark:border-slate-600 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 disabled:bg-slate-50 dark:bg-slate-800/60 dark:disabled:bg-slate-800"
+                            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 disabled:bg-slate-50"
                         >
                             <option value="">Selecionar</option>
                             {RENT_GUARANTEE_OPTIONS.map((option) => (
@@ -608,12 +608,12 @@ export function ContractDetailClient({ contract }: Props) {
                 )}
             </div>
             {locked ? (
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-500">
                     Este lado foi aprovado e os dados não podem mais ser alterados.
                 </p>
             ) : canEdit ? (
                 compactBrokerMode ? (
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-xs text-slate-500">
                         Use o bloco &quot;Dados bancários do corretor&quot; abaixo dos documentos para salvar com um único envio (e-mail e telefone vêm do cadastro).
                     </p>
                 ) : (
@@ -627,7 +627,7 @@ export function ContractDetailClient({ contract }: Props) {
                     </button>
                 )
             ) : (
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-500">
                     Você pode acompanhar esses dados, mas não editar este lado do contrato.
                 </p>
             )}
@@ -636,7 +636,7 @@ export function ContractDetailClient({ contract }: Props) {
 
     return (
         <div className="space-y-6">
-            <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-5 py-5 shadow-sm space-y-4" aria-labelledby="contract-header">
+            <section className="rounded-2xl border border-slate-200 bg-white px-5 py-5 shadow-sm space-y-4" aria-labelledby="contract-header">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
@@ -650,10 +650,10 @@ export function ContractDetailClient({ contract }: Props) {
                                 Comprador: {buyerMeta.compactLabel}
                             </span>
                         </div>
-                        <h1 id="contract-header" className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                        <h1 id="contract-header" className="text-lg font-semibold text-slate-900">
                             {currentContract.propertyTitle?.trim() || `Contrato ${shortId(currentContract.id)}`}
                         </h1>
-                        <p className="text-xs text-slate-600 dark:text-slate-300">
+                        <p className="text-xs text-slate-600">
                             Contrato {shortId(currentContract.id)} • Negociação {shortId(currentContract.negotiationId)} • Imóvel #{currentContract.propertyId}
                         </p>
                     </div>
@@ -663,8 +663,8 @@ export function ContractDetailClient({ contract }: Props) {
                     </div>
                 </div>
 
-                <div className="rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-4 py-4">
-                    <p className="text-sm text-slate-700 dark:text-slate-200">{statusMeta.description}</p>
+                <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-4">
+                    <p className="text-sm text-slate-700">{statusMeta.description}</p>
                     <div className="mt-4 grid gap-3 md:grid-cols-4">
                         {CONTRACT_STATUS_FLOW.map((status, index) => {
                             const stepMeta = getContractStatusMeta(status)
@@ -676,8 +676,8 @@ export function ContractDetailClient({ contract }: Props) {
                                     className={`rounded-xl border px-3 py-3 text-xs ${isCurrent
                                         ? 'border-primary-300 bg-white shadow-sm'
                                         : isCompleted
-                                            ? 'border-slate-200 dark:border-slate-600 bg-white'
-                                            : 'border-slate-100 dark:border-slate-700 bg-slate-100 text-slate-500 dark:text-slate-400'
+                                            ? 'border-slate-200 bg-white'
+                                            : 'border-slate-100 bg-slate-100 text-slate-500'
                                         }`}
                                 >
                                     <p className="font-semibold">{stepMeta.label}</p>
@@ -689,26 +689,26 @@ export function ContractDetailClient({ contract }: Props) {
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                    <div className="rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-4 py-4">
-                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Situação do vendedor</p>
+                    <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-4">
+                        <p className="text-sm font-semibold text-slate-900">Situação do vendedor</p>
                         <div className="mt-2 flex items-center gap-2">
                             {approvalBadge(currentContract.sellerApprovalStatus)}
                         </div>
-                        <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">{sellerMeta.description}</p>
+                        <p className="mt-2 text-xs text-slate-600">{sellerMeta.description}</p>
                         {sellerReason && (
-                            <p className="mt-2 text-xs text-slate-700 dark:text-slate-200">
+                            <p className="mt-2 text-xs text-slate-700">
                                 Observação: {sellerReason}
                             </p>
                         )}
                     </div>
-                    <div className="rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-4 py-4">
-                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Situação do comprador</p>
+                    <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-4">
+                        <p className="text-sm font-semibold text-slate-900">Situação do comprador</p>
                         <div className="mt-2 flex items-center gap-2">
                             {approvalBadge(currentContract.buyerApprovalStatus)}
                         </div>
-                        <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">{buyerMeta.description}</p>
+                        <p className="mt-2 text-xs text-slate-600">{buyerMeta.description}</p>
                         {buyerReason && (
-                            <p className="mt-2 text-xs text-slate-700 dark:text-slate-200">
+                            <p className="mt-2 text-xs text-slate-700">
                                 Observação: {buyerReason}
                             </p>
                         )}
@@ -767,13 +767,13 @@ export function ContractDetailClient({ contract }: Props) {
                         </div>
                     ) : (
                         <div className="flex flex-col gap-3 sm:flex-row">
-                            <div className="rounded-xl border border-slate-200 dark:border-slate-600 bg-white px-4 py-3 text-sm text-slate-700 dark:text-slate-200">
-                                <p className="font-semibold text-slate-900 dark:text-slate-100">Envio online</p>
+                            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                                <p className="font-semibold text-slate-900">Envio online</p>
                                 <p className="mt-1">Envie o contrato assinado para continuar o fluxo digital.</p>
                                 <div className="mt-3">{renderUploadField(undefined, 'contrato_assinado', 'contrato assinado')}</div>
                             </div>
-                            <div className="rounded-xl border border-slate-200 dark:border-slate-600 bg-white px-4 py-3 text-sm text-slate-700 dark:text-slate-200">
-                                <p className="font-semibold text-slate-900 dark:text-slate-100">Entrega presencial</p>
+                            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                                <p className="font-semibold text-slate-900">Entrega presencial</p>
                                 <p className="mt-1">Se a assinatura acontecer presencialmente, registre isso para a administração.</p>
                                 <button
                                     type="button"
@@ -794,11 +794,11 @@ export function ContractDetailClient({ contract }: Props) {
                             const isOptional = normalizedType === 'boleto_vistoria'
 
                             return (
-                                <div key={documentType} className="rounded-xl border border-slate-200 dark:border-slate-600 bg-white px-4 py-3 text-sm">
-                                    <p className="font-semibold text-slate-900 dark:text-slate-100">
+                                <div key={documentType} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
+                                    <p className="font-semibold text-slate-900">
                                         {documentLabel(normalizedType)} {isOptional ? '(opcional)' : ''}
                                     </p>
-                                    <p className={`mt-1 text-xs ${currentDoc ? 'text-emerald-700' : 'text-slate-500 dark:text-slate-400'}`}>
+                                    <p className={`mt-1 text-xs ${currentDoc ? 'text-emerald-700' : 'text-slate-500'}`}>
                                         {renderChecklistStatus(currentDoc)}
                                     </p>
                                     <div className="mt-3">{renderUploadField(undefined, normalizedType, documentLabel(normalizedType))}</div>
@@ -838,16 +838,16 @@ export function ContractDetailClient({ contract }: Props) {
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {sharedDocs.length > 0 && (
-                    <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-4 shadow-sm space-y-3 md:col-span-2" aria-labelledby="shared-documents">
+                    <section className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm space-y-3 md:col-span-2" aria-labelledby="shared-documents">
                         <div className="flex items-center justify-between">
-                            <h2 id="shared-documents" className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                            <h2 id="shared-documents" className="text-sm font-semibold text-slate-800">
                                 Documentos do contrato
                             </h2>
-                            <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-200">
+                            <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
                                 Visualização
                             </span>
                         </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="text-xs text-slate-500">
                             Aqui ficam os documentos compartilhados do fluxo contratual, como a minuta e outros arquivos sem vínculo exclusivo com vendedor ou comprador.
                         </p>
                         <ul className="space-y-1.5 text-xs">
@@ -861,7 +861,7 @@ export function ContractDetailClient({ contract }: Props) {
                                     >
                                         {doc.originalFileName || doc.documentType || 'Documento'}
                                     </a>
-                                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                                    <span className="text-[11px] text-slate-500">
                                         Somente leitura
                                     </span>
                                 </li>
@@ -880,14 +880,14 @@ export function ContractDetailClient({ contract }: Props) {
                     </section>
                 )}
 
-                <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-4 shadow-sm space-y-3" aria-labelledby="seller-documents">
+                <section className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm space-y-3" aria-labelledby="seller-documents">
                     <div className="flex items-center justify-between">
-                        <h2 id="seller-documents" className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                        <h2 id="seller-documents" className="text-sm font-semibold text-slate-800">
                             Documentos do vendedor
                         </h2>
                         {approvalBadge(currentContract.sellerApprovalStatus)}
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-xs text-slate-500">
                         Envie e acompanhe os documentos do vendedor neste bloco. Quando este lado for aprovado, os envios ficam bloqueados para prevenir erro operacional.
                     </p>
                     <ul className="space-y-1.5 text-xs">
@@ -913,23 +913,23 @@ export function ContractDetailClient({ contract }: Props) {
                             </li>
                         ))}
                         {sellerDocs.length === 0 && (
-                            <li className="text-slate-500 dark:text-slate-400">
+                            <li className="text-slate-500">
                                 Nenhum documento enviado ainda.
                             </li>
                         )}
                     </ul>
 
                     {sellerLocked ? (
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="text-xs text-slate-500">
                             Leitura apenas: este lado já foi aprovado e não aceita novos envios.
                         </p>
                     ) : !isAwaitingDocs ? (
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="text-xs text-slate-500">
                             Esta etapa não aceita novos documentos deste lado. Use apenas os documentos compartilhados do contrato.
                         </p>
                     ) : (
-                        <div className="space-y-2 rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3 py-3">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        <div className="space-y-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-3">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                                 Checklist deste lado
                             </p>
                             {sellerRequiredDocs.map((documentType) => {
@@ -937,8 +937,8 @@ export function ContractDetailClient({ contract }: Props) {
                                 return (
                                     <div key={`seller-${documentType}`} className="flex items-center justify-between gap-3 text-xs">
                                         <div className="min-w-0">
-                                            <p className="font-medium text-slate-800 dark:text-slate-100">{documentLabel(documentType)}</p>
-                                            <p className={currentDoc ? 'text-emerald-700' : 'text-slate-500 dark:text-slate-400'}>
+                                            <p className="font-medium text-slate-800">{documentLabel(documentType)}</p>
+                                            <p className={currentDoc ? 'text-emerald-700' : 'text-slate-500'}>
                                                 {renderChecklistStatus(currentDoc)}
                                             </p>
                                         </div>
@@ -950,14 +950,14 @@ export function ContractDetailClient({ contract }: Props) {
                     )}
                 </section>
 
-                <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-4 shadow-sm space-y-3" aria-labelledby="buyer-documents">
+                <section className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm space-y-3" aria-labelledby="buyer-documents">
                     <div className="flex items-center justify-between">
-                        <h2 id="buyer-documents" className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                        <h2 id="buyer-documents" className="text-sm font-semibold text-slate-800">
                             Documentos do comprador
                         </h2>
                         {approvalBadge(currentContract.buyerApprovalStatus)}
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-xs text-slate-500">
                         Envie e acompanhe os documentos do comprador neste bloco. A aprovação deste lado também determina o avanço do contrato.
                     </p>
                     <ul className="space-y-1.5 text-xs">
@@ -983,23 +983,23 @@ export function ContractDetailClient({ contract }: Props) {
                             </li>
                         ))}
                         {buyerDocs.length === 0 && (
-                            <li className="text-slate-500 dark:text-slate-400">
+                            <li className="text-slate-500">
                                 Nenhum documento enviado ainda.
                             </li>
                         )}
                     </ul>
 
                     {buyerLocked ? (
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="text-xs text-slate-500">
                             Leitura apenas: este lado já foi aprovado e não aceita novos envios.
                         </p>
                     ) : !isAwaitingDocs ? (
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="text-xs text-slate-500">
                             Esta etapa não aceita novos documentos deste lado. Use apenas os documentos compartilhados do contrato.
                         </p>
                     ) : (
-                        <div className="space-y-2 rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3 py-3">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        <div className="space-y-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-3">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                                 Checklist deste lado
                             </p>
                             {buyerRequiredDocs.map((documentType) => {
@@ -1007,8 +1007,8 @@ export function ContractDetailClient({ contract }: Props) {
                                 return (
                                     <div key={`buyer-${documentType}`} className="flex items-center justify-between gap-3 text-xs">
                                         <div className="min-w-0">
-                                            <p className="font-medium text-slate-800 dark:text-slate-100">{documentLabel(documentType)}</p>
-                                            <p className={currentDoc ? 'text-emerald-700' : 'text-slate-500 dark:text-slate-400'}>
+                                            <p className="font-medium text-slate-800">{documentLabel(documentType)}</p>
+                                            <p className={currentDoc ? 'text-emerald-700' : 'text-slate-500'}>
                                                 {renderChecklistStatus(currentDoc)}
                                             </p>
                                         </div>
@@ -1022,26 +1022,26 @@ export function ContractDetailClient({ contract }: Props) {
 
                 {isAwaitingDocs && isDoubleEndedBroker && (
                     <section
-                        className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-4 shadow-sm space-y-3 md:col-span-2"
+                        className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm space-y-3 md:col-span-2"
                         aria-labelledby="broker-bank-unified"
                     >
-                        <h2 id="broker-bank-unified" className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                        <h2 id="broker-bank-unified" className="text-sm font-semibold text-slate-800">
                             Dados bancários do corretor
                         </h2>
-                        <p className="text-xs text-slate-600 dark:text-slate-300">
+                        <p className="text-xs text-slate-600">
                             Você é captador e vendedor nesta negociação. E-mail e telefone vêm do cadastro; informe os dados bancários abaixo.
                         </p>
-                        <div className="grid gap-2 text-xs text-slate-800 dark:text-slate-100">
+                        <div className="grid gap-2 text-xs text-slate-800">
                             <p>
-                                <span className="font-medium text-slate-500 dark:text-slate-400">E-mail (cadastro)</span>{' '}
+                                <span className="font-medium text-slate-500">E-mail (cadastro)</span>{' '}
                                 {session?.user?.email?.trim() || '—'}
                             </p>
                             <p>
-                                <span className="font-medium text-slate-500 dark:text-slate-400">Telefone (cadastro)</span>{' '}
+                                <span className="font-medium text-slate-500">Telefone (cadastro)</span>{' '}
                                 {session?.user?.phone?.trim() || '—'}
                             </p>
                         </div>
-                        <label className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
+                        <label className="space-y-1 text-xs text-slate-600">
                             <span>Dados bancários</span>
                             <textarea
                                 rows={3}
@@ -1050,11 +1050,11 @@ export function ContractDetailClient({ contract }: Props) {
                                     setSellerForm({ ...sellerForm, bankDetails: event.target.value })
                                 }
                                 disabled={!canEditSellerSide}
-                                className="w-full rounded-xl border border-slate-200 dark:border-slate-600 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 disabled:bg-slate-50 dark:bg-slate-800/60 dark:disabled:bg-slate-800"
+                                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 disabled:bg-slate-50"
                             />
                         </label>
                         {isRentalPurpose(currentContract.propertyPurpose) && (
-                            <label className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
+                            <label className="space-y-1 text-xs text-slate-600">
                                 <span>Garantia de locação</span>
                                 <select
                                     value={buyerForm.guaranteeType}
@@ -1062,7 +1062,7 @@ export function ContractDetailClient({ contract }: Props) {
                                         setBuyerForm({ ...buyerForm, guaranteeType: event.target.value })
                                     }
                                     disabled={!canEditBuyerSide}
-                                    className="w-full rounded-xl border border-slate-200 dark:border-slate-600 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 disabled:bg-slate-50 dark:bg-slate-800/60 dark:disabled:bg-slate-800"
+                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 disabled:bg-slate-50"
                                 >
                                     <option value="">Selecionar</option>
                                     {RENT_GUARANTEE_OPTIONS.map((option) => (
@@ -1081,7 +1081,7 @@ export function ContractDetailClient({ contract }: Props) {
                                 {savingBrokerBundle ? 'Salvando...' : 'Salvar dados bancários do corretor'}
                             </button>
                         ) : (
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                            <p className="text-xs text-slate-500">
                                 Você não pode editar estes dados neste momento.
                             </p>
                         )}

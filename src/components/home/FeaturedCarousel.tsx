@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useCallback, useEffect, useState } from 'react'
 import useEmblaCarousel from 'embla-carousel-react'
@@ -50,25 +50,25 @@ export default function FeaturedCarousel({
 
     if (!properties.length) {
         return (
-            <section className="py-16 lg:py-24 bg-gray-50 dark:bg-slate-950">
+            <section className="py-16 lg:py-24 bg-gray-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100 mb-3">{title}</h2>
-                    <p className="text-gray-400 dark:text-slate-500">Nenhum imóvel em destaque no momento. Volte em breve!</p>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">{title}</h2>
+                    <p className="text-gray-400">Nenhum imóvel em destaque no momento. Volte em breve!</p>
                 </div>
             </section>
         )
     }
 
     return (
-        <section className="py-16 lg:py-24 bg-gray-50 dark:bg-slate-950">
+        <section className="py-16 lg:py-24 bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100">
+                        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
                             {title}
                         </h2>
-                        <p className="text-gray-500 dark:text-slate-400 mt-1">
+                        <p className="text-gray-500 mt-1">
                             Os melhores imóveis selecionados para você
                         </p>
                     </div>
@@ -78,7 +78,7 @@ export default function FeaturedCarousel({
                         <button
                             onClick={scrollPrev}
                             disabled={!canScrollPrev}
-                            className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 flex items-center justify-center text-gray-600 dark:text-slate-300 hover:bg-primary-50 hover:text-primary-600 hover:border-primary-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                            className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-primary-50 hover:text-primary-600 hover:border-primary-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
                             aria-label="Anterior"
                         >
                             <ChevronLeft className="w-5 h-5" />
@@ -86,7 +86,7 @@ export default function FeaturedCarousel({
                         <button
                             onClick={scrollNext}
                             disabled={!canScrollNext}
-                            className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 flex items-center justify-center text-gray-600 dark:text-slate-300 hover:bg-primary-50 hover:text-primary-600 hover:border-primary-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                            className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-primary-50 hover:text-primary-600 hover:border-primary-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
                             aria-label="Próximo"
                         >
                             <ChevronRight className="w-5 h-5" />
@@ -119,7 +119,7 @@ export default function FeaturedCarousel({
                         >
                             <span className={`block rounded-full transition-all ${idx === selectedIndex
                                 ? 'bg-primary-600 w-8 h-2.5'
-                                : 'bg-gray-300 dark:bg-slate-700 hover:bg-gray-400 dark:hover:bg-slate-600 w-2.5 h-2.5'
+                                : 'bg-gray-300 hover:bg-gray-400 w-2.5 h-2.5'
                                 }`} />
                         </button>
                     ))}
