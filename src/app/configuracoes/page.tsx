@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useUser } from '@/contexts/UserContext'
 import GuestAccessCard from '@/components/auth/GuestAccessCard'
 import { Loader2, Moon, Settings } from 'lucide-react'
-import { persistTheme, syncThemeFromStorage } from '@/lib/theme'
+import { isDarkModeActive, persistTheme, syncThemeFromStorage } from '@/lib/theme'
 
 export default function ConfiguracoesPage() {
     const { session, loading } = useUser()
@@ -12,9 +12,19 @@ export default function ConfiguracoesPage() {
     const [ready, setReady] = useState(false)
 
     useEffect(() => {
-        const prefersDark = syncThemeFromStorage()
-        setDark(prefersDark)
+        syncThemeFromStorage()
+        setDark(isDarkModeActive())
         setReady(true)
+    }, [])
+
+    useEffect(() => {
+        const syncFromDom = () => setDark(isDarkModeActive())
+        window.addEventListener('storage', syncFromDom)
+        window.addEventListener('focus', syncFromDom)
+        return () => {
+            window.removeEventListener('storage', syncFromDom)
+            window.removeEventListener('focus', syncFromDom)
+        }
     }, [])
 
     const setMode = (next: boolean) => {

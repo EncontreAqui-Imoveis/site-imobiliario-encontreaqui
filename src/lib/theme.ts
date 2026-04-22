@@ -23,6 +23,11 @@ export function syncThemeFromStorage(): boolean {
     return dark
 }
 
+export function isDarkModeActive(): boolean {
+    if (typeof window === 'undefined') return false
+    return document.documentElement.classList.contains('dark')
+}
+
 export function persistTheme(mode: SiteThemeMode): void {
     if (typeof window === 'undefined') return
     window.localStorage.setItem(SITE_THEME_STORAGE_KEY, mode)

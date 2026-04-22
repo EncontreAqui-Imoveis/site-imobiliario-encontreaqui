@@ -163,7 +163,7 @@ export default function EditarPerfilPage() {
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-900 dark:bg-slate-900 rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-100 bg-white p-6 shadow-lg shadow-slate-200/50 space-y-4 dark:border-slate-700 dark:bg-slate-900">
                 <div className="space-y-1.5">
                     <label htmlFor="name" className="block text-sm font-medium text-slate-700">Nome</label>
                     <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} maxLength={120}

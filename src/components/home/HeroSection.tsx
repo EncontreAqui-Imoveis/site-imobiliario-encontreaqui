@@ -65,11 +65,11 @@ export default function HeroSection() {
                     sizes="100vw"
                 />
                 <div
-                    className="absolute inset-0 bg-black/35"
+                    className="absolute inset-0 bg-black/20 dark:bg-black/35"
                     aria-hidden
                 />
                 <div
-                    className="absolute inset-0 bg-gradient-to-b from-primary-950/92 via-primary-900/84 to-primary-950/94"
+                    className="absolute inset-0 bg-gradient-to-b from-primary-950/72 via-primary-900/62 to-primary-950/78 dark:from-primary-950/92 dark:via-primary-900/84 dark:to-primary-950/94"
                     aria-hidden
                 />
             </div>

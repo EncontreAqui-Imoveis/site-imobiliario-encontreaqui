@@ -71,14 +71,14 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                     <>
                         <button
                             onClick={goToPrevious}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white dark:bg-slate-900/20 hover:bg-white dark:bg-slate-900/40 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-30 group-hover:opacity-100 focus:opacity-100 transition-all duration-300 z-10 hover:scale-110"
+                            className="absolute left-3 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-900 opacity-30 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-white group-hover:opacity-100 focus:opacity-100 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-800"
                             aria-label="Imagem anterior"
                         >
                             <ChevronLeft className="w-5 h-5 drop-shadow-md" />
                         </button>
                         <button
                             onClick={goToNext}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white dark:bg-slate-900/20 hover:bg-white dark:bg-slate-900/40 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-30 group-hover:opacity-100 focus:opacity-100 transition-all duration-300 z-10 hover:scale-110"
+                            className="absolute right-3 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-900 opacity-30 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-white group-hover:opacity-100 focus:opacity-100 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-800"
                             aria-label="Próxima imagem"
                         >
                             <ChevronRight className="w-5 h-5 drop-shadow-md" />

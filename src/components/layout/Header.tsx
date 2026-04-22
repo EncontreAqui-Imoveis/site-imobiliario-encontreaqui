@@ -111,13 +111,13 @@ export default function Header() {
 
     const headerBg =
         isHomepage && !isScrolled
-            ? 'bg-primary-950/40 backdrop-blur-md shadow-sm shadow-black/20'
+            ? 'bg-white/85 dark:bg-primary-950/40 backdrop-blur-md shadow-sm shadow-black/10 dark:shadow-black/20'
             : 'bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-sm'
     const textColor =
         isHomepage && !isScrolled
-            ? 'text-white drop-shadow-sm [text-shadow:0_1px_2px_rgba(0,0,0,0.45)]'
+            ? 'text-slate-700 dark:text-white drop-shadow-sm dark:[text-shadow:0_1px_2px_rgba(0,0,0,0.45)]'
             : 'text-gray-600 dark:text-slate-300'
-    const logoFilter = isHomepage && !isScrolled ? 'brightness-0 invert' : ''
+    const logoFilter = isHomepage && !isScrolled ? 'dark:brightness-0 dark:invert' : ''
     const userName = session?.user?.name?.split(' ')[0] || 'Usuário'
     const userInitial = userName.charAt(0).toUpperCase()
     const pendingAction = resolvePendingAction(session)
@@ -147,7 +147,7 @@ export default function Header() {
                     {/* Desktop Search */}
                     <form onSubmit={handleSearch} className="hidden lg:flex flex-1 max-w-md mx-8">
                         <div className="relative w-full">
-                            <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isHomepage && !isScrolled ? 'text-white/60' : 'text-gray-400'}`} />
+                            <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isHomepage && !isScrolled ? 'text-slate-500 dark:text-white/60' : 'text-gray-400 dark:text-slate-500'}`} />
                             <input
                                 type="text"
                                 value={searchQuery}
@@ -155,7 +155,7 @@ export default function Header() {
                                 maxLength={120}
                                 placeholder="Buscar imóveis..."
                                 className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-accent-500 ${isHomepage && !isScrolled
-                                    ? 'bg-white/10 border-white/20 text-white placeholder-white/60 focus:bg-white/20'
+                                    ? 'bg-white/80 dark:bg-white/10 border-slate-200 dark:border-white/20 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-white/60 focus:bg-white dark:focus:bg-white/20'
                                     : 'bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500'
                                     }`}
                             />
@@ -168,7 +168,7 @@ export default function Header() {
                             <Link
                                 key={link.href}
                                 href={link.href}
-                                className={`px-4 py-2 ${textColor} hover:text-accent-500 font-medium rounded-lg hover:bg-white/10 transition-all duration-200 ${pathname === link.href ? 'text-accent-500' : ''}`}
+                                className={`px-4 py-2 ${textColor} hover:text-accent-500 font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-200 ${pathname === link.href ? 'text-accent-500' : ''}`}
                             >
                                 {link.label}
                             </Link>
@@ -176,7 +176,7 @@ export default function Header() {
                         {isBroker && (
                             <Link
                                 href="/anuncie"
-                                className={`px-4 py-2 ${textColor} hover:text-accent-500 font-medium rounded-lg hover:bg-white/10 transition-all duration-200 ${pathname === '/anuncie' ? 'text-accent-500' : ''}`}
+                                className={`px-4 py-2 ${textColor} hover:text-accent-500 font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-200 ${pathname === '/anuncie' ? 'text-accent-500' : ''}`}
                             >
                                 Anuncie
                             </Link>
@@ -192,9 +192,9 @@ export default function Header() {
                                 <Link
                                     href="/notificacoes"
                                     className={`p-2.5 rounded-xl transition-all ${isHomepage && !isScrolled
-                                        ? 'text-white hover:bg-white/10'
+                                        ? 'text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-white/10'
                                         : 'text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-primary-600'
-                                        } ${pathname === '/notificacoes' ? (isHomepage && !isScrolled ? 'ring-2 ring-white/40' : 'text-primary-600 bg-primary-50') : ''}`}
+                                        } ${pathname === '/notificacoes' ? (isHomepage && !isScrolled ? 'ring-2 ring-slate-300 dark:ring-white/40' : 'text-primary-600 bg-primary-50 dark:bg-primary-900/30') : ''}`}
                                     aria-label="Notificações"
                                 >
                                     <Bell className="w-5 h-5" />
@@ -204,7 +204,7 @@ export default function Header() {
                                 <button
                                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                                     className={`flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all ${isHomepage && !isScrolled
-                                        ? 'hover:bg-white/10 text-white'
+                                        ? 'hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-white'
                                         : 'hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-100'
                                         }`}
                                     aria-label="Menu do usuário"
@@ -301,7 +301,7 @@ export default function Header() {
                                 <Link
                                     href="/auth/login"
                                     className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${isHomepage && !isScrolled
-                                        ? 'text-white hover:bg-white/10 border border-white/30'
+                                        ? 'text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-300 dark:border-white/30'
                                         : 'text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 border border-gray-200 dark:border-slate-700'
                                         }`}
                                 >
@@ -323,7 +323,7 @@ export default function Header() {
                                 href="/notificacoes"
                                 onClick={() => setIsMenuOpen(false)}
                                 className={`p-2 rounded-lg transition-colors ${isHomepage && !isScrolled
-                                    ? `${textColor} hover:bg-white/10`
+                                    ? `${textColor} hover:bg-slate-100 dark:hover:bg-white/10`
                                     : 'text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800'
                                     } ${pathname === '/notificacoes' ? 'text-primary-600' : ''}`}
                                 aria-label="Notificações"
@@ -334,7 +334,7 @@ export default function Header() {
                         <button
                             type="button"
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            className={`p-2 ${textColor} hover:bg-white/10 rounded-lg transition-colors`}
+                            className={`p-2 ${textColor} hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors`}
                             aria-label="Menu"
                         >
                             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}

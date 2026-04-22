@@ -467,7 +467,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                         <div className="mt-8 sm:hidden text-center">
                             <Link
                                 href={`/imoveis?bairro=${encodeURIComponent(property.bairro)}`}
-                                className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 dark:bg-slate-900 text-gray-900 dark:text-slate-100 font-semibold rounded-xl transition-colors"
+                                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-6 py-3 font-semibold text-gray-900 transition-colors hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
                             >
                                 Ver todos
                                 <ArrowRight className="w-5 h-5" />
@@ -479,7 +479,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
 
             {/* ================== Mobile Sticky Bottom Bar ================== */}
             <div
-                className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] dark:border-slate-700 dark:bg-slate-900 lg:hidden"
+                className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.08)] dark:border-slate-700 dark:bg-slate-900 lg:hidden"
                 role="region"
                 aria-label="Ações rápidas do imóvel"
             >
