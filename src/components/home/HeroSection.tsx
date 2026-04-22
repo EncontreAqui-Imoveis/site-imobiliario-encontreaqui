@@ -98,7 +98,7 @@ export default function HeroSection() {
                     </p>
 
                     {/* Search Box */}
-                    <div className="bg-white border border-white/70 rounded-2xl shadow-2xl p-3 sm:p-6 max-w-4xl mx-auto animate-fadeIn">
+                    <div className="bg-white/60 border border-white/70 rounded-2xl shadow-2xl p-3 sm:p-6 max-w-4xl mx-auto animate-fadeIn">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                             {/* Purpose */}
                             <div className="relative">

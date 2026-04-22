@@ -4,8 +4,12 @@ import PropertyCard from '@/components/property/PropertyCard'
 import { Property } from '@/types/property'
 
 jest.mock('next/link', () => {
-    function MockNextLink({ children, href }: { children: ReactNode; href: string }) {
-        return <a href={href}>{children}</a>
+    function MockNextLink({
+        children,
+        href,
+        ...rest
+    }: { children: ReactNode; href: string; [key: string]: unknown }) {
+        return <a href={href} {...rest}>{children}</a>
     }
     MockNextLink.displayName = 'MockNextLink'
     return MockNextLink
@@ -106,5 +110,13 @@ describe('PropertyCard', () => {
     it('shows favorite button', () => {
         render(<PropertyCard property={mockProperty} />)
         expect(screen.getByTestId('favorite-button')).toBeInTheDocument()
+    })
+
+    it('uses neutral highlight style in featured variant', () => {
+        const { container } = render(<PropertyCard property={{ ...mockProperty, purpose: 'Aluguel' }} variant="featured" />)
+
+        const card = container.querySelector('a')
+        expect(card).toHaveClass('ring-slate-200')
+        expect(card).not.toHaveClass('ring-accent-400')
     })
 })

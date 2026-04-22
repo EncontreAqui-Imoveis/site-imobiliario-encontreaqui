@@ -7,7 +7,7 @@ import {
     MapPin, Bed, Bath, Car, Maximize,
     Wifi, Waves, Sun, Cpu, Wind, Sofa, Building2, type LucideIcon,
     Hash, Share2, CheckCircle,
-    Map, Home as HomeIcon, Signpost, Layers, Mail, Phone, Globe
+    Map, Phone, Globe
 } from 'lucide-react'
 import { shareOrCopy } from '@/lib/webShare'
 
@@ -126,7 +126,6 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                     <span className="text-lg font-semibold sm:text-xl">
                         {property.bairro}
                         {property.city && ` • ${property.city}`}
-                        {property.state && ` • ${property.state}`}
                     </span>
                 </div>
 
@@ -180,49 +179,13 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
             )}
 
             {/* Detailed Location Section */}
-            {(property.address || property.numero || property.quadra || property.lote || property.bairro) && (
+            {(property.bairro || property.city) && (
                 <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100">
                     <h2 className="font-display text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
                         <Map className="w-5 h-5 text-primary-500" />
                         Localização
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {property.address && (
-                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                <MapPin className="w-4 h-4 text-primary-500 flex-shrink-0" />
-                                <div className="min-w-0">
-                                    <p className="text-xs text-gray-500">Endereço</p>
-                                    <p className="text-sm font-semibold text-gray-900 truncate">{property.address}</p>
-                                </div>
-                            </div>
-                        )}
-                        {property.numero && (
-                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                <HomeIcon className="w-4 h-4 text-primary-500 flex-shrink-0" />
-                                <div>
-                                    <p className="text-xs text-gray-500">Número</p>
-                                    <p className="text-sm font-semibold text-gray-900">{property.numero || 'S/N'}</p>
-                                </div>
-                            </div>
-                        )}
-                        {property.quadra && (
-                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                <Signpost className="w-4 h-4 text-primary-500 flex-shrink-0" />
-                                <div>
-                                    <p className="text-xs text-gray-500">Quadra</p>
-                                    <p className="text-sm font-semibold text-gray-900">{property.quadra}</p>
-                                </div>
-                            </div>
-                        )}
-                        {property.lote && (
-                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                <Layers className="w-4 h-4 text-primary-500 flex-shrink-0" />
-                                <div>
-                                    <p className="text-xs text-gray-500">Lote</p>
-                                    <p className="text-sm font-semibold text-gray-900">{property.lote}</p>
-                                </div>
-                            </div>
-                        )}
                         {property.bairro && (
                             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                                 <Building2 className="w-4 h-4 text-primary-500 flex-shrink-0" />
@@ -232,37 +195,12 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                                 </div>
                             </div>
                         )}
-                        {property.complemento && (
+                        {property.city && (
                             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                <Hash className="w-4 h-4 text-primary-500 flex-shrink-0" />
+                                <MapPin className="w-4 h-4 text-primary-500 flex-shrink-0" />
                                 <div>
-                                    <p className="text-xs text-gray-500">Complemento</p>
-                                    <p className="text-sm font-semibold text-gray-900">{property.complemento}</p>
-                                </div>
-                            </div>
-                        )}
-                        {property.tipoLote && (
-                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                <Map className="w-4 h-4 text-primary-500 flex-shrink-0" />
-                                <div>
-                                    <p className="text-xs text-gray-500">Tipo de Lote</p>
-                                    <p className="text-sm font-semibold text-gray-900 capitalize">{property.tipoLote}</p>
-                                </div>
-                            </div>
-                        )}
-                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                            <MapPin className="w-4 h-4 text-primary-500 flex-shrink-0" />
-                            <div>
-                                <p className="text-xs text-gray-500">Cidade</p>
-                                <p className="text-sm font-semibold text-gray-900">{property.city}{property.state && ` • ${property.state}`}</p>
-                            </div>
-                        </div>
-                        {property.cep && (
-                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                <Mail className="w-4 h-4 text-primary-500 flex-shrink-0" />
-                                <div>
-                                    <p className="text-xs text-gray-500">CEP</p>
-                                    <p className="text-sm font-semibold text-gray-900">{property.cep}</p>
+                                    <p className="text-xs text-gray-500">Cidade</p>
+                                    <p className="text-sm font-semibold text-gray-900">{property.city}</p>
                                 </div>
                             </div>
                         )}

@@ -30,7 +30,7 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                     ? { label: 'Rejeitado', className: 'bg-red-100 text-red-800' }
                     : { label: 'Disponível', className: 'bg-slate-100 text-slate-700' }
     const purposeBadge = property.purpose.toLowerCase().includes('alug')
-        ? { label: 'Aluguel', className: 'badge-gold' }
+        ? { label: 'Aluguel', className: isFeatured ? 'rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-bold text-slate-700' : 'badge-gold' }
         : { label: 'Venda', className: 'badge-teal' }
 
     const goToPrevious = (e: React.MouseEvent) => {
@@ -48,7 +48,7 @@ export default function PropertyCard({ property, variant = 'default' }: Property
     return (
         <Link
             href={`/imoveis/${property.id}`}
-            className={`group block bg-white rounded-[28px] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${isFeatured ? 'ring-2 ring-accent-400' : 'border border-gray-100'
+            className={`group block bg-white rounded-[28px] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${isFeatured ? 'ring-2 ring-slate-200 border border-slate-200' : 'border border-gray-100'
                 }`}
         >
             {/* Image Container */}

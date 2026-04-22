@@ -7,7 +7,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import {
     Menu, X, Home, Building2, Search, Smartphone,
     User, LogOut, Heart, FileText, BarChart3,
-    Settings, Bell, PlusCircle, ChevronDown
+    Bell, PlusCircle, ChevronDown
 } from 'lucide-react'
 import { getStoreUrlClient } from '@/lib/appLinks'
 import { useUser } from '@/contexts/UserContext'
@@ -16,7 +16,6 @@ import { resolvePendingAction } from '@/lib/auth/routeResolution'
 const navLinks = [
     { href: '/', label: 'Início', icon: Home },
     { href: '/imoveis', label: 'Imóveis', icon: Building2 },
-    { href: '/configuracoes', label: 'Configurações', icon: Settings },
 ]
 
 const authNavLinks = [
@@ -31,7 +30,6 @@ const userMenuLinks = [
     { href: '/propostas', label: 'Minhas Propostas', icon: FileText },
     { href: '/contratos', label: 'Contratos', icon: FileText },
     { href: '/notificacoes', label: 'Notificações', icon: Bell },
-    { href: '/configuracoes', label: 'Configurações', icon: Settings },
 ]
 
 const brokerMenuLinks = [

@@ -1,6 +1,6 @@
 /**
  * Integration test: Profile page
- * Tests rendering of all quick links including new notification + settings links
+ * Tests rendering of all quick links including notification links
  */
 import React from 'react'
 import { render, screen, fireEvent, act } from '@testing-library/react'
@@ -101,9 +101,6 @@ describe('Profile Page - Integration', () => {
 
         const contratos = screen.getByText('Contratos').closest('a')
         expect(contratos).toHaveAttribute('href', '/contratos')
-
-        const configuracoes = screen.getByText('Configurações').closest('a')
-        expect(configuracoes).toHaveAttribute('href', '/configuracoes')
     })
 
     it('renders notification link with description', () => {
@@ -112,10 +109,11 @@ describe('Profile Page - Integration', () => {
         expect(screen.getByText('Propostas, contratos e novidades')).toBeInTheDocument()
     })
 
-    it('renders settings link with description', () => {
+    it('does not render settings option anymore', () => {
         render(<PerfilPage />)
 
-        expect(screen.getByText('Preferências e ajustes')).toBeInTheDocument()
+        expect(screen.queryByText('Configurações')).not.toBeInTheDocument()
+        expect(screen.queryByText('Preferências e ajustes')).not.toBeInTheDocument()
     })
 
     it('handles logout', async () => {

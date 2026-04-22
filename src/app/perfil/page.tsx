@@ -7,7 +7,7 @@ import { useUser } from '@/contexts/UserContext'
 import { resolvePendingAction } from '@/lib/auth/routeResolution'
 import GuestAccessCard from '@/components/auth/GuestAccessCard'
 import { shareOrCopy } from '@/lib/webShare'
-import { BadgeCheck, Building2, LogOut, Briefcase, BarChart3, Loader2, Bell, Settings, Share2, User } from 'lucide-react'
+import { BadgeCheck, Building2, LogOut, Briefcase, BarChart3, Loader2, Bell, Share2, User } from 'lucide-react'
 
 export default function PerfilPage() {
     const router = useRouter()
@@ -270,19 +270,6 @@ export default function PerfilPage() {
                     <div>
                         <p className="text-sm font-semibold text-slate-900">Contratos</p>
                         <p className="text-xs text-slate-500">Acompanhe seus contratos ativos</p>
-                    </div>
-                </Link>
-
-                <Link
-                    href="/configuracoes"
-                    className="flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors"
-                >
-                    <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
-                        <Settings className="w-5 h-5 text-slate-600" />
-                    </div>
-                    <div>
-                        <p className="text-sm font-semibold text-slate-900">Configurações</p>
-                        <p className="text-xs text-slate-500">Preferências e ajustes</p>
                     </div>
                 </Link>
 
