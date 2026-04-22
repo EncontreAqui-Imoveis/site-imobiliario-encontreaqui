@@ -3,10 +3,7 @@ export const SITE_THEME_STORAGE_KEY = 'ea_site_theme'
 export type SiteThemeMode = 'light' | 'dark'
 
 function resolveDarkModeFromStorage(stored: string | null): boolean {
-    if (stored === 'dark') return true
-    if (stored === 'light') return false
-    if (typeof window === 'undefined') return false
-    return Boolean(window.matchMedia?.('(prefers-color-scheme: dark)').matches)
+    return stored === 'dark'
 }
 
 export function getResolvedDarkMode(): boolean {

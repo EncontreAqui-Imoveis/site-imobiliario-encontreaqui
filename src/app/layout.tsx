@@ -41,7 +41,7 @@ export default function RootLayout({
                             (function() {
                                 try {
                                     var stored = localStorage.getItem('ea_site_theme');
-                                    var dark = stored === 'dark' || (!stored && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                                    var dark = stored === 'dark';
                                     document.documentElement.classList.toggle('dark', !!dark);
                                 } catch (e) {}
                             })();
