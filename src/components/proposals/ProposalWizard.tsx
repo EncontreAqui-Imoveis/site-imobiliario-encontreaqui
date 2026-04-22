@@ -20,7 +20,7 @@ type Step = 1 | 2 | 3
 
 export function ProposalWizard({ property }: ProposalWizardProps) {
     const router = useRouter()
-    const { session, isBroker, loading: authLoading } = useUser()
+    const { session, loading: authLoading } = useUser()
     const [step, setStep] = useState<Step>(1)
     const [clientName, setClientName] = useState('')
     const [clientCpf, setClientCpf] = useState('')
@@ -47,13 +47,22 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
     const propertyValue = useMemo(() => {
         return property.priceSale ?? property.price
     }, [property.priceSale, property.price])
+    const userRole = String(session?.user?.role ?? '').trim().toLowerCase()
+    const isClientUser = userRole === 'client'
+    const isBrokerUser = userRole === 'broker'
+    const isClientOwnListing = Boolean(
+        isClientUser &&
+        session?.user?.id != null &&
+        (property.ownerId === session.user.id || property.brokerId === session.user.id)
+    )
+
     const canGenerateProposal =
         Boolean(
             !authLoading &&
             session?.user?.id != null &&
-            isBroker &&
+            (isClientUser || isBrokerUser) &&
             property.status === 'approved' &&
-            property.brokerId === session.user.id
+            !isClientOwnListing
         )
 
     useEffect(() => {
@@ -131,7 +140,7 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
         !canGenerateProposal ? (
             <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-6 md:p-8 space-y-4">
                 <p className="text-sm text-slate-600">
-                    Apenas o corretor captador de um imóvel aprovado pode gerar proposta.
+                    Clientes e corretores podem gerar proposta em imóveis aprovados de terceiros.
                 </p>
                 <p className="text-sm text-slate-500">Redirecionando para o imóvel...</p>
             </div>

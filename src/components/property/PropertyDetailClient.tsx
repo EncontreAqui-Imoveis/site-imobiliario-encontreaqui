@@ -28,6 +28,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
     const [similarProperties, setSimilarProperties] = useState<Property[]>([])
     const [loadError, setLoadError] = useState<string | null>(null)
     const { session, loading: authLoading } = useUser()
+    const userRole = (session?.user?.role ?? '').toLowerCase()
 
     // Owner / broker detection
     const userId = session?.user?.id
@@ -42,8 +43,9 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
         isOwner && statusLower !== 'pending_approval' && !hasPendingEditRequest
     const negotiationId = property?.negotiationId ?? property?.negotiation?.id
     const negotiationStatus = String(property?.negotiation?.status ?? '').trim().toUpperCase()
+    const isClientOwner = isOwner && userRole === 'client'
     const canGenerateProposal =
-        isOwner && statusLower === 'approved' && !negotiationId
+        isOwner && !isClientOwner && statusLower === 'approved' && !negotiationId
 
     useEffect(() => {
         if (property || authLoading || !session) return
@@ -191,7 +193,6 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
     const blockVisitorProposalDueToDeal =
         statusLower === 'negociacao' ||
         (negotiationStatus === 'IN_NEGOTIATION' && statusLower === 'negociacao')
-    const userRole = (session?.user?.role ?? '').toLowerCase()
     const visitorProposalHref =
         session &&
         !isOwner &&

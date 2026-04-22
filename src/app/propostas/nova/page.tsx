@@ -128,13 +128,26 @@ export default function ProposalWizardPage() {
         load()
     }, [propertyId])
 
+    const userRole = String(session?.user?.role ?? '').trim().toLowerCase()
+    const isClientUser = userRole === 'client'
+    const isBrokerUser = userRole === 'broker'
+    const isClientOwnListing =
+        Boolean(
+            isClientUser &&
+            property &&
+            session?.user?.id != null &&
+            (
+                property.ownerId === session.user.id ||
+                property.brokerId === session.user.id
+            )
+        )
     const canGenerateForProperty =
         Boolean(
             property &&
             session?.user?.id != null &&
-            isBroker &&
+            (isClientUser || isBrokerUser) &&
             property.status === 'approved' &&
-            property.brokerId === session.user.id
+            !isClientOwnListing
         )
 
     useEffect(() => {
@@ -270,13 +283,13 @@ export default function ProposalWizardPage() {
         )
     }
 
-    if (!isBroker) {
+    if (!(isClientUser || isBrokerUser)) {
         return (
             <div className="min-h-screen flex items-center justify-center pt-20">
                 <div className="text-center space-y-4 max-w-md">
                     <ShieldCheck className="w-16 h-16 mx-auto text-amber-400" />
-                    <h1 className="text-xl font-bold text-gray-900">Acesso restrito a corretores</h1>
-                    <p className="text-gray-500">Apenas corretores podem gerar propostas.</p>
+                    <h1 className="text-xl font-bold text-gray-900">Acesso restrito</h1>
+                    <p className="text-gray-500">Somente clientes ou corretores podem gerar propostas.</p>
                     <Link href="/" className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors">
                         Voltar ao início
                     </Link>
@@ -402,30 +415,31 @@ export default function ProposalWizardPage() {
                                 </div>
                             </div>
 
-                            {/* Broker selection */}
-                            <div className="border-t border-gray-100 pt-4">
-                                <label className="flex items-center gap-3 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={isSelfBroker}
-                                        onChange={e => {
-                                            setIsSelfBroker(e.target.checked)
-                                            if (e.target.checked) {
-                                                setSelectedBroker(null)
-                                                setBrokerSearch('')
-                                                setBrokerResults([])
-                                            }
-                                        }}
-                                        className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                                    />
-                                    <span className="text-sm font-medium text-gray-700">Eu sou o corretor vendedor</span>
-                                </label>
-                                <p className="mt-2 text-xs text-gray-400">
-                                    Caso o corretor vendedor for diferente, ele precisa estar cadastrado e aprovado no sistema.
-                                </p>
+                            {/* Broker selection (somente para corretores) */}
+                            {userRole === 'broker' && (
+                                <div className="border-t border-gray-100 pt-4">
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={isSelfBroker}
+                                            onChange={e => {
+                                                setIsSelfBroker(e.target.checked)
+                                                if (e.target.checked) {
+                                                    setSelectedBroker(null)
+                                                    setBrokerSearch('')
+                                                    setBrokerResults([])
+                                                }
+                                            }}
+                                            className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                                        />
+                                        <span className="text-sm font-medium text-gray-700">Eu sou o corretor vendedor</span>
+                                    </label>
+                                    <p className="mt-2 text-xs text-gray-400">
+                                        Caso o corretor vendedor for diferente, ele precisa estar cadastrado e aprovado no sistema.
+                                    </p>
 
-                                {!isSelfBroker && (
-                                    <div className="mt-4 space-y-2">
+                                    {!isSelfBroker && (
+                                        <div className="mt-4 space-y-2">
                                         <div className="relative">
                                             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                                             <input
@@ -475,8 +489,9 @@ export default function ProposalWizardPage() {
                                             </div>
                                         )}
                                     </div>
-                                )}
-                            </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     ) : (
                         /* ═══ STEP 2: Payment Composition ═══ */
