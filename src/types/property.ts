@@ -21,6 +21,8 @@ export interface Property {
     semQuadra?: boolean
     semLote?: boolean
     areaTerreno?: number
+    /** Unidade em que o usuário cadastrou a área do terreno; `areaTerreno` no API é sempre m². */
+    areaTerrenoUnidade?: 'm2' | 'alqueire' | 'hectare'
     garageSpots?: number
     hasWifi?: boolean
     temPiscina?: boolean

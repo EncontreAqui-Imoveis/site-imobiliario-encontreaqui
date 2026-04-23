@@ -41,6 +41,8 @@ export default function FavoritosPage() {
     }
 
     const handleRemove = async (propertyId: number) => {
+        const shouldRemove = window.confirm('Deseja remover dos favoritos?')
+        if (!shouldRemove) return
         try {
             await removeFavorite(propertyId)
             setFavorites(prev => prev.filter(p => p.id !== propertyId))

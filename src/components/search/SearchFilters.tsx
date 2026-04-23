@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Search, X, ChevronDown, SlidersHorizontal, MapPin, Home, Bed, Bath, DollarSign, Filter, Check } from 'lucide-react'
+import { useLocationOptions } from './useLocationOptions'
+import { CurrencyInput } from '@/components/form/CurrencyInput'
+import { parseCurrencyInput } from '@/lib/currencyInput'
 
 // ... existing options ...
 const propertyTypes = [
@@ -10,8 +13,15 @@ const propertyTypes = [
     { value: 'Casa', label: 'Casa' },
     { value: 'Apartamento', label: 'Apartamento' },
     { value: 'Terreno', label: 'Terreno' },
-    { value: 'Propriedade Rural', label: 'Rural' },
-    { value: 'Propriedade Comercial', label: 'Comercial' },
+    { value: 'Prédio', label: 'Prédio' },
+    { value: 'Fazenda', label: 'Fazenda' },
+    { value: 'Chácara', label: 'Chácara' },
+    { value: 'Sobrado', label: 'Sobrado' },
+    { value: 'Kitnet', label: 'Kitnet' },
+    { value: 'Cobertura', label: 'Cobertura' },
+    { value: 'Galpão', label: 'Galpão' },
+    { value: 'Loja', label: 'Loja' },
+    { value: 'Sala Comercial', label: 'Sala Comercial' },
 ]
 
 const purposes = [
@@ -49,12 +59,13 @@ export default function SearchFilters() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const [isOpen, setIsOpen] = useState(false)
+    const [priceError, setPriceError] = useState<string | null>(null)
     const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
         location: true,
         details: true,
         price: true,
         area: true,
-        amenities: false
+        amenities: true
     })
 
     const toggleSection = (section: string) => {
@@ -86,6 +97,7 @@ export default function SearchFilters() {
         })
         return initial
     })
+    const { cities, bairros, isLoadingCities, isLoadingBairros } = useLocationOptions(filters.city)
 
     // Sync from URL
     useEffect(() => {
@@ -117,9 +129,22 @@ export default function SearchFilters() {
 
     }, [searchParams])
 
+    useEffect(() => {
+        if (!filters.bairro || isLoadingBairros) return
+        const exists = bairros.some((item) => item.bairro === filters.bairro)
+        if (!exists) {
+            setFilters((prev) => ({ ...prev, bairro: '' }))
+        }
+    }, [bairros, filters.bairro, isLoadingBairros])
+
 
     const handleChange = (key: string, value: string) => {
-        setFilters(prev => ({ ...prev, [key]: value }))
+        setFilters(prev => {
+            if (key === 'city') {
+                return { ...prev, city: value, bairro: '' }
+            }
+            return { ...prev, [key]: value }
+        })
     }
 
     /** Finalidade: aplica na URL na hora (sem depender de “Ver resultados”). */
@@ -137,12 +162,27 @@ export default function SearchFilters() {
     }
 
     const applyFilters = () => {
+        const min = parseCurrencyInput(filters.minPrice)
+        const max = parseCurrencyInput(filters.maxPrice)
+        if (min > 0 && max > 0 && max < min) {
+            setPriceError('O valor máximo deve ser maior ou igual ao mínimo.')
+            return
+        }
+        setPriceError(null)
         const params = new URLSearchParams()
 
         Object.entries(filters).forEach(([key, value]) => {
             if (!value) return
             if (key === 'tipoLote') {
                 params.set('tipo_lote', value)
+                return
+            }
+            if (key === 'minPrice') {
+                params.set('minPrice', String(min))
+                return
+            }
+            if (key === 'maxPrice') {
+                params.set('maxPrice', String(max))
                 return
             }
             params.set(key, value)
@@ -275,22 +315,40 @@ export default function SearchFilters() {
                             </button>
                             {expandedSections.location && (
                                 <div className="p-4 pt-0 space-y-3 border-t border-gray-50 lg:border-none">
-                                    <input
-                                        type="text"
+                                    <select
                                         value={filters.city}
                                         onChange={(e) => handleChange('city', e.target.value)}
-                                        maxLength={120}
-                                        placeholder="Cidade"
                                         className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                    />
-                                    <input
-                                        type="text"
+                                    >
+                                        <option value="">{isLoadingCities ? 'Carregando cidades...' : 'Todas as cidades'}</option>
+                                        {cities.map((cityOption) => (
+                                            <option key={cityOption.city} value={cityOption.city}>
+                                                {cityOption.city} ({cityOption.total})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <select
                                         value={filters.bairro}
                                         onChange={(e) => handleChange('bairro', e.target.value)}
-                                        maxLength={120}
-                                        placeholder="Bairro"
                                         className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                    />
+                                        disabled={isLoadingBairros || bairros.length === 0}
+                                    >
+                                        <option value="">
+                                            {isLoadingBairros
+                                                ? 'Carregando bairros...'
+                                                : filters.city
+                                                    ? 'Todos os bairros da cidade'
+                                                    : 'Todos os bairros'}
+                                        </option>
+                                        {bairros.map((bairroOption) => (
+                                            <option
+                                                key={`${bairroOption.city}-${bairroOption.bairro}`}
+                                                value={bairroOption.bairro}
+                                            >
+                                                {bairroOption.bairro} ({bairroOption.total})
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                             )}
                         </div>
@@ -326,6 +384,7 @@ export default function SearchFilters() {
                                         </label>
                                         <input
                                             type="text"
+                                            inputMode="numeric"
                                             value={filters.code}
                                             onChange={(e) => handleChange('code', e.target.value)}
                                             maxLength={80}
@@ -391,20 +450,23 @@ export default function SearchFilters() {
                             </button>
                             {expandedSections.price && (
                                 <div className="p-4 pt-0 grid grid-cols-2 gap-3 border-t border-gray-50 lg:border-none">
-                                    <input
-                                        type="number"
+                                    <CurrencyInput
                                         value={filters.minPrice}
-                                        onChange={(e) => handleChange('minPrice', e.target.value)}
+                                        onChange={(value) => handleChange('minPrice', value)}
                                         placeholder="Mínimo"
                                         className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                                     />
-                                    <input
-                                        type="number"
+                                    <CurrencyInput
                                         value={filters.maxPrice}
-                                        onChange={(e) => handleChange('maxPrice', e.target.value)}
+                                        onChange={(value) => handleChange('maxPrice', value)}
                                         placeholder="Máximo"
                                         className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                                     />
+                                    {priceError && (
+                                        <p className="col-span-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                                            {priceError}
+                                        </p>
+                                    )}
                                 </div>
                             )}
                         </div>

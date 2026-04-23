@@ -47,6 +47,7 @@ import { validateImageFile, validateVideoFile } from '@/lib/sanitize'
 import { useUser } from '@/contexts/UserContext'
 import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
+import { areaUnitLabel } from '@/lib/areaUnits'
 
 type WizardStep = 1 | 2 | 3 | 4 | 5 | 6
 type CepLookupResult = { logradouro: string; bairro: string; localidade: string; uf: string }
@@ -58,12 +59,17 @@ const REVIEW_CARD = 'min-w-0 rounded-xl border border-slate-200 bg-white p-4'
 const REVIEW_SECTION_TITLE = 'text-base font-bold text-slate-900'
 const REVIEW_LABEL = 'text-xs font-semibold uppercase tracking-[0.12em] text-slate-500'
 const REVIEW_VALUE = 'mt-2 text-sm text-slate-800 whitespace-pre-wrap break-words [overflow-wrap:anywhere]'
+const AREA_UNIT_OPTIONS: Array<{ value: CreatePropertyDraftData['areaConstruidaUnidade']; label: string }> = [
+    { value: 'm2', label: 'm²' },
+    { value: 'hectare', label: 'Hectare (ha)' },
+    { value: 'alqueire', label: 'Alqueire' },
+]
 const INITIAL: CreatePropertyDraftData = {
     actorMode: null, propertyType: '', purpose: '', title: '', description: '', ownerName: '', ownerPhone: '',
     priceSale: '', priceRent: '', cep: '', state: 'GO', city: '', bairro: '', address: '', numero: '', complemento: '',
     quadra: '', lote: '', tipoLote: '', semNumero: false, semQuadra: false, semLote: false,
     bedrooms: '', bathrooms: '', garageSpots: '',
-    areaConstruida: '', areaConstruidaUnidade: 'm2', areaTerreno: '', hasWifi: false, temPiscina: false, temAutomacao: false,
+    areaConstruida: '', areaConstruidaUnidade: 'm2', areaTerreno: '', areaTerrenoUnidade: 'm2', hasWifi: false, temPiscina: false, temAutomacao: false,
     temArCondicionado: false, ehMobiliada: false,
 }
 
@@ -87,6 +93,20 @@ function parseDraft(data: Record<string, unknown>): CreatePropertyDraftData {
 function validOwnerPhone(value: string) {
     const digits = digitsOnly(value)
     return digits.length === 0 || (digits.length >= 10 && digits.length <= 13)
+}
+
+type CountFieldKey = 'bedrooms' | 'bathrooms' | 'garageSpots'
+type CountFieldMode = 'none' | 'count'
+
+function resolveCountFieldMode(value: string): CountFieldMode {
+    return value.trim().length === 0 ? 'none' : 'count'
+}
+
+function isValidCountFieldValue(value: string): boolean {
+    if (!value.trim()) return true
+    if (!/^\d+$/.test(value)) return false
+    const parsed = Number(value)
+    return Number.isInteger(parsed) && parsed >= 0 && parsed <= MAX_PROPERTY_COUNT
 }
 
 async function lookupCep(cep: string): Promise<CepLookupResult | null> {
@@ -200,6 +220,15 @@ export default function AnunciePage() {
 
     function updateField<K extends keyof CreatePropertyDraftData>(key: K, value: CreatePropertyDraftData[K]) {
         setForm((current) => ({ ...current, [key]: value }))
+        setError(null)
+    }
+
+    function setCountFieldMode(key: CountFieldKey, mode: CountFieldMode) {
+        setForm((current) => {
+            if (mode === 'none') return { ...current, [key]: '' }
+            if (!current[key]) return { ...current, [key]: '0' }
+            return current
+        })
         setError(null)
     }
 
@@ -331,9 +360,9 @@ export default function AnunciePage() {
                     Number(form.areaTerreno) > 0 &&
                     Number(form.areaConstruida) <= MAX_PROPERTY_AREA &&
                     Number(form.areaTerreno) <= MAX_PROPERTY_AREA &&
-                    (!form.bedrooms || Number(form.bedrooms) <= MAX_PROPERTY_COUNT) &&
-                    (!form.bathrooms || Number(form.bathrooms) <= MAX_PROPERTY_COUNT) &&
-                    (!form.garageSpots || Number(form.garageSpots) <= MAX_PROPERTY_COUNT)
+                    isValidCountFieldValue(form.bedrooms) &&
+                    isValidCountFieldValue(form.bathrooms) &&
+                    isValidCountFieldValue(form.garageSpots)
                 )
             case 4:
                 return true
@@ -481,7 +510,7 @@ export default function AnunciePage() {
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2">
                             <div><label className={LABEL}>Nome do proprietário</label><input value={form.ownerName} onChange={(e) => updateField('ownerName', e.target.value)} maxLength={120} className={INPUT} /></div>
-                            <div><label className={LABEL}>Telefone do proprietário</label><input value={form.ownerPhone} onChange={(e) => updateField('ownerPhone', formatPhoneInput(e.target.value))} maxLength={19} className={INPUT} placeholder="+55 (00) 00000-0000" /></div>
+                            <div><label className={LABEL}>Telefone do proprietário</label><input value={form.ownerPhone} onChange={(e) => updateField('ownerPhone', formatPhoneInput(e.target.value))} maxLength={15} className={INPUT} placeholder="(00) 00000-0000" /></div>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2">
                             {saleEnabled && <div><label className={LABEL}>Preço de venda *</label><CurrencyInput value={form.priceSale} onChange={(value) => updateField('priceSale', value)} className={INPUT} placeholder="R$ 0,00" /></div>}
@@ -529,25 +558,107 @@ export default function AnunciePage() {
 
                 {step === 3 && (
                     <>
-                        <div className="grid gap-3 sm:grid-cols-2">
-                            <div>
-                                <label className={LABEL}>Área construída *</label>
-                                <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
-                                    <input type="number" min="0" max={MAX_PROPERTY_AREA} step="0.01" value={form.areaConstruida} onChange={(e) => updateField('areaConstruida', clampAreaInput(e.target.value))} className={`${INPUT} min-w-0 flex-1`} />
-                                    <select value={form.areaConstruidaUnidade} onChange={(e) => updateField('areaConstruidaUnidade', e.target.value as CreatePropertyDraftData['areaConstruidaUnidade'])} className={`${INPUT} sm:w-40 shrink-0`}>
-                                        <option value="m2">m²</option>
-                                        <option value="hectare">Hectare (ha)</option>
-                                        <option value="alqueire">Alqueire</option>
-                                    </select>
+                        <div className="rounded-2xl border border-primary-100 bg-gradient-to-br from-primary-50/60 to-white p-4 sm:p-5">
+                            <h3 className="text-sm font-semibold text-slate-900">Dimensões do imóvel</h3>
+                            <p className="mt-1 text-xs text-slate-600">
+                                Informe as áreas com a unidade correta. O sistema converte internamente para m².
+                            </p>
+                            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label className={LABEL}>Área construída *</label>
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+                                        <input type="number" min="0" max={MAX_PROPERTY_AREA} step="0.01" value={form.areaConstruida} onChange={(e) => updateField('areaConstruida', clampAreaInput(e.target.value))} className={`${INPUT} min-w-0 flex-1`} />
+                                        <select value={form.areaConstruidaUnidade} onChange={(e) => updateField('areaConstruidaUnidade', e.target.value as CreatePropertyDraftData['areaConstruidaUnidade'])} className={`${INPUT} shrink-0 sm:w-44`}>
+                                            {AREA_UNIT_OPTIONS.map((option) => (
+                                                <option key={option.value} value={option.value}>{option.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
-                                <p className="mt-1 text-xs text-slate-500">Armazenado em m² no sistema; a unidade escolhida fica registrada.</p>
+                                <div>
+                                    <label className={LABEL}>Área do terreno *</label>
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+                                        <input type="number" min="0" max={MAX_PROPERTY_AREA} step="0.01" value={form.areaTerreno} onChange={(e) => updateField('areaTerreno', clampAreaInput(e.target.value))} className={`${INPUT} min-w-0 flex-1`} />
+                                        <select value={form.areaTerrenoUnidade} onChange={(e) => updateField('areaTerrenoUnidade', e.target.value as CreatePropertyDraftData['areaTerrenoUnidade'])} className={`${INPUT} shrink-0 sm:w-44`}>
+                                            {AREA_UNIT_OPTIONS.map((option) => (
+                                                <option key={option.value} value={option.value}>{option.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
-                            <div><label className={LABEL}>Área do terreno (m²) *</label><input type="number" min="0" max={MAX_PROPERTY_AREA} step="0.01" value={form.areaTerreno} onChange={(e) => updateField('areaTerreno', clampAreaInput(e.target.value))} className={INPUT} /></div>
                         </div>
-                        <div className="grid gap-3 sm:grid-cols-3">
-                            <div><label className={LABEL}>Quartos</label><input type="number" min="0" max={MAX_PROPERTY_COUNT} value={form.bedrooms} onChange={(e) => updateField('bedrooms', clampCountInput(e.target.value))} className={INPUT} /></div>
-                            <div><label className={LABEL}>Banheiros</label><input type="number" min="0" max={MAX_PROPERTY_COUNT} value={form.bathrooms} onChange={(e) => updateField('bathrooms', clampCountInput(e.target.value))} className={INPUT} /></div>
-                            <div><label className={LABEL}>Garagens</label><input type="number" min="0" max={MAX_PROPERTY_COUNT} value={form.garageSpots} onChange={(e) => updateField('garageSpots', clampCountInput(e.target.value))} className={INPUT} /></div>
+
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
+                            <h3 className="text-sm font-semibold text-slate-900">Quartos, banheiros e garagem</h3>
+                            <p className="mt-1 text-xs text-slate-600">
+                                Escolha “Sem ...” quando não se aplica ou informe a quantidade (inclui valor 0).
+                            </p>
+                            <div className="mt-4 grid gap-4 md:grid-cols-3">
+                                <div className="rounded-xl border border-slate-200 bg-white p-3">
+                                    <label className={LABEL}>Quartos</label>
+                                    <select
+                                        value={resolveCountFieldMode(form.bedrooms)}
+                                        onChange={(e) => setCountFieldMode('bedrooms', e.target.value as CountFieldMode)}
+                                        className={INPUT}
+                                    >
+                                        <option value="none">Sem quartos</option>
+                                        <option value="count">Informar quantidade</option>
+                                    </select>
+                                    {resolveCountFieldMode(form.bedrooms) === 'count' && (
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max={MAX_PROPERTY_COUNT}
+                                            value={form.bedrooms}
+                                            onChange={(e) => updateField('bedrooms', clampCountInput(e.target.value))}
+                                            className={`${INPUT} mt-2`}
+                                        />
+                                    )}
+                                </div>
+                                <div className="rounded-xl border border-slate-200 bg-white p-3">
+                                    <label className={LABEL}>Banheiros</label>
+                                    <select
+                                        value={resolveCountFieldMode(form.bathrooms)}
+                                        onChange={(e) => setCountFieldMode('bathrooms', e.target.value as CountFieldMode)}
+                                        className={INPUT}
+                                    >
+                                        <option value="none">Sem banheiros</option>
+                                        <option value="count">Informar quantidade</option>
+                                    </select>
+                                    {resolveCountFieldMode(form.bathrooms) === 'count' && (
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max={MAX_PROPERTY_COUNT}
+                                            value={form.bathrooms}
+                                            onChange={(e) => updateField('bathrooms', clampCountInput(e.target.value))}
+                                            className={`${INPUT} mt-2`}
+                                        />
+                                    )}
+                                </div>
+                                <div className="rounded-xl border border-slate-200 bg-white p-3">
+                                    <label className={LABEL}>Garagem</label>
+                                    <select
+                                        value={resolveCountFieldMode(form.garageSpots)}
+                                        onChange={(e) => setCountFieldMode('garageSpots', e.target.value as CountFieldMode)}
+                                        className={INPUT}
+                                    >
+                                        <option value="none">Sem garagem</option>
+                                        <option value="count">Informar quantidade</option>
+                                    </select>
+                                    {resolveCountFieldMode(form.garageSpots) === 'count' && (
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max={MAX_PROPERTY_COUNT}
+                                            value={form.garageSpots}
+                                            onChange={(e) => updateField('garageSpots', clampCountInput(e.target.value))}
+                                            className={`${INPUT} mt-2`}
+                                        />
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </>
                 )}
@@ -694,19 +805,21 @@ export default function AnunciePage() {
                                         </div>
                                         <div className="min-w-0">
                                             <p className={REVIEW_LABEL}>Área do terreno</p>
-                                            <p className={REVIEW_VALUE}>{form.areaTerreno || '—'} m²</p>
+                                            <p className={REVIEW_VALUE}>
+                                                {form.areaTerreno || '—'} {areaUnitLabel(form.areaTerrenoUnidade)}
+                                            </p>
                                         </div>
                                         <div className="min-w-0">
                                             <p className={REVIEW_LABEL}>Quartos</p>
-                                            <p className={REVIEW_VALUE}>{form.bedrooms || '—'}</p>
+                                            <p className={REVIEW_VALUE}>{form.bedrooms || 'Sem quartos'}</p>
                                         </div>
                                         <div className="min-w-0">
                                             <p className={REVIEW_LABEL}>Banheiros</p>
-                                            <p className={REVIEW_VALUE}>{form.bathrooms || '—'}</p>
+                                            <p className={REVIEW_VALUE}>{form.bathrooms || 'Sem banheiros'}</p>
                                         </div>
                                         <div className="min-w-0">
                                             <p className={REVIEW_LABEL}>Garagens</p>
-                                            <p className={REVIEW_VALUE}>{form.garageSpots || '—'}</p>
+                                            <p className={REVIEW_VALUE}>{form.garageSpots || 'Sem garagem'}</p>
                                         </div>
                                     </div>
                                 </div>

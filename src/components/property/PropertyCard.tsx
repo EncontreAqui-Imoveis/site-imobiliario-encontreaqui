@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Bed, Bath, Car, Maximize, MapPin, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Property, formatPrice, getPromoSalePrice, getPromoRentPrice } from '@/types/property'
 import { capitalizePropertyTitle } from '@/lib/propertyTitleDisplay'
+import { formatUnit } from '@/lib/propertyLabels'
 import FavoriteButton from '@/components/property/FavoriteButton'
 import PhotoWatermark from '@/components/property/PhotoWatermark'
 
@@ -171,19 +172,19 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                     {property.bedrooms != null && property.bedrooms > 0 && (
                         <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-3 py-3 text-center text-sm text-gray-700">
                             <Bed className="h-4 w-4 shrink-0 text-gray-400" />
-                            <span className="font-medium leading-tight">{property.bedrooms} quartos</span>
+                            <span className="font-medium leading-tight">{formatUnit(property.bedrooms, 'Quarto', 'Quartos')}</span>
                         </div>
                     )}
                     {property.bathrooms != null && property.bathrooms > 0 && (
                         <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-3 py-3 text-center text-sm text-gray-700">
                             <Bath className="h-4 w-4 shrink-0 text-gray-400" />
-                            <span className="font-medium leading-tight">{property.bathrooms} banheiros</span>
+                            <span className="font-medium leading-tight">{formatUnit(property.bathrooms, 'Banheiro', 'Banheiros')}</span>
                         </div>
                     )}
                     {property.garageSpots != null && property.garageSpots > 0 && (
                         <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-3 py-3 text-center text-sm text-gray-700">
                             <Car className="h-4 w-4 shrink-0 text-gray-400" />
-                            <span className="font-medium leading-tight">{property.garageSpots} vagas</span>
+                            <span className="font-medium leading-tight">{formatUnit(property.garageSpots, 'Garagem', 'Garagens')}</span>
                         </div>
                     )}
                     {property.areaConstruida != null && property.areaConstruida > 0 && (

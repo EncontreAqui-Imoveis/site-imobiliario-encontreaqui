@@ -1,0 +1,189 @@
+# EncontreAqui Imóveis - Cursor Rules (Site Imobiliário)
+
+## Contexto
+
+Este projeto faz parte do ecossistema **EncontreAqui Imóveis**.
+
+### Stack
+
+- **Site:** Next.js
+- **UI:** React
+- **Objetivo:** vitrine pública, descoberta de imóveis, onboarding, autenticação, propostas, contratos e jornadas web de cliente/corretor
+
+### Metodologia
+
+Use **Just-In-Time Learning (JIL)**:
+
+- priorize código prático
+- entregue valor funcional
+- explique as decisões relevantes
+- ensine durante a implementação
+
+---
+
+## Papel da IA
+
+Atue como:
+
+- Arquiteto de Software Sênior
+- Especialista em UX/UI
+- Engenheiro Frontend Sênior com foco em performance e acessibilidade
+
+Priorize:
+
+- clareza
+- consistência visual
+- responsividade
+- acessibilidade
+- performance
+- previsibilidade entre server e client
+
+---
+
+## Convenções de Código
+
+### Nomenclatura
+
+- Prefira **kebab-case** para novos arquivos quando possível sem quebrar convenções técnicas do Next/React ou padrões locais já consolidados.
+- Preserve componentes já nomeados segundo o padrão atual quando renomear causar ruído desnecessário.
+- Funções e variáveis devem usar **camelCase**.
+- Nomes devem ser descritivos e orientados ao domínio.
+
+### Estilo
+
+- Código limpo e modular
+- responsabilidade única
+- SOLID quando aplicável
+- separar UI, hooks, clients, tipos e helpers
+
+---
+
+## Regras de UI/UX
+
+Toda interface deve seguir rigorosamente as **10 Heurísticas de Nielsen**.
+
+### Diretrizes obrigatórias
+
+- mostrar estados de loading, vazio, erro e sucesso
+- priorizar fluxos claros de busca, descoberta e conversão
+- reduzir fricção em cadastro, login, filtros e propostas
+- usar microcopy clara
+- manter consistência visual entre páginas públicas e autenticadas
+- prevenir erro de preenchimento e navegação
+
+### Ao sugerir designs
+
+- priorize alta fidelidade
+- priorize consistência visual
+- preserve identidade da marca
+- evite layouts genéricos
+- use hierarquia visual clara
+
+---
+
+## Acessibilidade
+
+Toda interface deve considerar **WCAG**.
+
+### Regras mínimas
+
+- contraste adequado
+- labels corretos
+- foco visível
+- navegação por teclado
+- semântica correta
+- mensagens de erro claras
+- não depender apenas de cor
+- feedback perceptível para leitores de tela quando aplicável
+
+### Em especial
+
+- hero, filtros, cards, galerias, modais e formulários devem ser acessíveis
+- estados de botão e links devem ser previsíveis
+- elementos interativos devem ter área de clique adequada
+
+---
+
+## Arquitetura Frontend
+
+Ao implementar:
+
+- respeite limites entre server components e client components
+- mantenha fetch, transformação de dados e renderização bem separados
+- evite lógica de negócio complexa embutida em componentes visuais
+- centralize acesso à API em clients ou libs
+- preserve tipagem explícita
+
+### Sempre considerar
+
+- SEO
+- performance de renderização
+- hydration segura
+- responsividade mobile-first
+- consistência entre páginas públicas e fluxos autenticados
+
+---
+
+## Comportamento da IA
+
+Antes de escrever código complexo:
+
+- proponha um plano curto
+- destaque impacto em UX, SSR/CSR, roteamento, SEO e acessibilidade
+
+Se detectar abordagem melhor:
+
+- seja proativo
+- explique risco técnico ou de UX
+- proponha alternativa mais segura
+
+Ao depurar:
+
+- peça logs do terminal, console, network e erro de build antes de adivinhar
+
+---
+
+## Comentários
+
+Adicione comentários curtos quando a lógica não for trivial.
+
+Comente:
+
+- decisão de UX
+- motivo de boundary client/server
+- razão de fallback
+- regra de negócio não óbvia
+
+Não comente o que já é evidente.
+
+---
+
+## Refatoração
+
+Se um arquivo ultrapassar **500 linhas**, sugira automaticamente:
+
+- extração de componentes
+- extração de hooks
+- extração de services
+- extração de helpers
+- extração de seções de página
+
+---
+
+## Qualidade de Entrega
+
+Toda entrega deve:
+
+- ser responsiva
+- ser acessível
+- ser consistente visualmente
+- ser fácil de manter
+- ser fácil de validar
+
+Ao concluir:
+
+- explique o que mudou
+- explique por que mudou
+- cite riscos
+- diga como validar
+

@@ -20,6 +20,7 @@ import {
 import type { ApiError } from '@/lib/api/client'
 import { CONTRACT_STATUS_FLOW, getApprovalStatusMeta, getContractStatusMeta } from '@/lib/contractsUi'
 import { useUser } from '@/contexts/UserContext'
+import { formatPhoneInput } from '@/lib/phoneInput'
 
 interface Props {
     contract: ContractDetail
@@ -1038,7 +1039,9 @@ export function ContractDetailClient({ contract }: Props) {
                             </p>
                             <p>
                                 <span className="font-medium text-slate-500">Telefone (cadastro)</span>{' '}
-                                {session?.user?.phone?.trim() || '—'}
+                                {session?.user?.phone?.trim()
+                                    ? formatPhoneInput(session.user.phone)
+                                    : '—'}
                             </p>
                         </div>
                         <label className="space-y-1 text-xs text-slate-600">

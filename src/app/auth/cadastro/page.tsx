@@ -503,9 +503,9 @@ export default function CadastroPage() {
                                 required
                                 value={draft.data.phone}
                                 onChange={(e) => updateDraft({ phone: formatPhoneInput(e.target.value) })}
-                                maxLength={19}
+                                maxLength={15}
                                 className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                placeholder="+55 (00) 00000-0000"
+                                placeholder="(00) 00000-0000"
                             />
                         </div>
 

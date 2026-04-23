@@ -8,7 +8,7 @@ import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { fetchMyNegotiations } from '@/lib/negotiationsService'
 import type { NegotiationSummary } from '@/types/negotiation'
 import { getStatusLabel, getStatusColor } from '@/types/negotiation'
-import { FileText, Loader2, Plus, Building2 } from 'lucide-react'
+import { FileText, Loader2, Plus, Building2, Pencil, Trash2 } from 'lucide-react'
 
 export default function PropostasPage() {
     const router = useRouter()
@@ -19,6 +19,7 @@ export default function PropostasPage() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [filter, setFilter] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all')
+    const managementActionsAvailable = false
 
     useEffect(() => {
         if (!authLoading && !session) {
@@ -138,6 +139,12 @@ export default function PropostasPage() {
                 </div>
             )}
 
+            {!managementActionsAvailable && (
+                <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-sm">
+                    As ações de editar e excluir proposta ainda não estão disponíveis no site. A interface já está pronta para integração.
+                </div>
+            )}
+
             <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Aguardando assinatura</p>
@@ -242,6 +249,34 @@ export default function PropostasPage() {
                                     <p className="mt-2 text-xs font-medium text-primary-700">
                                         {resolveActionLabel(neg.status)}
                                     </p>
+                                </div>
+                                <div
+                                    className="flex flex-col items-end gap-2"
+                                    onClick={(event) => {
+                                        event.preventDefault()
+                                        event.stopPropagation()
+                                    }}
+                                >
+                                    <button
+                                        type="button"
+                                        disabled={!managementActionsAvailable}
+                                        title={managementActionsAvailable ? 'Editar proposta' : 'Editar em breve'}
+                                        aria-label="Editar proposta"
+                                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-500 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        <Pencil className="h-3.5 w-3.5" />
+                                        Editar
+                                    </button>
+                                    <button
+                                        type="button"
+                                        disabled={!managementActionsAvailable}
+                                        title={managementActionsAvailable ? 'Excluir proposta' : 'Excluir em breve'}
+                                        aria-label="Excluir proposta"
+                                        className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                        Excluir
+                                    </button>
                                 </div>
                             </div>
                         </Link>

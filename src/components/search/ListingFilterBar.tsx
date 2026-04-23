@@ -1,16 +1,26 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Filter, Search } from 'lucide-react'
+import { useLocationOptions } from './useLocationOptions'
+import { CurrencyInput } from '@/components/form/CurrencyInput'
+import { parseCurrencyInput } from '@/lib/currencyInput'
 
 const propertyTypes = [
     { value: '', label: 'Categoria' },
     { value: 'Casa', label: 'Casa' },
     { value: 'Apartamento', label: 'Apartamento' },
     { value: 'Terreno', label: 'Terreno' },
-    { value: 'Propriedade Rural', label: 'Rural' },
-    { value: 'Propriedade Comercial', label: 'Comercial' },
+    { value: 'Prédio', label: 'Prédio' },
+    { value: 'Fazenda', label: 'Fazenda' },
+    { value: 'Chácara', label: 'Chácara' },
+    { value: 'Sobrado', label: 'Sobrado' },
+    { value: 'Kitnet', label: 'Kitnet' },
+    { value: 'Cobertura', label: 'Cobertura' },
+    { value: 'Galpão', label: 'Galpão' },
+    { value: 'Loja', label: 'Loja' },
+    { value: 'Sala Comercial', label: 'Sala Comercial' },
 ]
 
 export default function ListingFilterBar() {
@@ -22,6 +32,23 @@ export default function ListingFilterBar() {
     const [minPrice, setMinPrice] = useState('')
     const [maxPrice, setMaxPrice] = useState('')
     const [code, setCode] = useState('')
+    const [priceError, setPriceError] = useState<string | null>(null)
+    const { cities, bairros, isLoadingCities, isLoadingBairros } = useLocationOptions(city)
+    const normalizeLabel = (value: string) =>
+        value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
+    const filteredCities = useMemo(() => {
+        const query = normalizeLabel(city)
+        if (!query) return cities
+        return cities.filter((item) => normalizeLabel(item.city).includes(query))
+    }, [cities, city])
+    const filteredBairros = useMemo(() => {
+        if (!city.trim()) return []
+        const cityQuery = normalizeLabel(city)
+        const bairroQuery = normalizeLabel(bairro)
+        return bairros
+            .filter((item) => normalizeLabel(item.city) === cityQuery)
+            .filter((item) => normalizeLabel(item.bairro).includes(bairroQuery))
+    }, [bairros, bairro, city])
 
     useEffect(() => {
         setCity(searchParams.get('city') || '')
@@ -32,7 +59,20 @@ export default function ListingFilterBar() {
         setCode(searchParams.get('code') || '')
     }, [searchParams.toString()])
 
+    useEffect(() => {
+        if (!bairro || isLoadingBairros) return
+        const exists = bairros.some((item) => item.bairro === bairro)
+        if (!exists) setBairro('')
+    }, [bairro, bairros, isLoadingBairros])
+
     const apply = useCallback(() => {
+        const min = parseCurrencyInput(minPrice)
+        const max = parseCurrencyInput(maxPrice)
+        if (min > 0 && max > 0 && max < min) {
+            setPriceError('O valor máximo deve ser maior ou igual ao mínimo.')
+            return
+        }
+        setPriceError(null)
         const next = new URLSearchParams(searchParams.toString())
         const setOrDelete = (key: string, value: string) => {
             const t = value.trim()
@@ -42,8 +82,8 @@ export default function ListingFilterBar() {
         setOrDelete('city', city)
         setOrDelete('bairro', bairro)
         setOrDelete('type', type)
-        setOrDelete('minPrice', minPrice)
-        setOrDelete('maxPrice', maxPrice)
+        setOrDelete('minPrice', min > 0 ? String(min) : '')
+        setOrDelete('maxPrice', max > 0 ? String(max) : '')
         setOrDelete('code', code)
         next.delete('id')
         router.push(`/imoveis?${next.toString()}`)
@@ -62,24 +102,48 @@ export default function ListingFilterBar() {
                 <div className="lg:col-span-1">
                     <label className="mb-1 block text-xs font-medium text-gray-500">Cidade</label>
                     <input
-                        type="text"
                         value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        maxLength={120}
-                        placeholder="Ex: Goiânia"
+                        onChange={(e) => {
+                            setCity(e.target.value)
+                            setBairro('')
+                        }}
+                        list="listing-city-options"
+                        autoComplete="off"
                         className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                        placeholder={isLoadingCities ? 'Carregando cidades...' : 'Digite a cidade'}
                     />
+                    <datalist id="listing-city-options">
+                        {filteredCities.map((cityOption) => (
+                            <option key={cityOption.city} value={cityOption.city}>
+                                {`${cityOption.city} (${cityOption.total})`}
+                            </option>
+                        ))}
+                    </datalist>
                 </div>
                 <div className="lg:col-span-1">
                     <label className="mb-1 block text-xs font-medium text-gray-500">Bairro</label>
                     <input
-                        type="text"
                         value={bairro}
                         onChange={(e) => setBairro(e.target.value)}
-                        maxLength={120}
-                        placeholder="Ex: Setor Bueno"
+                        list="listing-bairro-options"
+                        autoComplete="off"
                         className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                        disabled={!city.trim() || isLoadingBairros}
+                        placeholder={
+                            !city.trim()
+                                ? 'Selecione uma cidade primeiro'
+                                : isLoadingBairros
+                                    ? 'Carregando bairros...'
+                                    : 'Digite o bairro'
+                        }
                     />
+                    <datalist id="listing-bairro-options">
+                        {filteredBairros.map((bairroOption) => (
+                            <option key={`${bairroOption.city}-${bairroOption.bairro}`} value={bairroOption.bairro}>
+                                {`${bairroOption.bairro} (${bairroOption.total})`}
+                            </option>
+                        ))}
+                    </datalist>
                 </div>
                 <div className="lg:col-span-1">
                     <label className="mb-1 block text-xs font-medium text-gray-500">Categoria</label>
@@ -97,24 +161,18 @@ export default function ListingFilterBar() {
                 </div>
                 <div>
                     <label className="mb-1 block text-xs font-medium text-gray-500">Valor mín. (R$)</label>
-                    <input
-                        type="number"
-                        inputMode="numeric"
-                        min={0}
+                    <CurrencyInput
                         value={minPrice}
-                        onChange={(e) => setMinPrice(e.target.value)}
+                        onChange={setMinPrice}
                         placeholder="0"
                         className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
                     />
                 </div>
                 <div>
                     <label className="mb-1 block text-xs font-medium text-gray-500">Valor máx. (R$)</label>
-                    <input
-                        type="number"
-                        inputMode="numeric"
-                        min={0}
+                    <CurrencyInput
                         value={maxPrice}
-                        onChange={(e) => setMaxPrice(e.target.value)}
+                        onChange={setMaxPrice}
                         placeholder="Sem limite"
                         className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
                     />
@@ -123,6 +181,7 @@ export default function ListingFilterBar() {
                     <label className="mb-1 block text-xs font-medium text-gray-500">Código ou ID</label>
                     <input
                         type="text"
+                        inputMode="numeric"
                         value={code}
                         onChange={(e) => setCode(e.target.value)}
                         maxLength={80}
@@ -140,6 +199,11 @@ export default function ListingFilterBar() {
                         Aplicar
                     </button>
                 </div>
+                {priceError && (
+                    <p className="sm:col-span-2 lg:col-span-7 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                        {priceError}
+                    </p>
+                )}
             </div>
         </div>
     )

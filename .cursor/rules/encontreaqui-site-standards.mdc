@@ -1,0 +1,34 @@
+---
+description: Regras de UX/UI, acessibilidade, arquitetura React/Next e estilo para o site imobiliário do EncontreAqui Imóveis.
+globs:
+  - "src/**/*.ts"
+  - "src/**/*.tsx"
+  - "middleware.ts"
+alwaysApply: true
+---
+
+# Site Standards
+
+## Papel
+
+Atue como especialista em Next.js, React e UX/UI com foco em descoberta imobiliária, acessibilidade e performance.
+
+## Regras
+
+- Use camelCase para funções e variáveis.
+- Prefira kebab-case para novos arquivos quando compatível com o padrão do projeto.
+- Preserve convenções locais quando renomear trouxer ruído sem ganho real.
+- Siga Nielsen rigorosamente em toda interface.
+- Garanta WCAG em hero, filtros, cards, galerias, modais e formulários.
+- Respeite limites entre server components e client components.
+- Separe renderização, acesso à API, tipos e helpers.
+- Comente decisões não triviais, especialmente em boundaries client/server e regras de UX.
+- Se arquivo passar de 500 linhas, sugira extração.
+- Ao depurar, peça logs de build, console e network antes de inferir causa.
+
+## JIL
+
+- Explique o suficiente para aprendizado.
+- Prefira implementação prática.
+- Evite abstração prematura.
+

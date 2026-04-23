@@ -1,20 +1,27 @@
-export function formatPhoneInput(value: string): string {
-    const digits = value.replace(/\D/g, '').slice(0, 13)
+function normalizePhoneLocalDigits(value: string): string {
+    const digits = value.replace(/\D/g, '')
     if (!digits) return ''
-    if (digits.length <= 2) return `+${digits}`
+    if (digits.startsWith('55') && digits.length > 11) {
+        return digits.slice(2, 13)
+    }
+    return digits.slice(0, 11)
+}
 
-    const country = digits.slice(0, 2)
-    const rest = digits.slice(2)
-
-    if (rest.length <= 2) return `+${country} (${rest}`
-    const area = rest.slice(0, 2)
-    const local = rest.slice(2)
-
-    if (!local) return `+${country} (${area})`
-    if (local.length <= 5) return `+${country} (${area}) ${local}`
-    return `+${country} (${area}) ${local.slice(0, 5)}-${local.slice(5)}`
+export function formatPhoneInput(value: string): string {
+    const digits = normalizePhoneLocalDigits(value)
+    if (!digits) return ''
+    if (digits.length <= 2) return `(${digits}`
+    const area = digits.slice(0, 2)
+    const local = digits.slice(2)
+    if (!local) return `(${area}) `
+    if (local.length <= 5) return `(${area}) ${local}`
+    return `(${area}) ${local.slice(0, 5)}-${local.slice(5)}`
 }
 
 export function normalizePhoneDigits(value: string): string {
-    return value.replace(/\D/g, '')
+    const local = normalizePhoneLocalDigits(value)
+    if (!local) return ''
+    return `55${local}`
 }
+
+export { normalizePhoneLocalDigits }

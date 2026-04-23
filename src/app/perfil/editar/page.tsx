@@ -11,12 +11,6 @@ import { ArrowLeft, Save, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { formatPhoneInput, normalizePhoneDigits } from '@/lib/phoneInput'
 
-const BRAZILIAN_STATES = [
-    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
-    'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
-    'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
-]
-
 export default function EditarPerfilPage() {
     const router = useRouter()
     const searchParams = useSearchParams()
@@ -24,17 +18,9 @@ export default function EditarPerfilPage() {
 
     const [name, setName] = useState('')
     const [phone, setPhone] = useState('')
-    const [cep, setCep] = useState('')
-    const [street, setStreet] = useState('')
-    const [number, setNumber] = useState('')
-    const [complement, setComplement] = useState('')
-    const [bairro, setBairro] = useState('')
-    const [city, setCity] = useState('')
-    const [state, setState] = useState('')
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
-    const [cepLoading, setCepLoading] = useState(false)
 
     useEffect(() => {
         if (!authLoading && !session) {
@@ -47,13 +33,6 @@ export default function EditarPerfilPage() {
             const u = session.user
             setName(u.name || '')
             setPhone(formatPhoneInput(u.phone || ''))
-            setCep(u.cep || '')
-            setStreet(u.street || '')
-            setNumber(u.number || '')
-            setComplement(u.complement || '')
-            setBairro(u.bairro || '')
-            setCity(u.city || '')
-            setState(u.state || '')
         }
     }, [session])
 
@@ -65,28 +44,6 @@ export default function EditarPerfilPage() {
         }
         return undefined
     }, [searchParams])
-
-    const handleCepBlur = async () => {
-        const cleanCep = cep.replace(/\D/g, '')
-        if (cleanCep.length !== 8) return
-        setCepLoading(true)
-        try {
-            const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`)
-            const data = await res.json()
-            if (!data.erro) {
-                setStreet(data.logradouro || street)
-                setBairro(data.bairro || bairro)
-                setCity(data.localidade || city)
-                setState(data.uf || state)
-            }
-        } catch { /* silent */ } finally { setCepLoading(false) }
-    }
-
-    const formatCep = (val: string) => {
-        const digits = val.replace(/\D/g, '').slice(0, 8)
-        if (digits.length <= 5) return digits
-        return `${digits.slice(0, 5)}-${digits.slice(5)}`
-    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -103,13 +60,6 @@ export default function EditarPerfilPage() {
             const payload = {
                 name: name || undefined,
                 phone: normalizePhoneDigits(phone) || undefined,
-                cep: cep.replace(/\D/g, '') || undefined,
-                street: street || undefined,
-                number: number || undefined,
-                complement: complement || undefined,
-                bairro: bairro || undefined,
-                city: city || undefined,
-                state: state || undefined,
             }
 
             const originalPhone = normalizePhoneDigits(session.user.phone || '') || ''
@@ -172,58 +122,9 @@ export default function EditarPerfilPage() {
 
                 <div className="space-y-1.5">
                     <label htmlFor="phone" className="block text-sm font-medium text-slate-700">Telefone</label>
-                    <input id="phone" type="tel" value={phone} onChange={(e) => setPhone(formatPhoneInput(e.target.value))} maxLength={19}
+                    <input id="phone" type="tel" value={phone} onChange={(e) => setPhone(formatPhoneInput(e.target.value))} maxLength={15}
                         className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        placeholder="+55 (00) 00000-0000" />
-                </div>
-
-                <div className="space-y-3 pt-2">
-                    <h3 className="text-sm font-semibold text-slate-800">Endereço</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                            <label htmlFor="cep" className="block text-xs font-medium text-slate-600">CEP</label>
-                            <input id="cep" type="text" value={cep} onChange={(e) => setCep(formatCep(e.target.value))} onBlur={handleCepBlur}
-                                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="00000-000" />
-                            {cepLoading && <p className="text-xs text-primary-500">Buscando...</p>}
-                        </div>
-                        <div className="space-y-1">
-                            <label htmlFor="state" className="block text-xs font-medium text-slate-600">Estado</label>
-                            <select id="state" value={state} onChange={(e) => setState(e.target.value)}
-                                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                <option value="">UF</option>
-                                {BRAZILIAN_STATES.map(uf => <option key={uf} value={uf}>{uf}</option>)}
-                            </select>
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                            <label htmlFor="city" className="block text-xs font-medium text-slate-600">Cidade</label>
-                            <input id="city" type="text" value={city} onChange={(e) => setCity(e.target.value)} maxLength={120}
-                                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                        </div>
-                        <div className="space-y-1">
-                            <label htmlFor="bairro" className="block text-xs font-medium text-slate-600">Bairro</label>
-                            <input id="bairro" type="text" value={bairro} onChange={(e) => setBairro(e.target.value)} maxLength={120}
-                                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                        </div>
-                    </div>
-                    <div className="space-y-1">
-                        <label htmlFor="street" className="block text-xs font-medium text-slate-600">Rua</label>
-                        <input id="street" type="text" value={street} onChange={(e) => setStreet(e.target.value)} maxLength={120}
-                            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                            <label htmlFor="number" className="block text-xs font-medium text-slate-600">Número</label>
-                            <input id="number" type="text" value={number} onChange={(e) => setNumber(e.target.value)} maxLength={120}
-                                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                        </div>
-                        <div className="space-y-1">
-                            <label htmlFor="complement" className="block text-xs font-medium text-slate-600">Complemento</label>
-                            <input id="complement" type="text" value={complement} onChange={(e) => setComplement(e.target.value)} maxLength={120}
-                                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                        </div>
-                    </div>
+                        placeholder="(00) 00000-0000" />
                 </div>
 
                 {error && (

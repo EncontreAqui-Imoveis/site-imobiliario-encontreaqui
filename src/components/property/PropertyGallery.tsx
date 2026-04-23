@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight, X, Play, Grid } from 'lucide-react'
+import FsLightbox from 'fslightbox-react'
+import { ChevronLeft, ChevronRight, Grid, X } from 'lucide-react'
 import FavoriteButton from '@/components/property/FavoriteButton'
 import PhotoWatermark from '@/components/property/PhotoWatermark'
 
@@ -17,6 +18,7 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
     const [isOpen, setIsOpen] = useState(false)
     const [photoIndex, setPhotoIndex] = useState(0)
     const [showVideo, setShowVideo] = useState(false)
+    const [lightboxToggler, setLightboxToggler] = useState(false)
 
     // Ensure we have valid images
     const validImages = images?.filter(Boolean) || []
@@ -35,6 +37,7 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
     const openLightbox = (index: number) => {
         setPhotoIndex(index)
         setIsOpen(true)
+        setLightboxToggler((prev) => !prev)
     }
 
     const nextPhoto = () => {
@@ -44,6 +47,15 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
     const prevPhoto = () => {
         setPhotoIndex((prev) => (prev - 1 + validImages.length) % validImages.length)
     }
+
+    useEffect(() => {
+        if (!isOpen && !showVideo) return
+        const previousOverflow = document.body.style.overflow
+        document.body.style.overflow = 'hidden'
+        return () => {
+            document.body.style.overflow = previousOverflow
+        }
+    }, [isOpen, showVideo])
 
     return (
         <div className="relative">
@@ -108,7 +120,10 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
             </div>
 
             {/* Mobile/Tablet — fundo desfocado; sem `priority` duplicado (evita aviso de preload no Chrome) */}
-            <div className="lg:hidden relative h-[40vh] overflow-hidden bg-slate-950 group">
+            <div
+                className="lg:hidden relative h-[40vh] overflow-hidden bg-slate-950 group cursor-pointer"
+                onClick={() => openLightbox(photoIndex)}
+            >
                 <div className="pointer-events-none absolute inset-0 scale-110" aria-hidden>
                     <Image
                         src={validImages[photoIndex]}
@@ -165,81 +180,12 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
             </button>
 
             {/* Lightbox Modal */}
-            {isOpen && (
-                <div className="fixed inset-0 z-[60] bg-black flex flex-col">
-                    {/* Toolbar */}
-                    <div className="flex items-center justify-between p-4 text-white z-[61] bg-gradient-to-b from-black/80 to-transparent">
-                        <span className="font-medium text-lg">{photoIndex + 1} / {validImages.length}</span>
-                        <div className="flex items-center gap-4">
-                            {videoUrl && (
-                                <button
-                                    onClick={() => setShowVideo(true)}
-                                    className="flex items-center gap-2 hover:text-primary-400 transition-colors"
-                                >
-                                    <Play className="w-5 h-5" />
-                                    Vídeo
-                                </button>
-                            )}
-                            <button
-                                onClick={() => setIsOpen(false)}
-                                className="rounded-full p-2 transition-colors hover:bg-white/10"
-                                aria-label="Fechar galeria"
-                            >
-                                <X className="w-8 h-8" />
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Main View */}
-                    <div className="flex-1 relative flex items-center justify-center p-4">
-                        <button
-                            onClick={(e) => { e.stopPropagation(); prevPhoto(); }}
-                            className="absolute left-4 z-10 rounded-full bg-white/90 p-3 text-slate-900 transition-colors hover:bg-white"
-                            aria-label="Foto anterior"
-                        >
-                            <ChevronLeft className="w-8 h-8" />
-                        </button>
-
-                        <div className="relative w-full h-full max-w-7xl mx-auto">
-                            <Image
-                                src={validImages[photoIndex]}
-                                alt="Fullscreen view"
-                                fill
-                                className="object-contain"
-                                quality={100}
-                            />
-                            <PhotoWatermark />
-                        </div>
-
-                        <button
-                            onClick={(e) => { e.stopPropagation(); nextPhoto(); }}
-                            className="absolute right-4 z-10 rounded-full bg-white/90 p-3 text-slate-900 transition-colors hover:bg-white"
-                            aria-label="Próxima foto"
-                        >
-                            <ChevronRight className="w-8 h-8" />
-                        </button>
-                    </div>
-
-                    {/* Thumbnails Strip */}
-                    <div className="h-24 bg-black/90 p-4 flex items-center gap-2 overflow-x-auto">
-                        {validImages.map((img, idx) => (
-                            <button
-                                key={idx}
-                                onClick={() => setPhotoIndex(idx)}
-                                className={`relative w-20 h-16 flex-shrink-0 rounded-md overflow-hidden transition-all ${idx === photoIndex ? 'ring-2 ring-primary-500 opacity-100' : 'opacity-50 hover:opacity-80'
-                                    }`}
-                            >
-                                <Image
-                                    src={img}
-                                    alt={`Thumbnail ${idx}`}
-                                    fill
-                                    className="object-cover"
-                                />
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
+            <FsLightbox
+                toggler={lightboxToggler}
+                sources={validImages}
+                slide={photoIndex + 1}
+                onClose={() => setIsOpen(false)}
+            />
 
             {/* Video Modal */}
             {showVideo && videoUrl && (

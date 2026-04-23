@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
-import { Search, Home, MapPin, ChevronDown, Loader2 } from 'lucide-react'
+import { Search, Home, ChevronDown, Loader2 } from 'lucide-react'
 import SignupDraftNotice from '@/components/auth/SignupDraftNotice'
+import LocationSelectFields from '@/components/search/LocationSelectFields'
+import { usePropertySearch } from '@/hooks/usePropertySearch'
+import { CurrencyInput } from '@/components/form/CurrencyInput'
 
 /** Arte local (pasta `public/marketing/`) — alinhada ao app móvel. */
 const HERO_IMAGE = '/marketing/home-hero.png'
@@ -14,8 +15,15 @@ const propertyTypes = [
     { value: 'Casa', label: 'Casa' },
     { value: 'Apartamento', label: 'Apartamento' },
     { value: 'Terreno', label: 'Terreno' },
-    { value: 'Propriedade Rural', label: 'Rural' },
-    { value: 'Propriedade Comercial', label: 'Comercial' },
+    { value: 'Prédio', label: 'Prédio' },
+    { value: 'Fazenda', label: 'Fazenda' },
+    { value: 'Chácara', label: 'Chácara' },
+    { value: 'Sobrado', label: 'Sobrado' },
+    { value: 'Kitnet', label: 'Kitnet' },
+    { value: 'Cobertura', label: 'Cobertura' },
+    { value: 'Galpão', label: 'Galpão' },
+    { value: 'Loja', label: 'Loja' },
+    { value: 'Sala Comercial', label: 'Sala Comercial' },
 ]
 
 const purposes = [
@@ -25,29 +33,7 @@ const purposes = [
 ]
 
 export default function HeroSection() {
-    const router = useRouter()
-    const [type, setType] = useState('')
-    const [purpose, setPurpose] = useState('')
-    const [city, setCity] = useState('')
-    const [bairro, setBairro] = useState('')
-    const [minPrice, setMinPrice] = useState('')
-    const [maxPrice, setMaxPrice] = useState('')
-    const [code, setCode] = useState('')
-    const [isSearching, setIsSearching] = useState(false)
-
-    const handleSearch = () => {
-        setIsSearching(true)
-        const params = new URLSearchParams()
-        if (type) params.set('type', type)
-        if (purpose) params.set('purpose', purpose)
-        if (city.trim()) params.set('city', city.trim())
-        if (bairro.trim()) params.set('bairro', bairro.trim())
-        if (minPrice.trim()) params.set('minPrice', minPrice.trim())
-        if (maxPrice.trim()) params.set('maxPrice', maxPrice.trim())
-        if (code.trim()) params.set('code', code.trim())
-        router.push(`/imoveis?${params.toString()}`)
-        setIsSearching(false)
-    }
+    const { form, setField, handleSearch, isSearching, validationError } = usePropertySearch()
 
     return (
         <section
@@ -109,8 +95,8 @@ export default function HeroSection() {
                                     <select
                                         id="hero-purpose"
                                         name="purpose"
-                                        value={purpose}
-                                        onChange={(e) => setPurpose(e.target.value)}
+                                        value={form.purpose}
+                                        onChange={(e) => setField('purpose', e.target.value)}
                                         aria-label="Finalidade do imóvel"
                                         className="w-full min-h-[44px] appearance-none bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 pr-8 sm:pr-10 text-gray-700 text-sm sm:text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                     >
@@ -131,8 +117,8 @@ export default function HeroSection() {
                                     <select
                                         id="hero-type"
                                         name="type"
-                                        value={type}
-                                        onChange={(e) => setType(e.target.value)}
+                                        value={form.type}
+                                        onChange={(e) => setField('type', e.target.value)}
                                         aria-label="Tipo de imóvel"
                                         className="w-full min-h-[44px] appearance-none bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 pr-8 sm:pr-10 text-gray-700 text-sm sm:text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                     >
@@ -144,42 +130,12 @@ export default function HeroSection() {
                                 </div>
                             </div>
 
-                            {/* City */}
-                            <div className="relative">
-                                <label htmlFor="hero-city" className="block text-[10px] sm:text-xs font-medium text-white mb-1 text-left">
-                                    Cidade
-                                </label>
-                                <div className="relative">
-                                    <MapPin className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                                    <input
-                                        id="hero-city"
-                                        name="city"
-                                        type="text"
-                                        value={city}
-                                        onChange={(e) => setCity(e.target.value)}
-                                        maxLength={120}
-                                        placeholder="Cidade"
-                                        className="w-full min-h-[44px] bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl pl-8 sm:pl-10 pr-2 sm:pr-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Bairro */}
-                            <div className="relative">
-                                <label htmlFor="hero-bairro" className="block text-[10px] sm:text-xs font-medium text-white mb-1 text-left">
-                                    Bairro
-                                </label>
-                                <input
-                                    id="hero-bairro"
-                                    name="bairro"
-                                    type="text"
-                                    value={bairro}
-                                    onChange={(e) => setBairro(e.target.value)}
-                                    maxLength={120}
-                                    placeholder="Opcional"
-                                    className="w-full min-h-[44px] bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                                />
-                            </div>
+                            <LocationSelectFields
+                                city={form.city}
+                                bairro={form.bairro}
+                                onCityChange={(value) => setField('city', value)}
+                                onBairroChange={(value) => setField('bairro', value)}
+                            />
 
                             {/* Faixa de preço */}
                             <div className="relative sm:col-span-2 lg:col-span-1">
@@ -187,25 +143,19 @@ export default function HeroSection() {
                                     Valor (R$)
                                 </label>
                                 <div className="flex gap-1.5 sm:gap-2">
-                                    <input
+                                    <CurrencyInput
                                         id="hero-min-price"
                                         name="minPrice"
-                                        type="number"
-                                        inputMode="numeric"
-                                        min={0}
-                                        value={minPrice}
-                                        onChange={(e) => setMinPrice(e.target.value)}
+                                        value={form.minPrice}
+                                        onChange={(value) => setField('minPrice', value)}
                                         placeholder="Mín."
                                         className="min-w-0 min-h-[44px] flex-1 bg-gray-50 border border-black-200 rounded-lg sm:rounded-xl px-2 sm:px-3 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                     />
-                                    <input
+                                    <CurrencyInput
                                         id="hero-max-price"
                                         name="maxPrice"
-                                        type="number"
-                                        inputMode="numeric"
-                                        min={0}
-                                        value={maxPrice}
-                                        onChange={(e) => setMaxPrice(e.target.value)}
+                                        value={form.maxPrice}
+                                        onChange={(value) => setField('maxPrice', value)}
                                         placeholder="Máx."
                                         className="min-w-0 min-h-[44px] flex-1 bg-gray-50 border border-black-200 rounded-lg sm:rounded-xl px-2 sm:px-3 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                     />
@@ -221,8 +171,9 @@ export default function HeroSection() {
                                     id="hero-code"
                                     name="code"
                                     type="text"
-                                    value={code}
-                                    onChange={(e) => setCode(e.target.value)}
+                                    inputMode="numeric"
+                                    value={form.code}
+                                    onChange={(e) => setField('code', e.target.value)}
                                     maxLength={80}
                                     placeholder="Opcional"
                                     className="w-full min-h-[44px] bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
@@ -246,6 +197,11 @@ export default function HeroSection() {
                                 </button>
                             </div>
                         </div>
+                        {validationError && (
+                            <p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-left text-xs text-red-700">
+                                {validationError}
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>

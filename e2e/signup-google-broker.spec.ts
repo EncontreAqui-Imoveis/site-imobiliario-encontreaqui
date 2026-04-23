@@ -8,6 +8,14 @@ async function fillSixDigitCode(page: import('@playwright/test').Page) {
 }
 
 test('cadastro corretor em fluxo Google pendente segue para onboarding de documentos', async ({ page }) => {
+    await page.route('**/auth/check-creci**', async (route) => {
+        await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({ exists: false }),
+        })
+    })
+
     await page.addInitScript(() => {
         const draft = {
             source: 'google',
@@ -42,6 +50,7 @@ test('cadastro corretor em fluxo Google pendente segue para onboarding de docume
     await page.getByRole('button', { name: /quero cadastrar como corretor/i }).click()
     await page.getByRole('button', { name: /^continuar$/i }).click()
 
+    await page.getByLabel('Nome completo *').fill('Corretor Google')
     await page.getByLabel('Telefone *').fill('62999999998')
     await page.getByLabel('CRECI *').fill('12345-F')
     await page.getByRole('button', { name: /^continuar$/i }).click()

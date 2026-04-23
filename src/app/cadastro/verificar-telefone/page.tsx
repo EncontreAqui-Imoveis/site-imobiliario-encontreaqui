@@ -16,7 +16,7 @@ import {
 } from '@/lib/authSignupDraft'
 import { updateProfile } from '@/lib/api/user'
 import type { ApiError } from '@/lib/api/client'
-import { formatPhoneInput, normalizePhoneDigits } from '@/lib/phoneInput'
+import { formatPhoneInput, normalizePhoneDigits, normalizePhoneLocalDigits } from '@/lib/phoneInput'
 import { registerUserFromSignupDraft } from '@/lib/registerFromSignupDraft'
 
 const VERIFY_ERROR_COOLDOWN_MS = 2000
@@ -107,7 +107,8 @@ export default function VerificarTelefonePage() {
     useEffect(() => {
         if (!draftReady || autoSendTriggeredRef.current) return
         const normalizedPhone = normalizePhoneDigits(phone)
-        if (!normalizedPhone || normalizedPhone.length < 10) return
+        const localPhone = normalizePhoneLocalDigits(phone)
+        if (!normalizedPhone || localPhone.length < 10) return
         autoSendTriggeredRef.current = true
         void handleSendOtp(false, true)
     }, [draftReady, phone])
@@ -131,7 +132,8 @@ export default function VerificarTelefonePage() {
 
     const handleSendOtp = async (isResend = false, silent = false) => {
         const normalizedPhone = normalizePhoneDigits(phone)
-        if (!normalizedPhone || normalizedPhone.length < 10) {
+        const localPhone = normalizePhoneLocalDigits(phone)
+        if (!normalizedPhone || localPhone.length < 10) {
             setError('Informe um telefone válido antes de continuar.')
             return
         }
@@ -366,9 +368,9 @@ export default function VerificarTelefonePage() {
                                     if (isSignupFlow) return
                                     setPhone(formatPhoneInput(event.target.value))
                                 }}
-                                maxLength={19}
+                                maxLength={15}
                                 className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${isSignupFlow ? 'bg-slate-50 text-slate-700' : ''}`}
-                                placeholder="+55 (00) 00000-0000"
+                                placeholder="(00) 00000-0000"
                             />
                             {isSignupFlow && (
                                 <p className="text-xs text-slate-500">

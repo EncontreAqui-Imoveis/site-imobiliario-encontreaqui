@@ -57,6 +57,7 @@ describe('propertyCreate helpers', () => {
             areaConstruida: '0',
             areaConstruidaUnidade: 'm2',
             areaTerreno: '360',
+            areaTerrenoUnidade: 'hectare',
             hasWifi: false,
             temPiscina: false,
             temAutomacao: true,
@@ -78,6 +79,10 @@ describe('propertyCreate helpers', () => {
         expect(formData.get('sem_quadra')).toBe('0')
         expect(formData.get('sem_lote')).toBe('0')
         expect(formData.get('area_construida_unidade')).toBe('m2')
+        expect(formData.get('area_terreno_unidade')).toBe('hectare')
+        expect(formData.get('bedrooms')).toBe('0')
+        expect(formData.get('bathrooms')).toBe('0')
+        expect(formData.get('garage_spots')).toBe('0')
         expect(formData.get('tem_automacao')).toBe('1')
         expect(formData.get('video')).toBe(video)
         expect(formData.getAll('images')).toHaveLength(1)
@@ -116,6 +121,7 @@ describe('propertyCreate helpers', () => {
             areaConstruida: '180',
             areaConstruidaUnidade: 'm2',
             areaTerreno: '250',
+            areaTerrenoUnidade: 'm2',
             hasWifi: false,
             temPiscina: false,
             temAutomacao: false,

@@ -10,18 +10,19 @@ import {
     Map, Phone, Globe, Mail
 } from 'lucide-react'
 import { shareOrCopy } from '@/lib/webShare'
+import { displayStatusLabel, formatUnit } from '@/lib/propertyLabels'
 
 interface PropertyInfoProps {
     property: Property
 }
 
 // Status color mapping
-const statusColors: Record<string, { bg: string; text: string; label: string }> = {
-    pending: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Pendente' },
-    approved: { bg: 'bg-slate-100', text: 'text-slate-700', label: 'Disponível' },
-    rejected: { bg: 'bg-red-100', text: 'text-red-700', label: 'Rejeitado' },
-    sold: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Vendido' },
-    rented: { bg: 'bg-purple-100', text: 'text-purple-700', label: 'Alugado' },
+const statusColors: Record<string, { bg: string; text: string }> = {
+    pending: { bg: 'bg-yellow-100', text: 'text-yellow-700' },
+    approved: { bg: 'bg-slate-100', text: 'text-slate-700' },
+    rejected: { bg: 'bg-red-100', text: 'text-red-700' },
+    sold: { bg: 'bg-blue-100', text: 'text-blue-700' },
+    rented: { bg: 'bg-purple-100', text: 'text-purple-700' },
 }
 
 function formatDate(date?: string): string {
@@ -35,6 +36,7 @@ function formatDate(date?: string): string {
 
 export default function PropertyInfo({ property }: PropertyInfoProps) {
     const statusInfo = statusColors[property.status?.toLowerCase()] || statusColors.pending
+    const statusLabel = displayStatusLabel(property.status, property.purpose)
     const [shareMessage, setShareMessage] = useState<string | null>(null)
 
     // Build comfort amenities
@@ -81,7 +83,7 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex flex-wrap items-center gap-3">
                         <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wide rounded-full ${statusInfo.bg} ${statusInfo.text}`}>
-                            {statusInfo.label}
+                            {statusLabel}
                         </span>
                         <span className="px-3 py-1 bg-primary-50 text-primary-700 text-xs font-bold uppercase tracking-wide rounded-full">
                             {property.type}
@@ -134,17 +136,23 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                     <div className="flex flex-col items-center justify-center gap-2 text-center">
                         <Bed className="h-6 w-6 shrink-0 text-primary-600" />
                         <span className="text-xl font-bold text-gray-900">{property.bedrooms || 0}</span>
-                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">Quartos</span>
+                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">
+                            {formatUnit(property.bedrooms || 0, 'Quarto', 'Quartos')}
+                        </span>
                     </div>
                     <div className="flex flex-col items-center justify-center gap-2 text-center">
                         <Bath className="h-6 w-6 shrink-0 text-primary-600" />
                         <span className="text-xl font-bold text-gray-900">{property.bathrooms || 0}</span>
-                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">Banheiros</span>
+                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">
+                            {formatUnit(property.bathrooms || 0, 'Banheiro', 'Banheiros')}
+                        </span>
                     </div>
                     <div className="flex flex-col items-center justify-center gap-2 text-center">
                         <Car className="h-6 w-6 shrink-0 text-primary-600" />
                         <span className="text-xl font-bold text-gray-900">{property.garageSpots || 0}</span>
-                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">Vagas</span>
+                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">
+                            {formatUnit(property.garageSpots || 0, 'Garagem', 'Garagens')}
+                        </span>
                     </div>
                     <div className="flex flex-col items-center justify-center gap-2 text-center">
                         <Maximize className="h-6 w-6 shrink-0 text-primary-600" />

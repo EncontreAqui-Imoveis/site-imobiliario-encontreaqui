@@ -5,13 +5,6 @@ import { normalizeProperty } from '@/lib/propertiesApi'
 export interface UpdateProfilePayload {
     name?: string
     phone?: string
-    city?: string
-    state?: string
-    street?: string
-    number?: string
-    complement?: string
-    bairro?: string
-    cep?: string
 }
 
 export async function updateProfile(payload: UpdateProfilePayload): Promise<void> {

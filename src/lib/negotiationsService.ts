@@ -1,8 +1,10 @@
 import { apiClient, type ApiError } from '@/lib/api/client'
 import { generateIdempotencyKey } from '@/lib/idempotency'
 import { reportObservedError } from '@/lib/observability'
+import { hasAuthTokenInBrowser } from '@/lib/auth/tokenStore'
 import type { NegotiationSummary } from '@/types/negotiation'
 import type { Property } from '@/types/property'
+import { normalizeProperty } from '@/lib/propertiesApi'
 
 const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_URL || 'https://site-imobiliario-backend-production.up.railway.app'
@@ -57,31 +59,51 @@ export async function searchApprovedBrokers(query: string): Promise<ApprovedBrok
 }
 
 export async function fetchProposalTargetProperty(propertyId: string): Promise<Property> {
-    const response = await fetch(`${API_BASE_URL}/properties/${propertyId}`)
-    if (!response.ok) {
-        const requestId = response.headers.get('x-request-id') || undefined
-        reportObservedError(new Error('Imóvel não encontrado'), {
-            module: 'proposal-wizard-page',
-            status: response.status,
-            requestId,
-            url: response.url || undefined,
-            message: 'Imóvel não encontrado',
-        })
-        throw new Error('Imóvel não encontrado')
-    }
+    const normalizedId = encodeURIComponent(String(propertyId).trim())
+    const publicUrl = `${API_BASE_URL}/public/properties/${normalizedId}`
+    const publicResponse = await fetch(publicUrl, { cache: 'no-store' })
 
-    try {
-        const data = await response.json()
-        return (data.data || data) as Property
-    } catch (error) {
-        const apiError = error as Partial<ApiError>
-        if (apiError?.requestId) {
+    if (publicResponse.ok) {
+        try {
+            const payload = await publicResponse.json()
+            const normalized = normalizeProperty(payload?.data ?? payload)
+            if (normalized) return normalized
+            throw new Error('Imóvel indisponível para proposta.')
+        } catch (error) {
             reportObservedError(error, {
                 module: 'proposal-wizard-page',
-                requestId: apiError.requestId,
-                message: apiError.message,
+                url: publicResponse.url || undefined,
+                message: 'Falha ao normalizar imóvel público para proposta',
             })
+            throw new Error('Não foi possível carregar o imóvel.')
         }
-        throw new Error('Não foi possível carregar o imóvel.')
     }
+
+    // Fallback privado só quando existir sessão; evita 401 ruidoso em links públicos.
+    if (hasAuthTokenInBrowser()) {
+        try {
+            const privatePayload = await apiClient.get<unknown>(`/properties/${normalizedId}`)
+            const normalized = normalizeProperty(privatePayload)
+            if (normalized) return normalized
+        } catch (error) {
+            const apiError = error as Partial<ApiError>
+            if (
+                typeof apiError?.status === 'number' &&
+                (apiError.status === 401 || apiError.status === 403 || apiError.status === 404)
+            ) {
+                throw new Error('Imóvel indisponível para proposta.')
+            }
+            throw error
+        }
+    }
+
+    const requestId = publicResponse.headers.get('x-request-id') || undefined
+    reportObservedError(new Error('Imóvel indisponível para proposta'), {
+        module: 'proposal-wizard-page',
+        status: publicResponse.status,
+        requestId,
+        url: publicResponse.url || undefined,
+        message: 'Imóvel indisponível para proposta',
+    })
+    throw new Error('Imóvel indisponível para proposta.')
 }

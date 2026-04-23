@@ -15,6 +15,7 @@ import { Property, formatPrice, getPromoSalePrice, getPromoRentPrice } from '@/t
 import { useUser } from '@/contexts/UserContext'
 import { buildWhatsappLink } from '@/lib/contactLinks'
 import { fetchEditableProperty } from '@/lib/propertiesEditorService'
+import { displayStatusLabel } from '@/lib/propertyLabels'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://site-imobiliario-backend-production.up.railway.app'
 
@@ -38,14 +39,20 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
         ((property.brokerId != null && userId === property.brokerId) ||
             (property.ownerId != null && userId === property.ownerId))
     const statusLower = property?.status?.toLowerCase() || ''
+    const statusUpper = property?.status?.toUpperCase() || ''
     const hasPendingEditRequest = property?.hasPendingEditRequest === true
+    const isInAnalysisStatus =
+        statusUpper === 'IN_ANALYSIS' ||
+        statusUpper === 'UNDER_REVIEW' ||
+        statusUpper === 'PENDING_APPROVAL' ||
+        statusLower === 'em análise'
     const canEditProperty =
         isOwner && statusLower !== 'pending_approval' && !hasPendingEditRequest
     const negotiationId = property?.negotiationId ?? property?.negotiation?.id
     const negotiationStatus = String(property?.negotiation?.status ?? '').trim().toUpperCase()
     const isClientOwner = isOwner && userRole === 'client'
     const canGenerateProposal =
-        isOwner && !isClientOwner && statusLower === 'approved' && !negotiationId
+        isOwner && !isClientOwner && statusLower === 'approved' && !negotiationId && !isInAnalysisStatus
 
     useEffect(() => {
         if (property || authLoading || !session) return
@@ -126,6 +133,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
 
     const proposalAction = (() => {
         if (!isOwner || !property) return null
+        if (isInAnalysisStatus) return null
 
         if (!negotiationId && canGenerateProposal) {
             return {
@@ -228,6 +236,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
         property.priceRent != null
             ? `${formatPrice(promoRent ?? property.priceRent)}/mês`
             : null
+    const ownerStatusLabel = displayStatusLabel(property.status, property.purpose)
 
     return (
         <main
@@ -281,12 +290,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                                             statusLower === 'pending_approval' ? 'bg-amber-100 text-amber-700' :
                                                 'bg-gray-100 text-gray-600'
                                     }`}>
-                                    {statusLower === 'approved' ? 'Disponível' :
-                                        statusLower === 'sold' ? 'Vendido' :
-                                            statusLower === 'rented' ? 'Alugado' :
-                                                statusLower === 'pending_approval' ? 'Aguardando' :
-                                                    statusLower === 'rejected' ? 'Rejeitado' :
-                                                        property.status}
+                                    {ownerStatusLabel}
                                 </span>
                             </div>
                         </div>
@@ -346,27 +350,31 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                                 </Link>
                             )}
 
-                            {/* View Proposals */}
-                            <Link
-                                href="/propostas"
-                                className="flex flex-col items-center gap-2 px-4 py-5 hover:bg-gray-50 transition-colors text-center group"
-                            >
-                                <div className="w-10 h-10 rounded-xl bg-indigo-100 group-hover:bg-indigo-200 flex items-center justify-center transition-colors">
-                                    <ScrollText className="w-5 h-5 text-indigo-600" />
-                                </div>
-                                <span className="text-xs font-semibold text-gray-700 group-hover:text-indigo-700">Ver propostas</span>
-                            </Link>
+                            {!isInAnalysisStatus && (
+                                <>
+                                    {/* View Proposals */}
+                                    <Link
+                                        href="/propostas"
+                                        className="flex flex-col items-center gap-2 px-4 py-5 hover:bg-gray-50 transition-colors text-center group"
+                                    >
+                                        <div className="w-10 h-10 rounded-xl bg-indigo-100 group-hover:bg-indigo-200 flex items-center justify-center transition-colors">
+                                            <ScrollText className="w-5 h-5 text-indigo-600" />
+                                        </div>
+                                        <span className="text-xs font-semibold text-gray-700 group-hover:text-indigo-700">Ver propostas</span>
+                                    </Link>
 
-                            {/* View Contracts */}
-                            <Link
-                                href="/contratos"
-                                className="flex flex-col items-center gap-2 px-4 py-5 hover:bg-gray-50 transition-colors text-center group"
-                            >
-                                <div className="w-10 h-10 rounded-xl bg-slate-100 group-hover:bg-slate-200 flex items-center justify-center transition-colors">
-                                    <ScrollText className="w-5 h-5 text-slate-600" />
-                                </div>
-                                <span className="text-xs font-semibold text-gray-700 group-hover:text-slate-700">Ver contratos</span>
-                            </Link>
+                                    {/* View Contracts */}
+                                    <Link
+                                        href="/contratos"
+                                        className="flex flex-col items-center gap-2 px-4 py-5 hover:bg-gray-50 transition-colors text-center group"
+                                    >
+                                        <div className="w-10 h-10 rounded-xl bg-slate-100 group-hover:bg-slate-200 flex items-center justify-center transition-colors">
+                                            <ScrollText className="w-5 h-5 text-slate-600" />
+                                        </div>
+                                        <span className="text-xs font-semibold text-gray-700 group-hover:text-slate-700">Ver contratos</span>
+                                    </Link>
+                                </>
+                            )}
                         </div>
                     </section>
                 )}

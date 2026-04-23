@@ -34,7 +34,7 @@ export default function Footer() {
                                 src="/branding/7.svg"
                                 alt="Encontre Aqui Imóveis"
                                 fill
-                                className="object-contain object-left"
+                                className="block object-contain object-left"
                                 sizes="201px"
                             />
                         </Link>
@@ -64,36 +64,39 @@ export default function Footer() {
                         </div>
                     </div>
 
-                    <div>
-                        <h3 className="text-slate-100 font-semibold mb-4">Navegação</h3>
-                        <ul className="space-y-2">
-                            {footerLinks.map((link) => (
-                                <li key={link.href}>
-                                    <Link
-                                        href={link.href}
-                                        className="text-slate-400 transition-colors text-sm hover:text-slate-200"
-                                    >
-                                        {link.label}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h3 className="text-slate-100 font-semibold mb-4">Minha Conta</h3>
-                        <ul className="space-y-2">
-                            {accountLinks.map((link) => (
-                                <li key={link.href}>
-                                    <Link
-                                        href={link.href}
-                                        className="text-slate-400 transition-colors text-sm hover:text-slate-200"
-                                    >
-                                        {link.label}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
+                    <div className="sm:col-span-2 md:col-span-2">
+                        <div className="flex flex-row justify-between gap-x-4 md:grid md:grid-cols-2 md:gap-8">
+                            <div>
+                                <h3 className="text-slate-100 font-semibold mb-4">Navegação</h3>
+                                <ul className="space-y-2">
+                                    {footerLinks.map((link) => (
+                                        <li key={link.href}>
+                                            <Link
+                                                href={link.href}
+                                                className="text-slate-400 transition-colors text-sm hover:text-slate-200"
+                                            >
+                                                {link.label}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 className="text-slate-100 font-semibold mb-4">Minha Conta</h3>
+                                <ul className="space-y-2">
+                                    {accountLinks.map((link) => (
+                                        <li key={link.href}>
+                                            <Link
+                                                href={link.href}
+                                                className="text-slate-400 transition-colors text-sm hover:text-slate-200"
+                                            >
+                                                {link.label}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
                     </div>
 
                     <div>

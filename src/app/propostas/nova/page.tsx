@@ -23,6 +23,7 @@ import { formatCurrencyInput } from '@/lib/currencyInput'
 /* ─── Types ─── */
 
 type PaymentUnit = 'reais' | 'percent'
+type ProposalBaseMode = 'sale' | 'rent'
 
 interface PaymentField {
     value: string
@@ -78,6 +79,7 @@ export default function ProposalWizardPage() {
     const [step, setStep] = useState(0)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [submitError, setSubmitError] = useState<string | null>(null)
+    const [proposalBaseMode, setProposalBaseMode] = useState<ProposalBaseMode>('sale')
 
     // Step 1: Client data
     const [clientName, setClientName] = useState('')
@@ -89,7 +91,7 @@ export default function ProposalWizardPage() {
     const [isSearching, setIsSearching] = useState(false)
     const searchTimer = useRef<NodeJS.Timeout | null>(null)
 
-    // Step 2: Payment composition
+    // Step 2: Total proposal value composition
     const [payments, setPayments] = useState<Record<string, PaymentField>>({
         dinheiro: { value: '', unit: 'reais' },
         permuta: { value: '', unit: 'reais' },
@@ -121,12 +123,31 @@ export default function ProposalWizardPage() {
             try {
                 const loadedProperty = await fetchProposalTargetProperty(currentPropertyId)
                 setProperty(loadedProperty)
-            } catch {
-                setLoadError('Não foi possível carregar o imóvel.')
+            } catch (error) {
+                const message =
+                    error instanceof Error && error.message.trim().length > 0
+                        ? error.message
+                        : 'Não foi possível carregar o imóvel.'
+                setLoadError(message)
             }
         }
         load()
     }, [propertyId])
+
+    useEffect(() => {
+        if (!property) return
+        const hasSalePrice = Number(property.priceSale) > 0
+        const hasRentPrice = Number(property.priceRent) > 0
+        if (hasSalePrice && hasRentPrice) {
+            setProposalBaseMode('sale')
+            return
+        }
+        if (hasRentPrice) {
+            setProposalBaseMode('rent')
+            return
+        }
+        setProposalBaseMode('sale')
+    }, [property])
 
     const userRole = String(session?.user?.role ?? '').trim().toLowerCase()
     const isClientUser = userRole === 'client'
@@ -181,10 +202,20 @@ export default function ProposalWizardPage() {
     }
 
     /* ── Payment math ── */
+    const hasSalePrice = Boolean(property?.priceSale && property.priceSale > 0)
+    const hasRentPrice = Boolean(property?.priceRent && property.priceRent > 0)
+    const hasBothPriceModes = hasSalePrice && hasRentPrice
+
     const propertyValue = property
-        ? (property.priceSale && property.priceSale > 0 ? property.priceSale
-            : property.priceRent && property.priceRent > 0 ? property.priceRent
-                : Math.max(property.price, 0))
+        ? (
+            proposalBaseMode === 'rent' && hasRentPrice
+                ? Number(property.priceRent)
+                : hasSalePrice
+                    ? Number(property.priceSale)
+                    : hasRentPrice
+                        ? Number(property.priceRent)
+                        : Math.max(property.price, 0)
+        )
         : 0
 
     const totalAllocated = Object.values(payments).reduce((sum, f) => sum + toReais(f, propertyValue), 0)
@@ -366,6 +397,37 @@ export default function ProposalWizardPage() {
                     </p>
                 </div>
 
+                {hasBothPriceModes && (
+                    <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-4">
+                        <p className="text-sm font-medium text-gray-700">Tipo da proposta</p>
+                        <div className="mt-3 inline-flex rounded-xl border border-gray-200 p-1">
+                            <button
+                                type="button"
+                                onClick={() => setProposalBaseMode('sale')}
+                                className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${proposalBaseMode === 'sale'
+                                    ? 'bg-primary-600 text-white'
+                                    : 'text-gray-600 hover:bg-gray-50'
+                                    }`}
+                            >
+                                Venda
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setProposalBaseMode('rent')}
+                                className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${proposalBaseMode === 'rent'
+                                    ? 'bg-primary-600 text-white'
+                                    : 'text-gray-600 hover:bg-gray-50'
+                                    }`}
+                            >
+                                Aluguel
+                            </button>
+                        </div>
+                        <p className="mt-2 text-xs text-gray-500">
+                            Valor base selecionado: {formatPrice(propertyValue)}
+                        </p>
+                    </div>
+                )}
+
                 {/* Progress Bar */}
                 <div className="flex gap-2 mb-8">
                     {[0, 1].map(i => (
@@ -494,17 +556,17 @@ export default function ProposalWizardPage() {
                             )}
                         </div>
                     ) : (
-                        /* ═══ STEP 2: Payment Composition ═══ */
+                        /* ═══ STEP 2: Valor Total da Proposta ═══ */
                         <div className="p-6 space-y-6">
                             <div className="flex items-center gap-2 text-lg font-bold text-gray-900">
                                 <CreditCard className="w-5 h-5 text-primary-500" />
-                                Composição do Pagamento
+                                Valor Total da Proposta
                             </div>
 
                             {/* Summary */}
                             <div className="space-y-2 rounded-xl border border-gray-100 bg-gray-50 p-4">
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Valor do Imóvel</span>
+                                    <span className="text-gray-500">Valor Total da Proposta</span>
                                     <span className="font-bold text-gray-900">{formatPrice(propertyValue)}</span>
                                 </div>
                                 <div className={`flex justify-between text-sm ${isBalanced ? 'text-primary-700' : remaining > 0 ? 'text-amber-600' : 'text-red-600'}`}>
@@ -517,7 +579,7 @@ export default function ProposalWizardPage() {
                                 {isBalanced && (
                                     <div className="flex items-center gap-1 text-xs text-primary-600 font-medium">
                                         <CheckCircle className="w-3.5 h-3.5" />
-                                        Pagamento balanceado
+                                        Valor total balanceado
                                     </div>
                                 )}
                             </div>

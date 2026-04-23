@@ -9,27 +9,13 @@ import type { ApiError } from '@/lib/api/client'
 import { UserCircle, CheckCircle } from 'lucide-react'
 import { formatPhoneInput, normalizePhoneDigits } from '@/lib/phoneInput'
 
-const BRAZILIAN_STATES = [
-    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
-    'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
-    'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
-]
-
 export default function OnboardingPage() {
     const router = useRouter()
     const { session, loading, refresh, isProfileComplete } = useUser()
 
     const [phone, setPhone] = useState('')
-    const [cep, setCep] = useState('')
-    const [street, setStreet] = useState('')
-    const [number, setNumber] = useState('')
-    const [complement, setComplement] = useState('')
-    const [bairro, setBairro] = useState('')
-    const [city, setCity] = useState('')
-    const [state, setState] = useState('')
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [cepLoading, setCepLoading] = useState(false)
 
     useEffect(() => {
         if (!loading && !session) {
@@ -50,42 +36,8 @@ export default function OnboardingPage() {
         if (session?.user) {
             const u = session.user
             setPhone(formatPhoneInput(u.phone || ''))
-            setCep(u.cep || '')
-            setStreet(u.street || '')
-            setNumber(u.number || '')
-            setComplement(u.complement || '')
-            setBairro(u.bairro || '')
-            setCity(u.city || '')
-            setState(u.state || '')
         }
     }, [session])
-
-    const handleCepBlur = async () => {
-        const cleanCep = cep.replace(/\D/g, '')
-        if (cleanCep.length !== 8) return
-
-        setCepLoading(true)
-        try {
-            const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`)
-            const data = await res.json()
-            if (!data.erro) {
-                setStreet(data.logradouro || street)
-                setBairro(data.bairro || bairro)
-                setCity(data.localidade || city)
-                setState(data.uf || state)
-            }
-        } catch {
-            // silently fail
-        } finally {
-            setCepLoading(false)
-        }
-    }
-
-    const formatCep = (val: string) => {
-        const digits = val.replace(/\D/g, '').slice(0, 8)
-        if (digits.length <= 5) return digits
-        return `${digits.slice(0, 5)}-${digits.slice(5)}`
-    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -95,13 +47,6 @@ export default function OnboardingPage() {
         try {
             await updateProfile({
                 phone: normalizePhoneDigits(phone) || undefined,
-                cep: cep.replace(/\D/g, '') || undefined,
-                street: street || undefined,
-                number: number || undefined,
-                complement: complement || undefined,
-                bairro: bairro || undefined,
-                city: city || undefined,
-                state: state || undefined,
             })
             await refresh()
             if (!session) {
@@ -114,13 +59,6 @@ export default function OnboardingPage() {
                 user: {
                     ...session.user,
                     phone: normalizePhoneDigits(phone) || session.user.phone,
-                    cep: cep.replace(/\D/g, '') || session.user.cep,
-                    street: street || session.user.street,
-                    number: number || session.user.number,
-                    complement: complement || session.user.complement,
-                    bairro: bairro || session.user.bairro,
-                    city: city || session.user.city,
-                    state: state || session.user.state,
                 },
             }
             router.push(resolvePostAuthRoute(refreshedSession, '/meus-imoveis'))
@@ -155,7 +93,7 @@ export default function OnboardingPage() {
                         {isProfileComplete ? 'Perfil completo!' : 'Complete seu perfil'}
                     </h1>
                     <p className="text-sm text-slate-600">
-                        Olá, <strong>{session.user.name}</strong>! Preencha seus dados de contato e endereço
+                        Olá, <strong>{session.user.name}</strong>! Confirme seu telefone
                         para poder gerar propostas e negociar imóveis.
                     </p>
                 </div>
@@ -172,99 +110,11 @@ export default function OnboardingPage() {
                             required
                             value={phone}
                             onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
-                            maxLength={19}
+                            maxLength={15}
                             className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                            placeholder="+55 (00) 00000-0000"
+                            placeholder="(00) 00000-0000"
                         />
                     </div>
-
-                    {/* Endereço */}
-                    <fieldset className="space-y-3 pt-2">
-                        <legend className="text-sm font-semibold text-slate-800">Endereço</legend>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <label htmlFor="cep" className="block text-xs font-medium text-slate-600">CEP</label>
-                                <input
-                                    id="cep"
-                                    type="text"
-                                    value={cep}
-                                    onChange={(e) => setCep(formatCep(e.target.value))}
-                                    onBlur={handleCepBlur}
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                    placeholder="00000-000"
-                                />
-                                {cepLoading && <p role="status" aria-live="polite" className="text-xs text-primary-500">Buscando CEP...</p>}
-                            </div>
-                            <div className="space-y-1.5">
-                                <label htmlFor="state" className="block text-xs font-medium text-slate-600">Estado</label>
-                                <select
-                                    id="state"
-                                    value={state}
-                                    onChange={(e) => setState(e.target.value)}
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                >
-                                    <option value="">UF</option>
-                                    {BRAZILIAN_STATES.map(uf => (
-                                        <option key={uf} value={uf}>{uf}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <label htmlFor="city" className="block text-xs font-medium text-slate-600">Cidade</label>
-                                <input
-                                    id="city" type="text" value={city}
-                                    onChange={(e) => setCity(e.target.value)}
-                                    maxLength={120}
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                    placeholder="Sua cidade"
-                                />
-                            </div>
-                            <div className="space-y-1.5">
-                                <label htmlFor="bairro" className="block text-xs font-medium text-slate-600">Bairro</label>
-                                <input
-                                    id="bairro" type="text" value={bairro}
-                                    onChange={(e) => setBairro(e.target.value)}
-                                    maxLength={120}
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                    placeholder="Bairro"
-                                />
-                            </div>
-                        </div>
-                        <div className="space-y-1.5">
-                            <label htmlFor="street" className="block text-xs font-medium text-slate-600">Rua</label>
-                            <input
-                                id="street" type="text" value={street}
-                                onChange={(e) => setStreet(e.target.value)}
-                                maxLength={120}
-                                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                placeholder="Nome da rua"
-                            />
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <label htmlFor="number" className="block text-xs font-medium text-slate-600">Número</label>
-                                <input
-                                    id="number" type="text" value={number}
-                                    onChange={(e) => setNumber(e.target.value)}
-                                    maxLength={120}
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                    placeholder="Nº"
-                                />
-                            </div>
-                            <div className="space-y-1.5">
-                                <label htmlFor="complement" className="block text-xs font-medium text-slate-600">Complemento</label>
-                                <input
-                                    id="complement" type="text" value={complement}
-                                    onChange={(e) => setComplement(e.target.value)}
-                                    maxLength={120}
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                    placeholder="Apto, bloco..."
-                                />
-                            </div>
-                        </div>
-                    </fieldset>
 
                     {error && (
                         <p id="onboarding-error" role="alert" className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">

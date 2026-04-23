@@ -7,6 +7,7 @@ import { useUser } from '@/contexts/UserContext'
 import { resolvePendingAction } from '@/lib/auth/routeResolution'
 import GuestAccessCard from '@/components/auth/GuestAccessCard'
 import { shareOrCopy } from '@/lib/webShare'
+import { formatPhoneInput } from '@/lib/phoneInput'
 import { BadgeCheck, Building2, LogOut, Briefcase, BarChart3, Loader2, Bell, Share2, User } from 'lucide-react'
 
 export default function PerfilPage() {
@@ -80,12 +81,6 @@ export default function PerfilPage() {
                     : null
     const nextPendingAction = resolvePendingAction(session)
 
-    const formatCep = (cep: string | undefined) => {
-        const d = cep?.replace(/\D/g, '') ?? ''
-        if (d.length === 8) return `${d.slice(0, 5)}-${d.slice(5)}`
-        return cep?.trim() || ''
-    }
-
     return (
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 pt-24">
             {/* Profile Header */}
@@ -97,7 +92,7 @@ export default function PerfilPage() {
                     <div className="flex-1 min-w-0 pr-2">
                         <h1 className="text-xl font-bold text-slate-900">{user.name}</h1>
                         <p className="text-sm text-slate-500">{user.email}</p>
-                        {user.phone && <p className="text-sm text-slate-500">{user.phone}</p>}
+                        {user.phone && <p className="text-sm text-slate-500">{formatPhoneInput(user.phone)}</p>}
                         <div className="flex flex-wrap items-center gap-2 mt-2">
                             {isBroker && (
                                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary-50 text-primary-700">
@@ -139,32 +134,6 @@ export default function PerfilPage() {
                         </div>
                     </div>
                 </div>
-
-                {/* Address Info */}
-                {(user.street || user.city) && (
-                    <div className="mt-4 pt-4 border-t border-slate-100">
-                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Endereço</p>
-                        <address className="not-italic text-sm text-slate-700 space-y-1">
-                            {(user.street || user.number) && (
-                                <p className="leading-relaxed">
-                                    {[user.street, user.number].filter(Boolean).join(', ')}
-                                    {user.complement ? ` — ${user.complement}` : ''}
-                                </p>
-                            )}
-                            {user.bairro && <p className="text-slate-600">{user.bairro}</p>}
-                            {(user.city || user.state) && (
-                                <p className="font-medium text-slate-800">
-                                    {[user.city, user.state].filter(Boolean).join(user.city && user.state ? ' / ' : '')}
-                                </p>
-                            )}
-                            {user.cep && (
-                                <p className="text-slate-500 text-xs sm:text-sm">
-                                    CEP {formatCep(user.cep)}
-                                </p>
-                            )}
-                        </address>
-                    </div>
-                )}
             </div>
 
             {shareMessage && (

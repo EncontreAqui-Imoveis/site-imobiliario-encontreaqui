@@ -26,6 +26,10 @@ export default function FavoriteButton({ propertyId, className = '', size = 'md'
         e.stopPropagation()
 
         if (!isAuthenticated || loading) return
+        if (isFavorited) {
+            const shouldRemove = window.confirm('Deseja remover dos favoritos?')
+            if (!shouldRemove) return
+        }
 
         setLoading(true)
         try {

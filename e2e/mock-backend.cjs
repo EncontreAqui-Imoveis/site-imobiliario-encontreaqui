@@ -7,48 +7,31 @@ const demoImage = 'https://res.cloudinary.com/demo/image/upload/sample.jpg';
 const createdAt = '2026-04-07T10:00:00.000Z';
 const updatedAt = '2026-04-07T10:00:00.000Z';
 
-const properties = [
-  {
-    id: 101,
-    title: 'Casa E2E',
+const properties = Array.from({ length: 25 }, (_, index) => {
+  const id = 101 + index;
+  const inGoiania = index < 20;
+  const bairro = index % 2 === 0 ? 'Centro' : 'Jardim';
+  return {
+    id,
+    title: `Imóvel E2E ${id}`,
     description: 'Imóvel usado para validar o fluxo ponta a ponta.',
-    type: 'Casa',
+    type: index % 3 === 0 ? 'Casa' : 'Apartamento',
     status: 'approved',
     purpose: 'Venda',
-    price: 350000,
-    price_sale: 350000,
-    address: 'Rua Teste',
-    city: 'Goiânia',
+    price: 300000 + index * 5000,
+    price_sale: 300000 + index * 5000,
+    address: `Rua Teste ${id}`,
+    city: inGoiania ? 'Goiânia' : 'Aparecida de Goiânia',
     state: 'GO',
-    bairro: 'Centro',
-    cep: '74000000',
+    bairro: inGoiania ? bairro : 'Buriti Sereno',
+    cep: `74000${String(index).padStart(3, '0')}`,
     images: [demoImage],
     broker_name: 'Corretor E2E',
     broker_phone: '62999999999',
     created_at: createdAt,
-    code: 'E2E-101',
-  },
-  {
-    id: 102,
-    title: 'Apartamento Azul',
-    description: 'Segundo imóvel da suíte E2E.',
-    type: 'Apartamento',
-    status: 'approved',
-    purpose: 'Venda',
-    price: 420000,
-    price_sale: 420000,
-    address: 'Rua Azul',
-    city: 'Goiânia',
-    state: 'GO',
-    bairro: 'Jardim',
-    cep: '74000001',
-    images: [demoImage],
-    broker_name: 'Corretor E2E',
-    broker_phone: '62999999999',
-    created_at: createdAt,
-    code: 'E2E-102',
-  },
-];
+    code: `E2E-${id}`,
+  };
+});
 
 function json(res, status, payload, origin = 'http://127.0.0.1:3101') {
   res.writeHead(status, {
@@ -160,10 +143,55 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === 'GET' && url.pathname === '/properties') {
     const search = String(url.searchParams.get('search') || '').trim().toLowerCase();
-    const filtered = search
-      ? properties.filter((item) => item.title.toLowerCase().includes(search))
-      : properties;
-    json(res, 200, { data: filtered }, origin);
+    const city = String(url.searchParams.get('city') || '').trim().toLowerCase();
+    const bairro = String(url.searchParams.get('bairro') || '').trim().toLowerCase();
+    const page = Math.max(Number(url.searchParams.get('page') || 1), 1);
+    const limit = Math.max(Number(url.searchParams.get('limit') || 10), 1);
+    const status = String(url.searchParams.get('status') || '').trim().toLowerCase();
+    const filtered = properties.filter((item) => {
+      if (search && !item.title.toLowerCase().includes(search)) return false;
+      if (city && item.city.toLowerCase() !== city) return false;
+      if (bairro && item.bairro.toLowerCase() !== bairro) return false;
+      if (status && item.status.toLowerCase() !== status) return false;
+      return true;
+    });
+    const start = (page - 1) * limit;
+    const pageItems = filtered.slice(start, start + limit);
+    const total = filtered.length;
+    const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
+    json(res, 200, { properties: pageItems, data: pageItems, total, page, totalPages }, origin);
+    return;
+  }
+
+  if (req.method === 'GET' && url.pathname === '/properties/cities-with-count') {
+    const buckets = new Map();
+    for (const item of properties) {
+      if (item.status !== 'approved') continue;
+      buckets.set(item.city, (buckets.get(item.city) || 0) + 1);
+    }
+    const rows = [...buckets.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0], 'pt-BR'))
+      .map(([cityName, total]) => ({ city: cityName, total }));
+    json(res, 200, rows, origin);
+    return;
+  }
+
+  if (req.method === 'GET' && url.pathname === '/properties/bairros') {
+    const city = String(url.searchParams.get('city') || '').trim().toLowerCase();
+    const buckets = new Map();
+    for (const item of properties) {
+      if (item.status !== 'approved') continue;
+      if (city && item.city.toLowerCase() !== city) continue;
+      const key = `${item.city}|||${item.bairro}`;
+      buckets.set(key, (buckets.get(key) || 0) + 1);
+    }
+    const rows = [...buckets.entries()]
+      .map(([key, total]) => {
+        const [cityName, bairroName] = key.split('|||');
+        return { city: cityName, bairro: bairroName, total };
+      })
+      .sort((a, b) => a.bairro.localeCompare(b.bairro, 'pt-BR'));
+    json(res, 200, rows, origin);
     return;
   }
 
