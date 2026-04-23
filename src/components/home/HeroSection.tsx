@@ -98,11 +98,11 @@ export default function HeroSection() {
                     </p>
 
                     {/* Search Box */}
-                    <div className="bg-white/60 border border-white/70 rounded-2xl shadow-2xl p-3 sm:p-6 max-w-4xl mx-auto animate-fadeIn">
+                    <div className="rounded-2xl shadow-2xl p-3 sm:p-6 max-w-4xl mx-auto animate-fadeIn">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                             {/* Purpose */}
                             <div className="relative">
-                                <label htmlFor="hero-purpose" className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-1 text-left">
+                                <label htmlFor="hero-purpose" className="block text-[10px] sm:text-xs font-medium text-black-500 mb-1 text-left">
                                     Finalidade
                                 </label>
                                 <div className="relative">
@@ -124,7 +124,7 @@ export default function HeroSection() {
 
                             {/* Type */}
                             <div className="relative">
-                                <label htmlFor="hero-type" className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-1 text-left">
+                                <label htmlFor="hero-type" className="block text-[10px] sm:text-xs font-medium text-black-500 mb-1 text-left">
                                     Tipo
                                 </label>
                                 <div className="relative">
@@ -146,11 +146,11 @@ export default function HeroSection() {
 
                             {/* City */}
                             <div className="relative">
-                                <label htmlFor="hero-city" className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-1 text-left">
+                                <label htmlFor="hero-city" className="block text-[10px] sm:text-xs font-medium text-black-500 mb-1 text-left">
                                     Cidade
                                 </label>
                                 <div className="relative">
-                                    <MapPin className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                                    <MapPin className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-black-400" />
                                     <input
                                         id="hero-city"
                                         name="city"
@@ -166,7 +166,7 @@ export default function HeroSection() {
 
                             {/* Bairro */}
                             <div className="relative">
-                                <label htmlFor="hero-bairro" className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-1 text-left">
+                                <label htmlFor="hero-bairro" className="block text-[10px] sm:text-xs font-medium text-black-500 mb-1 text-left">
                                     Bairro
                                 </label>
                                 <input
@@ -183,7 +183,7 @@ export default function HeroSection() {
 
                             {/* Faixa de preço */}
                             <div className="relative sm:col-span-2 lg:col-span-1">
-                                <label className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-1 text-left">
+                                <label className="block text-[10px] sm:text-xs font-medium text-black-500 mb-1 text-left">
                                     Valor (R$)
                                 </label>
                                 <div className="flex gap-1.5 sm:gap-2">
@@ -196,7 +196,7 @@ export default function HeroSection() {
                                         value={minPrice}
                                         onChange={(e) => setMinPrice(e.target.value)}
                                         placeholder="Mín."
-                                        className="min-w-0 min-h-[44px] flex-1 bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2 sm:px-3 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                        className="min-w-0 min-h-[44px] flex-1 bg-gray-50 border border-black-200 rounded-lg sm:rounded-xl px-2 sm:px-3 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                     />
                                     <input
                                         id="hero-max-price"
@@ -207,14 +207,14 @@ export default function HeroSection() {
                                         value={maxPrice}
                                         onChange={(e) => setMaxPrice(e.target.value)}
                                         placeholder="Máx."
-                                        className="min-w-0 min-h-[44px] flex-1 bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2 sm:px-3 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                        className="min-w-0 min-h-[44px] flex-1 bg-gray-50 border border-black-200 rounded-lg sm:rounded-xl px-2 sm:px-3 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                                     />
                                 </div>
                             </div>
 
                             {/* Código / ID */}
                             <div className="relative sm:col-span-2 lg:col-span-1">
-                                <label htmlFor="hero-code" className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-1 text-left">
+                                <label htmlFor="hero-code" className="block text-[10px] sm:text-xs font-medium text-black-500 mb-1 text-left">
                                     Código ou ID
                                 </label>
                                 <input
