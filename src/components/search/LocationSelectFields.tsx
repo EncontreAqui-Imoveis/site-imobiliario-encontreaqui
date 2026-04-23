@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { ChevronDown, MapPin } from 'lucide-react'
 import { useLocationOptions } from '@/components/search/useLocationOptions'
 
@@ -31,6 +31,13 @@ export default function LocationSelectFields({
         if (!query) return cities
         return cities.filter((item) => normalizeLabel(item.city).includes(query))
     }, [cities, city])
+    const normalizedSelectedCity = useMemo(() => {
+        const normalizedInput = normalizeLabel(city)
+        if (!normalizedInput) return null
+        const exactMatch = cities.find((item) => normalizeLabel(item.city) === normalizedInput)
+        return exactMatch ? normalizeLabel(exactMatch.city) : null
+    }, [cities, city])
+    const previousNormalizedSelectedCityRef = useRef<string | null>(null)
     const bairroOptions = useMemo(
         () =>
             hasSelectedCity
@@ -46,6 +53,22 @@ export default function LocationSelectFields({
             onBairroChange('')
         }
     }, [bairro, hasSelectedCity, onBairroChange])
+
+    useEffect(() => {
+        const previousCity = previousNormalizedSelectedCityRef.current
+        const currentCity = normalizedSelectedCity
+
+        if (
+            previousCity &&
+            currentCity &&
+            previousCity !== currentCity &&
+            bairro.trim().length > 0
+        ) {
+            onBairroChange('')
+        }
+
+        previousNormalizedSelectedCityRef.current = currentCity
+    }, [bairro, normalizedSelectedCity, onBairroChange])
 
     return (
         <>
