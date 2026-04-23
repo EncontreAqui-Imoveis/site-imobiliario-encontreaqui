@@ -102,7 +102,7 @@ export default function HeroSection() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                             {/* Purpose */}
                             <div className="relative">
-                                <label htmlFor="hero-purpose" className="block text-[10px] sm:text-xs font-medium text-black-500 mb-1 text-left">
+                                <label htmlFor="hero-purpose" className="block text-[10px] sm:text-xs font-medium text-white-500 mb-1 text-left">
                                     Finalidade
                                 </label>
                                 <div className="relative">
@@ -124,7 +124,7 @@ export default function HeroSection() {
 
                             {/* Type */}
                             <div className="relative">
-                                <label htmlFor="hero-type" className="block text-[10px] sm:text-xs font-medium text-black-500 mb-1 text-left">
+                                <label htmlFor="hero-type" className="block text-[10px] sm:text-xs font-medium text-white-500 mb-1 text-left">
                                     Tipo
                                 </label>
                                 <div className="relative">
@@ -146,7 +146,7 @@ export default function HeroSection() {
 
                             {/* City */}
                             <div className="relative">
-                                <label htmlFor="hero-city" className="block text-[10px] sm:text-xs font-medium text-black-500 mb-1 text-left">
+                                <label htmlFor="hero-city" className="block text-[10px] sm:text-xs font-medium text-white-500 mb-1 text-left">
                                     Cidade
                                 </label>
                                 <div className="relative">
@@ -166,7 +166,7 @@ export default function HeroSection() {
 
                             {/* Bairro */}
                             <div className="relative">
-                                <label htmlFor="hero-bairro" className="block text-[10px] sm:text-xs font-medium text-black-500 mb-1 text-left">
+                                <label htmlFor="hero-bairro" className="block text-[10px] sm:text-xs font-medium text-white-500 mb-1 text-left">
                                     Bairro
                                 </label>
                                 <input
@@ -183,7 +183,7 @@ export default function HeroSection() {
 
                             {/* Faixa de preço */}
                             <div className="relative sm:col-span-2 lg:col-span-1">
-                                <label className="block text-[10px] sm:text-xs font-medium text-black-500 mb-1 text-left">
+                                <label className="block text-[10px] sm:text-xs font-medium text-white-500 mb-1 text-left">
                                     Valor (R$)
                                 </label>
                                 <div className="flex gap-1.5 sm:gap-2">
@@ -214,7 +214,7 @@ export default function HeroSection() {
 
                             {/* Código / ID */}
                             <div className="relative sm:col-span-2 lg:col-span-1">
-                                <label htmlFor="hero-code" className="block text-[10px] sm:text-xs font-medium text-black-500 mb-1 text-left">
+                                <label htmlFor="hero-code" className="block text-[10px] sm:text-xs font-medium text-white-500 mb-1 text-left">
                                     Código ou ID
                                 </label>
                                 <input
