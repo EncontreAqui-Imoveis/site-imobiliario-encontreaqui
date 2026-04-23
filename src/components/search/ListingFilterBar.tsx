@@ -16,6 +16,7 @@ const propertyTypes = [
 export default function ListingFilterBar() {
     const router = useRouter()
     const searchParams = useSearchParams()
+    const [city, setCity] = useState('')
     const [bairro, setBairro] = useState('')
     const [type, setType] = useState('')
     const [minPrice, setMinPrice] = useState('')
@@ -23,6 +24,7 @@ export default function ListingFilterBar() {
     const [code, setCode] = useState('')
 
     useEffect(() => {
+        setCity(searchParams.get('city') || '')
         setBairro(searchParams.get('bairro') || '')
         setType(searchParams.get('type') || '')
         setMinPrice(searchParams.get('minPrice') || '')
@@ -37,6 +39,7 @@ export default function ListingFilterBar() {
             if (t) next.set(key, t)
             else next.delete(key)
         }
+        setOrDelete('city', city)
         setOrDelete('bairro', bairro)
         setOrDelete('type', type)
         setOrDelete('minPrice', minPrice)
@@ -44,7 +47,7 @@ export default function ListingFilterBar() {
         setOrDelete('code', code)
         next.delete('id')
         router.push(`/imoveis?${next.toString()}`)
-    }, [bairro, type, minPrice, maxPrice, code, router, searchParams])
+    }, [city, bairro, type, minPrice, maxPrice, code, router, searchParams])
 
     return (
         <div
@@ -55,7 +58,18 @@ export default function ListingFilterBar() {
                 <Filter className="h-4 w-4 text-primary-600" />
                 Filtros rápidos
             </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6 lg:items-end">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-7 lg:items-end">
+                <div className="lg:col-span-1">
+                    <label className="mb-1 block text-xs font-medium text-gray-500">Cidade</label>
+                    <input
+                        type="text"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        maxLength={120}
+                        placeholder="Ex: Goiânia"
+                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                    />
+                </div>
                 <div className="lg:col-span-1">
                     <label className="mb-1 block text-xs font-medium text-gray-500">Bairro</label>
                     <input

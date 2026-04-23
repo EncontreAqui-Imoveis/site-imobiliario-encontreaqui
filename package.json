@@ -40,7 +40,7 @@
     "@types/react-dom": "^19.0.0",
     "autoprefixer": "^10.4.27",
     "cross-env": "^10.1.0",
-    "eslint": "^10.0.3",
+    "eslint": "^9.39.4",
     "eslint-config-next": "^16.1.6",
     "globals": "^17.4.0",
     "jest": "^30.3.0",

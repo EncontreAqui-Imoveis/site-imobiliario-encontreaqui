@@ -7,7 +7,7 @@ import {
     MapPin, Bed, Bath, Car, Maximize,
     Wifi, Waves, Sun, Cpu, Wind, Sofa, Building2, type LucideIcon,
     Hash, Share2, CheckCircle,
-    Map, Phone, Globe
+    Map, Phone, Globe, Mail
 } from 'lucide-react'
 import { shareOrCopy } from '@/lib/webShare'
 
