@@ -1,9 +1,10 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
 import useEmblaCarousel from 'embla-carousel-react'
 import Autoplay from 'embla-carousel-autoplay'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import PropertyCard from '@/components/property/PropertyCard'
 import { Property } from '@/types/property'
 
@@ -63,7 +64,7 @@ export default function FeaturedCarousel({
         <section className="py-16 lg:py-24 bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-8">
+                <div className="mb-8 flex items-center justify-between gap-4">
                     <div>
                         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
                             {title}
@@ -73,8 +74,15 @@ export default function FeaturedCarousel({
                         </p>
                     </div>
 
-                    {/* Navigation Arrows */}
-                    <div className="hidden sm:flex items-center gap-2">
+                    <div className="hidden items-center gap-5 sm:flex">
+                        <Link
+                            href="/imoveis?sort=created_at:desc"
+                            className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-semibold transition-colors group"
+                        >
+                            Ver todos os imóveis
+                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </Link>
+
                         <button
                             onClick={scrollPrev}
                             disabled={!canScrollPrev}
@@ -123,6 +131,16 @@ export default function FeaturedCarousel({
                                 }`} />
                         </button>
                     ))}
+                </div>
+
+                <div className="mt-10 text-center sm:hidden">
+                    <Link
+                        href="/imoveis?sort=created_at:desc"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl shadow-lg transition-all"
+                    >
+                        Ver todos os imóveis
+                        <ArrowRight className="w-4 h-4" />
+                    </Link>
                 </div>
             </div>
         </section>

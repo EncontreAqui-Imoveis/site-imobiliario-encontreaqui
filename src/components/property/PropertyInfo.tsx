@@ -37,6 +37,7 @@ function formatDate(date?: string): string {
 export default function PropertyInfo({ property }: PropertyInfoProps) {
     const statusInfo = statusColors[property.status?.toLowerCase()] || statusColors.pending
     const statusLabel = displayStatusLabel(property.status, property.purpose)
+    const isPurposeBadgeDuplicate = statusLabel.trim().toLowerCase() === (property.purpose ?? '').trim().toLowerCase()
     const [shareMessage, setShareMessage] = useState<string | null>(null)
 
     // Build comfort amenities
@@ -88,12 +89,14 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                         <span className="px-3 py-1 bg-primary-50 text-primary-700 text-xs font-bold uppercase tracking-wide rounded-full">
                             {property.type}
                         </span>
-                        <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wide rounded-full ${property.purpose?.includes('Alug')
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-slate-100 text-slate-700'
-                            }`}>
-                            {property.purpose}
-                        </span>
+                        {!isPurposeBadgeDuplicate && (
+                            <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wide rounded-full ${property.purpose?.includes('Alug')
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-slate-100 text-slate-700'
+                                }`}>
+                                {property.purpose}
+                            </span>
+                        )}
                     </div>
                     <div className="flex items-center gap-2">
                         <button
@@ -156,8 +159,8 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                     </div>
                     <div className="flex flex-col items-center justify-center gap-2 text-center">
                         <Maximize className="h-6 w-6 shrink-0 text-primary-600" />
-                        <span className="text-xl font-bold text-gray-900">{property.areaConstruida || 0} m²</span>
-                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">Área Útil</span>
+                        <span className="text-xl font-bold text-gray-900">{property.areaTerreno || 0} m²</span>
+                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">Área do Terreno</span>
                     </div>
                 </div>
 
@@ -287,8 +290,12 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                        <span className="text-gray-600">Área Total</span>
+                        <span className="text-gray-600">Área do Terreno</span>
                         <span className="font-bold text-gray-900">{property.areaTerreno || 0} m²</span>
+                    </div>
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                        <span className="text-gray-600">Área Construída</span>
+                        <span className="font-bold text-gray-900">{property.areaConstruida || 0} m²</span>
                     </div>
                     {property.tipoLote && (
                         <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">

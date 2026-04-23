@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { formatPrice, Property } from '@/types/property'
-import { Info, ShieldCheck, Smartphone, Phone, FileText } from 'lucide-react'
+import { Info, Smartphone, Phone, FileText } from 'lucide-react'
 import WhatsAppIcon from '@/components/icons/WhatsAppIcon'
 import { buildAppDeepLink, getStoreUrlClient } from '@/lib/appLinks'
 import { buildPhoneLink, buildWhatsappLink } from '@/lib/contactLinks'
@@ -60,22 +60,6 @@ export default function PropertySidebar({ property, visitorProposalHref }: Prope
                         </div>
 
                         <hr className="border-gray-100" />
-
-                        {/* Broker Info */}
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center text-primary-700 font-bold text-lg shadow-inner">
-                                {property.brokerName ? property.brokerName.charAt(0).toUpperCase() : 'C'}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="font-bold text-gray-900 leading-tight truncate">
-                                    {property.brokerName || 'Corretor'}
-                                </p>
-                                <div className="flex items-center gap-1 text-xs text-primary-600 font-medium">
-                                    <ShieldCheck className="w-3 h-3" />
-                                    <span>Corretor Credenciado</span>
-                                </div>
-                            </div>
-                        </div>
 
                         {/* Action Buttons */}
                         <div className="space-y-3 pt-2">

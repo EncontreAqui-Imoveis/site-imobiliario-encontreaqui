@@ -16,8 +16,7 @@ import { useUser } from '@/contexts/UserContext'
 import { buildWhatsappLink } from '@/lib/contactLinks'
 import { fetchEditableProperty } from '@/lib/propertiesEditorService'
 import { displayStatusLabel } from '@/lib/propertyLabels'
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://site-imobiliario-backend-production.up.railway.app'
+import { API_BASE_URL } from '@/lib/api/client'
 
 interface PropertyDetailClientProps {
     propertyId: string

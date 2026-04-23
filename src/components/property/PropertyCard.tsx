@@ -187,10 +187,11 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                             <span className="font-medium leading-tight">{formatUnit(property.garageSpots, 'Garagem', 'Garagens')}</span>
                         </div>
                     )}
-                    {property.areaConstruida != null && property.areaConstruida > 0 && (
+                    {property.areaTerreno != null && property.areaTerreno > 0 && (
                         <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-3 py-3 text-center text-sm text-gray-700">
                             <Maximize className="h-4 w-4 shrink-0 text-gray-400" />
-                            <span className="font-medium leading-tight">{property.areaConstruida} m²</span>
+                            <span className="font-medium leading-tight">{property.areaTerreno} m²</span>
+                            <span className="text-[11px] uppercase tracking-wide text-gray-500">Terreno</span>
                         </div>
                     )}
                 </div>

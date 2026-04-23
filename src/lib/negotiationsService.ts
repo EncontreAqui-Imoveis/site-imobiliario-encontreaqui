@@ -1,13 +1,10 @@
-import { apiClient, type ApiError } from '@/lib/api/client'
+import { apiClient, API_BASE_URL, type ApiError } from '@/lib/api/client'
 import { generateIdempotencyKey } from '@/lib/idempotency'
 import { reportObservedError } from '@/lib/observability'
 import { hasAuthTokenInBrowser } from '@/lib/auth/tokenStore'
 import type { NegotiationSummary } from '@/types/negotiation'
 import type { Property } from '@/types/property'
 import { normalizeProperty } from '@/lib/propertiesApi'
-
-const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL || 'https://site-imobiliario-backend-production.up.railway.app'
 
 export async function fetchMyNegotiations(): Promise<NegotiationSummary[]> {
     const response = await apiClient.get<{

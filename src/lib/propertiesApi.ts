@@ -1,9 +1,7 @@
 import { Property } from '@/types/property'
 import { reportObservedError } from '@/lib/observability'
-import { apiClient, ApiError } from '@/lib/api/client'
+import { apiClient, API_BASE_URL, ApiError } from '@/lib/api/client'
 import { hasAuthTokenInBrowser, hasAuthTokenInServer } from '@/lib/auth/tokenStore'
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://backend-production-6acc.up.railway.app'
 
 type ErrorPayload = {
     message?: string

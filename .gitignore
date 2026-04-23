@@ -2,9 +2,11 @@ node_modules/
 .next/
 .env
 .env*
+!.env.example
 out/
 coverage/
 .env.*
+!.env.example
 bfg-1.15.0.jar
 site-imobiliario-threat-model.md
 .gitignore
