@@ -44,13 +44,8 @@ export default function LocationSelectFields({
     useEffect(() => {
         if (!hasSelectedCity && bairro) {
             onBairroChange('')
-            return
         }
-        const exists = bairroOptions.some((item) => item.bairro === bairro)
-        if (bairro && !exists) {
-            onBairroChange('')
-        }
-    }, [bairro, bairroOptions, hasSelectedCity, onBairroChange])
+    }, [bairro, hasSelectedCity, onBairroChange])
 
     return (
         <>
