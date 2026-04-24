@@ -36,6 +36,24 @@ type ContractFormState = {
     guaranteeType: string
 }
 
+type RequirementApplicability = 'required' | 'optional' | 'not_applicable'
+
+type RequirementRow = {
+    category: ContractDocumentCategory
+    applicability: RequirementApplicability
+    required: boolean
+    reasonCode: string
+}
+
+type ChecklistEntry = {
+    documentType: ContractDocumentType
+    side?: ContractSide
+    documentCategory?: ContractDocumentCategory
+    label: string
+    optional?: boolean
+    allowMultiple?: boolean
+}
+
 function shortId(value: string | null | undefined): string {
     const normalized = String(value ?? '').trim()
     return normalized ? `${normalized.slice(0, 8)}…` : '—'
@@ -77,7 +95,6 @@ const DOCUMENT_LABELS: Record<string, string> = {
     contrato_assinado: 'Contrato assinado',
     comprovante_pagamento: 'Comprovante de pagamento',
     boleto_vistoria: 'Boleto/Vistoria',
-    outro: 'Outro documento',
     cliente_cnh: 'CNH do cliente',
     cliente_identidade: 'Identidade (RG/CNH) do cliente',
     cliente_outros: 'Outros documentos do cliente',
@@ -85,75 +102,9 @@ const DOCUMENT_LABELS: Record<string, string> = {
 
 const OPTIONAL_DOC_TYPES = new Set<ContractDocumentType>(['cliente_outros'])
 
-const SIGNATURE_REQUIRED_DOCS: ContractDocumentType[] = [
-    'contrato_assinado',
-    'comprovante_pagamento',
-]
-
 function isRentalPurpose(purpose: string | null | undefined): boolean {
     const normalized = String(purpose ?? '').trim().toLowerCase()
     return normalized.includes('alug') || normalized.includes('rent')
-}
-
-function requiredDocTypesForContract(contract: ContractDetail, awaitingSignatures = false): ContractDocumentType[] {
-    if (awaitingSignatures) {
-        return SIGNATURE_REQUIRED_DOCS
-    }
-    const requirementRows = contract.documentRequirements?.seller ?? []
-    const docs: ContractDocumentType[] = requirementRows.flatMap((row): ContractDocumentType[] => {
-        if (row.applicability === 'not_applicable') return [] as ContractDocumentType[]
-        switch (row.category) {
-            case 'identidade':
-                return ['doc_identidade']
-            case 'dados_bancarios':
-                return ['outro']
-            case 'comprovante_endereco':
-                return ['comprovante_endereco']
-            case 'estado_civil':
-                return ['certidao_casamento_nascimento']
-            case 'conjuge_documentos':
-                return ['outro']
-            case 'docs_imovel':
-                return ['certidao_inteiro_teor', 'certidao_onus_acoes']
-            default:
-                return [] as ContractDocumentType[]
-        }
-    })
-    return Array.from(new Set<ContractDocumentType>(docs))
-}
-
-function buyerClientIdentityDocumentTypes(): ContractDocumentType[] {
-    return ['cliente_identidade', 'cliente_outros']
-}
-
-function buyerRequiredDocTypesForContract(
-    contract: ContractDetail,
-    awaitingSignatures: boolean,
-): ContractDocumentType[] {
-    if (awaitingSignatures) {
-        return requiredDocTypesForContract(contract, true)
-    }
-    const requirementRows = contract.documentRequirements?.buyer ?? []
-    const docsFromMatrix: ContractDocumentType[] = requirementRows.flatMap((row): ContractDocumentType[] => {
-        if (row.applicability === 'not_applicable') return [] as ContractDocumentType[]
-        switch (row.category) {
-            case 'identidade':
-                return ['cliente_identidade']
-            case 'comprovante_endereco':
-                return ['comprovante_endereco']
-            case 'estado_civil':
-                return ['certidao_casamento_nascimento']
-            case 'conjuge_documentos':
-                return ['outro']
-            case 'comprovante_renda':
-                return ['comprovante_renda']
-            default:
-                return [] as ContractDocumentType[]
-        }
-    })
-    return Array.from(
-        new Set<ContractDocumentType>([...docsFromMatrix, ...buyerClientIdentityDocumentTypes()]),
-    )
 }
 
 function documentLabel(documentType: ContractDocumentType | null | undefined): string {
@@ -172,6 +123,168 @@ const CATEGORY_LABELS: Record<ContractDocumentCategory, string> = {
     comprovante_renda: 'Comprovante de renda',
     dados_bancarios: 'Dados bancários',
     docs_imovel: 'Documentos do imóvel',
+}
+
+function stripDiacritics(value: string): string {
+    return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
+function resolveMaritalBucket(value: string | null | undefined) {
+    const raw = stripDiacritics(String(value ?? '').trim().toLowerCase())
+    if (!raw) return 'unknown'
+    if (/(^|[^a-z0-9])solteir/.test(raw) || raw === 'solteiro' || raw === 'solteira') return 'single'
+    if (raw.includes('uni') && raw.includes('estav')) return 'stable_union'
+    if (raw.includes('casad') || raw.includes('matrim')) return 'married'
+    if (raw.includes('divorci')) return 'divorced'
+    if (raw.includes('viuv')) return 'widowed'
+    return 'unknown'
+}
+
+function spouseApplicabilityForMarital(value: string | null | undefined): RequirementRow {
+    const maritalBucket = resolveMaritalBucket(value)
+    if (maritalBucket === 'married' || maritalBucket === 'stable_union') {
+        return {
+            category: 'conjuge_documentos',
+            applicability: 'required',
+            required: true,
+            reasonCode: 'CONJUGE_REQUIRED_MARRIED_OR_STABLE',
+        }
+    }
+    return {
+        category: 'conjuge_documentos',
+        applicability: 'not_applicable',
+        required: false,
+        reasonCode: 'CONJUGE_NA_MARITAL_SINGLE_OR_EQUIVALENT',
+    }
+}
+
+function buildFallbackRequirementRows(
+    side: ContractSide,
+    maritalStatus: string | null | undefined,
+): RequirementRow[] {
+    const spouseRow = spouseApplicabilityForMarital(maritalStatus)
+    if (side === 'seller') {
+        return [
+            { category: 'identidade', applicability: 'required', required: true, reasonCode: 'IDENTIDADE_REQUIRED' },
+            { category: 'dados_bancarios', applicability: 'required', required: true, reasonCode: 'DADOS_BANCARIOS_REQUIRED' },
+            { category: 'comprovante_endereco', applicability: 'required', required: true, reasonCode: 'ENDERECO_REQUIRED' },
+            { category: 'estado_civil', applicability: 'required', required: true, reasonCode: 'ESTADO_CIVIL_REQUIRED' },
+            spouseRow,
+            { category: 'docs_imovel', applicability: 'required', required: true, reasonCode: 'DOCS_IMOVEL_REQUIRED' },
+        ]
+    }
+
+    return [
+        { category: 'identidade', applicability: 'required', required: true, reasonCode: 'IDENTIDADE_REQUIRED' },
+        { category: 'comprovante_endereco', applicability: 'required', required: true, reasonCode: 'ENDERECO_REQUIRED' },
+        { category: 'estado_civil', applicability: 'required', required: true, reasonCode: 'ESTADO_CIVIL_REQUIRED' },
+        spouseRow,
+        { category: 'comprovante_renda', applicability: 'required', required: true, reasonCode: 'COMPROVANTE_RENDA_REQUIRED' },
+    ]
+}
+
+function effectiveRequirementRows(
+    contract: ContractDetail,
+    side: ContractSide,
+    maritalStatus: string | null | undefined,
+): RequirementRow[] {
+    const sourceRows = contract.documentRequirements?.[side]
+    const rows = sourceRows && sourceRows.length > 0
+        ? sourceRows.map((row) => ({ ...row }))
+        : buildFallbackRequirementRows(side, maritalStatus)
+
+    return rows.map((row) => {
+        if (row.category !== 'conjuge_documentos') return row
+        return spouseApplicabilityForMarital(maritalStatus)
+    })
+}
+
+function expandRequirementRows(
+    side: ContractSide,
+    rows: RequirementRow[],
+): ChecklistEntry[] {
+    const entries: ChecklistEntry[] = []
+    for (const row of rows) {
+        if (row.applicability === 'not_applicable') continue
+        switch (row.category) {
+            case 'docs_imovel':
+                entries.push(
+                    {
+                        documentType: 'certidao_inteiro_teor',
+                        side,
+                        documentCategory: row.category,
+                        label: documentLabel('certidao_inteiro_teor'),
+                    },
+                    {
+                        documentType: 'certidao_onus_acoes',
+                        side,
+                        documentCategory: row.category,
+                        label: documentLabel('certidao_onus_acoes'),
+                    },
+                )
+                break
+            case 'identidade':
+                entries.push({
+                    documentType: side === 'buyer' ? 'cliente_identidade' : 'doc_identidade',
+                    side,
+                    documentCategory: row.category,
+                    label: side === 'buyer' ? documentLabel('cliente_identidade') : documentLabel('doc_identidade'),
+                })
+                break
+            case 'dados_bancarios':
+                entries.push({
+                    documentType: 'outro',
+                    side,
+                    documentCategory: row.category,
+                    label: CATEGORY_LABELS.dados_bancarios,
+                })
+                break
+            case 'conjuge_documentos':
+                entries.push({
+                    documentType: 'outro',
+                    side,
+                    documentCategory: row.category,
+                    label: CATEGORY_LABELS.conjuge_documentos,
+                })
+                break
+            case 'comprovante_endereco':
+                entries.push({
+                    documentType: 'comprovante_endereco',
+                    side,
+                    documentCategory: row.category,
+                    label: documentLabel('comprovante_endereco'),
+                })
+                break
+            case 'estado_civil':
+                entries.push({
+                    documentType: 'certidao_casamento_nascimento',
+                    side,
+                    documentCategory: row.category,
+                    label: documentLabel('certidao_casamento_nascimento'),
+                })
+                break
+            case 'comprovante_renda':
+                entries.push({
+                    documentType: 'comprovante_renda',
+                    side,
+                    documentCategory: row.category,
+                    label: documentLabel('comprovante_renda'),
+                })
+                break
+        }
+    }
+
+    if (side === 'buyer') {
+        entries.push({
+            documentType: 'cliente_outros',
+            side,
+            label: documentLabel('cliente_outros'),
+            optional: true,
+            allowMultiple: true,
+        })
+    }
+
+    return entries
 }
 
 function resolveCategoryByDocumentType(documentType: ContractDocumentType): ContractDocumentCategory {
@@ -201,24 +314,48 @@ function matchesDocumentType(
 
 function findLatestDoc(
     docs: ContractDocument[],
-    documentType: ContractDocumentType,
-    side?: ContractSide,
+    entry: Pick<ChecklistEntry, 'documentType' | 'documentCategory' | 'side'>,
 ): ContractDocument | null {
     const matched = docs.find((doc) => {
-        if (!matchesDocumentType(doc.documentType, documentType)) return false
-        if (side == null) return true
-        return doc.side === side
+        if (!matchesDocumentType(doc.documentType, entry.documentType)) return false
+        if (entry.documentCategory) {
+            const docCategory = String(doc.documentCategory ?? '').trim()
+            if (docCategory !== entry.documentCategory) return false
+        }
+        if (entry.side == null) return true
+        return doc.side === entry.side
     })
     return matched ?? null
+}
+
+function latestFileName(doc: ContractDocument | null): string | null {
+    const fileName = String(doc?.originalFileName ?? '').trim()
+    return fileName || null
+}
+
+function uploadedDocumentLabel(doc: ContractDocument): string {
+    const documentType = String(doc.documentType ?? '').trim()
+    if (isLegacyBuyerOtherDocumentType(documentType)) {
+        return documentLabel('cliente_outros')
+    }
+    if (documentType === 'outro') {
+        const category = String(doc.documentCategory ?? '').trim() as ContractDocumentCategory
+        if (category && CATEGORY_LABELS[category]) {
+            return CATEGORY_LABELS[category]
+        }
+    }
+    return documentLabel(documentType as ContractDocumentType)
 }
 
 function renderChecklistStatus(doc: ContractDocument | null) {
     if (!doc) return 'Pendente'
     const status = String(doc.categoryStatus ?? '').trim().toUpperCase()
+    if (status === 'PENDING') return 'Pendente'
     if (status === 'APPROVED') return 'Aprovado'
+    if (status === 'APPROVED_WITH_RES') return 'Aprovado com ressalvas'
     if (status === 'REJECTED') return 'Rejeitado'
     if (status === 'NOT_APPLICABLE') return 'Não se aplica'
-    return 'Enviado'
+    return 'Pendente'
 }
 
 function renderChecklistHint(doc: ContractDocument | null): string | null {
@@ -232,6 +369,16 @@ function renderChecklistHint(doc: ContractDocument | null): string | null {
         return 'Documento enviado. Aguardando análise administrativa.'
     }
     return null
+}
+
+function renderDocumentProgressStatus(status: string | null | undefined) {
+    const normalized = String(status ?? '').trim().toUpperCase()
+    if (normalized === 'PENDING') return 'Pendente'
+    if (normalized === 'APPROVED') return 'Aprovado'
+    if (normalized === 'APPROVED_WITH_RES') return 'Aprovado com ressalvas'
+    if (normalized === 'REJECTED') return 'Rejeitado'
+    if (normalized === 'NOT_APPLICABLE') return 'Não se aplica'
+    return normalized || 'Pendente'
 }
 
 function resolveSignatureMethod(contract: ContractDetail): string | null {
@@ -293,8 +440,7 @@ export function ContractDetailClient({ contract }: Props) {
     const { session } = useUser()
     const [currentContract, setCurrentContract] = useState<ContractDetail>(contract)
     const [documents, setDocuments] = useState<ContractDocument[]>(contract.documents)
-    const [uploadingSide, setUploadingSide] = useState<ContractSide | null>(null)
-    const [uploadingType, setUploadingType] = useState<ContractDocumentType | null>(null)
+    const [uploadingKey, setUploadingKey] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
     const [refreshingContract, setRefreshingContract] = useState(false)
     const [settingSignatureMethod, setSettingSignatureMethod] = useState(false)
@@ -323,21 +469,67 @@ export function ContractDetailClient({ contract }: Props) {
         }
     }
 
+    const buildUploadKey = (entry: Pick<ChecklistEntry, 'documentType' | 'documentCategory' | 'side'>) => {
+        const category = entry.documentCategory ? `#${entry.documentCategory}` : ''
+        const side = entry.side ? `${entry.side}::` : ''
+        return `${side}${entry.documentType}${category}`
+    }
+
+    const buildSidePayload = (side: ContractSide): Record<string, unknown> => {
+        if (side === 'seller') {
+            return {
+                estado_civil: sellerForm.maritalStatus.trim(),
+                profissao: sellerForm.profession.trim(),
+                email: sellerForm.email.trim(),
+                telefone: sellerForm.phone.trim(),
+                dados_bancarios: sellerForm.bankDetails.trim(),
+            }
+        }
+        const buyerInfo: Record<string, unknown> = {
+            estado_civil: buyerForm.maritalStatus.trim(),
+            profissao: buyerForm.profession.trim(),
+            email: buyerForm.email.trim(),
+            telefone: buyerForm.phone.trim(),
+        }
+        if (isRentalPurpose(currentContract.propertyPurpose)) {
+            buyerInfo.garantia_locacao = buyerForm.guaranteeType.trim()
+        }
+        return buyerInfo
+    }
+
+    const currentSavedMaritalStatus = (side: ContractSide) => {
+        const info = side === 'seller' ? toRecord(currentContract.sellerInfo) : toRecord(currentContract.buyerInfo)
+        return readContractInfoField(info, ['estado_civil', 'estadoCivil'])
+    }
+
+    const persistSideBeforeUploadIfNeeded = async (entry: ChecklistEntry) => {
+        if (!entry.side || entry.documentCategory !== 'conjuge_documentos') return
+        const formValue = (entry.side === 'seller' ? sellerForm.maritalStatus : buyerForm.maritalStatus).trim()
+        const persistedValue = currentSavedMaritalStatus(entry.side).trim()
+        if (formValue === persistedValue) return
+
+        await updateContractData({
+            contractId: currentContract.id,
+            sellerInfo: entry.side === 'seller' ? buildSidePayload('seller') : undefined,
+            buyerInfo: entry.side === 'buyer' ? buildSidePayload('buyer') : undefined,
+        })
+        await refreshContract()
+    }
+
     const handleUploadBatch = async (
-        side: ContractSide | undefined,
-        documentType: ContractDocumentType,
+        entry: ChecklistEntry,
         files: File[],
     ) => {
         setError(null)
-        setUploadingSide(side ?? null)
-        setUploadingType(documentType)
+        setUploadingKey(buildUploadKey(entry))
         try {
+            await persistSideBeforeUploadIfNeeded(entry)
             for (const file of files) {
                 await uploadContractDocument({
                     contractId: currentContract.id,
-                    side,
-                    documentType,
-                    documentCategory: resolveCategoryByDocumentType(documentType),
+                    side: entry.side,
+                    documentType: entry.documentType,
+                    documentCategory: entry.documentCategory ?? resolveCategoryByDocumentType(entry.documentType),
                     file,
                 })
             }
@@ -354,8 +546,7 @@ export function ContractDetailClient({ contract }: Props) {
                 setError('Não foi possível enviar o documento.')
             }
         } finally {
-            setUploadingSide(null)
-            setUploadingType(null)
+            setUploadingKey(null)
         }
     }
 
@@ -475,11 +666,8 @@ export function ContractDetailClient({ contract }: Props) {
         }
     }
 
-    const renderUploadField = (
-        side: ContractSide | undefined,
-        documentType: ContractDocumentType,
-        label: string,
-    ) => {
+    const renderUploadField = (entry: ChecklistEntry, currentDoc: ContractDocument | null) => {
+        const { side, label } = entry
         const locked =
             side == null ? false : isSideLocked(currentContract, side)
         if (locked) {
@@ -490,14 +678,14 @@ export function ContractDetailClient({ contract }: Props) {
             )
         }
 
-        const allowMultiple = documentType === 'cliente_outros'
-        const isUploading =
-            uploadingSide === (side ?? null) && uploadingType === documentType
+        const allowMultiple = entry.allowMultiple === true
+        const isUploading = uploadingKey === buildUploadKey(entry)
+        const ctaLabel = currentDoc ? 'Reenviar' : 'Enviar'
 
         return (
             <label className="block text-xs text-primary-700 cursor-pointer">
                 <span className="underline">
-                    Enviar {label}
+                    {ctaLabel} {label}
                 </span>
                 <input
                     type="file"
@@ -507,7 +695,7 @@ export function ContractDetailClient({ contract }: Props) {
                     onChange={(event) => {
                         const selectedFiles = Array.from(event.target.files ?? [])
                         if (selectedFiles.length > 0) {
-                            void handleUploadBatch(side, documentType, selectedFiles)
+                            void handleUploadBatch(entry, selectedFiles)
                         }
                     }}
                     disabled={isUploading}
@@ -528,10 +716,20 @@ export function ContractDetailClient({ contract }: Props) {
     const sellerLocked = isSideLocked(currentContract, 'seller')
     const buyerLocked = isSideLocked(currentContract, 'buyer')
     const awaitingSig = currentContract.status === 'AWAITING_SIGNATURES'
-    const sellerRequiredDocs = requiredDocTypesForContract(currentContract, awaitingSig)
-    const buyerRequiredDocs = buyerRequiredDocTypesForContract(currentContract, awaitingSig)
-    const draftDocument = findLatestDoc(sharedDocs, 'contrato_minuta')
-    const signedContractDocument = findLatestDoc(sharedDocs, 'contrato_assinado')
+    const sellerRequiredDocs = awaitingSig
+        ? []
+        : expandRequirementRows(
+            'seller',
+            effectiveRequirementRows(currentContract, 'seller', sellerForm.maritalStatus),
+        )
+    const buyerRequiredDocs = awaitingSig
+        ? []
+        : expandRequirementRows(
+            'buyer',
+            effectiveRequirementRows(currentContract, 'buyer', buyerForm.maritalStatus),
+        )
+    const draftDocument = findLatestDoc(sharedDocs, { documentType: 'contrato_minuta' })
+    const signedContractDocument = findLatestDoc(sharedDocs, { documentType: 'contrato_assinado' })
     const signatureMethod = resolveSignatureMethod(currentContract)
     const hasAgencyReceivedSignedContract = Boolean(
         String(currentContract.workflowMetadata?.agencySignedContractReceivedAt ?? '').trim(),
@@ -784,10 +982,7 @@ export function ContractDetailClient({ contract }: Props) {
                                     </p>
                                     <ul className="mt-3 space-y-1 text-xs text-slate-700">
                                         {(progress?.categories ?? []).map((item) => {
-                                            const statusLabel =
-                                                item.status === 'NOT_APPLICABLE'
-                                                    ? 'Não se aplica'
-                                                    : item.status
+                                            const statusLabel = renderDocumentProgressStatus(item.status)
                                             return (
                                             <li key={`${side}-${item.category}`} className="flex items-center justify-between gap-2">
                                                 <span>{CATEGORY_LABELS[item.category] ?? item.category}</span>
@@ -857,7 +1052,7 @@ export function ContractDetailClient({ contract }: Props) {
                             <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
                                 <p className="font-semibold text-slate-900">Envio online</p>
                                 <p className="mt-1">Envie o contrato assinado para continuar o fluxo digital.</p>
-                                <div className="mt-3">{renderUploadField(undefined, 'contrato_assinado', 'contrato assinado')}</div>
+                                <div className="mt-3">{renderUploadField({ documentType: 'contrato_assinado', label: 'contrato assinado' }, signedContractDocument)}</div>
                             </div>
                             <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
                                 <p className="font-semibold text-slate-900">Entrega presencial</p>
@@ -877,7 +1072,7 @@ export function ContractDetailClient({ contract }: Props) {
                     <div className="grid gap-3 md:grid-cols-3">
                         {[ 'contrato_assinado', 'comprovante_pagamento', 'boleto_vistoria' ].map((documentType) => {
                             const normalizedType = documentType as ContractDocumentType
-                            const currentDoc = findLatestDoc(sharedDocs, normalizedType)
+                            const currentDoc = findLatestDoc(sharedDocs, { documentType: normalizedType })
                             const isOptional = normalizedType === 'boleto_vistoria'
 
                             return (
@@ -888,7 +1083,12 @@ export function ContractDetailClient({ contract }: Props) {
                                     <p className={`mt-1 text-xs ${currentDoc ? 'text-emerald-700' : 'text-slate-500'}`}>
                                         {renderChecklistStatus(currentDoc)}
                                     </p>
-                                    <div className="mt-3">{renderUploadField(undefined, normalizedType, documentLabel(normalizedType))}</div>
+                                    {latestFileName(currentDoc) && (
+                                        <p className="mt-1 text-[11px] text-slate-500">
+                                            Último arquivo: {latestFileName(currentDoc)}
+                                        </p>
+                                    )}
+                                    <div className="mt-3">{renderUploadField({ documentType: normalizedType, label: documentLabel(normalizedType) }, currentDoc)}</div>
                                 </div>
                             )
                         })}
@@ -947,7 +1147,7 @@ export function ContractDetailClient({ contract }: Props) {
                                         rel="noopener noreferrer"
                                         className="text-primary-700 hover:text-primary-800 underline"
                                     >
-                                        {doc.originalFileName || doc.documentType || 'Documento'}
+                                    {uploadedDocumentLabel(doc)}{doc.originalFileName ? ` - ${doc.originalFileName}` : ''}
                                     </a>
                                     <span className="text-[11px] text-slate-500">
                                         Somente leitura
@@ -987,7 +1187,7 @@ export function ContractDetailClient({ contract }: Props) {
                                     rel="noopener noreferrer"
                                     className="text-primary-700 hover:text-primary-800 underline"
                                 >
-                                    {doc.originalFileName || doc.documentType || 'Documento'}
+                                    {doc.originalFileName || uploadedDocumentLabel(doc)}
                                 </a>
                                 {!isSideLocked(currentContract, 'seller') && isAwaitingDocs && (
                                     <button
@@ -1020,22 +1220,27 @@ export function ContractDetailClient({ contract }: Props) {
                             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                                 Checklist deste lado
                             </p>
-                            {sellerRequiredDocs.map((documentType) => {
-                                const currentDoc = findLatestDoc(sellerDocs, documentType, 'seller')
+                            {sellerRequiredDocs.map((entry) => {
+                                const currentDoc = findLatestDoc(sellerDocs, entry)
                                 return (
-                                    <div key={`seller-${documentType}`} className="flex items-center justify-between gap-3 text-xs">
+                                    <div key={`seller-${entry.documentType}-${entry.documentCategory ?? 'default'}`} className="flex items-center justify-between gap-3 text-xs">
                                         <div className="min-w-0">
-                                            <p className="font-medium text-slate-800">{documentLabel(documentType)}</p>
+                                            <p className="font-medium text-slate-800">{entry.label}</p>
                                             <p className={currentDoc ? 'text-emerald-700' : 'text-slate-500'}>
                                                 {renderChecklistStatus(currentDoc)}
                                             </p>
+                                            {latestFileName(currentDoc) && (
+                                                <p className="mt-1 text-[11px] text-slate-500">
+                                                    Último arquivo: {latestFileName(currentDoc)}
+                                                </p>
+                                            )}
                                             {renderChecklistHint(currentDoc) && (
                                                 <p className="mt-1 text-[11px] text-amber-700">
                                                     {renderChecklistHint(currentDoc)}
                                                 </p>
                                             )}
                                         </div>
-                                        {renderUploadField('seller', documentType, documentLabel(documentType))}
+                                        {renderUploadField(entry, currentDoc)}
                                     </div>
                                 )
                             })}
@@ -1062,7 +1267,7 @@ export function ContractDetailClient({ contract }: Props) {
                                     rel="noopener noreferrer"
                                     className="text-primary-700 hover:text-primary-800 underline"
                                 >
-                                    {doc.originalFileName || doc.documentType || 'Documento'}
+                                    {uploadedDocumentLabel(doc)}{doc.originalFileName ? ` - ${doc.originalFileName}` : ''}
                                 </a>
                                 {!isSideLocked(currentContract, 'buyer') && isAwaitingDocs && (
                                     <button
@@ -1095,25 +1300,30 @@ export function ContractDetailClient({ contract }: Props) {
                             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                                 Checklist deste lado
                             </p>
-                            {buyerRequiredDocs.map((documentType) => {
-                                const currentDoc = findLatestDoc(buyerDocs, documentType, 'buyer')
-                                const isOptional = OPTIONAL_DOC_TYPES.has(documentType)
+                            {buyerRequiredDocs.map((entry) => {
+                                const currentDoc = findLatestDoc(buyerDocs, entry)
+                                const isOptional = entry.optional === true || OPTIONAL_DOC_TYPES.has(entry.documentType)
                                 return (
-                                    <div key={`buyer-${documentType}`} className="flex items-center justify-between gap-3 text-xs">
+                                    <div key={`buyer-${entry.documentType}-${entry.documentCategory ?? 'default'}`} className="flex items-center justify-between gap-3 text-xs">
                                         <div className="min-w-0">
                                             <p className="font-medium text-slate-800">
-                                                {documentLabel(documentType)} {isOptional ? '(opcional)' : ''}
+                                                {entry.label} {isOptional ? '(opcional)' : ''}
                                             </p>
                                             <p className={currentDoc ? 'text-emerald-700' : 'text-slate-500'}>
                                                 {renderChecklistStatus(currentDoc)}
                                             </p>
+                                            {latestFileName(currentDoc) && (
+                                                <p className="mt-1 text-[11px] text-slate-500">
+                                                    Último arquivo: {latestFileName(currentDoc)}
+                                                </p>
+                                            )}
                                             {renderChecklistHint(currentDoc) && (
                                                 <p className="mt-1 text-[11px] text-amber-700">
                                                     {renderChecklistHint(currentDoc)}
                                                 </p>
                                             )}
                                         </div>
-                                        {renderUploadField('buyer', documentType, documentLabel(documentType))}
+                                        {renderUploadField(entry, currentDoc)}
                                     </div>
                                 )
                             })}
