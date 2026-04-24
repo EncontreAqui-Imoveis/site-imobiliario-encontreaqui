@@ -2,7 +2,7 @@
 export type AreaConstruidaUnidade = 'm2' | 'alqueire' | 'hectare'
 
 const M2_PER_HECTARE = 10_000
-const M2_PER_ALQUEIRE = 24_200
+const M2_PER_ALQUEIRE = 48_400
 
 export function normalizeAreaUnidade(raw: string | null | undefined): AreaConstruidaUnidade {
     const u = String(raw ?? '')

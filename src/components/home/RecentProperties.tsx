@@ -54,7 +54,7 @@ export default function RecentProperties({
         <section className="py-16 lg:py-24 bg-transparent">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+                <div className="mb-8 flex items-center justify-between gap-4">
                     <div>
                         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
                             {title}
@@ -64,34 +64,33 @@ export default function RecentProperties({
                         </p>
                     </div>
 
-                    {showViewAll && (
-                        <Link
-                            href="/imoveis?sort=created_at:desc"
-                            className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-semibold transition-colors group"
+                    <div className="hidden items-center gap-2 sm:flex">
+                        {showViewAll && (
+                            <Link
+                                href="/imoveis?sort=created_at:desc"
+                                className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-semibold transition-colors group"
+                            >
+                                Ver todos os imóveis
+                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                            </Link>
+                        )}
+                        <button
+                            onClick={() => emblaApi?.scrollPrev()}
+                            disabled={!canScrollPrev}
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 transition hover:border-primary-200 hover:text-primary-600 disabled:opacity-50"
+                            aria-label="Anterior"
                         >
-                            Ver todos os imóveis
-                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        </Link>
-                    )}
-                </div>
-
-                <div className="mb-5 hidden items-center justify-end gap-2 sm:flex">
-                    <button
-                        onClick={() => emblaApi?.scrollPrev()}
-                        disabled={!canScrollPrev}
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 transition hover:border-primary-200 hover:text-primary-600 disabled:opacity-50"
-                        aria-label="Anterior"
-                    >
-                        <ChevronLeft className="h-5 w-5" />
-                    </button>
-                    <button
-                        onClick={() => emblaApi?.scrollNext()}
-                        disabled={!canScrollNext}
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 transition hover:border-primary-200 hover:text-primary-600 disabled:opacity-50"
-                        aria-label="Próximo"
-                    >
-                        <ChevronRight className="h-5 w-5" />
-                    </button>
+                            <ChevronLeft className="h-5 w-5" />
+                        </button>
+                        <button
+                            onClick={() => emblaApi?.scrollNext()}
+                            disabled={!canScrollNext}
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 transition hover:border-primary-200 hover:text-primary-600 disabled:opacity-50"
+                            aria-label="Próximo"
+                        >
+                            <ChevronRight className="h-5 w-5" />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="overflow-hidden" ref={emblaRef}>

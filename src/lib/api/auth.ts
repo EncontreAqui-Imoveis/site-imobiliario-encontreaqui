@@ -28,6 +28,7 @@ type ProfileResponse = {
     role?: 'client' | 'broker'
     status?: 'pending_verification' | 'approved' | 'rejected'
     requiresDocuments?: boolean
+    needsCompletion?: boolean
     user: User
 }
 
@@ -148,7 +149,10 @@ function mapProfileResponseToSession(response: ProfileResponse): UserSession {
         isBroker,
         broker,
         requiresBrokerDocuments: response.requiresDocuments === true,
-        profileStatus: isProfileComplete(response.user) ? 'complete' : 'incomplete',
+        profileStatus:
+            response.needsCompletion === true || !isProfileComplete(response.user)
+                ? 'incomplete'
+                : 'complete',
     }
 }
 

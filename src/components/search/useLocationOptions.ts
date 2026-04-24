@@ -68,7 +68,7 @@ export function useLocationOptions(selectedCity: string) {
             return
         }
         setActiveCity('')
-    }, [selectedCity, selectedCityOption])
+    }, [cities, selectedCity, selectedCityOption])
 
     useEffect(() => {
         if (!activeCity) {
