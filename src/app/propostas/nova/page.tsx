@@ -190,6 +190,8 @@ export default function ProposalWizardPage() {
         if (!isEditMode || !property || !session || prefillAppliedRef.current) return
         const negotiationIdValue = String(negotiationId ?? '').trim()
         if (!negotiationIdValue) return
+        const currentPropertyId = property.id
+        const ownUserId = Number(session.user?.id ?? 0)
 
         let cancelled = false
         async function loadEditData() {
@@ -204,7 +206,7 @@ export default function ProposalWizardPage() {
                     setLoadError('Esta proposta já foi assinada e não pode mais ser editada.')
                     return
                 }
-                if (existing.propertyId !== property.id) {
+                if (existing.propertyId !== currentPropertyId) {
                     setLoadError('Proposta não corresponde ao imóvel informado.')
                     return
                 }
@@ -217,7 +219,6 @@ export default function ProposalWizardPage() {
                 }
 
                 const sellerBrokerId = Number(existing.sellerBrokerId ?? 0)
-                const ownUserId = Number(session.user?.id ?? 0)
                 if (isBrokerUser && sellerBrokerId > 0 && ownUserId > 0 && sellerBrokerId !== ownUserId) {
                     setIsSelfBroker(false)
                     setSelectedBroker({
