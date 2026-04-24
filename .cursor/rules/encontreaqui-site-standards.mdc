@@ -1,5 +1,5 @@
 ---
-description: Regras de UX/UI, acessibilidade, arquitetura React/Next e estilo para o site imobiliário do EncontreAqui Imóveis.
+description: Regras de UX/UI, acessibilidade, arquitetura React/Next e estilo para o site imobiliário do Encontre Aqui Imóveis.
 globs:
   - "src/**/*.ts"
   - "src/**/*.tsx"

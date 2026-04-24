@@ -177,7 +177,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
         if (negotiationId && resolveProposalBucket(negotiationStatus) === 'signed') {
             return {
                 title: 'Proposta em revisão',
-                description: 'Acompanhe o avanço da proposta e das próximas etapas até chegar aos contratos.',
+                description: 'Acompanhe a análise. O imóvel segue recebendo propostas até que uma assinatura seja aprovada.',
                 href: '/propostas',
                 tone: 'neutral' as const,
                 label: 'Acompanhar propostas',
@@ -197,7 +197,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
         return negotiationId
             ? {
                 title: 'Acompanhar propostas',
-                description: 'Use a trilha de propostas para seguir o status atual deste imóvel.',
+                description: 'Use a trilha de propostas para acompanhar quando ele segue em análise ou vai para histórico.',
                 href: '/propostas',
                 tone: 'neutral' as const,
                 label: 'Ver propostas',

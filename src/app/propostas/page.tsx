@@ -110,13 +110,18 @@ export default function PropostasPage() {
         return 'Abrir contratos'
     }
 
-    const canEditByStatus = (status: NegotiationSummary['status']) => isProposalPreSignatureStatus(status)
-    const canDeleteByStatus = (status: NegotiationSummary['status']) => isProposalPreSignatureStatus(status)
+    const canEditByStatus = (negotiation: NegotiationSummary) => {
+        if (typeof negotiation.canEditProposal === 'boolean') {
+            return negotiation.canEditProposal
+        }
+        return isProposalPreSignatureStatus(negotiation.status)
+    }
+    const canDeleteByStatus = (negotiation: NegotiationSummary) => canEditByStatus(negotiation)
     const canRestartCycle = (negotiation: NegotiationSummary) =>
         isProposalRefusedStatus(negotiation.status) && negotiation.propertyId > 0
 
     const handleEdit = (negotiation: NegotiationSummary) => {
-        if (!canEditByStatus(negotiation.status) || negotiation.propertyId <= 0) {
+        if (!canEditByStatus(negotiation) || negotiation.propertyId <= 0) {
             return
         }
         router.push(
@@ -125,7 +130,7 @@ export default function PropostasPage() {
     }
 
     const handleDelete = async (negotiation: NegotiationSummary) => {
-        if (!canDeleteByStatus(negotiation.status)) {
+        if (!canDeleteByStatus(negotiation)) {
             return
         }
         const confirmed = window.confirm('Excluir esta proposta em envio? Esta ação não pode ser desfeita.')
@@ -309,9 +314,9 @@ export default function PropostasPage() {
                                 >
                                     <button
                                         type="button"
-                                        disabled={!canEditByStatus(neg.status) || busyActionId === neg.id}
+                                        disabled={!canEditByStatus(neg) || busyActionId === neg.id}
                                         title={
-                                            canEditByStatus(neg.status)
+                                            canEditByStatus(neg)
                                                 ? 'Editar proposta'
                                                 : 'Edição bloqueada após assinatura'
                                         }
@@ -324,9 +329,9 @@ export default function PropostasPage() {
                                     </button>
                                     <button
                                         type="button"
-                                        disabled={!canDeleteByStatus(neg.status) || busyActionId === neg.id}
+                                        disabled={!canDeleteByStatus(neg) || busyActionId === neg.id}
                                         title={
-                                            canDeleteByStatus(neg.status)
+                                            canDeleteByStatus(neg)
                                                 ? 'Excluir proposta'
                                                 : canRestartCycle(neg)
                                                     ? 'Recusada: pode iniciar um novo ciclo'

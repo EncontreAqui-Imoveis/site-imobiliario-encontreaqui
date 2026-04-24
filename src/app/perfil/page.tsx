@@ -23,8 +23,8 @@ export default function PerfilPage() {
     const handleShare = async () => {
         const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://encontreaquiimoveis.app'
         const result = await shareOrCopy({
-            title: 'EncontreAqui Imóveis',
-            text: 'Venha conhecer o EncontreAqui Imóveis.',
+            title: 'Encontre Aqui Imóveis',
+            text: 'Venha conhecer o Encontre Aqui Imóveis.',
             url: baseUrl,
         })
 
