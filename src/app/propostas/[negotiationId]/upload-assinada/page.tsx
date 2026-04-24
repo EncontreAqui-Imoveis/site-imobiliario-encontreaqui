@@ -115,6 +115,9 @@ export default function UploadPropostaAssinadaPage() {
                         <p className="text-xs text-slate-500">
                             Apenas arquivos PDF. Tamanho máximo conforme limite configurado no backend.
                         </p>
+                        <p className="text-xs text-slate-600 font-medium">
+                            {file?.name?.trim() ? file.name.trim() : 'Envie sua proposta assinada'}
+                        </p>
                     </div>
 
                     {error && (

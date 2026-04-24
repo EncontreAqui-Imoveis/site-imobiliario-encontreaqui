@@ -337,7 +337,7 @@ export default function SearchFilters() {
                                         value={filters.bairro}
                                         onChange={(e) => handleChange('bairro', e.target.value)}
                                         className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                        disabled={!hasSelectedCity || isLoadingBairros || bairros.length === 0}
+                                        disabled={isLoadingBairros}
                                     >
                                         <option value="">
                                             {isLoadingBairros

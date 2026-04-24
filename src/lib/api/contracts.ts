@@ -291,7 +291,9 @@ export async function uploadContractDocument(options: {
 }): Promise<void> {
     const formData = new FormData()
     formData.append('file', options.file)
-    formData.append('documentType', options.documentType)
+    const normalizedDocumentType =
+        options.documentType === 'cliente_outros' ? 'cliente_outro_01' : options.documentType
+    formData.append('documentType', normalizedDocumentType)
     if (options.documentCategory) {
         formData.append('documentCategory', options.documentCategory)
     }

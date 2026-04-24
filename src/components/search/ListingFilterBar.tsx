@@ -136,13 +136,12 @@ export default function ListingFilterBar() {
                         list="listing-bairro-options"
                         autoComplete="off"
                         className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
-                        disabled={!hasSelectedCity || isLoadingBairros}
                         placeholder={
-                            !hasSelectedCity
-                                ? 'Selecione uma cidade primeiro'
-                                : isLoadingBairros
+                            isLoadingBairros
                                     ? 'Carregando bairros...'
-                                    : 'Digite o bairro'
+                                    : hasSelectedCity
+                                        ? 'Digite o bairro'
+                                        : 'Todos os bairros'
                         }
                     />
                     <datalist id="listing-bairro-options">

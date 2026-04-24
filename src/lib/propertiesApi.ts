@@ -285,6 +285,7 @@ async function fetchProperties(params: URLSearchParams): Promise<Property[]> {
 
 export async function fetchFeaturedProperties(limit = 6): Promise<Property[]> {
     const params = new URLSearchParams()
+    params.set('featured', '1')
     params.set('status', 'approved')
     params.set('limit', String(limit))
     params.set('sort', 'created_at:desc')

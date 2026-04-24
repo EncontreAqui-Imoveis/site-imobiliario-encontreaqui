@@ -67,7 +67,7 @@ function filterSharedDocs(docs: ContractDocument[]): ContractDocument[] {
 }
 
 const DOCUMENT_LABELS: Record<string, string> = {
-    doc_identidade: 'Documento de identidade',
+    doc_identidade: 'CNH do vendedor',
     comprovante_endereco: 'Comprovante de endereço',
     certidao_casamento_nascimento: 'Certidão de casamento/nascimento',
     certidao_inteiro_teor: 'Certidão de inteiro teor',
@@ -79,25 +79,11 @@ const DOCUMENT_LABELS: Record<string, string> = {
     boleto_vistoria: 'Boleto/Vistoria',
     outro: 'Outro documento',
     cliente_cnh: 'CNH do cliente',
-    cliente_identidade: 'Identidade (RG) do cliente',
-    cliente_cpf: 'CPF do cliente',
+    cliente_identidade: 'Identidade (RG/CNH) do cliente',
     cliente_outros: 'Outros documentos do cliente',
 }
 
-const SALE_REQUIRED_DOCS: ContractDocumentType[] = [
-    'doc_identidade',
-    'comprovante_endereco',
-    'certidao_casamento_nascimento',
-    'certidao_inteiro_teor',
-    'certidao_onus_acoes',
-]
-
-const RENT_REQUIRED_DOCS: ContractDocumentType[] = [
-    'doc_identidade',
-    'comprovante_endereco',
-    'certidao_casamento_nascimento',
-    'comprovante_renda',
-]
+const OPTIONAL_DOC_TYPES = new Set<ContractDocumentType>(['cliente_outros'])
 
 const SIGNATURE_REQUIRED_DOCS: ContractDocumentType[] = [
     'contrato_assinado',
@@ -109,32 +95,35 @@ function isRentalPurpose(purpose: string | null | undefined): boolean {
     return normalized.includes('alug') || normalized.includes('rent')
 }
 
-function isSalePurpose(purpose: string | null | undefined): boolean {
-    const normalized = String(purpose ?? '').trim().toLowerCase()
-    return normalized.includes('venda') || normalized.includes('sale')
-}
-
 function requiredDocTypesForContract(contract: ContractDetail, awaitingSignatures = false): ContractDocumentType[] {
     if (awaitingSignatures) {
         return SIGNATURE_REQUIRED_DOCS
     }
-
-    const isSale = isSalePurpose(contract.propertyPurpose)
-    const isRent = isRentalPurpose(contract.propertyPurpose)
-
-    if (isSale && isRent) {
-        return Array.from(new Set([...SALE_REQUIRED_DOCS, ...RENT_REQUIRED_DOCS]))
-    }
-
-    if (isRent) {
-        return RENT_REQUIRED_DOCS
-    }
-
-    return SALE_REQUIRED_DOCS
+    const requirementRows = contract.documentRequirements?.seller ?? []
+    const docs = requirementRows.flatMap((row) => {
+        if (row.applicability === 'not_applicable') return [] as ContractDocumentType[]
+        switch (row.category) {
+            case 'identidade':
+                return ['doc_identidade']
+            case 'dados_bancarios':
+                return ['outro']
+            case 'comprovante_endereco':
+                return ['comprovante_endereco']
+            case 'estado_civil':
+                return ['certidao_casamento_nascimento']
+            case 'conjuge_documentos':
+                return ['outro']
+            case 'docs_imovel':
+                return ['certidao_inteiro_teor', 'certidao_onus_acoes']
+            default:
+                return [] as ContractDocumentType[]
+        }
+    })
+    return Array.from(new Set(docs))
 }
 
 function buyerClientIdentityDocumentTypes(): ContractDocumentType[] {
-    return ['cliente_cnh', 'cliente_identidade', 'cliente_cpf', 'cliente_outros']
+    return ['cliente_identidade', 'cliente_outros']
 }
 
 function buyerRequiredDocTypesForContract(
@@ -144,7 +133,25 @@ function buyerRequiredDocTypesForContract(
     if (awaitingSignatures) {
         return requiredDocTypesForContract(contract, true)
     }
-    return [...requiredDocTypesForContract(contract, false), ...buyerClientIdentityDocumentTypes()]
+    const requirementRows = contract.documentRequirements?.buyer ?? []
+    const docsFromMatrix = requirementRows.flatMap((row) => {
+        if (row.applicability === 'not_applicable') return [] as ContractDocumentType[]
+        switch (row.category) {
+            case 'identidade':
+                return ['cliente_identidade']
+            case 'comprovante_endereco':
+                return ['comprovante_endereco']
+            case 'estado_civil':
+                return ['certidao_casamento_nascimento']
+            case 'conjuge_documentos':
+                return ['outro']
+            case 'comprovante_renda':
+                return ['comprovante_renda']
+            default:
+                return [] as ContractDocumentType[]
+        }
+    })
+    return Array.from(new Set([...docsFromMatrix, ...buyerClientIdentityDocumentTypes()]))
 }
 
 function documentLabel(documentType: ContractDocumentType | null | undefined): string {
@@ -170,7 +177,7 @@ function resolveCategoryByDocumentType(documentType: ContractDocumentType): Cont
     if (documentType === 'certidao_casamento_nascimento') return 'estado_civil'
     if (documentType === 'comprovante_renda') return 'comprovante_renda'
     if (documentType === 'certidao_inteiro_teor' || documentType === 'certidao_onus_acoes') return 'docs_imovel'
-    if (documentType === 'cliente_outros') return 'conjuge_documentos'
+    if (documentType === 'cliente_outros') return 'identidade'
     if (documentType === 'outro') return 'dados_bancarios'
     return 'identidade'
 }
@@ -549,6 +556,11 @@ export function ContractDetailClient({ contract }: Props) {
         currentUserId > 0 &&
         currentContract.capturingBrokerId === currentUserId &&
         currentContract.sellingBrokerId === currentUserId
+    const canViewDetailedDocuments =
+        Number.isFinite(currentUserId) &&
+        currentUserId > 0 &&
+        (currentContract.capturingBrokerId === currentUserId ||
+            currentContract.sellingBrokerId === currentUserId)
 
     const renderPartyForm = (
         side: ContractSide,
@@ -909,6 +921,7 @@ export function ContractDetailClient({ contract }: Props) {
                 </div>
             )}
 
+            {canViewDetailedDocuments ? (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {sharedDocs.length > 0 && (
                     <section className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm space-y-3 md:col-span-2" aria-labelledby="shared-documents">
@@ -1082,10 +1095,13 @@ export function ContractDetailClient({ contract }: Props) {
                             </p>
                             {buyerRequiredDocs.map((documentType) => {
                                 const currentDoc = findLatestDoc(buyerDocs, documentType, 'buyer')
+                                const isOptional = OPTIONAL_DOC_TYPES.has(documentType)
                                 return (
                                     <div key={`buyer-${documentType}`} className="flex items-center justify-between gap-3 text-xs">
                                         <div className="min-w-0">
-                                            <p className="font-medium text-slate-800">{documentLabel(documentType)}</p>
+                                            <p className="font-medium text-slate-800">
+                                                {documentLabel(documentType)} {isOptional ? '(opcional)' : ''}
+                                            </p>
                                             <p className={currentDoc ? 'text-emerald-700' : 'text-slate-500'}>
                                                 {renderChecklistStatus(currentDoc)}
                                             </p>
@@ -1173,6 +1189,13 @@ export function ContractDetailClient({ contract }: Props) {
                     </section>
                 )}
             </div>
+            ) : (
+                <section className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+                    <p className="text-sm text-slate-700">
+                        Você pode acompanhar apenas o status do contrato nesta etapa.
+                    </p>
+                </section>
+            )}
 
             {error && (
                 <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
