@@ -1,6 +1,8 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { Search, Home, ChevronDown, Loader2 } from 'lucide-react'
 import SignupDraftNotice from '@/components/auth/SignupDraftNotice'
 import LocationSelectFields from '@/components/search/LocationSelectFields'
@@ -32,7 +34,18 @@ const purposes = [
     { value: 'Aluguel', label: 'Alugar' },
 ]
 
-export default function HeroSection() {
+type HomeDeal = 'sale' | 'rent'
+
+function resolveDeal(searchParams: ReturnType<typeof useSearchParams>, initial: HomeDeal): HomeDeal {
+    const d = searchParams.get('deal')
+    if (d === 'rent') return 'rent'
+    if (d === 'sale') return 'sale'
+    return initial
+}
+
+export default function HeroSection({ initialDeal = 'sale' }: { initialDeal?: HomeDeal }) {
+    const searchParams = useSearchParams()
+    const vitrineDeal = resolveDeal(searchParams, initialDeal)
     const { form, setField, handleSearch, isSearching, validationError } = usePropertySearch()
 
     return (
@@ -78,10 +91,42 @@ export default function HeroSection() {
                     </h1>
 
                     {/* Subtitle */}
-                    <p className="text-lg sm:text-xl text-white/80 max-w-2xl mx-auto mb-10 animate-fadeIn">
+                    <p className="text-lg sm:text-xl text-white/80 max-w-2xl mx-auto mb-6 animate-fadeIn">
                         Compre ou alugue com agilidade, segurança e sem burocracia.
                         Seu novo lar está a poucos cliques de distância.
                     </p>
+
+                    <p className="text-sm text-white/70 max-w-2xl mx-auto mb-4">
+                        A vitrine de destaques e os recentes abaixo acompanham sua escolha.
+                    </p>
+                    <div
+                        className="flex flex-wrap items-center justify-center gap-2 mb-10"
+                        role="group"
+                        aria-label="Vitrine: comprar ou alugar"
+                    >
+                        <Link
+                            href="/?deal=sale"
+                            scroll={false}
+                            className={`min-h-11 min-w-[7rem] inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary-900 focus:ring-white ${
+                                vitrineDeal === 'sale'
+                                    ? 'bg-white text-primary-900 shadow-lg'
+                                    : 'bg-white/10 text-white border border-white/30 hover:bg-white/20'
+                            }`}
+                        >
+                            Comprar
+                        </Link>
+                        <Link
+                            href="/?deal=rent"
+                            scroll={false}
+                            className={`min-h-11 min-w-[7rem] inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary-900 focus:ring-white ${
+                                vitrineDeal === 'rent'
+                                    ? 'bg-white text-primary-900 shadow-lg'
+                                    : 'bg-white/10 text-white border border-white/30 hover:bg-white/20'
+                            }`}
+                        >
+                            Alugar
+                        </Link>
+                    </div>
 
                     {/* Search Box */}
                     <div className="rounded-2xl shadow-2xl p-3 sm:p-6 max-w-4xl mx-auto animate-fadeIn">

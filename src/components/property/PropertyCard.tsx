@@ -4,7 +4,13 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Bed, Bath, Car, Maximize, MapPin, ChevronLeft, ChevronRight } from 'lucide-react'
-import { Property, formatPrice, getPromoSalePrice, getPromoRentPrice } from '@/types/property'
+import {
+    Property,
+    formatPrice,
+    formatPromotionPeriodLabel,
+    getPromoSalePrice,
+    getPromoRentPrice,
+} from '@/types/property'
 import { capitalizePropertyTitle } from '@/lib/propertyTitleDisplay'
 import { formatUnit } from '@/lib/propertyLabels'
 import { areaUnitLabel, normalizeAreaUnidade, squareMetersToAreaInput } from '@/lib/areaUnits'
@@ -44,6 +50,13 @@ export default function PropertyCard({ property, variant = 'default' }: Property
     const purposeBadge = property.purpose.toLowerCase().includes('alug')
         ? { label: 'Aluguel', className: isFeatured ? 'rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-bold text-slate-700' : 'badge-gold' }
         : { label: 'Venda', className: 'badge-teal' }
+
+    const promoSale = getPromoSalePrice(property)
+    const promoRent = getPromoRentPrice(property)
+    const effectivePromo = promoSale ?? promoRent
+    const basePrice = property.priceSale ?? property.priceRent ?? property.price
+    const promoPeriodLabel =
+        effectivePromo != null ? formatPromotionPeriodLabel(property.promotionStart, property.promotionEnd) : null
 
     const goToPrevious = (e: React.MouseEvent) => {
         e.preventDefault()
@@ -151,31 +164,25 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                     <p className="mb-1 text-xs font-medium uppercase tracking-wider text-gray-400">
                         {property.priceSale ? 'Venda' : (property.priceRent ? 'Aluguel' : 'Valor')}
                     </p>
-                    {(() => {
-                        const promoSale = getPromoSalePrice(property)
-                        const promoRent = getPromoRentPrice(property)
-                        const basePrice = property.priceSale ?? property.priceRent ?? property.price
-                        const promo = promoSale ?? promoRent
-                        if (promo) {
-                            return (
-                                <>
-                                    <p className="text-base font-medium text-gray-400 line-through">
-                                        {formatPrice(basePrice)}
-                                    </p>
-                                    <p className="font-display text-3xl font-bold tracking-tight text-primary-700 sm:text-4xl">
-                                        {formatPrice(promo)}
-                                        {property.priceRent && <span className="text-base font-normal text-gray-500">/mês</span>}
-                                    </p>
-                                </>
-                            )
-                        }
-                        return (
-                            <p className="font-display text-3xl font-bold tracking-tight text-primary-700 sm:text-4xl">
+                    {effectivePromo != null ? (
+                        <>
+                            <p className="text-base font-medium text-gray-400 line-through">
                                 {formatPrice(basePrice)}
-                                {property.priceRent && <span className="text-base font-normal text-gray-500">/mês</span>}
                             </p>
-                        )
-                    })()}
+                            <p className="font-display text-xl font-bold tracking-tight text-primary-700 sm:text-2xl">
+                                {formatPrice(effectivePromo)}
+                                {property.priceRent && <span className="text-sm font-normal text-gray-500">/mês</span>}
+                            </p>
+                            {promoPeriodLabel && (
+                                <p className="mt-1 text-[11px] font-medium text-amber-800">{promoPeriodLabel}</p>
+                            )}
+                        </>
+                    ) : (
+                        <p className="font-display text-xl font-bold tracking-tight text-primary-700 sm:text-2xl">
+                            {formatPrice(basePrice)}
+                            {property.priceRent && <span className="text-sm font-normal text-gray-500">/mês</span>}
+                        </p>
+                    )}
                 </div>
 
                 {/* Stats Grid */}

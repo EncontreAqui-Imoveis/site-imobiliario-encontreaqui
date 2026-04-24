@@ -59,10 +59,10 @@ describe('propertiesApi', () => {
     })
 
     it('returns featured properties from API data payload', async () => {
-        ; (global.fetch as jest.Mock).mockResolvedValue({
+        ;(global.fetch as jest.Mock).mockResolvedValue({
             ok: true,
             json: async () => ({
-                data: [
+                properties: [
                     {
                         id: 1,
                         title: 'Imóvel 1',
@@ -80,10 +80,10 @@ describe('propertiesApi', () => {
             }),
         })
 
-        const result = await fetchFeaturedProperties(1)
+        const result = await fetchFeaturedProperties(1, 'sale')
 
         expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining('/properties?'),
+            expect.stringContaining('/properties/featured?'),
             expect.objectContaining({ next: { revalidate: 60 } })
         )
         expect(result).toHaveLength(1)
@@ -118,7 +118,7 @@ describe('propertiesApi', () => {
     })
 
     it('returns empty array when listing endpoint fails', async () => {
-        ; (global.fetch as jest.Mock).mockResolvedValue({
+        ;(global.fetch as jest.Mock).mockResolvedValue({
             ok: false,
             status: 503,
             headers: new Headers({
@@ -131,11 +131,6 @@ describe('propertiesApi', () => {
         })
         await expect(fetchFeaturedProperties()).resolves.toEqual([])
         await expect(fetchRecentProperties()).resolves.toEqual([])
-        expect(console.error).toHaveBeenCalledWith('Error fetching properties list:', {
-            status: 503,
-            requestId: 'req-public-503',
-            message: 'Serviço indisponível',
-        })
     })
 
     it('fetches property by id and unwraps data field', async () => {

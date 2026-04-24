@@ -79,6 +79,7 @@ describe('PropertyCard — Promotional Price', () => {
         // Original crossed out
         const strikethrough = screen.getByText(/R\$\s500\.000/)
         expect(strikethrough.className).toContain('line-through')
+        expect(screen.getByText(/^Promoção:/)).toBeInTheDocument()
     })
 
     it('shows normal price when promotion expired', () => {

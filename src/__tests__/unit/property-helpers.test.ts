@@ -6,6 +6,7 @@ import {
     getPromoSalePrice,
     getPromoRentPrice,
     formatPrice,
+    formatPromotionPeriodLabel,
     Property,
 } from '@/types/property'
 
@@ -26,6 +27,20 @@ function makeProperty(overrides: Partial<Property> = {}): Property {
         ...overrides,
     }
 }
+
+describe('formatPromotionPeriodLabel', () => {
+    it('returns null when start or end missing', () => {
+        expect(formatPromotionPeriodLabel()).toBeNull()
+        expect(formatPromotionPeriodLabel('2020-01-01')).toBeNull()
+    })
+
+    it('returns a span label when both dates valid', () => {
+        const s = '2024-01-10T00:00:00.000Z'
+        const e = '2024-12-20T00:00:00.000Z'
+        const label = formatPromotionPeriodLabel(s, e)
+        expect(label).toMatch(/^Promoção:/)
+    })
+})
 
 describe('formatPrice', () => {
     it('formats number as BRL currency', () => {

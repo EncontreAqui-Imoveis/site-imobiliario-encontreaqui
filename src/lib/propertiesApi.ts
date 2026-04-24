@@ -207,6 +207,9 @@ export function normalizeProperty(raw: unknown): Property | null {
         semCep: toBoolean(item.semCep ?? item.sem_cep) ?? false,
         negotiationId: negotiation?.id,
         negotiation,
+        rejectionReason: toStringOrUndefined(
+            item.rejectionReason ?? item.rejection_reason,
+        ) ?? null,
     }
 }
 
@@ -283,22 +286,40 @@ async function fetchProperties(params: URLSearchParams): Promise<Property[]> {
     }
 }
 
-export async function fetchFeaturedProperties(limit = 6): Promise<Property[]> {
-    const params = new URLSearchParams()
-    params.set('featured', '1')
-    params.set('status', 'approved')
-    params.set('limit', String(limit))
-    params.set('sort', 'created_at:desc')
+type HomeDeal = 'sale' | 'rent'
 
-    const properties = await fetchProperties(params)
-    return properties.slice(0, limit)
+/**
+ * Destaques administrativos (vitrine) — alinhado ao app: `GET /properties/featured?scope=`.
+ */
+export async function fetchFeaturedProperties(limit = 6, deal: HomeDeal = 'sale'): Promise<Property[]> {
+    const scope = deal === 'rent' ? 'rent' : 'sale'
+    try {
+        const response = await fetch(
+            `${API_BASE_URL}/properties/featured?limit=${encodeURIComponent(String(limit))}&page=1&scope=${scope}`,
+            { next: { revalidate: 60 } }
+        )
+        if (!response.ok) {
+            await logFailedResponse('Error fetching featured properties:', response)
+            return []
+        }
+        const payload = (await response.json()) as unknown
+        return unwrapPropertyArray(payload)
+            .map((item) => normalizeProperty(item))
+            .filter((item): item is Property => item !== null)
+            .slice(0, limit)
+    } catch (error) {
+        console.error('Error fetching featured properties', error)
+        reportObservedError(error, { module: 'properties-api', message: 'Error fetching featured properties' })
+        return []
+    }
 }
 
-export async function fetchRecentProperties(limit = 8): Promise<Property[]> {
+export async function fetchRecentProperties(limit = 8, deal: HomeDeal = 'sale'): Promise<Property[]> {
     const params = new URLSearchParams()
     params.set('status', 'approved')
     params.set('limit', String(limit))
     params.set('sort', 'created_at:desc')
+    params.set('purpose', deal === 'rent' ? 'Aluguel' : 'Venda')
 
     const properties = await fetchProperties(params)
     return properties.slice(0, limit)

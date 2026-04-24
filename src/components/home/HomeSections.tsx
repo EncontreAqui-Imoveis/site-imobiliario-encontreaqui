@@ -35,12 +35,15 @@ export function RecentSkeleton() {
     )
 }
 
-export async function FeaturedSection() {
-    const properties = await fetchFeaturedProperties(6)
-    return <FeaturedCarousel properties={properties} />
+type HomeDeal = 'sale' | 'rent'
+
+export async function FeaturedSection({ deal = 'sale' }: { deal?: HomeDeal } = {}) {
+    const properties = await fetchFeaturedProperties(6, deal)
+    const title = deal === 'rent' ? 'Imóveis em destaque (aluguel)' : 'Imóveis em destaque (venda)'
+    return <FeaturedCarousel properties={properties} title={title} />
 }
 
-export async function RecentSection() {
-    const properties = await fetchRecentProperties(8)
+export async function RecentSection({ deal = 'sale' }: { deal?: HomeDeal } = {}) {
+    const properties = await fetchRecentProperties(8, deal)
     return <RecentProperties properties={properties} />
 }

@@ -80,8 +80,8 @@ describe('HomePage integration', () => {
         jest.clearAllMocks()
     })
 
-    it('returns the expected static page structure without rendering async server components in jsdom', () => {
-        const page = HomePage()
+    it('returns the expected static page structure without rendering async server components in jsdom', async () => {
+        const page = await HomePage({ searchParams: Promise.resolve({}) })
 
         expect(isValidElement(page)).toBe(true)
 
@@ -96,7 +96,7 @@ describe('HomePage integration', () => {
 
         render(await FeaturedSection())
 
-        expect(fetchFeaturedProperties).toHaveBeenCalledWith(6)
+        expect(fetchFeaturedProperties).toHaveBeenCalledWith(6, 'sale')
         expect(screen.getByTestId('featured-carousel')).toHaveTextContent('Featured: 2')
     })
 
@@ -105,7 +105,7 @@ describe('HomePage integration', () => {
 
         render(await RecentSection())
 
-        expect(fetchRecentProperties).toHaveBeenCalledWith(8)
+        expect(fetchRecentProperties).toHaveBeenCalledWith(8, 'sale')
         expect(screen.getByTestId('recent-properties')).toHaveTextContent('Recent: 1')
     })
 

@@ -3,7 +3,9 @@ export interface Property {
     title: string
     description: string
     type: string
-    status: 'pending_approval' | 'approved' | 'rejected' | 'rented' | 'sold'
+    status: 'pending_approval' | 'approved' | 'rejected' | 'rented' | 'sold',
+    /** Motivo informado pelo admin em caso de rejeição */
+    rejectionReason?: string | null,
     purpose: 'Venda' | 'Aluguel' | 'Venda e Aluguel'
     price: number
     priceSale?: number
@@ -83,6 +85,23 @@ export function formatPrice(value: number): string {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     }).format(value)
+}
+
+/** Rótulo curto do intervalo de promoção para cards (fuso comercial). */
+export function formatPromotionPeriodLabel(start?: string, end?: string): string | null {
+    if (!start?.trim() || !end?.trim()) return null
+    const tz = 'America/Sao_Paulo'
+    const opts: Intl.DateTimeFormatOptions = {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        timeZone: tz,
+    }
+    const dtf = new Intl.DateTimeFormat('pt-BR', opts)
+    const ds = new Date(start)
+    const de = new Date(end)
+    if (Number.isNaN(ds.getTime()) || Number.isNaN(de.getTime())) return null
+    return `Promoção: ${dtf.format(ds)} — ${dtf.format(de)}`
 }
 
 /** Check if a promotion time window is currently active */

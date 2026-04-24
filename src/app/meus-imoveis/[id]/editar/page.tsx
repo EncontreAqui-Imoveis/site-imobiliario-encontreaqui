@@ -185,6 +185,9 @@ export default function EditPropertyPage() {
 
             await saveEditedProperty(property.id, payload, isClientOwner ? 'client' : 'broker')
             setProperty((current) => (current ? { ...current, hasPendingEditRequest: true } : current))
+            if (property.status === 'rejected') {
+                await loadProperty()
+            }
             setSaved(true)
         } catch (err: unknown) {
             setSaveError(err instanceof Error ? err.message : 'Erro ao salvar alterações.')
@@ -303,6 +306,18 @@ export default function EditPropertyPage() {
                         <h1 className="text-2xl font-bold text-gray-900">Editar Imóvel</h1>
                     </div>
                 </div>
+
+                {property.status === 'rejected' && (
+                    <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-900 dark:border-red-900 dark:bg-red-950 dark:text-red-100">
+                        <p className="font-semibold">Anúncio rejeitado</p>
+                        {property.rejectionReason?.trim() ? (
+                            <p className="mt-1 whitespace-pre-wrap">{property.rejectionReason.trim()}</p>
+                        ) : null}
+                        <p className="mt-2 text-red-800 dark:text-red-200">
+                            Ajuste os dados e salve — o anúncio volta para análise.
+                        </p>
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="space-y-8">
                     {/* Basic Info */}
