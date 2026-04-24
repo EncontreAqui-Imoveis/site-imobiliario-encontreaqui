@@ -85,7 +85,7 @@ function filterSharedDocs(docs: ContractDocument[]): ContractDocument[] {
 }
 
 const DOCUMENT_LABELS: Record<string, string> = {
-    doc_identidade: 'CNH do vendedor',
+    doc_identidade: 'Documento do proprietário',
     comprovante_endereco: 'Comprovante de endereço',
     certidao_casamento_nascimento: 'Certidão de casamento/nascimento',
     certidao_inteiro_teor: 'Certidão de inteiro teor',
@@ -413,7 +413,7 @@ function readContractInfoField(source: Record<string, unknown>, keys: string[]):
 }
 
 function buildSellerFormState(contract: ContractDetail): ContractFormState {
-    const source = toRecord(contract.sellerInfo)
+    const source = toRecord(contract.ownerInfo ?? contract.sellerInfo)
     return {
         maritalStatus: readContractInfoField(source, ['estado_civil', 'estadoCivil']),
         profession: readContractInfoField(source, ['profissao']),
@@ -738,32 +738,32 @@ export function ContractDetailClient({ contract }: Props) {
     const isInDraft = currentContract.status === 'IN_DRAFT'
     const isAwaitingSignatures = currentContract.status === 'AWAITING_SIGNATURES'
     const currentUserId = Number(session?.user?.id ?? 0)
-    const canEditSellerSide =
-        isAwaitingDocs &&
-        !sellerLocked &&
-        Number.isFinite(currentUserId) &&
-        currentUserId > 0 &&
-        currentUserId === currentContract.capturingBrokerId
-    const canEditBuyerSide =
-        isAwaitingDocs &&
-        !buyerLocked &&
-        Number.isFinite(currentUserId) &&
-        currentUserId > 0 &&
-        currentUserId === currentContract.sellingBrokerId
-
-    const isDoubleEndedBroker =
-        Number.isFinite(currentUserId) &&
-        currentUserId > 0 &&
-        currentContract.capturingBrokerId === currentUserId &&
-        currentContract.sellingBrokerId === currentUserId
-    const isSellerViewer =
+    const isCaptadorViewer =
         Number.isFinite(currentUserId) &&
         currentUserId > 0 &&
         currentContract.capturingBrokerId === currentUserId
+    const isOwnerViewer =
+        Number.isFinite(currentUserId) &&
+        currentUserId > 0 &&
+        currentContract.ownerId === currentUserId
     const isBuyerViewer =
         Number.isFinite(currentUserId) &&
         currentUserId > 0 &&
+        currentContract.buyerClientId === currentUserId
+    const canEditSellerSide =
+        isAwaitingDocs &&
+        !sellerLocked &&
+        (isCaptadorViewer || isOwnerViewer)
+    const canEditBuyerSide =
+        isAwaitingDocs &&
+        !buyerLocked &&
+        (isCaptadorViewer || isBuyerViewer)
+
+    const isDoubleEndedBroker =
+        currentContract.capturingBrokerId === currentUserId &&
         currentContract.sellingBrokerId === currentUserId
+    const isSellerViewer =
+        isCaptadorViewer || isOwnerViewer
     const viewerSide = (() => {
         if (currentContract.viewerSide === 'seller' || currentContract.viewerSide === 'buyer' || currentContract.viewerSide === 'both' || currentContract.viewerSide === 'none') {
             return currentContract.viewerSide
@@ -847,7 +847,7 @@ export function ContractDetailClient({ contract }: Props) {
                         />
                     </label>
                 )}
-                {side === 'seller' && !compactBrokerMode && (
+                {side === 'seller' && !compactBrokerMode && isCaptadorViewer && (
                     <label className="space-y-1 text-xs text-slate-600 md:col-span-2">
                         <span>Dados bancários</span>
                         <textarea
@@ -883,7 +883,7 @@ export function ContractDetailClient({ contract }: Props) {
             ) : canEdit ? (
                 compactBrokerMode ? (
                     <p className="text-xs text-slate-500">
-                        Use o bloco &quot;Dados bancários do corretor&quot; abaixo dos documentos para salvar com um único envio (e-mail e telefone vêm do cadastro).
+                        Use o bloco &quot;Dados bancários do captador&quot; abaixo dos documentos para salvar com um único envio (e-mail e telefone vêm do cadastro).
                     </p>
                 ) : (
                     <button
@@ -905,7 +905,7 @@ export function ContractDetailClient({ contract }: Props) {
 
     const renderCounterpartySummary = (side: ContractSide) => {
         const progress = currentContract.documentProgress?.[side]
-        const sideLabel = side === 'seller' ? 'vendedor' : 'comprador'
+        const sideLabel = side === 'seller' ? 'proprietário' : 'comprador'
         return (
             <section className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
                 <h2 className="text-sm font-semibold text-slate-800">
@@ -939,7 +939,7 @@ export function ContractDetailClient({ contract }: Props) {
                                 {statusMeta.label}
                             </span>
                             <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium ${sellerMeta.className}`}>
-                                Vendedor: {sellerMeta.compactLabel}
+                                Proprietário: {sellerMeta.compactLabel}
                             </span>
                             <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium ${buyerMeta.className}`}>
                                 Comprador: {buyerMeta.compactLabel}
@@ -985,7 +985,7 @@ export function ContractDetailClient({ contract }: Props) {
 
                 <div className="grid gap-4 md:grid-cols-2">
                     <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-4">
-                        <p className="text-sm font-semibold text-slate-900">Situação do vendedor</p>
+                        <p className="text-sm font-semibold text-slate-900">Situação do proprietário</p>
                         <div className="mt-2 flex items-center gap-2">
                             {approvalBadge(currentContract.sellerApprovalStatus)}
                         </div>
@@ -1014,7 +1014,7 @@ export function ContractDetailClient({ contract }: Props) {
                     <div className="grid gap-4 md:grid-cols-2">
                         {(['seller', 'buyer'] as const).map((side) => {
                             const progress = currentContract.documentProgress?.[side]
-                            const sideTitle = side === 'seller' ? 'Progresso vendedor/captador' : 'Progresso comprador'
+                            const sideTitle = side === 'seller' ? 'Progresso proprietário/captador' : 'Progresso comprador'
                             return (
                                 <div key={`progress-${side}`} className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-4">
                                     <p className="text-sm font-semibold text-slate-900">{sideTitle}</p>
@@ -1141,7 +1141,7 @@ export function ContractDetailClient({ contract }: Props) {
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     {canViewSellerDocuments && renderPartyForm(
                         'seller',
-                        'Dados do vendedor',
+                        'Dados do proprietário',
                         sellerForm,
                         setSellerForm,
                         canEditSellerSide,
@@ -1179,7 +1179,7 @@ export function ContractDetailClient({ contract }: Props) {
                             </span>
                         </div>
                         <p className="text-xs text-slate-500">
-                            Aqui ficam os documentos compartilhados do fluxo contratual, como a minuta e outros arquivos sem vínculo exclusivo com vendedor ou comprador.
+                            Aqui ficam os documentos compartilhados do fluxo contratual, como a minuta e outros arquivos sem vínculo exclusivo com proprietário ou comprador.
                         </p>
                         <ul className="space-y-1.5 text-xs">
                             {sharedDocs.map((doc) => (
@@ -1215,12 +1215,12 @@ export function ContractDetailClient({ contract }: Props) {
                 <section className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm space-y-3" aria-labelledby="seller-documents">
                     <div className="flex items-center justify-between">
                         <h2 id="seller-documents" className="text-sm font-semibold text-slate-800">
-                            Documentos do vendedor
+                            Documentos do proprietário
                         </h2>
                         {approvalBadge(currentContract.sellerApprovalStatus)}
                     </div>
                     <p className="text-xs text-slate-500">
-                        Envie e acompanhe os documentos do vendedor neste bloco. Quando este lado for aprovado, os envios ficam bloqueados para prevenir erro operacional.
+                        Envie e acompanhe os documentos do proprietário neste bloco. Quando este lado for aprovado, os envios ficam bloqueados para prevenir erro operacional.
                     </p>
                     <ul className="space-y-1.5 text-xs">
                         {sellerDocs.map((doc) => (
@@ -1387,10 +1387,10 @@ export function ContractDetailClient({ contract }: Props) {
                         aria-labelledby="broker-bank-unified"
                     >
                         <h2 id="broker-bank-unified" className="text-sm font-semibold text-slate-800">
-                            Dados bancários do corretor
+                            Dados bancários do captador
                         </h2>
                         <p className="text-xs text-slate-600">
-                            Você é captador e vendedor nesta negociação. E-mail e telefone vêm do cadastro; informe os dados bancários abaixo.
+                            Você é o captador responsável nesta negociação. E-mail e telefone vêm do cadastro; informe os dados bancários abaixo.
                         </p>
                         <div className="grid gap-2 text-xs text-slate-800">
                             <p>
@@ -1441,7 +1441,7 @@ export function ContractDetailClient({ contract }: Props) {
                                 disabled={savingBrokerBundle}
                                 className="inline-flex items-center rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-60"
                             >
-                                {savingBrokerBundle ? 'Salvando...' : 'Salvar dados bancários do corretor'}
+                                {savingBrokerBundle ? 'Salvando...' : 'Salvar dados bancários do captador'}
                             </button>
                         ) : (
                             <p className="text-xs text-slate-500">

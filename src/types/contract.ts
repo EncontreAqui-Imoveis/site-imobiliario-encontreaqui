@@ -119,13 +119,18 @@ export interface ContractSummary {
 
 export interface ContractDetail extends ContractSummary {
     sellerInfo?: unknown
+    ownerInfo?: unknown
     buyerInfo?: unknown
     commissionData?: unknown
     workflowMetadata?: Record<string, unknown> | null
     sellerApprovalReason?: ContractApprovalReason | null
+    ownerApprovalReason?: ContractApprovalReason | null
     buyerApprovalReason?: ContractApprovalReason | null
     capturingBrokerId?: number | null
     sellingBrokerId?: number | null
+    buyerClientId?: number | null
+    ownerId?: number | null
+    ownerName?: string | null
     capturingBrokerName?: string | null
     sellingBrokerName?: string | null
     agencyName?: string | null

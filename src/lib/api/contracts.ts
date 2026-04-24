@@ -215,7 +215,8 @@ function normalizeContractDetail(raw: unknown): ContractDetail {
         .filter((document): document is NonNullable<ReturnType<typeof normalizeContractDocument>> => document !== null)
     return {
         ...summary,
-        sellerInfo: item.sellerInfo ?? item.seller_info,
+        sellerInfo: item.ownerInfo ?? item.owner_info ?? item.sellerInfo ?? item.seller_info,
+        ownerInfo: item.ownerInfo ?? item.owner_info ?? item.sellerInfo ?? item.seller_info,
         buyerInfo: item.buyerInfo ?? item.buyer_info,
         commissionData: item.commissionData ?? item.commission_data,
         workflowMetadata:
@@ -225,11 +226,25 @@ function normalizeContractDetail(raw: unknown): ContractDetail {
                     ? item.workflow_metadata as Record<string, unknown>
                     : null,
         sellerApprovalReason:
-            item.sellerApprovalReason && typeof item.sellerApprovalReason === 'object'
-                ? item.sellerApprovalReason as ContractApprovalReason
-                : item.seller_approval_reason && typeof item.seller_approval_reason === 'object'
-                    ? item.seller_approval_reason as ContractApprovalReason
-                    : null,
+            item.ownerApprovalReason && typeof item.ownerApprovalReason === 'object'
+                ? item.ownerApprovalReason as ContractApprovalReason
+                : item.owner_approval_reason && typeof item.owner_approval_reason === 'object'
+                    ? item.owner_approval_reason as ContractApprovalReason
+                    : item.sellerApprovalReason && typeof item.sellerApprovalReason === 'object'
+                        ? item.sellerApprovalReason as ContractApprovalReason
+                        : item.seller_approval_reason && typeof item.seller_approval_reason === 'object'
+                            ? item.seller_approval_reason as ContractApprovalReason
+                            : null,
+        ownerApprovalReason:
+            item.ownerApprovalReason && typeof item.ownerApprovalReason === 'object'
+                ? item.ownerApprovalReason as ContractApprovalReason
+                : item.owner_approval_reason && typeof item.owner_approval_reason === 'object'
+                    ? item.owner_approval_reason as ContractApprovalReason
+                    : item.sellerApprovalReason && typeof item.sellerApprovalReason === 'object'
+                        ? item.sellerApprovalReason as ContractApprovalReason
+                        : item.seller_approval_reason && typeof item.seller_approval_reason === 'object'
+                            ? item.seller_approval_reason as ContractApprovalReason
+                            : null,
         buyerApprovalReason:
             item.buyerApprovalReason && typeof item.buyerApprovalReason === 'object'
                 ? item.buyerApprovalReason as ContractApprovalReason
@@ -247,6 +262,24 @@ function normalizeContractDetail(raw: unknown): ContractDetail {
                 ? item.sellingBrokerId
                 : typeof item.selling_broker_id === 'number'
                     ? item.selling_broker_id
+                    : null,
+        buyerClientId:
+            typeof item.buyerClientId === 'number'
+                ? item.buyerClientId
+                : typeof item.buyer_client_id === 'number'
+                    ? item.buyer_client_id
+                    : null,
+        ownerId:
+            typeof item.ownerId === 'number'
+                ? item.ownerId
+                : typeof item.property_owner_id === 'number'
+                    ? item.property_owner_id
+                    : null,
+        ownerName:
+            typeof item.ownerName === 'string'
+                ? item.ownerName
+                : typeof item.property_owner_name === 'string'
+                    ? item.property_owner_name
                     : null,
         capturingBrokerName:
             typeof item.capturingBrokerName === 'string'
@@ -349,4 +382,3 @@ export function buildNegotiationDocumentDownloadUrl(negotiationId: string, docum
         negotiationId,
     )}/documents/${encodeURIComponent(String(documentId))}/download`
 }
-

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
@@ -9,16 +9,14 @@ import {
     createProposal,
     fetchMyNegotiationById,
     fetchProposalTargetProperty,
-    searchApprovedBrokers,
     updateProposalDraft,
-    type ApprovedBrokerLookup,
 } from '@/lib/negotiationsService'
 import { isProposalPreSignatureStatus } from '@/types/negotiation'
 import { Property, formatPrice } from '@/types/property'
 import {
     ArrowLeft, ArrowRight, Loader2, FileText, User, CreditCard,
     DollarSign, Percent, Wand2, CheckCircle, AlertTriangle, Home, ChevronRight,
-    Search, ShieldCheck
+    ShieldCheck
 } from 'lucide-react'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
 import { formatCurrencyInput } from '@/lib/currencyInput'
@@ -91,12 +89,6 @@ export default function ProposalWizardPage() {
     // Step 1: Client data
     const [clientName, setClientName] = useState('')
     const [clientCpf, setClientCpf] = useState('')
-    const [isSelfBroker, setIsSelfBroker] = useState(true)
-    const [brokerSearch, setBrokerSearch] = useState('')
-    const [brokerResults, setBrokerResults] = useState<ApprovedBrokerLookup[]>([])
-    const [selectedBroker, setSelectedBroker] = useState<ApprovedBrokerLookup | null>(null)
-    const [isSearching, setIsSearching] = useState(false)
-    const searchTimer = useRef<NodeJS.Timeout | null>(null)
 
     // Step 2: Total proposal value composition
     const [payments, setPayments] = useState<Record<string, PaymentField>>({
@@ -191,8 +183,6 @@ export default function ProposalWizardPage() {
         const negotiationIdValue = String(negotiationId ?? '').trim()
         if (!negotiationIdValue) return
         const currentPropertyId = property.id
-        const ownUserId = Number(session.user?.id ?? 0)
-
         let cancelled = false
         async function loadEditData() {
             setIsPrefillLoading(true)
@@ -216,18 +206,6 @@ export default function ProposalWizardPage() {
                 setClientCpf(existing.clientCpf ?? '')
                 if (Number.isInteger(existing.validadeDias) && Number(existing.validadeDias) > 0) {
                     setValidadeDias(Number(existing.validadeDias))
-                }
-
-                const sellerBrokerId = Number(existing.sellerBrokerId ?? 0)
-                if (isBrokerUser && sellerBrokerId > 0 && ownUserId > 0 && sellerBrokerId !== ownUserId) {
-                    setIsSelfBroker(false)
-                    setSelectedBroker({
-                        id: sellerBrokerId,
-                        name: `Corretor #${sellerBrokerId}`,
-                    })
-                    setBrokerSearch(`Corretor #${sellerBrokerId}`)
-                } else {
-                    setIsSelfBroker(true)
                 }
 
                 const breakdown = existing.paymentBreakdown
@@ -264,31 +242,7 @@ export default function ProposalWizardPage() {
         return () => {
             cancelled = true
         }
-    }, [isEditMode, property, session, negotiationId, isBrokerUser])
-
-    /* ── Broker search ── */
-    const searchBrokers = useCallback(async (query: string) => {
-        if (query.trim().length < 2) {
-            setBrokerResults([])
-            return
-        }
-        setIsSearching(true)
-        try {
-            const items = await searchApprovedBrokers(query)
-            setBrokerResults(items)
-        } catch {
-            setBrokerResults([])
-        } finally {
-            setIsSearching(false)
-        }
-    }, [])
-
-    function handleBrokerSearch(query: string) {
-        setBrokerSearch(query)
-        if (selectedBroker && query !== selectedBroker.name) setSelectedBroker(null)
-        if (searchTimer.current) clearTimeout(searchTimer.current)
-        searchTimer.current = setTimeout(() => searchBrokers(query), 300)
-    }
+    }, [isEditMode, property, session, negotiationId])
 
     /* ── Payment math ── */
     const hasSalePrice = Boolean(property?.priceSale && property.priceSale > 0)
@@ -347,7 +301,7 @@ export default function ProposalWizardPage() {
 
     /* ── Validation ── */
     const cpfDigits = clientCpf.replace(/\D/g, '')
-    const isStep1Valid = clientName.trim().length > 0 && cpfDigits.length === 11 && (isSelfBroker || selectedBroker !== null)
+    const isStep1Valid = clientName.trim().length > 0 && cpfDigits.length === 11
     const canSubmit = !isSubmitting && isStep1Valid && isBalanced
 
     /* ── Submit ── */
@@ -369,7 +323,6 @@ export default function ProposalWizardPage() {
                 clientName: clientName.trim(),
                 clientCpf: cpfDigits,
                 validadeDias,
-                ...((!isSelfBroker && selectedBroker) ? { sellerBrokerId: selectedBroker.id } : {}),
                 pagamento: {
                     dinheiro: toReais(payments.dinheiro, propertyValue),
                     permuta: toReais(payments.permuta, propertyValue),
@@ -579,81 +532,12 @@ export default function ProposalWizardPage() {
                                 </div>
                             </div>
 
-                            {/* Broker selection (somente para corretores) */}
                             {userRole === 'broker' && (
                                 <div className="border-t border-gray-100 pt-4">
-                                    <label className="flex items-center gap-3 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={isSelfBroker}
-                                            onChange={e => {
-                                                setIsSelfBroker(e.target.checked)
-                                                if (e.target.checked) {
-                                                    setSelectedBroker(null)
-                                                    setBrokerSearch('')
-                                                    setBrokerResults([])
-                                                }
-                                            }}
-                                            className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                                        />
-                                        <span className="text-sm font-medium text-gray-700">Eu sou o corretor vendedor</span>
-                                    </label>
+                                    <p className="text-sm font-medium text-gray-700">Corretor responsável</p>
                                     <p className="mt-2 text-xs text-gray-400">
-                                        Caso o corretor vendedor for diferente, ele precisa estar cadastrado e aprovado no sistema.
+                                        A proposta será vinculada automaticamente ao corretor captador responsável pelo imóvel.
                                     </p>
-
-                                    {!isSelfBroker && (
-                                        <div className="mt-4 space-y-2">
-                                        <div className="relative">
-                                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                                            <input
-                                                type="text"
-                                                value={brokerSearch}
-                                                onChange={e => handleBrokerSearch(e.target.value)}
-                                                maxLength={120}
-                                                className="w-full rounded-xl border border-gray-200 py-3 pl-10 pr-4 outline-none focus:border-transparent focus:ring-2 focus:ring-primary-500"
-                                                placeholder="Buscar por nome, email ou CRECI"
-                                            />
-                                        </div>
-
-                                        {isSearching && (
-                                            <div className="h-1 overflow-hidden rounded-full bg-gray-100">
-                                                <div className="h-full bg-primary-500 rounded-full animate-pulse w-1/2" />
-                                            </div>
-                                        )}
-
-                                        {selectedBroker && (
-                                            <p className="text-sm font-semibold text-primary-700 flex items-center gap-1">
-                                                <CheckCircle className="w-4 h-4" />
-                                                Selecionado: {selectedBroker.name}
-                                            </p>
-                                        )}
-
-                                        {brokerResults.length > 0 && !selectedBroker && (
-                                            <div className="overflow-hidden rounded-xl border border-gray-200 divide-y divide-gray-100">
-                                                {brokerResults.map(broker => (
-                                                    <button
-                                                        key={broker.id}
-                                                        onClick={() => {
-                                                            setSelectedBroker(broker)
-                                                            setBrokerSearch(broker.name)
-                                                            setBrokerResults([])
-                                                        }}
-                                                        className="w-full text-left px-4 py-3 hover:bg-primary-50 transition-colors"
-                                                    >
-                                                        <p className="text-sm font-semibold text-gray-900">{broker.name}</p>
-                                                        <p className="text-xs text-gray-500">
-                                                            {[
-                                                                broker.creci && `CRECI ${broker.creci}`,
-                                                                broker.email,
-                                                            ].filter(Boolean).join(' • ')}
-                                                        </p>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                    )}
                                 </div>
                             )}
                         </div>
