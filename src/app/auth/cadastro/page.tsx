@@ -22,7 +22,7 @@ import {
 import { useUser } from '@/contexts/UserContext'
 import type { ApiError } from '@/lib/api/client'
 import { formatPhoneInput } from '@/lib/phoneInput'
-import { Eye, EyeOff } from 'lucide-react'
+import { CheckCircle2, Eye, EyeOff } from 'lucide-react'
 
 const BRAZILIAN_STATES = [
     'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
@@ -107,6 +107,20 @@ export default function CadastroPage() {
 
     const isGoogleFlow = draft.source === 'google'
     const isLoading = submitting || googleLoading
+    const selectionCards = [
+        {
+            value: 'client' as const,
+            title: 'Quero cadastrar como cliente',
+            description: 'Para favoritar imóveis, gerar propostas e acompanhar contratos.',
+            helper: 'Acesso focado em busca, proposta e acompanhamento.',
+        },
+        {
+            value: 'broker' as const,
+            title: 'Quero cadastrar como corretor',
+            description: 'Para anunciar imóveis, gerar propostas e operar a carteira.',
+            helper: 'Acesso para operação comercial e gestão da carteira.',
+        },
+    ]
 
     const updateDraft = (
         data: Partial<SignupDraft['data']>,
@@ -361,34 +375,58 @@ export default function CadastroPage() {
                 {stepIndex === 0 && (
                     <form onSubmit={handleContinueProfile} className="space-y-4" aria-describedby={error ? 'register-error' : undefined}>
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            <button
-                                type="button"
-                                onClick={() => updateDraft({}, { userType: 'client' })}
-                                className={`rounded-2xl border p-4 sm:p-5 text-left transition-colors ${
-                                    draft.userType === 'client'
-                                        ? 'border-primary-500 bg-primary-50'
-                                        : 'border-slate-200 bg-white hover:border-primary-300'
-                                }`}
-                            >
-                                <p className="text-sm font-semibold text-slate-900">Quero cadastrar como cliente</p>
-                                <p className="mt-2 text-xs sm:text-sm text-slate-600">
-                                    Para favoritar imóveis, gerar propostas e acompanhar contratos.
-                                </p>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => updateDraft({}, { userType: 'broker' })}
-                                className={`rounded-2xl border p-4 sm:p-5 text-left transition-colors ${
-                                    draft.userType === 'broker'
-                                        ? 'border-primary-500 bg-primary-50'
-                                        : 'border-slate-200 bg-white hover:border-primary-300'
-                                }`}
-                            >
-                                <p className="text-sm font-semibold text-slate-900">Quero cadastrar como corretor</p>
-                                <p className="mt-2 text-xs sm:text-sm text-slate-600">
-                                    Para anunciar imóveis, gerar propostas e operar a carteira.
-                                </p>
-                            </button>
+                            {selectionCards.map((option) => {
+                                const isSelected = draft.userType === option.value
+                                return (
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        aria-pressed={isSelected}
+                                        aria-describedby={`signup-role-${option.value}-hint`}
+                                        onClick={() => updateDraft({}, { userType: option.value })}
+                                        className={`group relative cursor-pointer rounded-2xl border p-4 text-left shadow-sm transition-all focus:outline-none focus:ring-4 focus:ring-primary-500/20 sm:p-5 ${
+                                            isSelected
+                                                ? 'border-primary-600 bg-primary-50 ring-2 ring-primary-500/30 shadow-primary-200/60'
+                                                : 'border-slate-200 bg-white hover:border-primary-400 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm font-semibold text-slate-900">{option.title}</p>
+                                                    {isSelected && (
+                                                        <span className="inline-flex items-center gap-1 rounded-full bg-primary-600 px-2 py-0.5 text-[11px] font-semibold text-white">
+                                                            <CheckCircle2 className="h-3.5 w-3.5" />
+                                                            Selecionado
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs sm:text-sm text-slate-600">
+                                                    {option.description}
+                                                </p>
+                                            </div>
+                                            <span
+                                                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                                                    isSelected
+                                                        ? 'border-primary-600 bg-primary-600 text-white'
+                                                        : 'border-slate-300 bg-white text-transparent group-hover:border-primary-400'
+                                                }`}
+                                                aria-hidden="true"
+                                            >
+                                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                            </span>
+                                        </div>
+                                        <p
+                                            id={`signup-role-${option.value}-hint`}
+                                            className={`mt-3 text-xs font-medium ${
+                                                isSelected ? 'text-primary-700' : 'text-slate-500'
+                                            }`}
+                                        >
+                                            {isSelected ? 'Escolha aplicada. Continue para preencher seus dados.' : option.helper}
+                                        </p>
+                                    </button>
+                                )
+                            })}
                         </div>
 
                         {!isGoogleFlow && (

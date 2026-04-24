@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useUser } from '@/contexts/UserContext'
 import { sendEmailVerificationCode, verifyEmailCode } from '@/lib/api/auth'
 import { resolvePostAuthRoute } from '@/lib/auth/routeResolution'
-import { loadSignupDraft } from '@/lib/authSignupDraft'
+import { loadSignupDraft, markSignupDraftEmailVerified } from '@/lib/authSignupDraft'
 import { registerUserFromSignupDraft } from '@/lib/registerFromSignupDraft'
 import type { ApiError } from '@/lib/api/client'
 import { ShieldCheck, ArrowLeft } from 'lucide-react'
@@ -76,7 +76,11 @@ export default function VerificacaoPage() {
             router.replace('/auth/cadastro')
             return
         }
-        const merged = { ...draft, emailVerified: true }
+        const merged = markSignupDraftEmailVerified('verify_method') ?? {
+            ...draft,
+            emailVerified: true,
+            step: 'verify_method' as const,
+        }
         const result = await registerUserFromSignupDraft(merged)
         await refresh()
         if (result.isBroker && result.requiresBrokerDocuments) {
@@ -218,6 +222,7 @@ export default function VerificacaoPage() {
             if (isSignupFlowRef.current) {
                 setSuccessMessage('Conta criada! Redirecionando...')
                 try {
+                    markSignupDraftEmailVerified('verify_method')
                     await completeSignupAfterEmail()
                     setSuccess(true)
                 } catch {

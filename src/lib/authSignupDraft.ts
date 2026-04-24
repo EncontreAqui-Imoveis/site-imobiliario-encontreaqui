@@ -136,7 +136,7 @@ export function saveSignupDraft(draft: SignupDraft) {
 }
 
 export function patchSignupDraft(
-    input: Partial<Omit<SignupDraft, 'data' | 'updatedAt'>> & { data?: Partial<SignupDraftData> },
+  input: Partial<Omit<SignupDraft, 'data' | 'updatedAt'>> & { data?: Partial<SignupDraftData> },
 ): SignupDraft {
     const current = loadSignupDraft() ?? createSignupDraft()
     const next = createSignupDraft({
@@ -147,8 +147,24 @@ export function patchSignupDraft(
             ...(input.data ?? {}),
         },
     })
-    saveSignupDraft(next)
-    return next
+  saveSignupDraft(next)
+  return next
+}
+
+export function markSignupDraftEmailVerified(
+  step: SignupStep = 'verify_method',
+): SignupDraft | null {
+  const current = loadSignupDraft()
+  if (!current) return null
+
+  const next = createSignupDraft({
+    ...current,
+    emailVerified: true,
+    step,
+    data: current.data,
+  })
+  saveSignupDraft(next)
+  return next
 }
 
 export function clearSignupDraft() {
