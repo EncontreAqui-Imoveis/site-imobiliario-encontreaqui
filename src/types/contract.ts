@@ -50,6 +50,7 @@ export type ContractDocumentType =
     | 'contrato_assinado'
     | 'comprovante_pagamento'
     | 'boleto_vistoria'
+    | 'outro'
     | 'cliente_cnh'
     | 'cliente_identidade'
     | 'cliente_cpf'

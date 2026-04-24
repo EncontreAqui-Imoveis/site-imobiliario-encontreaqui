@@ -77,6 +77,7 @@ const DOCUMENT_LABELS: Record<string, string> = {
     contrato_assinado: 'Contrato assinado',
     comprovante_pagamento: 'Comprovante de pagamento',
     boleto_vistoria: 'Boleto/Vistoria',
+    outro: 'Outro documento',
     cliente_cnh: 'CNH do cliente',
     cliente_identidade: 'Identidade (RG) do cliente',
     cliente_cpf: 'CPF do cliente',
