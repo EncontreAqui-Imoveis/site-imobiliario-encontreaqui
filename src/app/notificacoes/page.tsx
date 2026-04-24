@@ -103,6 +103,15 @@ export default function NotificacoesPage() {
     const [clearingAll, setClearingAll] = useState(false)
     const [expandedNotif, setExpandedNotif] = useState<Notification | null>(null)
 
+    const syncUnreadBadge = useCallback((nextNotifications: Notification[]) => {
+        const unreadCount = nextNotifications.filter((item) => !item.isRead).length
+        window.dispatchEvent(
+            new CustomEvent('notifications-unread-count', {
+                detail: { unreadCount },
+            }),
+        )
+    }, [])
+
     useEffect(() => {
         if (session) {
             loadNotifications()
@@ -121,6 +130,7 @@ export default function NotificacoesPage() {
                 setError(null)
                 setLoading(false)
             })
+            syncUnreadBadge(data)
         } catch {
             unstable_batchedUpdates(() => {
                 setError('Erro ao carregar notificações.')
@@ -133,9 +143,11 @@ export default function NotificacoesPage() {
         try {
             await markAsRead(id)
             unstable_batchedUpdates(() => {
-                setNotifications(prev =>
-                    prev.map(n => n.id === id ? { ...n, isRead: true } : n)
-                )
+                setNotifications(prev => {
+                    const next = prev.map(n => n.id === id ? { ...n, isRead: true } : n)
+                    syncUnreadBadge(next)
+                    return next
+                })
             })
         } catch {
             // silent
@@ -146,7 +158,11 @@ export default function NotificacoesPage() {
         try {
             await markAllAsRead()
             unstable_batchedUpdates(() => {
-                setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
+                setNotifications(prev => {
+                    const next = prev.map(n => ({ ...n, isRead: true }))
+                    syncUnreadBadge(next)
+                    return next
+                })
             })
         } catch {
             // silent
@@ -158,7 +174,11 @@ export default function NotificacoesPage() {
         try {
             await deleteNotification(id)
             unstable_batchedUpdates(() => {
-                setNotifications(prev => prev.filter(n => n.id !== id))
+                setNotifications(prev => {
+                    const next = prev.filter(n => n.id !== id)
+                    syncUnreadBadge(next)
+                    return next
+                })
             })
         } catch {
             // silent — keep notification in list
@@ -176,6 +196,7 @@ export default function NotificacoesPage() {
             await clearAllNotifications()
             unstable_batchedUpdates(() => {
                 setNotifications([])
+                syncUnreadBadge([])
             })
         } catch {
             // silent
@@ -184,7 +205,7 @@ export default function NotificacoesPage() {
                 setClearingAll(false)
             })
         }
-    }, [])
+    }, [syncUnreadBadge])
 
     const handleOpenNotification = useCallback(async (notification: Notification) => {
         const href = resolveNotificationHref(notification)

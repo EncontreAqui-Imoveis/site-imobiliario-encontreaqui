@@ -12,6 +12,7 @@ import {
 import { getStoreUrlClient } from '@/lib/appLinks'
 import { useUser } from '@/contexts/UserContext'
 import { resolvePendingAction } from '@/lib/auth/routeResolution'
+import { getNotifications } from '@/lib/api/notifications'
 
 const navLinks = [
     { href: '/', label: 'Início', icon: Home },
@@ -49,6 +50,7 @@ export default function Header() {
     const [isScrolled, setIsScrolled] = useState(false)
     const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
     const [storeUrl, setStoreUrl] = useState('https://play.google.com/store')
+    const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
     const userMenuRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
@@ -57,6 +59,39 @@ export default function Header() {
 
     useEffect(() => {
         setStoreUrl(getStoreUrlClient())
+    }, [])
+
+    useEffect(() => {
+        if (!isAuthenticated) {
+            setUnreadNotificationsCount(0)
+            return
+        }
+        let isMounted = true
+        void getNotifications()
+            .then((rows) => {
+                if (!isMounted) return
+                const unread = rows.filter((item) => !item.isRead).length
+                setUnreadNotificationsCount(unread)
+            })
+            .catch(() => {
+                if (!isMounted) return
+                setUnreadNotificationsCount(0)
+            })
+        return () => {
+            isMounted = false
+        }
+    }, [isAuthenticated, pathname])
+
+    useEffect(() => {
+        const handler = (event: Event) => {
+            const detail = (event as CustomEvent<{ unreadCount?: number }>).detail
+            const unread = Number(detail?.unreadCount ?? 0)
+            setUnreadNotificationsCount(Number.isFinite(unread) && unread > 0 ? unread : 0)
+        }
+        window.addEventListener('notifications-unread-count', handler as EventListener)
+        return () => {
+            window.removeEventListener('notifications-unread-count', handler as EventListener)
+        }
     }, [])
 
     const isHomepage = pathname === '/'
@@ -196,7 +231,14 @@ export default function Header() {
                                         } ${pathname === '/notificacoes' ? (isHomepage && !isScrolled ? 'ring-2 ring-slate-300' : 'text-primary-600 bg-primary-50') : ''}`}
                                     aria-label="Notificações"
                                 >
-                                    <Bell className="w-5 h-5" />
+                                    <span className="relative inline-flex">
+                                        <Bell className="w-5 h-5" />
+                                        {unreadNotificationsCount > 0 && (
+                                            <span className="absolute -right-2 -top-2 min-w-[18px] rounded-full bg-red-600 px-1 text-center text-[10px] font-bold leading-[18px] text-white">
+                                                {unreadNotificationsCount > 99 ? '99+' : unreadNotificationsCount}
+                                            </span>
+                                        )}
+                                    </span>
                                 </Link>
                             {/* Logged-in: Avatar + Dropdown */}
                             <div className="relative" ref={userMenuRef}>
@@ -327,7 +369,14 @@ export default function Header() {
                                     } ${pathname === '/notificacoes' ? 'text-primary-600' : ''}`}
                                 aria-label="Notificações"
                             >
-                                <Bell className="w-6 h-6" />
+                                <span className="relative inline-flex">
+                                    <Bell className="w-6 h-6" />
+                                    {unreadNotificationsCount > 0 && (
+                                        <span className="absolute -right-2 -top-2 min-w-[18px] rounded-full bg-red-600 px-1 text-center text-[10px] font-bold leading-[18px] text-white">
+                                            {unreadNotificationsCount > 99 ? '99+' : unreadNotificationsCount}
+                                        </span>
+                                    )}
+                                </span>
                             </Link>
                         )}
                         <button

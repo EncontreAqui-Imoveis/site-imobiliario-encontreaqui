@@ -56,7 +56,18 @@ export function useLocationOptions(selectedCity: string) {
 
         if (selectedCityOption) {
             setActiveCity(selectedCityOption.city)
+            return
         }
+
+        const normalizedInput = normalizeLabel(selectedCity)
+        const fuzzyMatches = cities.filter((item) =>
+            normalizeLabel(item.city).includes(normalizedInput),
+        )
+        if (fuzzyMatches.length === 1) {
+            setActiveCity(fuzzyMatches[0].city)
+            return
+        }
+        setActiveCity('')
     }, [selectedCity, selectedCityOption])
 
     useEffect(() => {

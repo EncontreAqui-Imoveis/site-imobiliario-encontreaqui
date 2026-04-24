@@ -74,7 +74,7 @@ export default function FeaturedCarousel({
                         </p>
                     </div>
 
-                    <div className="hidden items-center gap-5 sm:flex">
+                    <div className="hidden items-center gap-2 sm:flex">
                         <Link
                             href="/imoveis?sort=created_at:desc"
                             className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-semibold transition-colors group"

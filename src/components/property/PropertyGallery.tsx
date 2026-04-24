@@ -172,7 +172,7 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
 
             {/* "Show All" Button (Desktop) */}
             <button
-                onClick={() => setIsOpen(true)}
+                onClick={() => openLightbox(0)}
                 className="absolute bottom-4 right-4 hidden items-center gap-2 rounded-lg bg-white px-4 py-2 font-semibold text-gray-900 shadow-lg transition-transform active:scale-95 hover:bg-gray-50 lg:flex"
             >
                 <Grid className="w-4 h-4" />

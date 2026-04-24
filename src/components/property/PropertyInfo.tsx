@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { shareOrCopy } from '@/lib/webShare'
 import { displayStatusLabel, formatUnit } from '@/lib/propertyLabels'
+import { areaUnitLabel, normalizeAreaUnidade, squareMetersToAreaInput } from '@/lib/areaUnits'
 
 interface PropertyInfoProps {
     property: Property
@@ -35,6 +36,16 @@ function formatDate(date?: string): string {
 }
 
 export default function PropertyInfo({ property }: PropertyInfoProps) {
+    const formatArea = (valueInM2?: number, unitRaw?: string | null) => {
+        if (valueInM2 == null || valueInM2 <= 0) return '0 m²'
+        const unit = normalizeAreaUnidade(unitRaw)
+        const converted = squareMetersToAreaInput(valueInM2, unit)
+        const asNumber = Number(converted)
+        const formatted = Number.isFinite(asNumber)
+            ? asNumber.toLocaleString('pt-BR', { maximumFractionDigits: 2 })
+            : converted
+        return `${formatted} ${areaUnitLabel(unit)}`
+    }
     const statusInfo = statusColors[property.status?.toLowerCase()] || statusColors.pending
     const statusLabel = displayStatusLabel(property.status, property.purpose)
     const isPurposeBadgeDuplicate = statusLabel.trim().toLowerCase() === (property.purpose ?? '').trim().toLowerCase()
@@ -159,7 +170,9 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                     </div>
                     <div className="flex flex-col items-center justify-center gap-2 text-center">
                         <Maximize className="h-6 w-6 shrink-0 text-primary-600" />
-                        <span className="text-xl font-bold text-gray-900">{property.areaTerreno || 0} m²</span>
+                        <span className="text-xl font-bold text-gray-900">
+                            {formatArea(property.areaTerreno, property.areaTerrenoUnidade)}
+                        </span>
                         <span className="text-xs font-medium uppercase tracking-wide text-gray-600">Área do Terreno</span>
                     </div>
                 </div>
@@ -291,11 +304,15 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                         <span className="text-gray-600">Área do Terreno</span>
-                        <span className="font-bold text-gray-900">{property.areaTerreno || 0} m²</span>
+                        <span className="font-bold text-gray-900">
+                            {formatArea(property.areaTerreno, property.areaTerrenoUnidade)}
+                        </span>
                     </div>
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                         <span className="text-gray-600">Área Construída</span>
-                        <span className="font-bold text-gray-900">{property.areaConstruida || 0} m²</span>
+                        <span className="font-bold text-gray-900">
+                            {formatArea(property.areaConstruida, property.areaConstruidaUnidade)}
+                        </span>
                     </div>
                     {property.tipoLote && (
                         <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">

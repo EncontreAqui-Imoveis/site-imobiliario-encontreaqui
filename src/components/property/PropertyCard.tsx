@@ -7,6 +7,7 @@ import { Bed, Bath, Car, Maximize, MapPin, ChevronLeft, ChevronRight } from 'luc
 import { Property, formatPrice, getPromoSalePrice, getPromoRentPrice } from '@/types/property'
 import { capitalizePropertyTitle } from '@/lib/propertyTitleDisplay'
 import { formatUnit } from '@/lib/propertyLabels'
+import { areaUnitLabel, normalizeAreaUnidade, squareMetersToAreaInput } from '@/lib/areaUnits'
 import FavoriteButton from '@/components/property/FavoriteButton'
 import PhotoWatermark from '@/components/property/PhotoWatermark'
 
@@ -16,6 +17,16 @@ interface PropertyCardProps {
 }
 
 export default function PropertyCard({ property, variant = 'default' }: PropertyCardProps) {
+    const formatAreaDisplay = (valueInM2?: number, unitRaw?: string | null) => {
+        if (valueInM2 == null || valueInM2 <= 0) return null
+        const unit = normalizeAreaUnidade(unitRaw)
+        const converted = squareMetersToAreaInput(valueInM2, unit)
+        const asNumber = Number(converted)
+        const formatted = Number.isFinite(asNumber)
+            ? asNumber.toLocaleString('pt-BR', { maximumFractionDigits: 2 })
+            : converted
+        return `${formatted} ${areaUnitLabel(unit)}`
+    }
     const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
     const images = property.images?.length ? property.images : ['/logo_circular.png']
@@ -190,7 +201,9 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                     {property.areaTerreno != null && property.areaTerreno > 0 && (
                         <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-3 py-3 text-center text-sm text-gray-700">
                             <Maximize className="h-4 w-4 shrink-0 text-gray-400" />
-                            <span className="font-medium leading-tight">{property.areaTerreno} m²</span>
+                            <span className="font-medium leading-tight">
+                                {formatAreaDisplay(property.areaTerreno, property.areaTerrenoUnidade)}
+                            </span>
                             <span className="text-[11px] uppercase tracking-wide text-gray-500">Terreno</span>
                         </div>
                     )}
