@@ -100,7 +100,7 @@ function requiredDocTypesForContract(contract: ContractDetail, awaitingSignature
         return SIGNATURE_REQUIRED_DOCS
     }
     const requirementRows = contract.documentRequirements?.seller ?? []
-    const docs = requirementRows.flatMap((row) => {
+    const docs: ContractDocumentType[] = requirementRows.flatMap((row): ContractDocumentType[] => {
         if (row.applicability === 'not_applicable') return [] as ContractDocumentType[]
         switch (row.category) {
             case 'identidade':
@@ -119,7 +119,7 @@ function requiredDocTypesForContract(contract: ContractDetail, awaitingSignature
                 return [] as ContractDocumentType[]
         }
     })
-    return Array.from(new Set(docs))
+    return Array.from(new Set<ContractDocumentType>(docs))
 }
 
 function buyerClientIdentityDocumentTypes(): ContractDocumentType[] {
@@ -134,7 +134,7 @@ function buyerRequiredDocTypesForContract(
         return requiredDocTypesForContract(contract, true)
     }
     const requirementRows = contract.documentRequirements?.buyer ?? []
-    const docsFromMatrix = requirementRows.flatMap((row) => {
+    const docsFromMatrix: ContractDocumentType[] = requirementRows.flatMap((row): ContractDocumentType[] => {
         if (row.applicability === 'not_applicable') return [] as ContractDocumentType[]
         switch (row.category) {
             case 'identidade':
@@ -151,7 +151,9 @@ function buyerRequiredDocTypesForContract(
                 return [] as ContractDocumentType[]
         }
     })
-    return Array.from(new Set([...docsFromMatrix, ...buyerClientIdentityDocumentTypes()]))
+    return Array.from(
+        new Set<ContractDocumentType>([...docsFromMatrix, ...buyerClientIdentityDocumentTypes()]),
+    )
 }
 
 function documentLabel(documentType: ContractDocumentType | null | undefined): string {
