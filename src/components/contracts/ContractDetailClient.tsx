@@ -8,6 +8,7 @@ import type {
     ContractDocument,
     ContractDocumentType,
     ContractSide,
+    ContractDocumentCategory,
 } from '@/types/contract'
 import {
     buildNegotiationDocumentDownloadUrl,
@@ -153,6 +154,26 @@ function documentLabel(documentType: ContractDocumentType | null | undefined): s
     return DOCUMENT_LABELS[raw] ?? (raw.length > 0 ? raw : 'Documento')
 }
 
+const CATEGORY_LABELS: Record<ContractDocumentCategory, string> = {
+    identidade: 'Identidade',
+    comprovante_endereco: 'Comprovante de endereço',
+    estado_civil: 'Estado civil',
+    conjuge_documentos: 'Documentos do cônjuge',
+    comprovante_renda: 'Comprovante de renda',
+    dados_bancarios: 'Dados bancários',
+    docs_imovel: 'Documentos do imóvel',
+}
+
+function resolveCategoryByDocumentType(documentType: ContractDocumentType): ContractDocumentCategory {
+    if (documentType === 'comprovante_endereco') return 'comprovante_endereco'
+    if (documentType === 'certidao_casamento_nascimento') return 'estado_civil'
+    if (documentType === 'comprovante_renda') return 'comprovante_renda'
+    if (documentType === 'certidao_inteiro_teor' || documentType === 'certidao_onus_acoes') return 'docs_imovel'
+    if (documentType === 'cliente_outros') return 'conjuge_documentos'
+    if (documentType === 'outro') return 'dados_bancarios'
+    return 'identidade'
+}
+
 function isLegacyBuyerOtherDocumentType(value: ContractDocumentType | string | null | undefined): boolean {
     return String(value ?? '').trim().startsWith('cliente_outro_')
 }
@@ -182,7 +203,25 @@ function findLatestDoc(
 }
 
 function renderChecklistStatus(doc: ContractDocument | null) {
-    return doc ? 'Enviado' : 'Pendente'
+    if (!doc) return 'Pendente'
+    const status = String(doc.categoryStatus ?? '').trim().toUpperCase()
+    if (status === 'APPROVED') return 'Aprovado'
+    if (status === 'REJECTED') return 'Rejeitado'
+    if (status === 'NOT_APPLICABLE') return 'Não se aplica'
+    return 'Enviado'
+}
+
+function renderChecklistHint(doc: ContractDocument | null): string | null {
+    if (!doc) return null
+    const status = String(doc.categoryStatus ?? '').trim().toUpperCase()
+    const reason = String(doc.reviewReason ?? '').trim()
+    if (status === 'REJECTED') {
+        return reason || 'Ajuste o documento e reenviar nesta categoria.'
+    }
+    if (status === 'PENDING') {
+        return 'Documento enviado. Aguardando análise administrativa.'
+    }
+    return null
 }
 
 function resolveSignatureMethod(contract: ContractDetail): string | null {
@@ -288,6 +327,7 @@ export function ContractDetailClient({ contract }: Props) {
                     contractId: currentContract.id,
                     side,
                     documentType,
+                    documentCategory: resolveCategoryByDocumentType(documentType),
                     file,
                 })
             }
@@ -715,6 +755,37 @@ export function ContractDetailClient({ contract }: Props) {
                         )}
                     </div>
                 </div>
+
+                {currentContract.documentProgress && (
+                    <div className="grid gap-4 md:grid-cols-2">
+                        {(['seller', 'buyer'] as const).map((side) => {
+                            const progress = currentContract.documentProgress?.[side]
+                            const sideTitle = side === 'seller' ? 'Progresso vendedor/captador' : 'Progresso comprador'
+                            return (
+                                <div key={`progress-${side}`} className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-4">
+                                    <p className="text-sm font-semibold text-slate-900">{sideTitle}</p>
+                                    <p className="mt-1 text-xs text-slate-600">
+                                        Pendentes: {progress?.totals.pending ?? 0} • Aprovadas: {progress?.totals.approved ?? 0} • Rejeitadas: {progress?.totals.rejected ?? 0}
+                                    </p>
+                                    <ul className="mt-3 space-y-1 text-xs text-slate-700">
+                                        {(progress?.categories ?? []).map((item) => {
+                                            const statusLabel =
+                                                item.status === 'NOT_APPLICABLE'
+                                                    ? 'Não se aplica'
+                                                    : item.status
+                                            return (
+                                            <li key={`${side}-${item.category}`} className="flex items-center justify-between gap-2">
+                                                <span>{CATEGORY_LABELS[item.category] ?? item.category}</span>
+                                                <span className="shrink-0 text-slate-600">{statusLabel}</span>
+                                            </li>
+                                            )
+                                        })}
+                                    </ul>
+                                </div>
+                            )
+                        })}
+                    </div>
+                )}
             </section>
 
             {refreshingContract && (
@@ -942,6 +1013,11 @@ export function ContractDetailClient({ contract }: Props) {
                                             <p className={currentDoc ? 'text-emerald-700' : 'text-slate-500'}>
                                                 {renderChecklistStatus(currentDoc)}
                                             </p>
+                                            {renderChecklistHint(currentDoc) && (
+                                                <p className="mt-1 text-[11px] text-amber-700">
+                                                    {renderChecklistHint(currentDoc)}
+                                                </p>
+                                            )}
                                         </div>
                                         {renderUploadField('seller', documentType, documentLabel(documentType))}
                                     </div>
@@ -1012,6 +1088,11 @@ export function ContractDetailClient({ contract }: Props) {
                                             <p className={currentDoc ? 'text-emerald-700' : 'text-slate-500'}>
                                                 {renderChecklistStatus(currentDoc)}
                                             </p>
+                                            {renderChecklistHint(currentDoc) && (
+                                                <p className="mt-1 text-[11px] text-amber-700">
+                                                    {renderChecklistHint(currentDoc)}
+                                                </p>
+                                            )}
                                         </div>
                                         {renderUploadField('buyer', documentType, documentLabel(documentType))}
                                     </div>

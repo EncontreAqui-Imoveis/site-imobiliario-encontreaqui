@@ -1,4 +1,5 @@
 export type NegotiationStatus =
+    | 'PROPOSAL_DRAFT'
     | 'PENDING_PROPOSAL'
     | 'PROPOSAL_SENT'
     | 'PROPOSAL_SIGNED'
@@ -25,6 +26,10 @@ export interface NegotiationSummary {
     createdAt: string
     updatedAt: string
     proposalValidUntil?: string
+    contractId?: string
+    contractStatus?: string
+    buyerApprovalStatus?: string
+    sellerApprovalStatus?: string
 }
 
 export interface NegotiationDetail extends NegotiationSummary {
@@ -59,6 +64,7 @@ export interface NegotiationHistoryEntry {
 
 export function getStatusLabel(status: NegotiationStatus): string {
     const labels: Record<NegotiationStatus, string> = {
+        PROPOSAL_DRAFT: 'Proposta em Rascunho',
         PENDING_PROPOSAL: 'Proposta Pendente',
         PROPOSAL_SENT: 'Proposta Enviada',
         PROPOSAL_SIGNED: 'Proposta Assinada',
@@ -77,6 +83,7 @@ export function getStatusLabel(status: NegotiationStatus): string {
 
 export function getStatusColor(status: NegotiationStatus): string {
     const colors: Record<NegotiationStatus, string> = {
+        PROPOSAL_DRAFT: 'bg-amber-50 text-amber-700',
         PENDING_PROPOSAL: 'bg-amber-50 text-amber-700',
         PROPOSAL_SENT: 'bg-blue-50 text-blue-700',
         PROPOSAL_SIGNED: 'bg-indigo-50 text-indigo-700',

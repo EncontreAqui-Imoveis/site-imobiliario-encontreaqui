@@ -8,11 +8,20 @@ import {
     type CityOptionWithCount,
 } from '@/lib/locationOptionsApi'
 
+function normalizeLabel(value: string) {
+    return value
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim()
+}
+
 export function useLocationOptions(selectedCity: string) {
     const [cities, setCities] = useState<CityOptionWithCount[]>([])
     const [bairros, setBairros] = useState<BairroOptionWithCount[]>([])
     const [isLoadingCities, setIsLoadingCities] = useState(false)
     const [isLoadingBairros, setIsLoadingBairros] = useState(false)
+    const [activeCity, setActiveCity] = useState('')
 
     useEffect(() => {
         let isMounted = true
@@ -33,11 +42,34 @@ export function useLocationOptions(selectedCity: string) {
         }
     }, [])
 
+    const selectedCityOption = useMemo(() => {
+        const normalizedInput = normalizeLabel(selectedCity)
+        if (!normalizedInput) return null
+        return cities.find((item) => normalizeLabel(item.city) === normalizedInput) ?? null
+    }, [cities, selectedCity])
+
     useEffect(() => {
+        if (!selectedCity.trim()) {
+            setActiveCity('')
+            return
+        }
+
+        if (selectedCityOption) {
+            setActiveCity(selectedCityOption.city)
+        }
+    }, [selectedCity, selectedCityOption])
+
+    useEffect(() => {
+        if (!activeCity) {
+            setBairros([])
+            setIsLoadingBairros(false)
+            return
+        }
+
         let isMounted = true
         setIsLoadingBairros(true)
 
-        fetchBairrosWithCount(selectedCity)
+        fetchBairrosWithCount(activeCity)
             .then((rows) => {
                 if (!isMounted) return
                 setBairros(rows)
@@ -50,18 +82,14 @@ export function useLocationOptions(selectedCity: string) {
         return () => {
             isMounted = false
         }
-    }, [selectedCity])
-
-    const availableBairros = useMemo(() => {
-        const normalizedCity = selectedCity.trim().toLowerCase()
-        if (!normalizedCity) return bairros
-        return bairros.filter((item) => item.city.trim().toLowerCase() === normalizedCity)
-    }, [bairros, selectedCity])
+    }, [activeCity])
 
     return {
         cities,
-        bairros: availableBairros,
+        bairros,
         isLoadingCities,
         isLoadingBairros,
+        selectedCity: activeCity,
+        hasSelectedCity: activeCity.trim().length > 0,
     }
 }

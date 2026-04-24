@@ -210,6 +210,26 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
             ? `/propostas/nova?propertyId=${property.id}`
             : null
 
+    const buyerContractStatusHint = (() => {
+        if (isOwner || !negotiationStatus) return null
+        if (negotiationStatus === 'DOCUMENTATION_PHASE') {
+            return 'Aguardando análise dos moderadores.'
+        }
+        if (negotiationStatus === 'IN_NEGOTIATION') {
+            return 'Negociação aprovada. Contrato aguardando documentos.'
+        }
+        if (negotiationStatus === 'CONTRACT_DRAFTING') {
+            return 'Contrato em confecção de minuta.'
+        }
+        if (negotiationStatus === 'AWAITING_SIGNATURES') {
+            return 'Contrato aguardando assinaturas.'
+        }
+        if (negotiationStatus === 'SOLD' || negotiationStatus === 'RENTED') {
+            return 'Contrato finalizado.'
+        }
+        return null
+    })()
+
     const promoSale = getPromoSalePrice(property)
     const promoRent = getPromoRentPrice(property)
     const promoPrice = promoSale ?? promoRent
@@ -440,7 +460,14 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                                 </div>
                             </aside>
                         ) : (
-                            <PropertySidebar property={property} visitorProposalHref={visitorProposalHref} />
+                            <aside className="space-y-6">
+                                {buyerContractStatusHint && (
+                                    <div className="rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm text-violet-900">
+                                        <strong>Status do contrato:</strong> {buyerContractStatusHint}
+                                    </div>
+                                )}
+                                <PropertySidebar property={property} visitorProposalHref={visitorProposalHref} />
+                            </aside>
                         )}
                     </div>
                 </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Search, X, ChevronDown, SlidersHorizontal, MapPin, Home, Bed, Bath, DollarSign, Filter, Check } from 'lucide-react'
 import { useLocationOptions } from './useLocationOptions'
@@ -97,7 +97,8 @@ export default function SearchFilters() {
         })
         return initial
     })
-    const { cities, bairros, isLoadingCities, isLoadingBairros } = useLocationOptions(filters.city)
+    const { cities, bairros, isLoadingCities, isLoadingBairros, selectedCity, hasSelectedCity } = useLocationOptions(filters.city)
+    const previousSelectedCityRef = useRef('')
 
     // Sync from URL
     useEffect(() => {
@@ -130,19 +131,24 @@ export default function SearchFilters() {
     }, [searchParams])
 
     useEffect(() => {
-        if (!filters.bairro || isLoadingBairros) return
-        const exists = bairros.some((item) => item.bairro === filters.bairro)
-        if (!exists) {
+        const previousCity = previousSelectedCityRef.current
+        const currentCity = selectedCity
+
+        if (
+            previousCity &&
+            currentCity &&
+            previousCity !== currentCity &&
+            filters.bairro.trim().length > 0
+        ) {
             setFilters((prev) => ({ ...prev, bairro: '' }))
         }
-    }, [bairros, filters.bairro, isLoadingBairros])
+
+        previousSelectedCityRef.current = currentCity
+    }, [filters.bairro, selectedCity])
 
 
     const handleChange = (key: string, value: string) => {
         setFilters(prev => {
-            if (key === 'city') {
-                return { ...prev, city: value, bairro: '' }
-            }
             return { ...prev, [key]: value }
         })
     }
@@ -331,12 +337,12 @@ export default function SearchFilters() {
                                         value={filters.bairro}
                                         onChange={(e) => handleChange('bairro', e.target.value)}
                                         className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                        disabled={isLoadingBairros || bairros.length === 0}
+                                        disabled={!hasSelectedCity || isLoadingBairros || bairros.length === 0}
                                     >
                                         <option value="">
                                             {isLoadingBairros
                                                 ? 'Carregando bairros...'
-                                                : filters.city
+                                                : hasSelectedCity
                                                     ? 'Todos os bairros da cidade'
                                                     : 'Todos os bairros'}
                                         </option>

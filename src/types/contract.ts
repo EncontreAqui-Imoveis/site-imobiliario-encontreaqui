@@ -11,6 +11,33 @@ export type ApprovalStatus =
     | 'REJECTED'
 
 export type ContractSide = 'seller' | 'buyer'
+export type ContractDocumentCategoryStatus =
+    | 'PENDING'
+    | 'APPROVED'
+    | 'REJECTED'
+    | 'NOT_APPLICABLE'
+
+export type DocumentCategoryApplicability = 'required' | 'optional' | 'not_applicable'
+
+export interface DocumentCategoryRequirement {
+    category: ContractDocumentCategory
+    applicability: DocumentCategoryApplicability
+    required: boolean
+    reasonCode: string
+}
+
+export interface DocumentRequirementsPayload {
+    seller: DocumentCategoryRequirement[]
+    buyer: DocumentCategoryRequirement[]
+}
+export type ContractDocumentCategory =
+    | 'identidade'
+    | 'comprovante_endereco'
+    | 'estado_civil'
+    | 'conjuge_documentos'
+    | 'comprovante_renda'
+    | 'dados_bancarios'
+    | 'docs_imovel'
 
 export type ContractDocumentType =
     | 'doc_identidade'
@@ -34,8 +61,36 @@ export interface ContractDocument {
     type: 'proposal' | 'contract' | 'other'
     documentType: ContractDocumentType | null
     side?: ContractSide
+    documentCategory?: ContractDocumentCategory | null
+    categoryStatus?: ContractDocumentCategoryStatus
+    reviewReason?: string | null
+    validationResult?: Record<string, unknown> | null
     originalFileName?: string
     createdAt: string
+}
+
+export interface ContractDocumentCategoryProgress {
+    category: ContractDocumentCategory
+    status: ContractDocumentCategoryStatus
+    uploadedCount: number
+    required: boolean
+    latestDocumentId: number | null
+    latestUploadedAt: string | null
+}
+
+export interface ContractDocumentProgressSide {
+    side: ContractSide
+    categories: ContractDocumentCategoryProgress[]
+    totals: {
+        pending: number
+        approved: number
+        rejected: number
+    }
+}
+
+export interface ContractDocumentProgressSummary {
+    seller: ContractDocumentProgressSide
+    buyer: ContractDocumentProgressSide
 }
 
 export interface ContractApprovalReason {
@@ -56,6 +111,8 @@ export interface ContractSummary {
     propertyTitle?: string | null
     propertyCode?: string | null
     propertyPurpose?: string | null
+    documentProgress?: ContractDocumentProgressSummary | null
+    documentRequirements?: DocumentRequirementsPayload | null
 }
 
 export interface ContractDetail extends ContractSummary {

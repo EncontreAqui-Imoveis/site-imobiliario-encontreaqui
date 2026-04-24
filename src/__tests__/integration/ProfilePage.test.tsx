@@ -72,17 +72,16 @@ describe('Profile Page - Integration', () => {
 
         expect(screen.getByText('João Corretor')).toBeInTheDocument()
         expect(screen.getByText('joao@corretor.com')).toBeInTheDocument()
-        expect(screen.getByText('62999998888')).toBeInTheDocument()
+        expect(screen.getByText('(62) 99999-8888')).toBeInTheDocument()
         expect(screen.getByText('Corretor')).toBeInTheDocument()
         expect(screen.getByText('Perfil completo')).toBeInTheDocument()
     })
 
-    it('renders address information', () => {
+    it('renders pending action card information', () => {
         render(<PerfilPage />)
 
-        expect(screen.getByText(/Rua das Flores/)).toBeInTheDocument()
-        expect(screen.getByText(/Goiânia/)).toBeInTheDocument()
-        expect(screen.getByText(/74000-000/)).toBeInTheDocument()
+        expect(screen.getByText('Verificar e-mail')).toBeInTheDocument()
+        expect(screen.getByText('Continuar')).toBeInTheDocument()
     })
 
     it('renders all quick links for brokers', () => {

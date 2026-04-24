@@ -118,7 +118,7 @@ describe('catalog shell accessibility baseline', () => {
         }) as jest.Mock
         window.fetch = global.fetch
 
-        render(await PropertiesPage({ searchParams: Promise.resolve({}) }))
+        render(<PropertiesPage />)
 
         expect(
             screen.getByRole('navigation', { name: /breadcrumb/i })

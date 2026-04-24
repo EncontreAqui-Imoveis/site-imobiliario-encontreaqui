@@ -8,6 +8,17 @@ jest.mock('next/navigation', () => ({
     useSearchParams: jest.fn(),
 }))
 
+jest.mock('@/components/search/useLocationOptions', () => ({
+    useLocationOptions: jest.fn(() => ({
+        cities: [{ city: 'São Paulo', total: 10 }],
+        bairros: [{ bairro: 'Centro', city: 'São Paulo', total: 5 }],
+        isLoadingCities: false,
+        isLoadingBairros: false,
+        selectedCity: 'São Paulo',
+        hasSelectedCity: true,
+    })),
+}))
+
 // Mock Lucide icons
 jest.mock('lucide-react', () => ({
     Search: () => <div data-testid="search-icon" />,
@@ -73,9 +84,8 @@ describe('SearchFilters', () => {
     it('updates city filter', () => {
         render(<SearchFilters />)
 
-        // City input is in "Localização" section which is expanded by default
-        const cityInput = screen.getByPlaceholderText('Cidade')
-        fireEvent.change(cityInput, { target: { value: 'São Paulo' } })
+        const citySelect = screen.getAllByRole('combobox')[0]
+        fireEvent.change(citySelect, { target: { value: 'São Paulo' } })
 
         const applyButton = screen.getByText('Ver resultados')
         fireEvent.click(applyButton)

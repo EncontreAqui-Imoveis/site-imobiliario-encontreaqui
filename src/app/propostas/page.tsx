@@ -18,8 +18,10 @@ export default function PropostasPage() {
     const [negotiations, setNegotiations] = useState<NegotiationSummary[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-    const [filter, setFilter] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all')
+    const [filter, setFilter] = useState<'active' | 'completed' | 'cancelled'>('active')
     const managementActionsAvailable = false
+    const activeStatuses = new Set(['PROPOSAL_DRAFT', 'PENDING_PROPOSAL', 'PROPOSAL_SENT', 'PROPOSAL_SIGNED', 'DOCUMENTATION_PHASE'])
+    const completedStatuses = new Set(['SOLD', 'RENTED', 'CONTRACT_FINALIZED', 'IN_NEGOTIATION', 'CONTRACT_DRAFTING', 'AWAITING_SIGNATURES', 'IN_CONTRACT'])
 
     useEffect(() => {
         if (!authLoading && !session) {
@@ -51,26 +53,26 @@ export default function PropostasPage() {
     }
 
     const filtered = negotiations.filter(n => {
-        if (filter === 'active') return !['SOLD', 'RENTED', 'CANCELLED', 'CONTRACT_FINALIZED'].includes(n.status)
-        if (filter === 'completed') return ['SOLD', 'RENTED', 'CONTRACT_FINALIZED'].includes(n.status)
+        if (filter === 'active') return activeStatuses.has(n.status)
+        if (filter === 'completed') return completedStatuses.has(n.status)
         if (filter === 'cancelled') return n.status === 'CANCELLED'
-        return true
+        return false
     })
 
     const statusSummary = {
         waitingSignature: negotiations.filter((n) =>
-            ['PENDING_PROPOSAL', 'PROPOSAL_SENT'].includes(n.status),
+            ['PROPOSAL_DRAFT', 'PENDING_PROPOSAL', 'PROPOSAL_SENT'].includes(n.status),
         ).length,
         underReview: negotiations.filter((n) =>
-            ['PROPOSAL_SIGNED', 'DOCUMENTATION_PHASE', 'CONTRACT_DRAFTING', 'AWAITING_SIGNATURES', 'IN_CONTRACT'].includes(n.status),
+            ['PROPOSAL_SIGNED', 'DOCUMENTATION_PHASE'].includes(n.status),
         ).length,
         approved: negotiations.filter((n) =>
-            ['IN_NEGOTIATION', 'SOLD', 'RENTED', 'CONTRACT_FINALIZED'].includes(n.status),
+            completedStatuses.has(n.status),
         ).length,
     }
 
     const resolveNegotiationHref = (status: NegotiationSummary['status'], id: string) => {
-        if (status === 'PENDING_PROPOSAL' || status === 'PROPOSAL_SENT') {
+        if (status === 'PROPOSAL_DRAFT' || status === 'PENDING_PROPOSAL' || status === 'PROPOSAL_SENT') {
             return `/propostas/${id}/upload-assinada`
         }
         if (status === 'PROPOSAL_SIGNED' || status === 'DOCUMENTATION_PHASE' || status === 'CONTRACT_DRAFTING' || status === 'AWAITING_SIGNATURES') {
@@ -80,7 +82,7 @@ export default function PropostasPage() {
     }
 
     const resolveActionLabel = (status: NegotiationSummary['status']) => {
-        if (status === 'PENDING_PROPOSAL' || status === 'PROPOSAL_SENT') {
+        if (status === 'PROPOSAL_DRAFT' || status === 'PENDING_PROPOSAL' || status === 'PROPOSAL_SENT') {
             return 'Enviar proposta assinada'
         }
         if (status === 'PROPOSAL_SIGNED') {
@@ -99,6 +101,14 @@ export default function PropostasPage() {
             return 'Acompanhar negociação'
         }
         return 'Abrir contratos'
+    }
+
+    const approvalLabel = (status?: string | null) => {
+        const normalized = String(status ?? '').trim().toUpperCase()
+        if (normalized === 'APPROVED' || normalized === 'APPROVED_WITH_RES') return 'aprovado'
+        if (normalized === 'REJECTED') return 'rejeitado'
+        if (normalized === 'PENDING') return 'pendente'
+        return normalized ? normalized.toLowerCase() : null
     }
 
     const signedSuccess = searchParams.get('signed') === '1'
@@ -166,7 +176,6 @@ export default function PropostasPage() {
             {/* Filters */}
             <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
                 {([
-                    ['all', 'Todas'],
                     ['active', 'Ativas'],
                     ['completed', 'Finalizadas'],
                     ['cancelled', 'Canceladas'],
@@ -199,7 +208,7 @@ export default function PropostasPage() {
                 <div className="text-center py-20 space-y-4">
                     <FileText className="w-16 h-16 mx-auto text-slate-200" />
                     <h2 className="text-lg font-semibold text-slate-700">
-                        {filter === 'all' ? 'Nenhuma proposta ainda' : 'Nenhuma proposta neste filtro'}
+                        Nenhuma proposta neste filtro
                     </h2>
                     <p className="text-sm text-slate-500">
                         Explore imóveis e gere sua primeira proposta.
@@ -246,6 +255,13 @@ export default function PropostasPage() {
                                             </>
                                         )}
                                     </div>
+                                    {neg.contractStatus && (
+                                        <div className="mt-2 text-xs font-medium text-violet-700">
+                                            Contrato: {neg.contractStatus}
+                                            {approvalLabel(neg.buyerApprovalStatus) ? ` · docs comprador ${approvalLabel(neg.buyerApprovalStatus)}` : ''}
+                                            {approvalLabel(neg.sellerApprovalStatus) ? ` · docs vendedor ${approvalLabel(neg.sellerApprovalStatus)}` : ''}
+                                        </div>
+                                    )}
                                     <p className="mt-2 text-xs font-medium text-primary-700">
                                         {resolveActionLabel(neg.status)}
                                     </p>

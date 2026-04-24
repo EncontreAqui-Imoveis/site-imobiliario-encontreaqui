@@ -24,6 +24,12 @@ export function ContractList({ contracts }: ContractListProps) {
             {contracts.map((contract) => {
                 const statusMeta = getContractStatusMeta(contract.status)
                 const title = contract.propertyTitle?.trim() || 'Contrato'
+                const sellerPending = contract.documentProgress?.seller.totals.pending ?? 0
+                const buyerPending = contract.documentProgress?.buyer.totals.pending ?? 0
+                const pendingLabel =
+                    sellerPending + buyerPending > 0
+                        ? `${sellerPending + buyerPending} categorias pendentes`
+                        : 'Documentação em dia'
 
                 return (
                     <li key={contract.id}>
@@ -38,6 +44,7 @@ export function ContractList({ contracts }: ContractListProps) {
                                         {statusMeta.label}
                                     </span>
                                 </p>
+                                <p className="mt-1 text-[11px] text-slate-500">{pendingLabel}</p>
                             </div>
                             <ChevronRight className="h-5 w-5 shrink-0 text-slate-400 group-hover:text-primary-500" aria-hidden />
                         </Link>

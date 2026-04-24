@@ -1,11 +1,106 @@
 import { apiClient, API_BASE_URL } from '@/lib/api/client'
 import type {
     ContractDetail,
-    ContractSummary,
+    ContractDocumentCategory,
+    ContractDocumentCategoryStatus,
+    ContractDocumentProgressSummary,
     ContractDocumentType,
+    DocumentCategoryApplicability,
+    ContractSummary,
     ContractSide,
     ContractApprovalReason,
 } from '@/types/contract'
+
+function parseCategoryStatus(raw: unknown): ContractDocumentCategoryStatus {
+    const s = String(raw ?? 'PENDING').trim().toUpperCase()
+    if (s === 'APPROVED' || s === 'REJECTED' || s === 'NOT_APPLICABLE' || s === 'PENDING') {
+        return s
+    }
+    return 'PENDING'
+}
+
+export function normalizeDocumentRequirements(
+    raw: unknown,
+): ContractSummary['documentRequirements'] {
+    if (!raw || typeof raw !== 'object') {
+        return null
+    }
+    const o = raw as Record<string, unknown>
+    const mapRow = (item: unknown) => {
+        if (!item || typeof item !== 'object') {
+            return null
+        }
+        const row = item as Record<string, unknown>
+        return {
+            category: String(row.category ?? '').trim() as ContractDocumentCategory,
+            applicability: String(row.applicability ?? 'required').trim().toLowerCase() as DocumentCategoryApplicability,
+            required: Boolean(row.required),
+            reasonCode: String(row.reasonCode ?? '').trim(),
+        }
+    }
+    const parseList = (key: 'seller' | 'buyer') => {
+        const a = o[key]
+        if (!Array.isArray(a)) {
+            return []
+        }
+        return a
+            .map(mapRow)
+            .filter(
+                (row): row is NonNullable<ReturnType<typeof mapRow>> => row !== null,
+            )
+    }
+    const out = {
+        seller: parseList('seller'),
+        buyer: parseList('buyer'),
+    }
+    if (out.seller.length === 0 && out.buyer.length === 0) {
+        return null
+    }
+    return out
+}
+
+function normalizeDocumentProgress(raw: unknown): ContractDocumentProgressSummary | null {
+    if (!raw || typeof raw !== 'object') return null
+    const root = raw as Record<string, unknown>
+    const parseSide = (side: 'seller' | 'buyer') => {
+        const sideRaw = root[side]
+        if (!sideRaw || typeof sideRaw !== 'object') {
+            return {
+                side,
+                categories: [],
+                totals: { pending: 0, approved: 0, rejected: 0 },
+            }
+        }
+        const sideObj = sideRaw as Record<string, unknown>
+        const categoriesRaw = Array.isArray(sideObj.categories) ? sideObj.categories : []
+        const categories = categoriesRaw
+            .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+            .map((item) => ({
+                category: String(item.category ?? '').trim() as ContractDocumentCategory,
+                status: parseCategoryStatus(item.status),
+                uploadedCount: Number(item.uploadedCount ?? 0),
+                required: Boolean(item.required),
+                latestDocumentId: Number(item.latestDocumentId ?? 0) || null,
+                latestUploadedAt: String(item.latestUploadedAt ?? '').trim() || null,
+            }))
+        const totalsObj = sideObj.totals && typeof sideObj.totals === 'object'
+            ? sideObj.totals as Record<string, unknown>
+            : {}
+        return {
+            side,
+            categories,
+            totals: {
+                pending: Number(totalsObj.pending ?? 0),
+                approved: Number(totalsObj.approved ?? 0),
+                rejected: Number(totalsObj.rejected ?? 0),
+            },
+        }
+    }
+    return {
+        seller: parseSide('seller'),
+        buyer: parseSide('buyer'),
+    }
+}
 
 function normalizeContractSummary(raw: unknown): ContractSummary | null {
     if (!raw || typeof raw !== 'object') return null
@@ -50,10 +145,14 @@ function normalizeContractSummary(raw: unknown): ContractSummary | null {
             : typeof item.property_purpose === 'string'
                 ? item.property_purpose
                 : null,
+        documentProgress: normalizeDocumentProgress(item.documentProgress ?? item.document_progress),
+        documentRequirements: normalizeDocumentRequirements(
+            item.documentRequirements ?? item.document_requirements,
+        ),
     }
 }
 
-function normalizeContractDocument(raw: unknown) {
+export function normalizeContractDocument(raw: unknown) {
     if (!raw || typeof raw !== 'object') return null
     const item = raw as Record<string, unknown>
     const id = Number(item.id ?? 0)
@@ -68,6 +167,16 @@ function normalizeContractDocument(raw: unknown) {
         type: (String(item.type ?? 'other').trim() || 'other') as ContractDetail['documents'][number]['type'],
         documentType: (item.documentType ?? item.document_type ?? null) as ContractDocumentType | null,
         side: (item.side ?? undefined) as 'seller' | 'buyer' | undefined,
+        documentCategory: (item.documentCategory ?? item.document_category ?? null) as ContractDocumentCategory | null,
+        categoryStatus: parseCategoryStatus(
+            item.categoryStatus ?? item.category_status ?? 'PENDING',
+        ),
+        reviewReason: String(item.reviewReason ?? item.review_reason ?? '').trim() || null,
+        validationResult: item.validationResult && typeof item.validationResult === 'object'
+            ? item.validationResult as Record<string, unknown>
+            : item.validation_result && typeof item.validation_result === 'object'
+                ? item.validation_result as Record<string, unknown>
+                : null,
         originalFileName: typeof item.originalFileName === 'string'
             ? item.originalFileName
             : typeof item.original_file_name === 'string'
@@ -176,12 +285,16 @@ export async function getContractById(id: string): Promise<ContractDetail> {
 export async function uploadContractDocument(options: {
     contractId: string
     documentType: ContractDocumentType
+    documentCategory?: ContractDocumentCategory
     side?: ContractSide
     file: File
 }): Promise<void> {
     const formData = new FormData()
     formData.append('file', options.file)
     formData.append('documentType', options.documentType)
+    if (options.documentCategory) {
+        formData.append('documentCategory', options.documentCategory)
+    }
     if (options.side) {
         formData.append('side', options.side)
     }

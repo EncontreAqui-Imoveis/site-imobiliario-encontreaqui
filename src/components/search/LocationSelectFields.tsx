@@ -17,7 +17,7 @@ export default function LocationSelectFields({
     onCityChange,
     onBairroChange,
 }: LocationSelectFieldsProps) {
-    const { cities, bairros, isLoadingCities, isLoadingBairros } = useLocationOptions(city)
+    const { cities, bairros, isLoadingCities, isLoadingBairros, selectedCity, hasSelectedCity } = useLocationOptions(city)
     const normalizeLabel = (value: string) =>
         value
             .normalize('NFD')
@@ -25,27 +25,19 @@ export default function LocationSelectFields({
             .toLowerCase()
             .trim()
 
-    const hasSelectedCity = city.trim().length > 0
     const filteredCityOptions = useMemo(() => {
         const query = normalizeLabel(city)
         if (!query) return cities
         return cities.filter((item) => normalizeLabel(item.city).includes(query))
     }, [cities, city])
-    const normalizedSelectedCity = useMemo(() => {
-        const normalizedInput = normalizeLabel(city)
-        if (!normalizedInput) return null
-        const exactMatch = cities.find((item) => normalizeLabel(item.city) === normalizedInput)
-        return exactMatch ? normalizeLabel(exactMatch.city) : null
-    }, [cities, city])
-    const previousNormalizedSelectedCityRef = useRef<string | null>(null)
+    const previousSelectedCityRef = useRef<string>('')
     const bairroOptions = useMemo(
         () =>
             hasSelectedCity
                 ? bairros
-                    .filter((item) => normalizeLabel(item.city) === normalizeLabel(city))
                     .filter((item) => normalizeLabel(item.bairro).includes(normalizeLabel(bairro)))
                 : [],
-        [bairros, bairro, city, hasSelectedCity],
+        [bairros, bairro, hasSelectedCity],
     )
 
     useEffect(() => {
@@ -55,8 +47,8 @@ export default function LocationSelectFields({
     }, [bairro, hasSelectedCity, onBairroChange])
 
     useEffect(() => {
-        const previousCity = previousNormalizedSelectedCityRef.current
-        const currentCity = normalizedSelectedCity
+        const previousCity = previousSelectedCityRef.current
+        const currentCity = selectedCity
 
         if (
             previousCity &&
@@ -67,8 +59,8 @@ export default function LocationSelectFields({
             onBairroChange('')
         }
 
-        previousNormalizedSelectedCityRef.current = currentCity
-    }, [bairro, normalizedSelectedCity, onBairroChange])
+        previousSelectedCityRef.current = currentCity
+    }, [bairro, onBairroChange, selectedCity])
 
     return (
         <>

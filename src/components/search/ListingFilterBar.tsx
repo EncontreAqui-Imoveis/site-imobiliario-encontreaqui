@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Filter, Search } from 'lucide-react'
 import { useLocationOptions } from './useLocationOptions'
@@ -33,7 +33,8 @@ export default function ListingFilterBar() {
     const [maxPrice, setMaxPrice] = useState('')
     const [code, setCode] = useState('')
     const [priceError, setPriceError] = useState<string | null>(null)
-    const { cities, bairros, isLoadingCities, isLoadingBairros } = useLocationOptions(city)
+    const previousSelectedCityRef = useRef('')
+    const { cities, bairros, isLoadingCities, isLoadingBairros, selectedCity, hasSelectedCity } = useLocationOptions(city)
     const normalizeLabel = (value: string) =>
         value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
     const filteredCities = useMemo(() => {
@@ -42,13 +43,11 @@ export default function ListingFilterBar() {
         return cities.filter((item) => normalizeLabel(item.city).includes(query))
     }, [cities, city])
     const filteredBairros = useMemo(() => {
-        if (!city.trim()) return []
-        const cityQuery = normalizeLabel(city)
+        if (!hasSelectedCity) return []
         const bairroQuery = normalizeLabel(bairro)
         return bairros
-            .filter((item) => normalizeLabel(item.city) === cityQuery)
             .filter((item) => normalizeLabel(item.bairro).includes(bairroQuery))
-    }, [bairros, bairro, city])
+    }, [bairros, bairro, hasSelectedCity])
 
     useEffect(() => {
         setCity(searchParams.get('city') || '')
@@ -60,10 +59,20 @@ export default function ListingFilterBar() {
     }, [searchParams.toString()])
 
     useEffect(() => {
-        if (!bairro || isLoadingBairros) return
-        const exists = bairros.some((item) => item.bairro === bairro)
-        if (!exists) setBairro('')
-    }, [bairro, bairros, isLoadingBairros])
+        const previousCity = previousSelectedCityRef.current
+        const currentCity = selectedCity
+
+        if (
+            previousCity &&
+            currentCity &&
+            previousCity !== currentCity &&
+            bairro.trim().length > 0
+        ) {
+            setBairro('')
+        }
+
+        previousSelectedCityRef.current = currentCity
+    }, [bairro, selectedCity])
 
     const apply = useCallback(() => {
         const min = parseCurrencyInput(minPrice)
@@ -105,7 +114,6 @@ export default function ListingFilterBar() {
                         value={city}
                         onChange={(e) => {
                             setCity(e.target.value)
-                            setBairro('')
                         }}
                         list="listing-city-options"
                         autoComplete="off"
@@ -128,9 +136,9 @@ export default function ListingFilterBar() {
                         list="listing-bairro-options"
                         autoComplete="off"
                         className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
-                        disabled={!city.trim() || isLoadingBairros}
+                        disabled={!hasSelectedCity || isLoadingBairros}
                         placeholder={
-                            !city.trim()
+                            !hasSelectedCity
                                 ? 'Selecione uma cidade primeiro'
                                 : isLoadingBairros
                                     ? 'Carregando bairros...'
