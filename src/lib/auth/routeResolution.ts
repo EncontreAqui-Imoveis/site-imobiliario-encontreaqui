@@ -6,6 +6,12 @@ export interface PendingAction {
     description: string
 }
 
+function hasVerifiedContact(session: UserSession): boolean {
+    const emailVerified = session.user.email_verified === true
+    const hasPhone = String(session.user.phone ?? '').trim().length > 0
+    return emailVerified || hasPhone
+}
+
 function normalizeNextPath(next: string | null | undefined): string | null {
     const value = String(next ?? '').trim()
     if (!value.startsWith('/')) return null
@@ -19,7 +25,7 @@ export function resolvePostAuthRoute(
 ): string {
     const safeNext = normalizeNextPath(next)
 
-    if (!session.user.email_verified) {
+    if (!hasVerifiedContact(session)) {
         return '/verificacao'
     }
 
@@ -45,11 +51,11 @@ export function resolvePendingAction(
 ): PendingAction | null {
     if (!session) return null
 
-    if (!session.user.email_verified) {
+    if (!hasVerifiedContact(session)) {
         return {
             href: '/verificacao',
-            title: 'Verificar e-mail',
-            description: 'Confirme sua conta para liberar os próximos fluxos.',
+            title: 'Verificar contato',
+            description: 'Confirme e-mail ou telefone para liberar os próximos fluxos.',
         }
     }
 

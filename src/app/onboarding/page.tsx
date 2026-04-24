@@ -22,7 +22,10 @@ export default function OnboardingPage() {
             router.replace('/auth/login?next=/onboarding')
             return
         }
-        if (!loading && session?.user && !session.user.email_verified) {
+        const hasVerifiedContact =
+            session?.user?.email_verified === true ||
+            String(session?.user?.phone ?? '').trim().length > 0
+        if (!loading && session?.user && !hasVerifiedContact) {
             router.replace('/verificacao')
             return
         }
@@ -93,7 +96,7 @@ export default function OnboardingPage() {
                         {isProfileComplete ? 'Perfil completo!' : 'Complete seu perfil'}
                     </h1>
                     <p className="text-sm text-slate-600">
-                        Olá, <strong>{session.user.name}</strong>! Confirme seu telefone
+                        Olá, <strong>{session.user.name}</strong>! Revise seus dados
                         para poder gerar propostas e negociar imóveis.
                     </p>
                 </div>

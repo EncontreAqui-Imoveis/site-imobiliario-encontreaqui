@@ -51,7 +51,7 @@ const nextConfig = {
                             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
                             "img-src 'self' https://res.cloudinary.com https://lh3.googleusercontent.com data: blob:",
                             "media-src 'self' https://res.cloudinary.com blob:",
-                            `connect-src 'self' ${apiUrl} https://viacep.com.br https://servicodados.ibge.gov.br https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com`,
+                            `connect-src 'self' ${apiUrl} https://res.cloudinary.com https://api.cloudinary.com https://viacep.com.br https://servicodados.ibge.gov.br https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com`,
                             "font-src 'self' data: https://fonts.gstatic.com",
                             "frame-src https://accounts.google.com https://*.firebaseapp.com",
                             "frame-ancestors 'self'",
