@@ -10,6 +10,8 @@ type PhotoWatermarkProps = {
      * `top`: centro-superior — evita o botão «Ver todas as fotos» na última célula da grelha desktop.
      */
     placement?: 'bottom' | 'top'
+    /** Classes extra no contentor (ex.: z-index maior no lightbox por cima do next/image). */
+    layerClassName?: string
 }
 
 /**
@@ -29,7 +31,7 @@ export default function PhotoWatermark({ compact, placement = 'bottom' }: PhotoW
 
     return (
         <div
-            className={`pointer-events-none absolute left-1/2 z-[8] -translate-x-1/2 select-none ${vertical}`}
+            className={`pointer-events-none absolute left-1/2 z-[8] -translate-x-1/2 select-none ${vertical} ${layerClassName}`.trim()}
             aria-hidden
         >
             <Image

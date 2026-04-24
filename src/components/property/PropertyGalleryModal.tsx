@@ -65,7 +65,7 @@ export default function PropertyGalleryModal({ images, initialIndex = 0, isOpen,
                         className="object-contain"
                         sizes="100vw"
                     />
-                    <PhotoWatermark />
+                    <PhotoWatermark layerClassName="z-[35]" />
                 </div>
 
                 {/* Navigation */}
