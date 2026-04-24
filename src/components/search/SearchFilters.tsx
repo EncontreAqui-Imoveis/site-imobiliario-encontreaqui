@@ -97,7 +97,15 @@ export default function SearchFilters() {
         })
         return initial
     })
-    const { cities, bairros, isLoadingCities, isLoadingBairros, selectedCity, hasSelectedCity } = useLocationOptions(filters.city)
+    const {
+        cities,
+        bairros,
+        isLoadingCities,
+        isLoadingBairros,
+        selectedCity,
+        hasSelectedCity,
+        hasBairros,
+    } = useLocationOptions(filters.city)
     const previousSelectedCityRef = useRef('')
 
     // Sync from URL
@@ -337,13 +345,15 @@ export default function SearchFilters() {
                                         value={filters.bairro}
                                         onChange={(e) => handleChange('bairro', e.target.value)}
                                         className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                        disabled={isLoadingBairros}
+                                        disabled={isLoadingBairros || !hasSelectedCity}
                                     >
                                         <option value="">
                                             {isLoadingBairros
                                                 ? 'Carregando bairros...'
                                                 : hasSelectedCity
-                                                    ? 'Todos os bairros da cidade'
+                                                    ? hasBairros
+                                                        ? 'Todos os bairros da cidade'
+                                                        : 'Nenhum bairro encontrado na cidade'
                                                     : 'Todos os bairros'}
                                         </option>
                                         {bairros.map((bairroOption) => (

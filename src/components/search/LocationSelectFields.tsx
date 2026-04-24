@@ -17,7 +17,15 @@ export default function LocationSelectFields({
     onCityChange,
     onBairroChange,
 }: LocationSelectFieldsProps) {
-    const { cities, bairros, isLoadingCities, isLoadingBairros, selectedCity, hasSelectedCity } = useLocationOptions(city)
+    const {
+        cities,
+        bairros,
+        isLoadingCities,
+        isLoadingBairros,
+        selectedCity,
+        hasSelectedCity,
+        hasBairros,
+    } = useLocationOptions(city)
     const normalizeLabel = (value: string) =>
         value
             .normalize('NFD')
@@ -109,7 +117,9 @@ export default function LocationSelectFields({
                                 ? 'Selecione uma cidade primeiro'
                                 : isLoadingBairros
                                     ? 'Carregando bairros...'
-                                    : 'Digite o bairro'
+                                    : hasBairros
+                                        ? 'Digite o bairro'
+                                        : 'Nenhum bairro encontrado na cidade'
                         }
                         className="w-full min-h-[44px] bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 pr-8 sm:pr-10 text-sm sm:text-base text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all disabled:opacity-70"
                     />

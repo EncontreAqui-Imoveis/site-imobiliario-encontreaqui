@@ -16,6 +16,7 @@ jest.mock('@/components/search/useLocationOptions', () => ({
         isLoadingBairros: false,
         selectedCity: 'São Paulo',
         hasSelectedCity: true,
+        hasBairros: true,
     })),
 }))
 
@@ -110,5 +111,24 @@ describe('SearchFilters', () => {
 
         expect(mockPush).toHaveBeenCalledWith('/imoveis')
         expect(screen.getByPlaceholderText('Buscar por termo...')).toHaveValue('')
+    })
+
+    it('shows empty-state copy when the selected city has no bairros', () => {
+        const { useLocationOptions } = jest.requireMock('@/components/search/useLocationOptions') as {
+            useLocationOptions: jest.Mock
+        }
+        useLocationOptions.mockReturnValue({
+            cities: [{ city: 'São Paulo', total: 10 }],
+            bairros: [],
+            isLoadingCities: false,
+            isLoadingBairros: false,
+            selectedCity: 'São Paulo',
+            hasSelectedCity: true,
+            hasBairros: false,
+        })
+
+        render(<SearchFilters />)
+
+        expect(screen.getByRole('option', { name: 'Nenhum bairro encontrado na cidade' })).toBeInTheDocument()
     })
 })

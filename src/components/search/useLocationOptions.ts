@@ -102,5 +102,6 @@ export function useLocationOptions(selectedCity: string) {
         isLoadingBairros,
         selectedCity: activeCity,
         hasSelectedCity: activeCity.trim().length > 0,
+        hasBairros: bairros.length > 0,
     }
 }

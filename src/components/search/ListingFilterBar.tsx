@@ -34,7 +34,15 @@ export default function ListingFilterBar() {
     const [code, setCode] = useState('')
     const [priceError, setPriceError] = useState<string | null>(null)
     const previousSelectedCityRef = useRef('')
-    const { cities, bairros, isLoadingCities, isLoadingBairros, selectedCity, hasSelectedCity } = useLocationOptions(city)
+    const {
+        cities,
+        bairros,
+        isLoadingCities,
+        isLoadingBairros,
+        selectedCity,
+        hasSelectedCity,
+        hasBairros,
+    } = useLocationOptions(city)
     const normalizeLabel = (value: string) =>
         value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
     const filteredCities = useMemo(() => {
@@ -140,7 +148,9 @@ export default function ListingFilterBar() {
                             isLoadingBairros
                                     ? 'Carregando bairros...'
                                     : hasSelectedCity
-                                        ? 'Digite o bairro'
+                                        ? hasBairros
+                                            ? 'Digite o bairro'
+                                            : 'Nenhum bairro encontrado na cidade'
                                         : 'Todos os bairros'
                         }
                     />
