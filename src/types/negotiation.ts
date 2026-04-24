@@ -29,6 +29,19 @@ export interface NegotiationSummary {
     createdAt: string
     updatedAt: string
     proposalValidUntil?: string
+    canEditProposal?: boolean
+    secondsUntilEditAllowed?: number
+    hasSignedProposal?: boolean
+    validadeDias?: number
+    proposalValue?: number | null
+    paymentBreakdown?: {
+        dinheiro: number
+        permuta: number
+        financiamento: number
+        outros: number
+    } | null
+    propertyBrokerId?: number | null
+    sellerBrokerId?: number | null
     contractId?: string
     contractStatus?: string
     buyerApprovalStatus?: string

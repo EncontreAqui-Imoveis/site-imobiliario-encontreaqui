@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
 import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
-import { fetchMyNegotiations } from '@/lib/negotiationsService'
+import { deleteProposal, fetchMyNegotiations } from '@/lib/negotiationsService'
 import type { NegotiationSummary } from '@/types/negotiation'
 import {
     getStatusColor,
@@ -25,7 +25,7 @@ export default function PropostasPage() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [filter, setFilter] = useState<'sent' | 'signed' | 'refused'>('sent')
-    const managementActionsAvailable = false
+    const [busyActionId, setBusyActionId] = useState<string | null>(null)
 
     useEffect(() => {
         if (!authLoading && !session) {
@@ -111,8 +111,37 @@ export default function PropostasPage() {
     }
 
     const canEditByStatus = (status: NegotiationSummary['status']) => isProposalPreSignatureStatus(status)
+    const canDeleteByStatus = (status: NegotiationSummary['status']) => isProposalPreSignatureStatus(status)
     const canRestartCycle = (negotiation: NegotiationSummary) =>
         isProposalRefusedStatus(negotiation.status) && negotiation.propertyId > 0
+
+    const handleEdit = (negotiation: NegotiationSummary) => {
+        if (!canEditByStatus(negotiation.status) || negotiation.propertyId <= 0) {
+            return
+        }
+        router.push(
+            `/propostas/nova?propertyId=${negotiation.propertyId}&negotiationId=${encodeURIComponent(negotiation.id)}`,
+        )
+    }
+
+    const handleDelete = async (negotiation: NegotiationSummary) => {
+        if (!canDeleteByStatus(negotiation.status)) {
+            return
+        }
+        const confirmed = window.confirm('Excluir esta proposta em envio? Esta ação não pode ser desfeita.')
+        if (!confirmed) {
+            return
+        }
+        setBusyActionId(negotiation.id)
+        try {
+            await deleteProposal(negotiation.id)
+            await loadNegotiations()
+        } catch {
+            setError('Não foi possível excluir a proposta. Tente novamente.')
+        } finally {
+            setBusyActionId(null)
+        }
+    }
 
     const approvalLabel = (status?: string | null) => {
         const normalized = String(status ?? '').trim().toUpperCase()
@@ -157,12 +186,6 @@ export default function PropostasPage() {
             {signedSuccess && (
                 <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900 shadow-sm">
                     Proposta assinada enviada com sucesso. Agora acompanhe a negociação por aqui até ela avançar para contratos.
-                </div>
-            )}
-
-            {!managementActionsAvailable && (
-                <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-sm">
-                    Edição/exclusão no site segue o mesmo fluxo do app: permitido antes da assinatura, bloqueado após assinatura e com novo ciclo após recusa.
                 </div>
             )}
 
@@ -286,14 +309,13 @@ export default function PropostasPage() {
                                 >
                                     <button
                                         type="button"
-                                        disabled={!managementActionsAvailable}
+                                        disabled={!canEditByStatus(neg.status) || busyActionId === neg.id}
                                         title={
-                                            managementActionsAvailable
+                                            canEditByStatus(neg.status)
                                                 ? 'Editar proposta'
-                                                : canEditByStatus(neg.status)
-                                                    ? 'Edição permitida até a assinatura (integração pendente)'
-                                                    : 'Edição bloqueada após assinatura'
+                                                : 'Edição bloqueada após assinatura'
                                         }
+                                        onClick={() => handleEdit(neg)}
                                         aria-label="Editar proposta"
                                         className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-500 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
@@ -302,14 +324,15 @@ export default function PropostasPage() {
                                     </button>
                                     <button
                                         type="button"
-                                        disabled={!managementActionsAvailable}
+                                        disabled={!canDeleteByStatus(neg.status) || busyActionId === neg.id}
                                         title={
-                                            managementActionsAvailable
+                                            canDeleteByStatus(neg.status)
                                                 ? 'Excluir proposta'
                                                 : canRestartCycle(neg)
                                                     ? 'Recusada: pode iniciar um novo ciclo'
-                                                    : 'Exclusão em breve'
+                                                    : 'Exclusão bloqueada após assinatura'
                                         }
+                                        onClick={() => void handleDelete(neg)}
                                         aria-label="Excluir proposta"
                                         className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
                                     >

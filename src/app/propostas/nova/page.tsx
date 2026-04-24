@@ -7,10 +7,13 @@ import { useUser } from '@/contexts/UserContext'
 import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import {
     createProposal,
+    fetchMyNegotiationById,
     fetchProposalTargetProperty,
     searchApprovedBrokers,
+    updateProposalDraft,
     type ApprovedBrokerLookup,
 } from '@/lib/negotiationsService'
+import { isProposalPreSignatureStatus } from '@/types/negotiation'
 import { Property, formatPrice } from '@/types/property'
 import {
     ArrowLeft, ArrowRight, Loader2, FileText, User, CreditCard,
@@ -71,6 +74,7 @@ export default function ProposalWizardPage() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const propertyId = searchParams.get('propertyId')
+    const negotiationId = searchParams.get('negotiationId')
     const { session, loading: authLoading, isBroker, isAuxiliaryAdministrative } = useUser()
 
     /* ── State ── */
@@ -80,6 +84,9 @@ export default function ProposalWizardPage() {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [submitError, setSubmitError] = useState<string | null>(null)
     const [proposalBaseMode, setProposalBaseMode] = useState<ProposalBaseMode>('sale')
+    const [isPrefillLoading, setIsPrefillLoading] = useState(false)
+    const [validadeDias, setValidadeDias] = useState(10)
+    const prefillAppliedRef = useRef(false)
 
     // Step 1: Client data
     const [clientName, setClientName] = useState('')
@@ -153,6 +160,7 @@ export default function ProposalWizardPage() {
     const isClientUser = userRole === 'client'
     const isBrokerUser = userRole === 'broker'
     const isAuxiliaryUser = userRole === 'auxiliary_administrative' || isAuxiliaryAdministrative
+    const isEditMode = Boolean(negotiationId && String(negotiationId).trim().length > 0)
     const isClientOwnListing =
         Boolean(
             isClientUser &&
@@ -177,6 +185,85 @@ export default function ProposalWizardPage() {
         if (canGenerateForProperty) return
         router.replace(`/imoveis/${property.id}?proposalBlocked=1`)
     }, [canGenerateForProperty, property, router])
+
+    useEffect(() => {
+        if (!isEditMode || !property || !session || prefillAppliedRef.current) return
+        const negotiationIdValue = String(negotiationId ?? '').trim()
+        if (!negotiationIdValue) return
+
+        let cancelled = false
+        async function loadEditData() {
+            setIsPrefillLoading(true)
+            try {
+                const existing = await fetchMyNegotiationById(negotiationIdValue)
+                if (!existing) {
+                    setLoadError('Proposta não encontrada para edição.')
+                    return
+                }
+                if (!isProposalPreSignatureStatus(existing.status)) {
+                    setLoadError('Esta proposta já foi assinada e não pode mais ser editada.')
+                    return
+                }
+                if (existing.propertyId !== property.id) {
+                    setLoadError('Proposta não corresponde ao imóvel informado.')
+                    return
+                }
+                if (cancelled) return
+
+                setClientName(existing.clientName ?? '')
+                setClientCpf(existing.clientCpf ?? '')
+                if (Number.isInteger(existing.validadeDias) && Number(existing.validadeDias) > 0) {
+                    setValidadeDias(Number(existing.validadeDias))
+                }
+
+                const sellerBrokerId = Number(existing.sellerBrokerId ?? 0)
+                const ownUserId = Number(session.user?.id ?? 0)
+                if (isBrokerUser && sellerBrokerId > 0 && ownUserId > 0 && sellerBrokerId !== ownUserId) {
+                    setIsSelfBroker(false)
+                    setSelectedBroker({
+                        id: sellerBrokerId,
+                        name: `Corretor #${sellerBrokerId}`,
+                    })
+                    setBrokerSearch(`Corretor #${sellerBrokerId}`)
+                } else {
+                    setIsSelfBroker(true)
+                }
+
+                const breakdown = existing.paymentBreakdown
+                if (breakdown) {
+                    setPayments({
+                        dinheiro: {
+                            value: formatCurrencyInput(Number(breakdown.dinheiro ?? 0).toFixed(2).replace('.', ',')),
+                            unit: 'reais',
+                        },
+                        permuta: {
+                            value: formatCurrencyInput(Number(breakdown.permuta ?? 0).toFixed(2).replace('.', ',')),
+                            unit: 'reais',
+                        },
+                        financiamento: {
+                            value: formatCurrencyInput(Number(breakdown.financiamento ?? 0).toFixed(2).replace('.', ',')),
+                            unit: 'reais',
+                        },
+                        outros: {
+                            value: formatCurrencyInput(Number(breakdown.outros ?? 0).toFixed(2).replace('.', ',')),
+                            unit: 'reais',
+                        },
+                    })
+                }
+
+                prefillAppliedRef.current = true
+            } catch {
+                setLoadError('Não foi possível carregar a proposta para edição.')
+            } finally {
+                if (!cancelled) setIsPrefillLoading(false)
+            }
+        }
+
+        loadEditData()
+        return () => {
+            cancelled = true
+        }
+    }, [isEditMode, property, session, negotiationId, isBrokerUser])
 
     /* ── Broker search ── */
     const searchBrokers = useCallback(async (query: string) => {
@@ -267,18 +354,20 @@ export default function ProposalWizardPage() {
         if (!canSubmit || !property) return
 
         const confirmed = window.confirm(
-            'Após assinatura, a proposta fica bloqueada para edição. Revise os dados antes de gerar. Deseja continuar?'
+            isEditMode
+                ? 'Salvar alterações da proposta? Após assinatura ela ficará bloqueada para edição.'
+                : 'Após assinatura, a proposta fica bloqueada para edição. Revise os dados antes de gerar. Deseja continuar?'
         )
         if (!confirmed) return
 
         setIsSubmitting(true)
         setSubmitError(null)
         try {
-            await createProposal({
+            const payload = {
                 propertyId: property.id,
                 clientName: clientName.trim(),
                 clientCpf: cpfDigits,
-                validadeDias: 10,
+                validadeDias,
                 ...((!isSelfBroker && selectedBroker) ? { sellerBrokerId: selectedBroker.id } : {}),
                 pagamento: {
                     dinheiro: toReais(payments.dinheiro, propertyValue),
@@ -286,8 +375,15 @@ export default function ProposalWizardPage() {
                     financiamento: toReais(payments.financiamento, propertyValue),
                     outros: toReais(payments.outros, propertyValue),
                 },
-            })
-            router.push('/propostas?created=1')
+            }
+
+            if (isEditMode && negotiationId) {
+                await updateProposalDraft(negotiationId, payload)
+                router.push('/propostas?updated=1')
+            } else {
+                await createProposal(payload)
+                router.push('/propostas?created=1')
+            }
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Erro ao gerar proposta.'
             setSubmitError(message)
@@ -342,12 +438,14 @@ export default function ProposalWizardPage() {
         )
     }
 
-    if (!property) {
+    if (!property || isPrefillLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center pt-20">
                 <div className="space-y-3 text-center">
                     <Loader2 className="w-6 h-6 animate-spin text-primary-500 mx-auto" />
-                    <p className="text-sm text-gray-500">Carregando imóvel...</p>
+                    <p className="text-sm text-gray-500">
+                        {isPrefillLoading ? 'Carregando proposta para edição...' : 'Carregando imóvel...'}
+                    </p>
                 </div>
             </div>
         )
@@ -391,7 +489,9 @@ export default function ProposalWizardPage() {
                         <div className="w-10 h-10 bg-accent-100 rounded-xl flex items-center justify-center">
                             <FileText className="w-5 h-5 text-accent-600" />
                         </div>
-                        <h1 className="text-2xl font-bold text-gray-900">Gerar Proposta</h1>
+                        <h1 className="text-2xl font-bold text-gray-900">
+                            {isEditMode ? 'Editar Proposta' : 'Gerar Proposta'}
+                        </h1>
                     </div>
                     <p className="text-sm text-gray-500">
                         {property.title} — {formatPrice(propertyValue)}
@@ -682,12 +782,12 @@ export default function ProposalWizardPage() {
                             {isSubmitting ? (
                                 <>
                                     <Loader2 className="w-4 h-4 animate-spin" />
-                                    Gerando...
+                                    {isEditMode ? 'Salvando...' : 'Gerando...'}
                                 </>
                             ) : step === 1 ? (
                                 <>
                                     <FileText className="w-4 h-4" />
-                                    Gerar Proposta
+                                    {isEditMode ? 'Salvar edição' : 'Gerar Proposta'}
                                 </>
                             ) : (
                                 <>

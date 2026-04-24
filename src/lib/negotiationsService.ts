@@ -14,6 +14,13 @@ export async function fetchMyNegotiations(): Promise<NegotiationSummary[]> {
     return Array.isArray(response) ? response : (response?.data ?? [])
 }
 
+export async function fetchMyNegotiationById(negotiationId: string): Promise<NegotiationSummary | null> {
+    const id = String(negotiationId ?? '').trim()
+    if (!id) return null
+    const items = await fetchMyNegotiations()
+    return items.find((item) => String(item.id ?? '').trim() === id) ?? null
+}
+
 export interface CreateProposalPayload {
     propertyId: number
     clientName: string
@@ -50,6 +57,25 @@ export async function createProposal(payload: CreateProposalPayload): Promise<vo
         }
         throw error
     }
+}
+
+export async function updateProposalDraft(
+    negotiationId: string,
+    payload: Omit<CreateProposalPayload, 'idempotencyKey'>,
+): Promise<void> {
+    const id = String(negotiationId ?? '').trim()
+    if (!id) {
+        throw new Error('Negociação inválida para edição.')
+    }
+    await apiClient.put(`/negotiations/${encodeURIComponent(id)}/draft`, payload)
+}
+
+export async function deleteProposal(negotiationId: string): Promise<void> {
+    const id = String(negotiationId ?? '').trim()
+    if (!id) {
+        throw new Error('Negociação inválida para exclusão.')
+    }
+    await apiClient.delete(`/negotiations/${encodeURIComponent(id)}`)
 }
 
 export interface ApprovedBrokerLookup {
