@@ -17,6 +17,11 @@ import { buildWhatsappLink } from '@/lib/contactLinks'
 import { fetchEditableProperty } from '@/lib/propertiesEditorService'
 import { displayStatusLabel } from '@/lib/propertyLabels'
 import { API_BASE_URL } from '@/lib/api/client'
+import {
+    isProposalPreSignatureStatus,
+    isProposalRefusedStatus,
+    resolveProposalBucket,
+} from '@/types/negotiation'
 
 interface PropertyDetailClientProps {
     propertyId: string
@@ -49,9 +54,14 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
         isOwner && statusLower !== 'pending_approval' && !hasPendingEditRequest
     const negotiationId = property?.negotiationId ?? property?.negotiation?.id
     const negotiationStatus = String(property?.negotiation?.status ?? '').trim().toUpperCase()
+    const hasRefusedNegotiation = isProposalRefusedStatus(negotiationStatus)
     const isClientOwner = isOwner && userRole === 'client'
     const canGenerateProposal =
-        isOwner && !isClientOwner && statusLower === 'approved' && !negotiationId && !isInAnalysisStatus
+        isOwner &&
+        !isClientOwner &&
+        statusLower === 'approved' &&
+        (!negotiationId || hasRefusedNegotiation) &&
+        !isInAnalysisStatus
 
     useEffect(() => {
         if (property || authLoading || !session) return
@@ -144,23 +154,13 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
             }
         }
 
-        if (negotiationId && ['PENDING_PROPOSAL', 'PROPOSAL_DRAFT', 'PROPOSAL_SENT'].includes(negotiationStatus)) {
+        if (negotiationId && isProposalPreSignatureStatus(negotiationStatus)) {
             return {
                 title: 'Proposta em andamento',
                 description: 'A proposta já foi iniciada. Continue enviando a versão assinada para análise.',
                 href: `/propostas/${encodeURIComponent(negotiationId)}/upload-assinada`,
                 tone: 'accent' as const,
                 label: 'Enviar proposta assinada',
-            }
-        }
-
-        if (negotiationId && ['DOCUMENTATION_PHASE', 'CONTRACT_DRAFTING', 'AWAITING_SIGNATURES'].includes(negotiationStatus)) {
-            return {
-                title: 'Proposta em revisão',
-                description: 'Acompanhe o avanço da proposta e das próximas etapas até chegar aos contratos.',
-                href: '/propostas',
-                tone: 'neutral' as const,
-                label: 'Acompanhar propostas',
             }
         }
 
@@ -171,6 +171,26 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                 href: '/contratos',
                 tone: 'success' as const,
                 label: 'Ir para contratos',
+            }
+        }
+
+        if (negotiationId && resolveProposalBucket(negotiationStatus) === 'signed') {
+            return {
+                title: 'Proposta em revisão',
+                description: 'Acompanhe o avanço da proposta e das próximas etapas até chegar aos contratos.',
+                href: '/propostas',
+                tone: 'neutral' as const,
+                label: 'Acompanhar propostas',
+            }
+        }
+
+        if (negotiationId && hasRefusedNegotiation) {
+            return {
+                title: 'Proposta recusada',
+                description: 'A última proposta foi recusada. Você pode iniciar um novo ciclo para este imóvel.',
+                href: `/propostas/nova?propertyId=${property.id}`,
+                tone: 'primary' as const,
+                label: 'Gerar nova proposta',
             }
         }
 
@@ -203,9 +223,9 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
     const visitorProposalHref =
         session &&
         !isOwner &&
-        (userRole === 'client' || userRole === 'broker') &&
+        (userRole === 'client' || userRole === 'broker' || userRole === 'auxiliary_administrative') &&
         statusLower === 'approved' &&
-        !negotiationId &&
+        (!negotiationId || hasRefusedNegotiation) &&
         !blockVisitorProposalDueToDeal
             ? `/propostas/nova?propertyId=${property.id}`
             : null

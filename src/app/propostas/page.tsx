@@ -7,7 +7,13 @@ import { useUser } from '@/contexts/UserContext'
 import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { fetchMyNegotiations } from '@/lib/negotiationsService'
 import type { NegotiationSummary } from '@/types/negotiation'
-import { getStatusLabel, getStatusColor } from '@/types/negotiation'
+import {
+    getStatusColor,
+    getStatusLabel,
+    isProposalPreSignatureStatus,
+    isProposalRefusedStatus,
+    resolveProposalBucket,
+} from '@/types/negotiation'
 import { FileText, Loader2, Plus, Building2, Pencil, Trash2 } from 'lucide-react'
 
 export default function PropostasPage() {
@@ -18,10 +24,8 @@ export default function PropostasPage() {
     const [negotiations, setNegotiations] = useState<NegotiationSummary[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-    const [filter, setFilter] = useState<'active' | 'completed' | 'cancelled'>('active')
+    const [filter, setFilter] = useState<'sent' | 'signed' | 'refused'>('sent')
     const managementActionsAvailable = false
-    const activeStatuses = new Set(['PROPOSAL_DRAFT', 'PENDING_PROPOSAL', 'PROPOSAL_SENT', 'PROPOSAL_SIGNED', 'DOCUMENTATION_PHASE'])
-    const completedStatuses = new Set(['SOLD', 'RENTED', 'CONTRACT_FINALIZED', 'IN_NEGOTIATION', 'CONTRACT_DRAFTING', 'AWAITING_SIGNATURES', 'IN_CONTRACT'])
 
     useEffect(() => {
         if (!authLoading && !session) {
@@ -53,40 +57,43 @@ export default function PropostasPage() {
     }
 
     const filtered = negotiations.filter(n => {
-        if (filter === 'active') return activeStatuses.has(n.status)
-        if (filter === 'completed') return completedStatuses.has(n.status)
-        if (filter === 'cancelled') return n.status === 'CANCELLED'
-        return false
+        const bucket = resolveProposalBucket(n.status)
+        return bucket === filter
     })
 
     const statusSummary = {
-        waitingSignature: negotiations.filter((n) =>
-            ['PROPOSAL_DRAFT', 'PENDING_PROPOSAL', 'PROPOSAL_SENT'].includes(n.status),
-        ).length,
-        underReview: negotiations.filter((n) =>
-            ['PROPOSAL_SIGNED', 'DOCUMENTATION_PHASE'].includes(n.status),
-        ).length,
-        approved: negotiations.filter((n) =>
-            completedStatuses.has(n.status),
-        ).length,
+        sent: negotiations.filter((n) => resolveProposalBucket(n.status) === 'sent').length,
+        signed: negotiations.filter((n) => resolveProposalBucket(n.status) === 'signed').length,
+        refused: negotiations.filter((n) => resolveProposalBucket(n.status) === 'refused').length,
     }
 
-    const resolveNegotiationHref = (status: NegotiationSummary['status'], id: string) => {
-        if (status === 'PROPOSAL_DRAFT' || status === 'PENDING_PROPOSAL' || status === 'PROPOSAL_SENT') {
+    const resolveNegotiationHref = (negotiation: NegotiationSummary) => {
+        const { status, id, propertyId } = negotiation
+        if (isProposalPreSignatureStatus(status)) {
             return `/propostas/${id}/upload-assinada`
         }
-        if (status === 'PROPOSAL_SIGNED' || status === 'DOCUMENTATION_PHASE' || status === 'CONTRACT_DRAFTING' || status === 'AWAITING_SIGNATURES') {
+        if (isProposalRefusedStatus(status)) {
+            if (propertyId > 0) {
+                return `/propostas/nova?propertyId=${propertyId}`
+            }
+            return '/propostas'
+        }
+        if (resolveProposalBucket(status) === 'signed') {
             return '/propostas'
         }
         return '/contratos'
     }
 
-    const resolveActionLabel = (status: NegotiationSummary['status']) => {
-        if (status === 'PROPOSAL_DRAFT' || status === 'PENDING_PROPOSAL' || status === 'PROPOSAL_SENT') {
+    const resolveActionLabel = (negotiation: NegotiationSummary) => {
+        const { status, propertyId } = negotiation
+        if (isProposalPreSignatureStatus(status)) {
             return 'Enviar proposta assinada'
         }
         if (status === 'PROPOSAL_SIGNED') {
             return 'Proposta assinada enviada'
+        }
+        if (isProposalRefusedStatus(status)) {
+            return propertyId > 0 ? 'Iniciar novo ciclo de proposta' : 'Proposta recusada'
         }
         if (status === 'DOCUMENTATION_PHASE') {
             return 'Aguardar análise documental'
@@ -102,6 +109,10 @@ export default function PropostasPage() {
         }
         return 'Abrir contratos'
     }
+
+    const canEditByStatus = (status: NegotiationSummary['status']) => isProposalPreSignatureStatus(status)
+    const canRestartCycle = (negotiation: NegotiationSummary) =>
+        isProposalRefusedStatus(negotiation.status) && negotiation.propertyId > 0
 
     const approvalLabel = (status?: string | null) => {
         const normalized = String(status ?? '').trim().toUpperCase()
@@ -151,34 +162,34 @@ export default function PropostasPage() {
 
             {!managementActionsAvailable && (
                 <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-sm">
-                    As ações de editar e excluir proposta ainda não estão disponíveis no site. A interface já está pronta para integração.
+                    Edição/exclusão no site segue o mesmo fluxo do app: permitido antes da assinatura, bloqueado após assinatura e com novo ciclo após recusa.
                 </div>
             )}
 
             <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Aguardando assinatura</p>
-                    <p className="mt-2 text-2xl font-bold text-slate-900">{statusSummary.waitingSignature}</p>
-                    <p className="mt-1 text-sm text-slate-600">Propostas iniciadas que ainda precisam do PDF assinado.</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Enviadas</p>
+                    <p className="mt-2 text-2xl font-bold text-slate-900">{statusSummary.sent}</p>
+                    <p className="mt-1 text-sm text-slate-600">Propostas em fase de envio, ainda antes da assinatura final.</p>
                 </div>
                 <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Em revisão</p>
-                    <p className="mt-2 text-2xl font-bold text-slate-900">{statusSummary.underReview}</p>
-                    <p className="mt-1 text-sm text-slate-600">Negociações em análise, minuta ou assinaturas.</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Assinadas</p>
+                    <p className="mt-2 text-2xl font-bold text-slate-900">{statusSummary.signed}</p>
+                    <p className="mt-1 text-sm text-slate-600">Propostas assinadas ou já avançadas para documentação/contrato.</p>
                 </div>
                 <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Aprovadas / encerradas</p>
-                    <p className="mt-2 text-2xl font-bold text-slate-900">{statusSummary.approved}</p>
-                    <p className="mt-1 text-sm text-slate-600">Negociações que já avançaram para contratos ou fecharam.</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Recusadas</p>
+                    <p className="mt-2 text-2xl font-bold text-slate-900">{statusSummary.refused}</p>
+                    <p className="mt-1 text-sm text-slate-600">Negociações recusadas/canceladas, liberadas para novo ciclo.</p>
                 </div>
             </div>
 
             {/* Filters */}
             <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
                 {([
-                    ['active', 'Ativas'],
-                    ['completed', 'Finalizadas'],
-                    ['cancelled', 'Canceladas'],
+                    ['sent', 'Enviadas'],
+                    ['signed', 'Assinadas'],
+                    ['refused', 'Recusadas'],
                 ] as const).map(([key, label]) => (
                     <button
                         key={key}
@@ -226,7 +237,7 @@ export default function PropostasPage() {
                     {filtered.map((neg) => (
                         <Link
                             key={neg.id}
-                            href={resolveNegotiationHref(neg.status, neg.id)}
+                            href={resolveNegotiationHref(neg)}
                             className="block bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-4"
                         >
                             <div className="flex items-center gap-4">
@@ -263,7 +274,7 @@ export default function PropostasPage() {
                                         </div>
                                     )}
                                     <p className="mt-2 text-xs font-medium text-primary-700">
-                                        {resolveActionLabel(neg.status)}
+                                        {resolveActionLabel(neg)}
                                     </p>
                                 </div>
                                 <div
@@ -276,7 +287,13 @@ export default function PropostasPage() {
                                     <button
                                         type="button"
                                         disabled={!managementActionsAvailable}
-                                        title={managementActionsAvailable ? 'Editar proposta' : 'Editar em breve'}
+                                        title={
+                                            managementActionsAvailable
+                                                ? 'Editar proposta'
+                                                : canEditByStatus(neg.status)
+                                                    ? 'Edição permitida até a assinatura (integração pendente)'
+                                                    : 'Edição bloqueada após assinatura'
+                                        }
                                         aria-label="Editar proposta"
                                         className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-500 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
@@ -286,7 +303,13 @@ export default function PropostasPage() {
                                     <button
                                         type="button"
                                         disabled={!managementActionsAvailable}
-                                        title={managementActionsAvailable ? 'Excluir proposta' : 'Excluir em breve'}
+                                        title={
+                                            managementActionsAvailable
+                                                ? 'Excluir proposta'
+                                                : canRestartCycle(neg)
+                                                    ? 'Recusada: pode iniciar um novo ciclo'
+                                                    : 'Exclusão em breve'
+                                        }
                                         aria-label="Excluir proposta"
                                         className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
                                     >

@@ -12,6 +12,7 @@ interface UserContextValue {
     error: string | null
     isAuthenticated: boolean
     isBroker: boolean
+    isAuxiliaryAdministrative: boolean
     isProfileComplete: boolean
     refresh: () => Promise<void>
     logout: () => Promise<void>
@@ -55,6 +56,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!session,
         // Paridade com o app: corretor pendente ainda vê fluxo de corretor (menu, anunciar, etc.).
         isBroker: Boolean(session?.isBroker || session?.user.role === 'broker'),
+        isAuxiliaryAdministrative: session?.user.role === 'auxiliary_administrative',
         isProfileComplete: session?.profileStatus === 'complete',
         refresh: loadSession,
         logout: handleLogout,

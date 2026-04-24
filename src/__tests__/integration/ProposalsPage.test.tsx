@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import PropostasPage from '@/app/propostas/page'
 
@@ -72,6 +72,10 @@ describe('PropostasPage', () => {
 
         await waitFor(() => {
             expect(screen.getByText('Enviar proposta assinada')).toBeInTheDocument()
+        })
+
+        fireEvent.click(screen.getByRole('button', { name: 'Assinadas' }))
+        await waitFor(() => {
             expect(screen.getByText('Aguardar análise documental')).toBeInTheDocument()
         })
     })

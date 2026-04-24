@@ -3,7 +3,12 @@ import { generateIdempotencyKey } from '@/lib/idempotency'
 
 export type NegotiationStatus =
     | 'PROPOSAL_DRAFT'
+    | 'PENDING_PROPOSAL'
     | 'PROPOSAL_SENT'
+    | 'PROPOSAL_SIGNED'
+    | 'PROPOSAL_REJECTED'
+    | 'PROPOSAL_DECLINED'
+    | 'PROPOSAL_REFUSED'
     | 'IN_NEGOTIATION'
     | 'DOCUMENTATION_PHASE'
     | 'CONTRACT_DRAFTING'

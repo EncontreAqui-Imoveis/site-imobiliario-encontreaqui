@@ -756,11 +756,26 @@ export function ContractDetailClient({ contract }: Props) {
         currentUserId > 0 &&
         currentContract.capturingBrokerId === currentUserId &&
         currentContract.sellingBrokerId === currentUserId
-    const canViewDetailedDocuments =
+    const isSellerViewer =
         Number.isFinite(currentUserId) &&
         currentUserId > 0 &&
-        (currentContract.capturingBrokerId === currentUserId ||
-            currentContract.sellingBrokerId === currentUserId)
+        currentContract.capturingBrokerId === currentUserId
+    const isBuyerViewer =
+        Number.isFinite(currentUserId) &&
+        currentUserId > 0 &&
+        currentContract.sellingBrokerId === currentUserId
+    const viewerSide = (() => {
+        if (currentContract.viewerSide === 'seller' || currentContract.viewerSide === 'buyer' || currentContract.viewerSide === 'both' || currentContract.viewerSide === 'none') {
+            return currentContract.viewerSide
+        }
+        if (isSellerViewer && isBuyerViewer) return 'both'
+        if (isSellerViewer) return 'seller'
+        if (isBuyerViewer) return 'buyer'
+        return 'none'
+    })()
+    const canViewSellerDocuments = viewerSide === 'seller' || viewerSide === 'both'
+    const canViewBuyerDocuments = viewerSide === 'buyer' || viewerSide === 'both'
+    const canViewDetailedDocuments = canViewSellerDocuments || canViewBuyerDocuments
 
     const renderPartyForm = (
         side: ContractSide,
@@ -887,6 +902,32 @@ export function ContractDetailClient({ contract }: Props) {
             )}
         </section>
     )
+
+    const renderCounterpartySummary = (side: ContractSide) => {
+        const progress = currentContract.documentProgress?.[side]
+        const sideLabel = side === 'seller' ? 'vendedor' : 'comprador'
+        return (
+            <section className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+                <h2 className="text-sm font-semibold text-slate-800">
+                    Pendências do {sideLabel}
+                </h2>
+                <p className="mt-1 text-xs text-slate-500">
+                    Por política de privacidade, os arquivos do outro lado não ficam visíveis aqui. Você acompanha somente o status agregado.
+                </p>
+                <p className="mt-3 text-xs text-slate-700">
+                    Pendentes: {progress?.totals.pending ?? 0} • Aprovadas: {progress?.totals.approved ?? 0} • Rejeitadas: {progress?.totals.rejected ?? 0}
+                </p>
+                <ul className="mt-3 space-y-1 text-xs text-slate-700">
+                    {(progress?.categories ?? []).map((item) => (
+                        <li key={`counterparty-${side}-${item.category}`} className="flex items-center justify-between gap-2">
+                            <span>{CATEGORY_LABELS[item.category] ?? item.category}</span>
+                            <span className="shrink-0 text-slate-600">{renderDocumentProgressStatus(item.status)}</span>
+                        </li>
+                    ))}
+                </ul>
+            </section>
+        )
+    }
 
     return (
         <div className="space-y-6">
@@ -1098,7 +1139,7 @@ export function ContractDetailClient({ contract }: Props) {
 
             {isAwaitingDocs && (
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    {renderPartyForm(
+                    {canViewSellerDocuments && renderPartyForm(
                         'seller',
                         'Dados do vendedor',
                         sellerForm,
@@ -1109,7 +1150,7 @@ export function ContractDetailClient({ contract }: Props) {
                         currentContract.sellerApprovalStatus,
                         isDoubleEndedBroker,
                     )}
-                    {renderPartyForm(
+                    {canViewBuyerDocuments && renderPartyForm(
                         'buyer',
                         'Dados do comprador',
                         buyerForm,
@@ -1120,6 +1161,8 @@ export function ContractDetailClient({ contract }: Props) {
                         currentContract.buyerApprovalStatus,
                         isDoubleEndedBroker,
                     )}
+                    {!canViewSellerDocuments && renderCounterpartySummary('seller')}
+                    {!canViewBuyerDocuments && renderCounterpartySummary('buyer')}
                 </div>
             )}
 
@@ -1168,6 +1211,7 @@ export function ContractDetailClient({ contract }: Props) {
                     </section>
                 )}
 
+                {canViewSellerDocuments && (
                 <section className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm space-y-3" aria-labelledby="seller-documents">
                     <div className="flex items-center justify-between">
                         <h2 id="seller-documents" className="text-sm font-semibold text-slate-800">
@@ -1247,7 +1291,9 @@ export function ContractDetailClient({ contract }: Props) {
                         </div>
                     )}
                 </section>
+                )}
 
+                {canViewBuyerDocuments && (
                 <section className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm space-y-3" aria-labelledby="buyer-documents">
                     <div className="flex items-center justify-between">
                         <h2 id="buyer-documents" className="text-sm font-semibold text-slate-800">
@@ -1330,6 +1376,10 @@ export function ContractDetailClient({ contract }: Props) {
                         </div>
                     )}
                 </section>
+                )}
+
+                {!isAwaitingDocs && !canViewSellerDocuments && renderCounterpartySummary('seller')}
+                {!isAwaitingDocs && !canViewBuyerDocuments && renderCounterpartySummary('buyer')}
 
                 {isAwaitingDocs && isDoubleEndedBroker && (
                     <section

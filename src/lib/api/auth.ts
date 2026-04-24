@@ -25,7 +25,7 @@ type AuthResponse = {
 }
 
 type ProfileResponse = {
-    role?: 'client' | 'broker'
+    role?: 'client' | 'broker' | 'auxiliary_administrative'
     status?: 'pending_verification' | 'approved' | 'rejected'
     requiresDocuments?: boolean
     needsCompletion?: boolean

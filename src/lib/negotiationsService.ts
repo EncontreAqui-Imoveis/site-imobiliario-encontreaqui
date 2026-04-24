@@ -1,4 +1,4 @@
-import { apiClient, API_BASE_URL, type ApiError } from '@/lib/api/client'
+import { apiClient, API_BASE_URL, ApiError, type ApiErrorPayload } from '@/lib/api/client'
 import { generateIdempotencyKey } from '@/lib/idempotency'
 import { reportObservedError } from '@/lib/observability'
 import { hasAuthTokenInBrowser } from '@/lib/auth/tokenStore'
@@ -32,10 +32,24 @@ export interface CreateProposalPayload {
 export async function createProposal(payload: CreateProposalPayload): Promise<void> {
     const { idempotencyKey, ...restPayload } = payload
     const generatedIdempotencyKey = idempotencyKey ?? generateIdempotencyKey()
-    await apiClient.post('/negotiations/proposal', {
-        ...restPayload,
-        idempotency_key: generatedIdempotencyKey,
-    })
+    try {
+        await apiClient.post('/negotiations/proposal', {
+            ...restPayload,
+            idempotency_key: generatedIdempotencyKey,
+        })
+    } catch (error) {
+        if (error instanceof ApiError && error.status === 409) {
+            const payloadCode = String((error.payload as ApiErrorPayload | undefined)?.code ?? '')
+                .trim()
+                .toUpperCase()
+            if (payloadCode === 'PROPOSAL_ALREADY_EXISTS') {
+                throw new Error(
+                    'Já existe uma proposta ativa para este imóvel. Abra "Minhas Propostas" para continuar o fluxo ou aguarde o encerramento antes de iniciar um novo ciclo.',
+                )
+            }
+        }
+        throw error
+    }
 }
 
 export interface ApprovedBrokerLookup {

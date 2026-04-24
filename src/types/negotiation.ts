@@ -3,6 +3,9 @@ export type NegotiationStatus =
     | 'PENDING_PROPOSAL'
     | 'PROPOSAL_SENT'
     | 'PROPOSAL_SIGNED'
+    | 'PROPOSAL_REJECTED'
+    | 'PROPOSAL_DECLINED'
+    | 'PROPOSAL_REFUSED'
     | 'IN_CONTRACT'
     | 'CONTRACT_FINALIZED'
     | 'IN_NEGOTIATION'
@@ -62,12 +65,71 @@ export interface NegotiationHistoryEntry {
     notes?: string
 }
 
+export type ProposalBucket = 'sent' | 'signed' | 'refused' | 'other'
+
+const REFUSED_STATUSES = new Set<string>([
+    'CANCELLED',
+    'PROPOSAL_REJECTED',
+    'PROPOSAL_DECLINED',
+    'PROPOSAL_REFUSED',
+    'PROPOSAL_DENIED',
+    'PROPOSAL_RECUSED',
+])
+
+const SENT_STATUSES = new Set<string>([
+    'PROPOSAL_DRAFT',
+    'PENDING_PROPOSAL',
+    'PROPOSAL_SENT',
+])
+
+const SIGNED_STATUSES = new Set<string>([
+    'PROPOSAL_SIGNED',
+    'DOCUMENTATION_PHASE',
+    'CONTRACT_DRAFTING',
+    'AWAITING_SIGNATURES',
+    'IN_NEGOTIATION',
+    'IN_CONTRACT',
+    'CONTRACT_FINALIZED',
+    'SOLD',
+    'RENTED',
+])
+
+function normalizeStatus(status: string): string {
+    return String(status ?? '').trim().toUpperCase()
+}
+
+export function isProposalRefusedStatus(status: string): boolean {
+    const normalized = normalizeStatus(status)
+    if (REFUSED_STATUSES.has(normalized)) return true
+    return normalized.includes('REJECT') || normalized.includes('DECLIN') || normalized.includes('REFUS')
+}
+
+export function isProposalPreSignatureStatus(status: string): boolean {
+    const normalized = normalizeStatus(status)
+    return SENT_STATUSES.has(normalized)
+}
+
+export function isProposalSignedOrBeyondStatus(status: string): boolean {
+    const normalized = normalizeStatus(status)
+    return SIGNED_STATUSES.has(normalized)
+}
+
+export function resolveProposalBucket(status: string): ProposalBucket {
+    if (isProposalRefusedStatus(status)) return 'refused'
+    if (isProposalPreSignatureStatus(status)) return 'sent'
+    if (isProposalSignedOrBeyondStatus(status)) return 'signed'
+    return 'other'
+}
+
 export function getStatusLabel(status: NegotiationStatus): string {
     const labels: Record<NegotiationStatus, string> = {
         PROPOSAL_DRAFT: 'Proposta em Rascunho',
         PENDING_PROPOSAL: 'Proposta Pendente',
         PROPOSAL_SENT: 'Proposta Enviada',
         PROPOSAL_SIGNED: 'Proposta Assinada',
+        PROPOSAL_REJECTED: 'Proposta Recusada',
+        PROPOSAL_DECLINED: 'Proposta Recusada',
+        PROPOSAL_REFUSED: 'Proposta Recusada',
         IN_CONTRACT: 'Em Contrato',
         CONTRACT_FINALIZED: 'Contrato Finalizado',
         IN_NEGOTIATION: 'Em Negociação',
@@ -87,6 +149,9 @@ export function getStatusColor(status: NegotiationStatus): string {
         PENDING_PROPOSAL: 'bg-amber-50 text-amber-700',
         PROPOSAL_SENT: 'bg-blue-50 text-blue-700',
         PROPOSAL_SIGNED: 'bg-indigo-50 text-indigo-700',
+        PROPOSAL_REJECTED: 'bg-red-50 text-red-700',
+        PROPOSAL_DECLINED: 'bg-red-50 text-red-700',
+        PROPOSAL_REFUSED: 'bg-red-50 text-red-700',
         IN_CONTRACT: 'bg-purple-50 text-purple-700',
         CONTRACT_FINALIZED: 'bg-slate-100 text-slate-700',
         IN_NEGOTIATION: 'bg-slate-100 text-slate-700',

@@ -71,7 +71,7 @@ export default function ProposalWizardPage() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const propertyId = searchParams.get('propertyId')
-    const { session, loading: authLoading, isBroker } = useUser()
+    const { session, loading: authLoading, isBroker, isAuxiliaryAdministrative } = useUser()
 
     /* ── State ── */
     const [property, setProperty] = useState<Property | null>(null)
@@ -152,6 +152,7 @@ export default function ProposalWizardPage() {
     const userRole = String(session?.user?.role ?? '').trim().toLowerCase()
     const isClientUser = userRole === 'client'
     const isBrokerUser = userRole === 'broker'
+    const isAuxiliaryUser = userRole === 'auxiliary_administrative' || isAuxiliaryAdministrative
     const isClientOwnListing =
         Boolean(
             isClientUser &&
@@ -166,7 +167,7 @@ export default function ProposalWizardPage() {
         Boolean(
             property &&
             session?.user?.id != null &&
-            (isClientUser || isBrokerUser) &&
+            (isClientUser || isBrokerUser || isAuxiliaryUser) &&
             property.status === 'approved' &&
             !isClientOwnListing
         )
@@ -266,7 +267,7 @@ export default function ProposalWizardPage() {
         if (!canSubmit || !property) return
 
         const confirmed = window.confirm(
-            'Após gerar a proposta, ela não pode ser alterada. Tem certeza dos dados?'
+            'Após assinatura, a proposta fica bloqueada para edição. Revise os dados antes de gerar. Deseja continuar?'
         )
         if (!confirmed) return
 
@@ -314,13 +315,13 @@ export default function ProposalWizardPage() {
         )
     }
 
-    if (!(isClientUser || isBrokerUser)) {
+    if (!(isClientUser || isBrokerUser || isAuxiliaryUser)) {
         return (
             <div className="min-h-screen flex items-center justify-center pt-20">
                 <div className="text-center space-y-4 max-w-md">
                     <ShieldCheck className="w-16 h-16 mx-auto text-amber-400" />
                     <h1 className="text-xl font-bold text-gray-900">Acesso restrito</h1>
-                    <p className="text-gray-500">Somente clientes ou corretores podem gerar propostas.</p>
+                    <p className="text-gray-500">Somente clientes, corretores ou auxiliares administrativos podem gerar propostas.</p>
                     <Link href="/" className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors">
                         Voltar ao início
                     </Link>

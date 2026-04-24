@@ -7,6 +7,9 @@ export interface PendingAction {
 }
 
 function hasVerifiedContact(session: UserSession): boolean {
+    if (session.user.role === 'auxiliary_administrative') {
+        return true
+    }
     const emailVerified = session.user.email_verified === true
     const hasPhone = String(session.user.phone ?? '').trim().length > 0
     return emailVerified || hasPhone
@@ -24,6 +27,9 @@ export function resolvePostAuthRoute(
     next?: string | null,
 ): string {
     const safeNext = normalizeNextPath(next)
+    if (session.user.role === 'auxiliary_administrative') {
+        return safeNext ?? '/propostas'
+    }
 
     if (!hasVerifiedContact(session)) {
         return '/verificacao'
@@ -50,6 +56,7 @@ export function resolvePendingAction(
     session: UserSession | null | undefined,
 ): PendingAction | null {
     if (!session) return null
+    if (session.user.role === 'auxiliary_administrative') return null
 
     if (!hasVerifiedContact(session)) {
         return {

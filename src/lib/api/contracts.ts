@@ -116,6 +116,15 @@ function normalizeContractSummary(raw: unknown): ContractSummary | null {
         item.buyerApprovalStatus ?? item.buyer_approval_status ?? 'PENDING'
     ).trim() as ContractSummary['buyerApprovalStatus']
     const createdAt = String(item.createdAt ?? item.created_at ?? '').trim()
+    const rawViewerSide = String(item.viewerSide ?? item.viewer_side ?? '')
+        .trim()
+        .toLowerCase()
+    const viewerSide: ContractSummary['viewerSide'] =
+        rawViewerSide === 'seller' || rawViewerSide === 'buyer'
+            ? rawViewerSide
+            : rawViewerSide === 'both' || rawViewerSide === 'none'
+                ? rawViewerSide
+                : null
 
     if (!id || !negotiationId || !Number.isFinite(propertyId) || propertyId <= 0) {
         return null
@@ -145,6 +154,7 @@ function normalizeContractSummary(raw: unknown): ContractSummary | null {
             : typeof item.property_purpose === 'string'
                 ? item.property_purpose
                 : null,
+        viewerSide,
         documentProgress: normalizeDocumentProgress(item.documentProgress ?? item.document_progress),
         documentRequirements: normalizeDocumentRequirements(
             item.documentRequirements ?? item.document_requirements,

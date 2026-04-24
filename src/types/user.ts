@@ -2,7 +2,7 @@ export interface User {
     id: number
     name: string
     email: string
-    role?: 'client' | 'broker'
+    role?: 'client' | 'broker' | 'auxiliary_administrative'
     broker_status?: 'pending_verification' | 'approved' | 'rejected' | null
     email_verified?: boolean
     email_verified_at?: string | null

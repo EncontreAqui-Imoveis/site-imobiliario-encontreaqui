@@ -112,6 +112,7 @@ export interface ContractSummary {
     propertyTitle?: string | null
     propertyCode?: string | null
     propertyPurpose?: string | null
+    viewerSide?: ContractSide | 'both' | 'none' | null
     documentProgress?: ContractDocumentProgressSummary | null
     documentRequirements?: DocumentRequirementsPayload | null
 }
