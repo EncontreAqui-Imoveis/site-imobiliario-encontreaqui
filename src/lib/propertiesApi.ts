@@ -204,7 +204,7 @@ export function normalizeProperty(raw: unknown): Property | null {
         quadra: toStringOrUndefined(item.quadra),
         lote: toStringOrUndefined(item.lote),
         complemento: toStringOrUndefined(item.complemento),
-        tipoLote: toStringOrUndefined(item.tipoLote ?? item.tipo_lote),
+        semCep: toBoolean(item.semCep ?? item.sem_cep) ?? false,
         negotiationId: negotiation?.id,
         negotiation,
     }

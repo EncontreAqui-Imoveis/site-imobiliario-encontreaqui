@@ -31,7 +31,7 @@ import {
     CreatePropertyDraftData,
     digitsOnly,
     formatCepInput,
-    LOT_TYPES,
+    isOptionalBairroPropertyType,
     MAX_PROPERTY_AREA,
     MAX_PROPERTY_COUNT,
     MAX_PROPERTY_PRICE,
@@ -66,8 +66,8 @@ const AREA_UNIT_OPTIONS: Array<{ value: CreatePropertyDraftData['areaConstruidaU
 ]
 const INITIAL: CreatePropertyDraftData = {
     actorMode: null, propertyType: '', purpose: '', title: '', description: '', ownerName: '', ownerPhone: '',
-    priceSale: '', priceRent: '', cep: '', state: 'GO', city: '', bairro: '', address: '', numero: '', complemento: '',
-    quadra: '', lote: '', tipoLote: '', semNumero: false, semQuadra: false, semLote: false,
+    priceSale: '', priceRent: '', cep: '', semCep: false, state: 'GO', city: '', bairro: '', address: '', numero: '', complemento: '',
+    quadra: '', lote: '', semNumero: false, semQuadra: false, semLote: false,
     bedrooms: '', bathrooms: '', garageSpots: '',
     areaConstruida: '', areaConstruidaUnidade: 'm2', areaTerreno: '', areaTerrenoUnidade: 'm2', hasWifi: false, temPiscina: false, temAutomacao: false,
     temArCondicionado: false, ehMobiliada: false,
@@ -165,6 +165,7 @@ export default function AnunciePage() {
     const saleEnabled = useMemo(() => supportsSale(form.purpose), [form.purpose])
     const rentEnabled = useMemo(() => supportsRent(form.purpose), [form.purpose])
     const needsLotFields = useMemo(() => requiresLotFields(form.propertyType), [form.propertyType])
+    const bairroOptional = useMemo(() => isOptionalBairroPropertyType(form.propertyType), [form.propertyType])
     const salePriceValue = useMemo(() => parseCurrencyInput(form.priceSale), [form.priceSale])
     const rentPriceValue = useMemo(() => parseCurrencyInput(form.priceRent), [form.priceRent])
 
@@ -263,6 +264,7 @@ export default function AnunciePage() {
     }
 
     async function handleCepBlur() {
+        if (form.semCep) return
         const result = await lookupCep(form.cep)
         if (!result) return
         setCepLoading(true)
@@ -344,13 +346,12 @@ export default function AnunciePage() {
                 )
             case 2:
                 return Boolean(
-                    digitsOnly(form.cep).length === 8 &&
+                    (form.semCep || digitsOnly(form.cep).length === 8) &&
                         form.address.trim() &&
-                        form.bairro.trim() &&
+                        (bairroOptional || form.bairro.trim()) &&
                         form.city.trim() &&
                         form.state.trim() &&
                         (form.semNumero || form.numero.trim()) &&
-                        form.tipoLote.trim() &&
                         (!needsLotFields ||
                             ((form.semQuadra || form.quadra.trim()) && (form.semLote || form.lote.trim()))),
                 )
@@ -522,12 +523,35 @@ export default function AnunciePage() {
                 {step === 2 && (
                     <>
                         <div className="grid gap-3 sm:grid-cols-2">
-                            <div><label className={LABEL}>CEP *</label><input value={form.cep} onChange={(e) => updateField('cep', formatCepInput(e.target.value))} onBlur={handleCepBlur} className={INPUT} placeholder="00000-000" />{cepLoading && <p className="mt-1 text-xs text-primary-500">Buscando CEP...</p>}</div>
+                            <div>
+                                <label className={LABEL}>{form.semCep ? 'CEP (opcional)' : 'CEP *'}</label>
+                                <input
+                                    value={form.cep}
+                                    disabled={form.semCep}
+                                    onChange={(e) => updateField('cep', formatCepInput(e.target.value))}
+                                    onBlur={handleCepBlur}
+                                    className={`${INPUT} disabled:bg-slate-50 disabled:text-slate-400`}
+                                    placeholder="00000-000"
+                                />
+                                {cepLoading && <p className="mt-1 text-xs text-primary-500">Buscando CEP...</p>}
+                                <label className="mt-2 inline-flex items-center gap-2 text-sm text-slate-600">
+                                    <input
+                                        type="checkbox"
+                                        checked={form.semCep}
+                                        onChange={(e) => {
+                                            updateField('semCep', e.target.checked)
+                                            if (e.target.checked) updateField('cep', '')
+                                        }}
+                                        className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                                    />
+                                    Sem CEP
+                                </label>
+                            </div>
                             <div><label className={LABEL}>Estado *</label><select value={form.state} onChange={(e) => updateField('state', e.target.value)} className={INPUT}>{BRAZILIAN_STATES.map((o) => <option key={o} value={o}>{o}</option>)}</select></div>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2">
                             <div><label className={LABEL}>Cidade *</label><input list="city-options" value={form.city} onChange={(e) => updateField('city', e.target.value)} maxLength={120} className={INPUT} />{cityOptions.length > 0 && <datalist id="city-options">{cityOptions.map((city) => <option key={city} value={city} />)}</datalist>}</div>
-                            <div><label className={LABEL}>Bairro *</label><input value={form.bairro} onChange={(e) => updateField('bairro', e.target.value)} maxLength={120} className={INPUT} /></div>
+                            <div><label className={LABEL}>{bairroOptional ? 'Bairro' : 'Bairro *'}</label><input value={form.bairro} onChange={(e) => updateField('bairro', e.target.value)} maxLength={120} className={INPUT} /></div>
                         </div>
                         <div><label className={LABEL}>Rua *</label><input value={form.address} onChange={(e) => updateField('address', e.target.value)} maxLength={120} className={INPUT} /></div>
                         <div className="grid gap-3 sm:grid-cols-2">
@@ -551,7 +575,6 @@ export default function AnunciePage() {
                                     Sem lote
                                 </label>
                             </div>
-                            <div><label className={LABEL}>Tipo de lote *</label><select value={form.tipoLote} onChange={(e) => updateField('tipoLote', e.target.value)} className={INPUT}><option value="">Selecionar</option>{LOT_TYPES.map((o) => <option key={o} value={o}>{o}</option>)}</select></div>
                         </div>
                     </>
                 )}
@@ -726,10 +749,6 @@ export default function AnunciePage() {
                                     <p className={REVIEW_SECTION_TITLE}>Finalidade</p>
                                     <p className={REVIEW_VALUE}>{form.purpose || '—'}</p>
                                 </div>
-                                <div className={REVIEW_CARD}>
-                                    <p className={REVIEW_SECTION_TITLE}>Tipo de lote</p>
-                                    <p className={REVIEW_VALUE}>{form.tipoLote || '—'}</p>
-                                </div>
                             </div>
 
                             <div className={REVIEW_CARD}>
@@ -747,7 +766,7 @@ export default function AnunciePage() {
                                 <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                                     <div className="min-w-0">
                                         <p className={REVIEW_LABEL}>CEP</p>
-                                        <p className={REVIEW_VALUE}>{form.cep || '—'}</p>
+                                        <p className={REVIEW_VALUE}>{form.semCep ? 'Sem CEP' : form.cep || '—'}</p>
                                     </div>
                                     <div className="min-w-0">
                                         <p className={REVIEW_LABEL}>Estado</p>
@@ -759,7 +778,7 @@ export default function AnunciePage() {
                                     </div>
                                     <div className="min-w-0">
                                         <p className={REVIEW_LABEL}>Bairro</p>
-                                        <p className={REVIEW_VALUE}>{form.bairro || '—'}</p>
+                                        <p className={REVIEW_VALUE}>{form.bairro || (bairroOptional ? 'Não informado' : '—')}</p>
                                     </div>
                                     <div className="min-w-0 sm:col-span-2">
                                         <p className={REVIEW_LABEL}>Rua</p>
@@ -780,10 +799,6 @@ export default function AnunciePage() {
                                     <div className="min-w-0">
                                         <p className={REVIEW_LABEL}>Lote</p>
                                         <p className={REVIEW_VALUE}>{form.semLote ? 'Sem lote' : form.lote || '—'}</p>
-                                    </div>
-                                    <div className="min-w-0">
-                                        <p className={REVIEW_LABEL}>Tipo de lote</p>
-                                        <p className={REVIEW_VALUE}>{form.tipoLote || '—'}</p>
                                     </div>
                                 </div>
                             </div>

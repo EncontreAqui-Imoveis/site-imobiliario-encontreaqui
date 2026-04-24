@@ -27,6 +27,7 @@ const authNavLinks = [
 
 const userMenuLinks = [
     { href: '/perfil', label: 'Meu Perfil', icon: User },
+    { href: '/anuncie', label: 'Anunciar Imóvel', icon: PlusCircle },
     { href: '/favoritos', label: 'Favoritos', icon: Heart },
     { href: '/propostas', label: 'Minhas Propostas', icon: FileText },
     { href: '/contratos', label: 'Contratos', icon: FileText },
@@ -35,7 +36,6 @@ const userMenuLinks = [
 
 const brokerMenuLinks = [
     { href: '/meus-imoveis', label: 'Meus Imóveis', icon: Building2 },
-    { href: '/anuncie', label: 'Anunciar Imóvel', icon: PlusCircle },
     { href: '/relatorios', label: 'Relatórios', icon: BarChart3 },
 ]
 
@@ -207,7 +207,7 @@ export default function Header() {
                                 {link.label}
                             </Link>
                         ))}
-                        {isBroker && (
+                        {isAuthenticated && (
                             <Link
                                 href="/anuncie"
                                 className={`px-4 py-2 ${textColor} hover:text-accent-500 font-medium rounded-lg hover:bg-slate-100 transition-all duration-200 ${pathname === '/anuncie' ? 'text-accent-500' : ''}`}
@@ -450,10 +450,10 @@ export default function Header() {
                                             </Link>
                                         )
                                     })}
-                                    {isBroker && (
+                                    {isAuthenticated && (
                                         <>
                                             <div className="my-2 border-t border-gray-100" />
-                                            {brokerMenuLinks.map((link) => {
+                                            {(isBroker ? brokerMenuLinks : []).map((link) => {
                                                 const Icon = link.icon
                                                 return (
                                                     <Link
@@ -471,6 +471,19 @@ export default function Header() {
                                                 )
                                             })}
                                         </>
+                                    )}
+                                    {!isBroker && (
+                                        <Link
+                                            href="/anuncie"
+                                            onClick={() => setIsMenuOpen(false)}
+                                            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${pathname === '/anuncie'
+                                                ? 'text-primary-600 bg-primary-50 font-semibold'
+                                                : 'text-gray-700 hover:text-primary-500 hover:bg-primary-50'
+                                                }`}
+                                        >
+                                            <PlusCircle className="w-5 h-5" />
+                                            Anunciar Imóvel
+                                        </Link>
                                     )}
                                 </>
                             )}

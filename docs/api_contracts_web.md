@@ -132,7 +132,7 @@
       - `lifecycle_status = 'AVAILABLE'`
       - `status` não final (`'rented'`, `'sold'`).
   - **Parâmetros suportados** (via query string, já usados no front atual):
-    - `status`, `search`, `type`, `purpose`, `city`, `bairro`, `bedrooms`, `bathrooms`, `min_price`, `max_price`, `tipo_lote`, `sort`, flags booleanas (`has_wifi`, `tem_piscina`, `tem_energia_solar`, `tem_automacao`, `tem_ar_condicionado`, `eh_mobiliada`).
+    - `status`, `search`, `type`, `purpose`, `city`, `bairro`, `bedrooms`, `bathrooms`, `min_price`, `max_price`, `sort`, flags booleanas (`has_wifi`, `tem_piscina`, `tem_energia_solar`, `tem_automacao`, `tem_ar_condicionado`, `eh_mobiliada`).
   - **Relacionamento com schema**:
     - `properties` (campos principais).
     - `property_images` (galeria).

@@ -45,7 +45,7 @@ describe('propertiesApi', () => {
             broker_name: 'Corretor',
             broker_phone: '64999999999',
             created_at: '2026-01-01T00:00:00.000Z',
-            tipo_lote: 'inteiro',
+            sem_cep: 1,
         })
 
         expect(normalized).not.toBeNull()
@@ -55,7 +55,7 @@ describe('propertiesApi', () => {
         expect(normalized?.areaConstruida).toBe(120)
         expect(normalized?.images[0]).toContain('https://cdn/imovel.jpg')
         expect(normalized?.brokerName).toBe('Corretor')
-        expect(normalized?.tipoLote).toBe('inteiro')
+        expect(normalized?.semCep).toBe(true)
     })
 
     it('returns featured properties from API data payload', async () => {

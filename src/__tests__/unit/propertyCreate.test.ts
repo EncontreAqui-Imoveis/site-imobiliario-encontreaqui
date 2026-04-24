@@ -39,6 +39,7 @@ describe('propertyCreate helpers', () => {
             priceSale: '250000',
             priceRent: '1500',
             cep: '75900-000',
+            semCep: false,
             state: 'GO',
             city: 'Rio Verde',
             bairro: 'Centro',
@@ -47,7 +48,6 @@ describe('propertyCreate helpers', () => {
             complemento: 'Fundos',
             quadra: 'Q1',
             lote: 'L2',
-            tipoLote: 'inteiro',
             semNumero: true,
             semQuadra: false,
             semLote: false,
@@ -74,7 +74,7 @@ describe('propertyCreate helpers', () => {
         expect(formData.get('price_rent')).toBe('1500')
         expect(formData.get('owner_name')).toBe('Ana Silva')
         expect(formData.get('owner_phone')).toBe('64999999999')
-        expect(formData.get('tipo_lote')).toBe('inteiro')
+        expect(formData.get('sem_cep')).toBe('0')
         expect(formData.get('sem_numero')).toBe('1')
         expect(formData.get('sem_quadra')).toBe('0')
         expect(formData.get('sem_lote')).toBe('0')
@@ -103,6 +103,7 @@ describe('propertyCreate helpers', () => {
             priceSale: '250000',
             priceRent: '',
             cep: '75900-000',
+            semCep: false,
             state: 'GO',
             city: 'Rio Verde',
             bairro: 'Centro',
@@ -111,7 +112,6 @@ describe('propertyCreate helpers', () => {
             complemento: '',
             quadra: '',
             lote: '',
-            tipoLote: 'inteiro',
             semNumero: false,
             semQuadra: false,
             semLote: false,

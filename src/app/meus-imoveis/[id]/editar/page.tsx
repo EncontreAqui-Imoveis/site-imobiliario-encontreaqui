@@ -10,7 +10,7 @@ import {
     clampAreaInput,
     clampCountInput,
     digitsOnly,
-    LOT_TYPES,
+    isOptionalBairroPropertyType,
     MAX_PROPERTY_AREA,
     MAX_PROPERTY_COUNT,
     PROPERTY_TYPES,
@@ -52,7 +52,7 @@ export default function EditPropertyPage() {
         title: '', description: '', type: 'Casa', purpose: 'Venda',
         priceSale: '', priceRent: '',
         address: '', numero: '', quadra: '', lote: '', bairro: '',
-        complemento: '', tipoLote: '', city: '', state: 'GO', cep: '',
+        complemento: '', city: '', state: 'GO', cep: '', semCep: false,
         bedrooms: '', bathrooms: '', garageSpots: '',
         areaConstruida: '', areaTerreno: '',
         areaConstruidaUnidade: 'm2' as AreaConstruidaUnidade,
@@ -94,10 +94,10 @@ export default function EditPropertyPage() {
                 lote: p.lote || '',
                 bairro: p.bairro || '',
                 complemento: p.complemento || '',
-                tipoLote: p.tipoLote || '',
                 city: p.city || '',
                 state: p.state || 'GO',
                 cep: p.cep || '',
+                semCep: p.semCep ?? false,
                 bedrooms: p.bedrooms ? String(p.bedrooms) : '',
                 bathrooms: p.bathrooms ? String(p.bathrooms) : '',
                 garageSpots: p.garageSpots ? String(p.garageSpots) : '',
@@ -122,6 +122,7 @@ export default function EditPropertyPage() {
     }, [propertyId])
 
     const needsLotFields = useMemo(() => requiresLotFields(form.type), [form.type])
+    const bairroOptional = useMemo(() => isOptionalBairroPropertyType(form.type), [form.type])
 
     useEffect(() => { if (propertyId) loadProperty() }, [propertyId, loadProperty])
 
@@ -162,10 +163,10 @@ export default function EditPropertyPage() {
                 lote: form.lote.trim(),
                 bairro: form.bairro.trim(),
                 complemento: form.complemento.trim(),
-                tipoLote: form.tipoLote.trim(),
                 city: form.city.trim(),
                 state: form.state,
-                cep: form.cep.trim(),
+                cep: form.semCep ? '' : form.cep.trim(),
+                semCep: form.semCep,
                 bedrooms: parseInt(form.bedrooms) || 0,
                 bathrooms: parseInt(form.bathrooms) || 0,
                 garageSpots: parseInt(form.garageSpots) || 0,
@@ -377,19 +378,23 @@ export default function EditPropertyPage() {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className={labelClass}>Bairro</label>
+                                <label className={labelClass}>{bairroOptional ? 'Bairro' : 'Bairro *'}</label>
                                 <input type="text" value={form.bairro} onChange={e => updateField('bairro', e.target.value)} maxLength={120} className={inputClass} />
                             </div>
                             <div>
-                                <label className={labelClass}>CEP</label>
-                                <input type="text" value={form.cep} onChange={e => updateField('cep', e.target.value)} className={inputClass} maxLength={9} />
+                                <label className={labelClass}>{form.semCep ? 'CEP (opcional)' : 'CEP'}</label>
+                                <input type="text" value={form.cep} disabled={form.semCep} onChange={e => updateField('cep', e.target.value)} className={`${inputClass} disabled:bg-slate-50 disabled:text-slate-500`} maxLength={9} />
+                                <label className="mt-2 inline-flex items-center gap-2 text-sm text-gray-600">
+                                    <input type="checkbox" checked={form.semCep} onChange={(e) => { updateField('semCep', e.target.checked); if (e.target.checked) updateField('cep', '') }} className="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                                    Sem CEP
+                                </label>
                             </div>
                         </div>
                         <div>
                             <label className={labelClass}>Complemento</label>
                             <input type="text" value={form.complemento} onChange={e => updateField('complemento', e.target.value)} maxLength={120} className={inputClass} />
                         </div>
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className={labelClass}>Cidade</label>
                                 <input type="text" value={form.city} onChange={e => updateField('city', e.target.value)} maxLength={120} className={inputClass} />
@@ -398,13 +403,6 @@ export default function EditPropertyPage() {
                                 <label className={labelClass}>Estado</label>
                                 <select value={form.state} onChange={e => updateField('state', e.target.value)} className={inputClass}>
                                     {STATES.map(s => <option key={s} value={s}>{s}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className={labelClass}>Tipo de Lote *</label>
-                                <select value={form.tipoLote} onChange={e => updateField('tipoLote', e.target.value)} className={inputClass}>
-                                    <option value="">Selecionar</option>
-                                    {LOT_TYPES.map((lotType) => <option key={lotType} value={lotType}>{lotType}</option>)}
                                 </select>
                             </div>
                         </div>

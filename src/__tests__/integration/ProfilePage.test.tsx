@@ -51,12 +51,36 @@ const mockBrokerSession = {
     profileStatus: 'complete',
 }
 
+const mockClientSession = {
+    user: {
+        id: 2,
+        name: 'Maria Cliente',
+        email: 'maria@cliente.com',
+        phone: '62988887777',
+        street: 'Rua das Acacias',
+        number: '456',
+        complement: '',
+        bairro: 'Centro',
+        city: 'Rio Verde',
+        state: 'GO',
+        cep: '75900-000',
+        email_verified: true,
+        broker_status: null,
+    },
+    isBroker: false,
+    profileStatus: 'complete',
+}
+
+let mockUserContextValue = {
+    session: mockBrokerSession,
+    loading: false,
+    isBroker: true,
+    logout: mockLogout,
+}
+
 jest.mock('@/contexts/UserContext', () => ({
     useUser: () => ({
-        session: mockBrokerSession,
-        loading: false,
-        isBroker: true,
-        logout: mockLogout,
+        ...mockUserContextValue,
     }),
 }))
 
@@ -65,6 +89,12 @@ describe('Profile Page - Integration', () => {
         mockPush.mockClear()
         mockReplace.mockClear()
         mockLogout.mockClear()
+        mockUserContextValue = {
+            session: mockBrokerSession,
+            loading: false,
+            isBroker: true,
+            logout: mockLogout,
+        }
     })
 
     it('renders user info', () => {
@@ -80,12 +110,15 @@ describe('Profile Page - Integration', () => {
     it('renders pending action card information', () => {
         render(<PerfilPage />)
 
-        expect(screen.getByText('Verificar e-mail')).toBeInTheDocument()
+        expect(screen.getByText('Finalizar corretor')).toBeInTheDocument()
         expect(screen.getByText('Continuar')).toBeInTheDocument()
     })
 
     it('renders all quick links for brokers', () => {
         render(<PerfilPage />)
+
+        const anunciar = screen.getByText('Anunciar Imóvel').closest('a')
+        expect(anunciar).toHaveAttribute('href', '/anuncie')
 
         // Broker-specific links
         const meusImoveis = screen.getByText('Meus Imóveis').closest('a')
@@ -129,5 +162,19 @@ describe('Profile Page - Integration', () => {
         render(<PerfilPage />)
 
         expect(screen.queryByText('Quero ser corretor')).not.toBeInTheDocument()
+    })
+
+    it('shows "Anunciar Imóvel" for clients too', () => {
+        mockUserContextValue = {
+            session: mockClientSession,
+            loading: false,
+            isBroker: false,
+            logout: mockLogout,
+        }
+
+        render(<PerfilPage />)
+
+        const anunciar = screen.getByText('Anunciar Imóvel').closest('a')
+        expect(anunciar).toHaveAttribute('href', '/anuncie')
     })
 })

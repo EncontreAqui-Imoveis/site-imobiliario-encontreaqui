@@ -314,12 +314,6 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                             {formatArea(property.areaConstruida, property.areaConstruidaUnidade)}
                         </span>
                     </div>
-                    {property.tipoLote && (
-                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                            <span className="text-gray-600">Tipo de Lote</span>
-                            <span className="font-bold text-gray-900 capitalize">{property.tipoLote}</span>
-                        </div>
-                    )}
                     {(additionalInfo.length > 0) && additionalInfo.map((info, idx) => (
                         <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                             <span className="text-gray-600">{info.label}</span>

@@ -85,7 +85,6 @@ export default function SearchFilters() {
         minArea: searchParams.get('minArea') || '',
         maxArea: searchParams.get('maxArea') || '',
         areaUnit: searchParams.get('areaUnit') || 'm2',
-        tipoLote: searchParams.get('tipo_lote') || '',
         sort: searchParams.get('sort') || '',
         code: searchParams.get('code') || '',
     })
@@ -125,7 +124,6 @@ export default function SearchFilters() {
             minArea: searchParams.get('minArea') || '',
             maxArea: searchParams.get('maxArea') || '',
             areaUnit: searchParams.get('areaUnit') || 'm2',
-            tipoLote: searchParams.get('tipo_lote') || '',
             sort: searchParams.get('sort') || '',
             code: searchParams.get('code') || '',
         }))
@@ -187,10 +185,6 @@ export default function SearchFilters() {
 
         Object.entries(filters).forEach(([key, value]) => {
             if (!value) return
-            if (key === 'tipoLote') {
-                params.set('tipo_lote', value)
-                return
-            }
             if (key === 'minPrice') {
                 params.set('minPrice', String(min))
                 return
@@ -215,7 +209,7 @@ export default function SearchFilters() {
             search: '', type: '', purpose: '', city: '', bedrooms: '',
             bathrooms: '', bairro: '', minPrice: '', maxPrice: '',
             minArea: '', maxArea: '', areaUnit: 'm2',
-            tipoLote: '', sort: '', code: '',
+            sort: '', code: '',
         })
         setAmenities(amenityOptions.reduce((acc, a) => ({ ...acc, [a.key]: false }), {}))
         router.push('/imoveis')

@@ -8,7 +8,7 @@ import { resolvePendingAction } from '@/lib/auth/routeResolution'
 import GuestAccessCard from '@/components/auth/GuestAccessCard'
 import { shareOrCopy } from '@/lib/webShare'
 import { formatPhoneInput } from '@/lib/phoneInput'
-import { BadgeCheck, Building2, LogOut, Briefcase, BarChart3, Loader2, Bell, Share2, User } from 'lucide-react'
+import { BadgeCheck, Building2, LogOut, Briefcase, BarChart3, Loader2, Bell, Share2, User, PlusCircle } from 'lucide-react'
 
 export default function PerfilPage() {
     const router = useRouter()
@@ -171,6 +171,19 @@ export default function PerfilPage() {
                         </div>
                     </Link>
                 )}
+
+                <Link
+                    href="/anuncie"
+                    className="flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors"
+                >
+                    <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center">
+                        <PlusCircle className="w-5 h-5 text-primary-600" />
+                    </div>
+                    <div>
+                        <p className="text-sm font-semibold text-slate-900">Anunciar Imóvel</p>
+                        <p className="text-xs text-slate-500">Cadastre um imóvel para venda ou locação</p>
+                    </div>
+                </Link>
 
                 {isBroker && (
                     <>

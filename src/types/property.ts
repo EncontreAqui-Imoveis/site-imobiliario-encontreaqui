@@ -13,6 +13,7 @@ export interface Property {
     state: string
     bairro?: string
     cep?: string
+    semCep?: boolean
     bedrooms?: number
     bathrooms?: number
     areaConstruida?: number
@@ -50,7 +51,6 @@ export interface Property {
     quadra?: string
     lote?: string
     complemento?: string
-    tipoLote?: string
     // Agency (imobiliária)
     agencyName?: string
     agencyAddress?: string

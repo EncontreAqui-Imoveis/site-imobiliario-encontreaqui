@@ -12,7 +12,6 @@ const LISTING_FILTER_KEYS = [
     'minArea',
     'maxArea',
     'areaUnit',
-    'tipo_lote',
     'sort',
     'code',
     'id',

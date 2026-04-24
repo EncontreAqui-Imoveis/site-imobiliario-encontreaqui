@@ -46,8 +46,6 @@ export function buildPublicPropertiesQuery(
     setIfPresent(queryParams, 'maxPrice', sourceParams.get('maxPrice'))
     setIfPresent(queryParams, 'code', sourceParams.get('code'))
     setIfPresent(queryParams, 'id', sourceParams.get('id'))
-    setIfPresent(queryParams, 'tipo_lote', sourceParams.get('tipo_lote'))
-
     const sort = sourceParams.get('sort')
     if (sort?.trim()) queryParams.set('sortBy', sort.trim())
 

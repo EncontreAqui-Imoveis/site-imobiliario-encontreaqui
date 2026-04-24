@@ -19,7 +19,6 @@ export const PROPERTY_TYPES = [
 ] as const
 
 export const PROPERTY_PURPOSES = ['Venda', 'Aluguel', 'Venda e Aluguel'] as const
-export const LOT_TYPES = ['meio', 'inteiro'] as const
 export const MAX_PROPERTY_COUNT = 99
 export const MAX_PROPERTY_AREA = 9999999.99
 export const MAX_PROPERTY_PRICE = 9999999999.99
@@ -40,6 +39,7 @@ export type CreatePropertyDraftData = {
     priceSale: string
     priceRent: string
     cep: string
+    semCep: boolean
     state: string
     city: string
     bairro: string
@@ -48,7 +48,6 @@ export type CreatePropertyDraftData = {
     complemento: string
     quadra: string
     lote: string
-    tipoLote: string
     semNumero: boolean
     semQuadra: boolean
     semLote: boolean
@@ -80,6 +79,8 @@ const LOT_REQUIRED_TYPES = new Set<string>([
     'Chácara',
     'Área comercial',
 ])
+
+const OPTIONAL_BAIRRO_PROPERTY_TYPES = new Set<string>(['Área rural', 'Chácara', 'Rancho'])
 
 function appendIfPresent(
     formData: FormData,
@@ -167,6 +168,10 @@ export function requiresLotFields(propertyType: string): boolean {
     return LOT_REQUIRED_TYPES.has(propertyType)
 }
 
+export function isOptionalBairroPropertyType(propertyType: string): boolean {
+    return OPTIONAL_BAIRRO_PROPERTY_TYPES.has(propertyType)
+}
+
 export function resolveCreatePropertyPath(actor: CreatePropertyActor): string {
     return actor === 'client-owner' ? '/properties/client' : '/properties'
 }
@@ -196,7 +201,8 @@ export function buildCreatePropertyFormData(payload: CreatePropertyPayload): For
     appendIfPresent(formData, 'owner_name', normalizeText(payload.ownerName))
     appendIfPresent(formData, 'owner_phone', digitsOnly(payload.ownerPhone))
     formData.append('address', normalizeText(payload.address))
-    appendIfPresent(formData, 'cep', digitsOnly(payload.cep))
+    appendIfPresent(formData, 'cep', payload.semCep ? null : digitsOnly(payload.cep))
+    formData.append('sem_cep', payload.semCep ? '1' : '0')
     formData.append('city', normalizeText(payload.city))
     formData.append('state', payload.state)
     appendIfPresent(formData, 'numero', payload.semNumero ? null : normalizeText(payload.numero))
@@ -204,7 +210,6 @@ export function buildCreatePropertyFormData(payload: CreatePropertyPayload): For
     appendIfPresent(formData, 'complemento', normalizeText(payload.complemento))
     appendIfPresent(formData, 'quadra', normalizeText(payload.quadra))
     appendIfPresent(formData, 'lote', normalizeText(payload.lote))
-    appendIfPresent(formData, 'tipo_lote', normalizeText(payload.tipoLote))
     formData.append('sem_numero', payload.semNumero ? '1' : '0')
     formData.append('sem_quadra', payload.semQuadra ? '1' : '0')
     formData.append('sem_lote', payload.semLote ? '1' : '0')

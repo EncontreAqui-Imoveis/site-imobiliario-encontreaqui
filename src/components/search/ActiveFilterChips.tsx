@@ -17,7 +17,6 @@ const FILTER_LABELS: Record<string, string> = {
     minArea: 'Área mín.',
     maxArea: 'Área máx.',
     areaUnit: 'Unid. área',
-    tipo_lote: 'Tipo de lote',
     sort: 'Ordenar',
     code: 'Código ou ID',
     id: 'ID',
