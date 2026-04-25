@@ -18,7 +18,11 @@ type PhotoWatermarkProps = {
  * Marca d'água nas fotos de imóveis (listagem, detalhe, galeria).
  * Imagem estática em `/public/branding/marcadagua.png`.
  */
-export default function PhotoWatermark({ compact, placement = 'bottom' }: PhotoWatermarkProps) {
+export default function PhotoWatermark({
+    compact,
+    placement = 'bottom',
+    layerClassName = '',
+}: PhotoWatermarkProps) {
     const isTop = placement === 'top'
     const vertical =
         isTop
