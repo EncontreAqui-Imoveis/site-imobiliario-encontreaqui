@@ -24,6 +24,22 @@ describe('contracts api normalization', () => {
         expect((normalized?.validationResult as { status?: string } | null)?.status).toBe('REJECTED')
     })
 
+    it('preserva APPROVED_WITH_RES no status categorial', () => {
+        const normalized = normalizeContractDocument({
+            id: 11,
+            negotiationId: 'neg-11',
+            type: 'other',
+            documentType: 'doc_identidade',
+            side: 'buyer',
+            documentCategory: 'identidade',
+            categoryStatus: 'APPROVED_WITH_RES',
+            createdAt: '2026-01-01T00:00:00.000Z',
+        })
+
+        expect(normalized).not.toBeNull()
+        expect(normalized?.categoryStatus).toBe('APPROVED_WITH_RES')
+    })
+
     it('normaliza documentRequirements (matriz de categorias)', () => {
         const out = normalizeDocumentRequirements({
             seller: [

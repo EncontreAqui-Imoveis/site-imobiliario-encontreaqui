@@ -51,9 +51,7 @@ function buildContract(): ContractDetail {
         sellerApprovalReason: null,
         buyerApprovalReason: null,
         capturingBrokerId: 1,
-        sellingBrokerId: 2,
         capturingBrokerName: 'Captador',
-        sellingBrokerName: 'Vendedor',
         propertyTitle: 'Casa teste',
         propertyPurpose: 'Venda',
         agencyName: 'Imobiliária Teste',
@@ -114,7 +112,7 @@ describe('ContractDetailClient', () => {
         expect(screen.queryByText('Outro documento')).not.toBeInTheDocument()
         expect(screen.queryByText('Documentos do cônjuge')).not.toBeInTheDocument()
 
-        const sellerForm = screen.getByText('Dados do vendedor').closest('section')
+        const sellerForm = screen.getByText('Dados do proprietário').closest('section')
         expect(sellerForm).not.toBeNull()
         const maritalSelect = within(sellerForm as HTMLElement).getByRole('combobox')
         fireEvent.change(maritalSelect, { target: { value: 'Casado(a)' } })

@@ -323,7 +323,7 @@ export default function ProposalWizardPage() {
                 clientName: clientName.trim(),
                 clientCpf: cpfDigits,
                 validadeDias,
-                pagamento: {
+                payment: {
                     dinheiro: toReais(payments.dinheiro, propertyValue),
                     permuta: toReais(payments.permuta, propertyValue),
                     financiamento: toReais(payments.financiamento, propertyValue),

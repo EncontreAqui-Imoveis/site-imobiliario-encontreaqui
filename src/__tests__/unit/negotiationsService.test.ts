@@ -17,7 +17,7 @@ describe('negotiations service', () => {
 
         await fetchMyNegotiations()
 
-        expect(apiClient.get).toHaveBeenCalledWith('/negotiations/mine')
+        expect(apiClient.get).toHaveBeenCalledWith('/negotiations/me')
     })
 
     it('createProposal() delegates to apiClient.post', async () => {
@@ -30,7 +30,7 @@ describe('negotiations service', () => {
             clientName: 'Cliente',
             clientCpf: '12345678900',
             validadeDias: 10,
-            pagamento: {
+            payment: {
                 dinheiro: 10,
                 permuta: 0,
                 financiamento: 0,

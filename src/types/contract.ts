@@ -14,6 +14,7 @@ export type ContractSide = 'seller' | 'buyer'
 export type ContractDocumentCategoryStatus =
     | 'PENDING'
     | 'APPROVED'
+    | 'APPROVED_WITH_RES'
     | 'REJECTED'
     | 'NOT_APPLICABLE'
 
@@ -127,12 +128,10 @@ export interface ContractDetail extends ContractSummary {
     ownerApprovalReason?: ContractApprovalReason | null
     buyerApprovalReason?: ContractApprovalReason | null
     capturingBrokerId?: number | null
-    sellingBrokerId?: number | null
     buyerClientId?: number | null
     ownerId?: number | null
     ownerName?: string | null
     capturingBrokerName?: string | null
-    sellingBrokerName?: string | null
     agencyName?: string | null
     agencyAddress?: string | null
     documents: ContractDocument[]

@@ -13,7 +13,13 @@ import type {
 
 function parseCategoryStatus(raw: unknown): ContractDocumentCategoryStatus {
     const s = String(raw ?? 'PENDING').trim().toUpperCase()
-    if (s === 'APPROVED' || s === 'REJECTED' || s === 'NOT_APPLICABLE' || s === 'PENDING') {
+    if (
+        s === 'APPROVED' ||
+        s === 'APPROVED_WITH_RES' ||
+        s === 'REJECTED' ||
+        s === 'NOT_APPLICABLE' ||
+        s === 'PENDING'
+    ) {
         return s
     }
     return 'PENDING'
@@ -257,12 +263,6 @@ function normalizeContractDetail(raw: unknown): ContractDetail {
                 : typeof item.capturing_broker_id === 'number'
                     ? item.capturing_broker_id
                     : null,
-        sellingBrokerId:
-            typeof item.sellingBrokerId === 'number'
-                ? item.sellingBrokerId
-                : typeof item.selling_broker_id === 'number'
-                    ? item.selling_broker_id
-                    : null,
         buyerClientId:
             typeof item.buyerClientId === 'number'
                 ? item.buyerClientId
@@ -286,12 +286,6 @@ function normalizeContractDetail(raw: unknown): ContractDetail {
                 ? item.capturingBrokerName
                 : typeof item.capturing_broker_name === 'string'
                     ? item.capturing_broker_name
-                    : null,
-        sellingBrokerName:
-            typeof item.sellingBrokerName === 'string'
-                ? item.sellingBrokerName
-                : typeof item.selling_broker_name === 'string'
-                    ? item.selling_broker_name
                     : null,
         agencyName:
             typeof item.agencyName === 'string'

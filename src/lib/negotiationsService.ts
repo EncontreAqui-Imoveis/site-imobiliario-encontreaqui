@@ -9,7 +9,7 @@ import { normalizeProperty } from '@/lib/propertiesApi'
 export async function fetchMyNegotiations(): Promise<NegotiationSummary[]> {
     const response = await apiClient.get<{
         data?: NegotiationSummary[]
-    } | NegotiationSummary[]>('/negotiations/mine')
+    } | NegotiationSummary[]>('/negotiations/me')
 
     return Array.isArray(response) ? response : (response?.data ?? [])
 }
@@ -28,7 +28,13 @@ export interface CreateProposalPayload {
     validadeDias: number
     idempotencyKey?: string
     sellerBrokerId?: number
-    pagamento: {
+    payment: {
+        dinheiro: number
+        permuta: number
+        financiamento: number
+        outros: number
+    }
+    pagamento?: {
         dinheiro: number
         permuta: number
         financiamento: number
@@ -39,9 +45,12 @@ export interface CreateProposalPayload {
 export async function createProposal(payload: CreateProposalPayload): Promise<void> {
     const { idempotencyKey, ...restPayload } = payload
     const generatedIdempotencyKey = idempotencyKey ?? generateIdempotencyKey()
+    const paymentPayload = restPayload.payment ?? restPayload.pagamento
     try {
         await apiClient.post('/negotiations/proposal', {
             ...restPayload,
+            payment: paymentPayload,
+            pagamento: undefined,
             idempotency_key: generatedIdempotencyKey,
         })
     } catch (error) {
@@ -67,7 +76,11 @@ export async function updateProposalDraft(
     if (!id) {
         throw new Error('Negociação inválida para edição.')
     }
-    await apiClient.put(`/negotiations/${encodeURIComponent(id)}/draft`, payload)
+    await apiClient.put(`/negotiations/${encodeURIComponent(id)}/draft`, {
+        ...payload,
+        payment: payload.payment ?? payload.pagamento,
+        pagamento: undefined,
+    })
 }
 
 export async function deleteProposal(negotiationId: string): Promise<void> {

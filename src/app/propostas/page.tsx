@@ -298,7 +298,7 @@ export default function PropostasPage() {
                                         <div className="mt-2 text-xs font-medium text-violet-700">
                                             Contrato: {neg.contractStatus}
                                             {approvalLabel(neg.buyerApprovalStatus) ? ` · docs comprador ${approvalLabel(neg.buyerApprovalStatus)}` : ''}
-                                            {approvalLabel(neg.sellerApprovalStatus) ? ` · docs vendedor ${approvalLabel(neg.sellerApprovalStatus)}` : ''}
+                                            {approvalLabel(neg.sellerApprovalStatus) ? ` · docs proprietário ${approvalLabel(neg.sellerApprovalStatus)}` : ''}
                                         </div>
                                     )}
                                     <p className="mt-2 text-xs font-medium text-primary-700">

@@ -293,7 +293,6 @@ function resolveCategoryByDocumentType(documentType: ContractDocumentType): Cont
     if (documentType === 'comprovante_renda') return 'comprovante_renda'
     if (documentType === 'certidao_inteiro_teor' || documentType === 'certidao_onus_acoes') return 'docs_imovel'
     if (documentType === 'cliente_outros') return 'identidade'
-    if (documentType === 'outro') return 'dados_bancarios'
     return 'identidade'
 }
 
@@ -759,9 +758,8 @@ export function ContractDetailClient({ contract }: Props) {
         !buyerLocked &&
         (isCaptadorViewer || isBuyerViewer)
 
-    const isDoubleEndedBroker =
-        currentContract.capturingBrokerId === currentUserId &&
-        currentContract.sellingBrokerId === currentUserId
+    const isDualRoleViewer =
+        isCaptadorViewer && isBuyerViewer
     const isSellerViewer =
         isCaptadorViewer || isOwnerViewer
     const viewerSide = (() => {
@@ -1148,7 +1146,7 @@ export function ContractDetailClient({ contract }: Props) {
                         sellerLocked,
                         sellerReason,
                         currentContract.sellerApprovalStatus,
-                        isDoubleEndedBroker,
+                        isDualRoleViewer,
                     )}
                     {canViewBuyerDocuments && renderPartyForm(
                         'buyer',
@@ -1159,7 +1157,7 @@ export function ContractDetailClient({ contract }: Props) {
                         buyerLocked,
                         buyerReason,
                         currentContract.buyerApprovalStatus,
-                        isDoubleEndedBroker,
+                        isDualRoleViewer,
                     )}
                     {!canViewSellerDocuments && renderCounterpartySummary('seller')}
                     {!canViewBuyerDocuments && renderCounterpartySummary('buyer')}
@@ -1381,7 +1379,7 @@ export function ContractDetailClient({ contract }: Props) {
                 {!isAwaitingDocs && !canViewSellerDocuments && renderCounterpartySummary('seller')}
                 {!isAwaitingDocs && !canViewBuyerDocuments && renderCounterpartySummary('buyer')}
 
-                {isAwaitingDocs && isDoubleEndedBroker && (
+                {isAwaitingDocs && isDualRoleViewer && (
                     <section
                         className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm space-y-3 md:col-span-2"
                         aria-labelledby="broker-bank-unified"
