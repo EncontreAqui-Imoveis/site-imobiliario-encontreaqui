@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -12,11 +12,28 @@ import SignupDraftNotice from '@/components/auth/SignupDraftNotice'
 import { useUser } from '@/contexts/UserContext'
 import { createSignupDraft, saveSignupDraft } from '@/lib/authSignupDraft'
 import type { ApiError } from '@/lib/api/client'
+import { createSignupDraftRemote } from '@/lib/api/signupDraft'
+
+function isGooglePopupClosedError(err: unknown): boolean {
+    const code = (err as { code?: unknown }).code
+    const message = (err as { message?: unknown }).message
+    return (
+        code === 'auth/popup-closed-by-user'
+        || code === 'auth/cancelled-popup-request'
+        || String(message).toLowerCase().includes('popup-closed-by-user')
+    )
+}
 
 export default function LoginPage() {
     const router = useRouter()
     const searchParams = useSearchParams()
-    const { refresh } = useUser()
+    const { refresh, session, loading } = useUser()
+
+    useEffect(() => {
+        if (!loading && session) {
+            router.replace(resolvePostAuthRoute(session, '/meus-imoveis'))
+        }
+    }, [loading, router, session])
 
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -59,26 +76,56 @@ export default function LoginPage() {
         try {
             const result = await loginWithGooglePopup()
             if (isGooglePendingAuthResult(result)) {
-                saveSignupDraft(
-                    createSignupDraft({
-                        source: 'google',
-                        step: 'profile',
-                        emailVerified: true,
+                const requestedProfile = result.requestedProfile
+                const draftProfile = requestedProfile === 'client' || requestedProfile === 'broker' ? requestedProfile : null
+
+                let draft = createSignupDraft({
+                    source: 'google',
+                    userType: draftProfile,
+                    step: draftProfile ? 'basic' : 'profile',
+                    emailVerified: true,
+                    data: {
+                        email: result.pending.email,
+                        name: result.pending.name,
+                        googleIdToken: result.pending.googleIdToken,
+                        googleUid: result.pending.googleUid,
+                        state: 'GO',
+                    },
+                })
+
+                if (draftProfile) {
+                    const created = await createSignupDraftRemote({
+                        source: draft.source,
+                        email: draft.data.email,
+                        name: draft.data.name,
+                        userType: draftProfile,
+                        googleUid: draft.data.googleUid,
+                        authProvider: 'google',
+                    })
+
+                    draft = createSignupDraft({
+                        ...draft,
+                        draftId: created.draftId,
+                        draftToken: created.draftToken,
                         data: {
-                            email: result.pending.email,
-                            name: result.pending.name,
-                            googleIdToken: result.pending.googleIdToken,
-                            googleUid: result.pending.googleUid,
-                            state: 'GO',
+                            ...draft.data,
+                            state: created.draft?.state || draft.data.state,
+                            cep: created.draft?.cep || draft.data.cep,
                         },
-                    }),
-                )
+                    })
+                }
+
+                saveSignupDraft(draft)
                 router.push('/auth/cadastro')
                 return
             }
             await refresh()
             router.push(resolvePostAuthRoute(result, next))
         } catch (err) {
+            if (isGooglePopupClosedError(err)) {
+                return
+            }
+
             const apiErr = err as ApiError
             if ('status' in apiErr && apiErr.status === 401) {
                 setError('Não foi possível autenticar com Google. Tente novamente.')
@@ -93,7 +140,7 @@ export default function LoginPage() {
     const isLoading = submitting || googleLoading
 
     return (
-        <div className="min-h-[70vh] flex items-center justify-center bg-gradient-to-b from-slate-50/95 to-slate-100/95 px-4 pb-16 pt-28 sm:pt-32">
+            <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gradient-to-b from-slate-50/95 to-slate-100/95 px-4 pb-16 pt-28 sm:pt-36">
             <div className="w-full max-w-md space-y-6 rounded-2xl border border-slate-100 bg-white p-8 shadow-xl shadow-slate-200/70">
                 <div className="space-y-2 text-center">
                     <h1 className="text-2xl font-bold text-slate-900">

@@ -17,7 +17,7 @@ import {
 import { updateProfile } from '@/lib/api/user'
 import type { ApiError } from '@/lib/api/client'
 import { formatPhoneInput, normalizePhoneDigits, normalizePhoneLocalDigits } from '@/lib/phoneInput'
-import { registerUserFromSignupDraft } from '@/lib/registerFromSignupDraft'
+import { confirmSignupDraftPhoneCode, requestSignupDraftPhoneOtp } from '@/lib/api/signupDraft'
 
 const VERIFY_ERROR_COOLDOWN_MS = 2000
 const MIN_PHONE_RESEND_GAP_MS = 30_000
@@ -54,7 +54,6 @@ export default function VerificarTelefonePage() {
 
     const isSignupFlow = !session && (searchParams.get('flow') === 'signup' || signupDraftState != null)
     const isProfileUpdateFlow = Boolean(session && (searchParams.get('mode') === 'profile-update' || pendingPhoneUpdateState != null))
-
     useEffect(() => {
         if (cooldownRemainingSeconds <= 0) return
         const timer = window.setInterval(() => {
@@ -154,9 +153,18 @@ export default function VerificarTelefonePage() {
         setSending(true)
         setError(null)
         try {
+            const draft = isSignupFlow ? loadSignupDraft() : null
+            if (isSignupFlow && (!draft?.draftId || !draft?.draftToken)) {
+                setError('Fluxo de cadastro inválido. Retorne ao início do cadastro.')
+                return
+            }
             const response = sessionToken
-                ? await resendPhoneOtp(sessionToken)
-                : await requestPhoneOtp(normalizedPhone)
+                ? isSignupFlow
+                    ? await requestSignupDraftPhoneOtp(draft?.draftId ?? '', draft?.draftToken ?? '', normalizedPhone)
+                    : await resendPhoneOtp(sessionToken)
+                : isSignupFlow
+                    ? await requestSignupDraftPhoneOtp(draft?.draftId ?? '', draft?.draftToken ?? '', normalizedPhone)
+                    : await requestPhoneOtp(normalizedPhone)
             setSessionToken(response.sessionToken)
             const nextIndex = isResend
                 ? Math.min(cooldownIndex + 1, cooldownSteps.length - 1)
@@ -208,26 +216,8 @@ export default function VerificarTelefonePage() {
             phoneVerified: true,
             data: { phone: formatPhoneInput(phone) },
         })
-        const fresh = loadSignupDraft()
-        if (!fresh) {
-            router.push('/auth/cadastro')
-            return
-        }
-
-        const result = await registerUserFromSignupDraft({
-            ...fresh,
-            phoneVerified: true,
-            data: { ...fresh.data, phone: formatPhoneInput(phone) },
-        })
-        await refresh()
-
-        if (result.isBroker && result.requiresBrokerDocuments) {
-            router.push('/onboarding/broker?mode=signup')
-            return
-        }
-
-        router.push(resolvePostAuthRoute(result, '/meus-imoveis'))
-    }, [phone, refresh, router])
+        router.push('/cadastro/verificar-metodo')
+    }, [phone, router])
 
     const handleVerify = useCallback(
         async (fromAuto = false) => {
@@ -245,7 +235,20 @@ export default function VerificarTelefonePage() {
             setVerifying(true)
             setError(null)
             try {
-                await verifyPhoneOtp(sessionToken, fullCode)
+                if (isSignupFlow) {
+                    const d = loadSignupDraft()
+                    if (!d?.draftId || !d.draftToken) {
+                        setError('Fluxo de cadastro inválido. Retorne ao início do cadastro.')
+                        return
+                    }
+                    await confirmSignupDraftPhoneCode(d.draftId, d.draftToken, sessionToken, fullCode)
+                    patchSignupDraft({
+                        phoneVerified: true,
+                        data: { phone: formatPhoneInput(phone) },
+                    })
+                } else {
+                    await verifyPhoneOtp(sessionToken, fullCode)
+                }
                 setSuccess(true)
 
                 if (isProfileUpdateFlow) {
@@ -318,14 +321,14 @@ export default function VerificarTelefonePage() {
 
     if ((loading && !isSignupFlow) || !draftReady) {
         return (
-            <div className="min-h-[60vh] flex items-center justify-center">
+            <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
                 <p className="text-sm text-slate-600">Carregando...</p>
             </div>
         )
     }
 
     return (
-        <div className="min-h-[70vh] flex items-center justify-center px-4 py-12 bg-gradient-to-b from-slate-50 to-slate-100">
+        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-3 pt-24 pb-10 sm:px-4 sm:pt-36 sm:pb-16 bg-gradient-to-b from-slate-50/95 to-slate-100/95">
             <div className="w-full max-w-md bg-white rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-8 space-y-6">
                 {success ? (
                     <div className="text-center space-y-4">

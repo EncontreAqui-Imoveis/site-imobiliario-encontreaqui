@@ -1,7 +1,9 @@
-import { register, type UserSession } from '@/lib/api/auth'
 import type { SignupDraft } from '@/lib/authSignupDraft'
 import { clearSignupDraft } from '@/lib/authSignupDraft'
-import { normalizePhoneDigits } from '@/lib/phoneInput'
+import { persistAuthToken } from '@/lib/auth/tokenStore'
+import { finalizeSignupDraft } from '@/lib/api/signupDraft'
+import { mapAuthResponseToSession, type UserSession } from '@/lib/api/auth'
+
 
 /**
  * Cria a conta a partir do rascunho (e-mail ou telefone já validados no fluxo).
@@ -11,27 +13,22 @@ export async function registerUserFromSignupDraft(draft: SignupDraft): Promise<U
     if (!draft.userType) {
         throw new Error('Tipo de perfil ausente no rascunho.')
     }
-    const normalizedPhone = normalizePhoneDigits(draft.data.phone)
-    const signupProfileType = draft.userType === 'broker' ? 'broker' : 'client'
+    if (!draft.draftId || !draft.draftToken) {
+        throw new Error('Draft incompleto para consolidação.')
+    }
 
-    const result = await register({
-        name: draft.data.name.trim(),
-        email: draft.data.email.trim().toLowerCase(),
-        password: draft.data.password,
-        profileType: signupProfileType,
-        creci: signupProfileType === 'broker' ? draft.data.creci.trim().toUpperCase() : undefined,
-        googleIdToken: draft.source === 'google' ? draft.data.googleIdToken : undefined,
-        phone: normalizedPhone || undefined,
-        cep: draft.data.cep.replace(/\D/g, '') || undefined,
-        street: draft.data.street.trim() || undefined,
-        number: draft.data.number.trim() || undefined,
-        withoutNumber: draft.data.semNumero ? true : undefined,
-        complement: draft.data.complement.trim() || undefined,
-        bairro: draft.data.bairro.trim() || undefined,
-        city: draft.data.city.trim() || undefined,
-        state: draft.data.state.trim().toUpperCase() || undefined,
-    })
+    const action = draft.userType === 'broker' ? 'broker_submit_documents' : 'client_finalize'
+    const finalize = await finalizeSignupDraft(draft.draftId, draft.draftToken, action)
+
+    if (finalize.token) {
+        persistAuthToken(finalize.token)
+    }
 
     clearSignupDraft()
-    return result
+    return mapAuthResponseToSession({
+        user: finalize.user as unknown as UserSession['user'],
+        token: finalize.token,
+        needsCompletion: finalize.needsCompletion,
+        requiresDocuments: finalize.requiresDocuments,
+    })
 }

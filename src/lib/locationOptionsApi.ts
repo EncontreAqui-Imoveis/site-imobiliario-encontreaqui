@@ -11,6 +11,26 @@ export interface BairroOptionWithCount {
     total: number
 }
 
+export async function fetchCitiesByState(uf: string): Promise<string[]> {
+    if (uf.trim().length !== 2) return []
+
+    try {
+        const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf.toUpperCase()}/municipios`)
+        if (!response.ok) return []
+
+        const payload = (await response.json()) as Array<{ nome?: string }>
+        if (!Array.isArray(payload)) return []
+
+        return payload
+            .map((row) => String(row?.nome ?? '').trim())
+            .filter((city) => city.length > 0)
+            .sort((a, b) => a.localeCompare(b, 'pt-BR'))
+    } catch (error) {
+        console.error('Erro ao carregar cidades por estado:', error)
+        return []
+    }
+}
+
 function normalizeCount(value: unknown): number {
     const parsed = Number(value)
     if (!Number.isFinite(parsed) || parsed < 0) return 0

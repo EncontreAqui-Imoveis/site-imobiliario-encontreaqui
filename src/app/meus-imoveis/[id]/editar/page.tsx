@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
 import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { fetchEditableProperty, saveEditedProperty } from '@/lib/propertiesEditorService'
+import { fetchCitiesByState } from '@/lib/locationOptionsApi'
 import {
     clampAreaInput,
     clampCountInput,
@@ -46,6 +47,8 @@ export default function EditPropertyPage() {
     const [saving, setSaving] = useState(false)
     const [saved, setSaved] = useState(false)
     const [saveError, setSaveError] = useState<string | null>(null)
+    const [cityOptions, setCityOptions] = useState<string[]>([])
+    const [cityLoading, setCityLoading] = useState(false)
 
     // Form state
     const [form, setForm] = useState({
@@ -60,6 +63,27 @@ export default function EditPropertyPage() {
         hasWifi: false, temPiscina: false, temEnergiaSolar: false,
         temAutomacao: false, temArCondicionado: false, ehMobiliada: false,
     })
+
+    useEffect(() => {
+        let canceled = false
+        void (async () => {
+            if (!form.state.trim()) {
+                setCityOptions([])
+                setCityLoading(false)
+                return
+            }
+            setCityLoading(true)
+            const options = await fetchCitiesByState(form.state)
+            if (!canceled) {
+                setCityOptions(options)
+                setCityLoading(false)
+            }
+        })()
+
+        return () => {
+            canceled = true
+        }
+    }, [form.state])
 
     // Auth guard
     useEffect(() => {
@@ -412,7 +436,18 @@ export default function EditPropertyPage() {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className={labelClass}>Cidade</label>
-                                <input type="text" value={form.city} onChange={e => updateField('city', e.target.value)} maxLength={120} className={inputClass} />
+                                <input
+                                    type="text"
+                                    list="edit-property-city-options"
+                                    value={form.city}
+                                    onChange={e => updateField('city', e.target.value)}
+                                    maxLength={120}
+                                    className={inputClass}
+                                    placeholder={cityLoading ? 'Carregando cidades...' : 'Digite ou selecione'}
+                                />
+                                <datalist id="edit-property-city-options">
+                                    {cityOptions.map((option) => <option key={option} value={option} />)}
+                                </datalist>
                             </div>
                             <div>
                                 <label className={labelClass}>Estado</label>

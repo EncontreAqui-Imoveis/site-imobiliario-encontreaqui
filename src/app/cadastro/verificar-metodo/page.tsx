@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { ArrowLeft, Loader2, Mail, ShieldCheck, Smartphone } from 'lucide-react'
+import { ArrowLeft, Mail, Smartphone } from 'lucide-react'
 import { useUser } from '@/contexts/UserContext'
 import { resolvePostAuthRoute } from '@/lib/auth/routeResolution'
 
@@ -22,8 +22,9 @@ export default function VerificarMetodoPage() {
     const [draft, setDraft] = useState<SignupDraft | null>(null)
     const [autoCompleting, setAutoCompleting] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const hasTriggeredAutoCompleteRef = useRef(false)
     const isMountedRef = useRef(true)
+    const isBrokerSignup = draft?.userType === 'broker'
+    const signupCreci = draft?.data.creci.trim() ?? ''
 
     useEffect(() => {
         return () => {
@@ -62,42 +63,50 @@ export default function VerificarMetodoPage() {
         router.replace('/auth/cadastro')
     }, [router])
 
-    useEffect(() => {
-        if (!draft?.emailVerified || hasTriggeredAutoCompleteRef.current) return
-
-        hasTriggeredAutoCompleteRef.current = true
+    const finalizeClientSignup = async () => {
+        if (!draft) {
+            setError('Não foi possível carregar o cadastro em andamento. Tente novamente.')
+            return
+        }
         setAutoCompleting(true)
         setError(null)
 
-        const completeSignup = async () => {
-            try {
-                const persistedDraft = markSignupDraftEmailVerified('verify_method') ?? draft
-                const result = await registerUserFromSignupDraft({
-                    ...persistedDraft,
-                    emailVerified: true,
-                    step: 'verify_method',
-                })
-                await refresh()
-                if (!isMountedRef.current) return
-                if (result.isBroker && result.requiresBrokerDocuments) {
-                    router.replace('/onboarding/broker?mode=signup')
-                    return
+        try {
+            if (draft.userType === 'broker') {
+                const params = new URLSearchParams({ mode: 'signup' })
+                if (signupCreci) {
+                    params.set('creci', signupCreci.toUpperCase())
                 }
-                router.replace(resolvePostAuthRoute(result, '/meus-imoveis'))
-            } catch (signupError) {
-                if (!isMountedRef.current) return
-                hasTriggeredAutoCompleteRef.current = false
-                setError(
-                    signupError instanceof Error
-                        ? signupError.message
-                        : 'Não foi possível concluir o cadastro agora.',
-                )
+                router.replace(`/onboarding/broker?${params.toString()}`)
+                return
+            }
+
+            const persistedDraft = markSignupDraftEmailVerified('verify_method') ?? draft
+            const result = await registerUserFromSignupDraft({
+                ...persistedDraft,
+                emailVerified: true,
+                step: 'verify_method',
+            })
+            await refresh()
+            if (!isMountedRef.current) return
+            router.replace(resolvePostAuthRoute(result, '/meus-imoveis'))
+        } catch (signupError) {
+            if (!isMountedRef.current) return
+            setError(
+                signupError instanceof Error
+                    ? signupError.message
+                    : 'Não foi possível concluir o cadastro agora.',
+            )
+        } finally {
+            if (isMountedRef.current) {
                 setAutoCompleting(false)
             }
         }
+    }
 
-        void completeSignup()
-    }, [draft, refresh, router])
+    const handleSkipPhoneVerification = async () => {
+        await finalizeClientSignup()
+    }
 
     const goEmail = () => {
         if (!draft) return
@@ -124,73 +133,79 @@ export default function VerificarMetodoPage() {
 
     if (!draft) {
         return (
-            <div className="min-h-[40vh] flex items-center justify-center text-slate-600 text-sm">
+            <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center text-slate-600 text-sm">
                 Carregando…
             </div>
         )
     }
 
     const fromGoogle = draft.source === 'google'
-    const canChooseEmail = !draft.emailVerified
-    const showPhoneOption = !draft.emailVerified || error != null
+    const requiresEmailMethod = !draft.emailVerified
 
     return (
-        <div className="min-h-[70vh] flex items-center justify-center px-4 py-12 bg-gradient-to-b from-slate-50 to-slate-100">
+        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-3 pt-24 pb-10 sm:px-4 sm:pt-36 sm:pb-16 bg-gradient-to-b from-slate-50/95 to-slate-100/95">
             <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-100 p-8 space-y-6">
                 <h1 className="text-2xl font-bold text-slate-900 text-center">Verificação da conta</h1>
                 <p className="text-sm text-slate-600 text-center">
                     {draft.emailVerified
-                        ? 'Seu e-mail já está confirmado. Estamos liberando a próxima etapa do cadastro.'
+                ? 'Seu e-mail já foi verificado. Você quer verificar seu telefone?'
                         : fromGoogle
                             ? 'Seu e-mail já foi validado pelo Google. Escolha como deseja receber o código de confirmação.'
                             : 'Escolha receber o código por e-mail ou por SMS no telefone informado.'}
                 </p>
-                {draft.emailVerified && autoCompleting ? (
-                    <div className="rounded-2xl border border-primary-100 bg-primary-50 px-5 py-6 text-center">
-                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-primary-600 shadow-sm">
-                            <ShieldCheck className="h-6 w-6" />
-                        </div>
-                        <p className="mt-4 text-sm font-semibold text-slate-900">E-mail confirmado</p>
-                        <p className="mt-2 text-sm text-slate-600">Finalizando seu cadastro automaticamente...</p>
-                        <div className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary-700">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Processando
-                        </div>
-                    </div>
-                ) : (
                 <div className="space-y-3">
-                    {canChooseEmail && (
-                        <button
-                            type="button"
-                            onClick={goEmail}
-                            className="w-full flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-4 text-left hover:bg-slate-50 transition"
-                        >
-                            <Mail className="h-6 w-6 text-amber-600 shrink-0" />
-                            <div>
-                                <div className="font-semibold text-slate-900">E-mail</div>
-                                <div className="text-xs text-slate-600">Código de 6 dígitos no seu e-mail</div>
-                            </div>
-                        </button>
-                    )}
-                    {showPhoneOption && (
-                        <button
-                            type="button"
-                            onClick={goPhone}
-                            className="w-full flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-4 text-left hover:bg-slate-50 transition"
-                        >
-                            <Smartphone className="h-6 w-6 text-amber-600 shrink-0" />
-                            <div>
-                                <div className="font-semibold text-slate-900">Telefone (SMS)</div>
-                                <div className="text-xs text-slate-600">
-                                    {draft.emailVerified
-                                        ? 'Opcional: use SMS se preferir continuar por telefone.'
-                                        : 'Código por mensagem de texto'}
+                    {requiresEmailMethod ? (
+                        <>
+                            <button
+                                type="button"
+                                onClick={goEmail}
+                                className="w-full flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-4 text-left hover:bg-slate-50 transition"
+                            >
+                                <Mail className="h-6 w-6 text-amber-600 shrink-0" />
+                                <div>
+                                    <div className="font-semibold text-slate-900">E-mail</div>
+                                    <div className="text-xs text-slate-600">Código de 6 dígitos no seu e-mail</div>
                                 </div>
-                            </div>
-                        </button>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={goPhone}
+                                className="w-full flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-4 text-left hover:bg-slate-50 transition"
+                            >
+                                <Smartphone className="h-6 w-6 text-amber-600 shrink-0" />
+                                <div>
+                                    <div className="font-semibold text-slate-900">Telefone (SMS)</div>
+                                    <div className="text-xs text-slate-600">Código por mensagem de texto</div>
+                                </div>
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button
+                                type="button"
+                                onClick={goPhone}
+                                className="w-full rounded-xl border border-slate-200 px-4 py-3 hover:bg-slate-50 transition"
+                                disabled={autoCompleting}
+                            >
+                                Sim, verificar por SMS
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => void handleSkipPhoneVerification()}
+                                className="w-full rounded-xl bg-primary-600 text-white px-4 py-3 font-semibold hover:bg-primary-700 transition disabled:opacity-60"
+                                disabled={autoCompleting}
+                            >
+                                {autoCompleting
+                                    ? isBrokerSignup
+                                        ? 'Prosseguindo com a verificação...'
+                                        : 'Finalizando cadastro...'
+                                    : isBrokerSignup
+                                        ? 'Prosseguir com verificação de corretor'
+                                        : 'Não, continuar sem verificar'}
+                            </button>
+                        </>
                     )}
                 </div>
-                )}
                 {error && (
                     <p className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
                         {error}

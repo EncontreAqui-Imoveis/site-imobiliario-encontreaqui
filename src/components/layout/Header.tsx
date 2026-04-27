@@ -161,13 +161,15 @@ export default function Header() {
     const resolvedUserMenuLinks = isBroker
         ? userMenuLinks
         : userMenuLinks.filter((link) => link.href !== '/propostas')
+    const blockMandatoryBrokerNav = pendingAction?.href === '/onboarding/broker' && pathname === '/onboarding/broker'
+    const logoHref = blockMandatoryBrokerNav ? '/onboarding/broker' : '/'
 
     return (
         <header className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${headerBg} ${!isHomepage || isScrolled ? 'border-b border-gray-100' : ''}`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16 lg:h-20">
                     {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2 group flex-shrink-0">
+                    <Link href={logoHref} className="flex items-center gap-2 group flex-shrink-0">
                         <Image
                             src="/logo1.svg"
                             alt="Encontre Aqui Imóveis"
@@ -197,7 +199,7 @@ export default function Header() {
                     </form>
 
                     {/* Desktop Nav */}
-                    <nav className="hidden lg:flex items-center gap-1">
+                    <nav className={`hidden lg:flex items-center gap-1 ${blockMandatoryBrokerNav ? 'pointer-events-none opacity-70' : ''}`}>
                         {navLinks.map((link) => (
                             <Link
                                 key={link.href}
@@ -218,7 +220,7 @@ export default function Header() {
                     </nav>
 
                     {/* Desktop Auth Section */}
-                    <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
+                    <div className={`hidden lg:flex items-center gap-2 flex-shrink-0 ${blockMandatoryBrokerNav ? 'pointer-events-none opacity-70' : ''}`}>
                         {authLoading ? (
                             <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
                         ) : isAuthenticated ? (
@@ -358,7 +360,7 @@ export default function Header() {
                         )}
                     </div>
 
-                    <div className="flex items-center gap-0.5 lg:hidden">
+                    <div className={`flex items-center gap-0.5 lg:hidden ${blockMandatoryBrokerNav ? 'pointer-events-none opacity-70' : ''}`}>
                         {!authLoading && isAuthenticated && (
                             <Link
                                 href="/notificacoes"
@@ -392,7 +394,7 @@ export default function Header() {
 
                 {/* ===================== Mobile Menu ===================== */}
                 {isMenuOpen && (
-                    <div className="lg:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-y-contain border-t border-gray-100 animate-fadeIn bg-white rounded-b-2xl shadow-lg [touch-action:pan-y] scrollbar-none">
+                    <div className={`lg:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-y-contain border-t border-gray-100 animate-fadeIn bg-white rounded-b-2xl shadow-lg [touch-action:pan-y] scrollbar-none ${blockMandatoryBrokerNav ? 'pointer-events-none opacity-70' : ''}`}>
                         <div className="py-4">
                         {/* Mobile Search */}
                         <form onSubmit={handleSearch} className="px-4 mb-4">

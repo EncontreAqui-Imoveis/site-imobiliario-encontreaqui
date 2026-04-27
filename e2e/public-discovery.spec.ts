@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 test('home, busca e detalhe público carregam com backend mockado', async ({ page }) => {
     await page.goto('/')
 
-    await expect(page.getByLabel('Destaque da página inicial')).toBeVisible()
+    await expect(page.locator('section[aria-label="Destaque da página inicial"]:visible')).toBeVisible()
 
     await page.goto('/imoveis?search=Casa')
     await expect(page.getByRole('heading', { name: /encontre seu imóvel ideal/i })).toBeVisible()

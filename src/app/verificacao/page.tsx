@@ -5,15 +5,16 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useUser } from '@/contexts/UserContext'
 import { sendEmailVerificationCode, verifyEmailCode } from '@/lib/api/auth'
 import { resolvePostAuthRoute } from '@/lib/auth/routeResolution'
-import { loadSignupDraft, markSignupDraftEmailVerified } from '@/lib/authSignupDraft'
-import { registerUserFromSignupDraft } from '@/lib/registerFromSignupDraft'
+import { loadSignupDraft, markSignupDraftEmailVerified, rewindSignupDraftToAddress } from '@/lib/authSignupDraft'
 import type { ApiError } from '@/lib/api/client'
+import { confirmSignupDraftEmailCode, sendSignupDraftEmailCode } from '@/lib/api/signupDraft'
 import { ShieldCheck, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 const VERIFY_ERROR_COOLDOWN_MS = 2000
 const EMAIL_OTP_CACHE_MS = 60_000
 const MIN_CLIENT_RESEND_GAP_MS = 30_000
+const EMAIL_VERIFICATION_AUTO_SEND_GUARD_MS = 120_000
 
 function emailOtpCacheKey(emailAddr: string) {
     return `ea_email_otp_sent_${emailAddr.toLowerCase()}`
@@ -46,7 +47,6 @@ export default function VerificacaoPage() {
     /** Evita reenvio automático infinito com o mesmo código após erro. */
     const autoVerifyBlockedForCodeRef = useRef<string | null>(null)
     const isSignupFlowRef = useRef(false)
-
     useEffect(() => {
         const signupDraft = loadSignupDraft()
         setSignupDraftEmail(signupDraft?.data.email ?? null)
@@ -70,25 +70,21 @@ export default function VerificacaoPage() {
         return dailySendCount >= DAILY_LIMIT
     })()
 
-    const completeSignupAfterEmail = useCallback(async () => {
+    const markEmailVerifiedAndContinueSignup = useCallback(() => {
         const draft = loadSignupDraft()
         if (!draft?.userType) {
             router.replace('/auth/cadastro')
-            return
+            return false
         }
-        const merged = markSignupDraftEmailVerified('verify_method') ?? {
-            ...draft,
-            emailVerified: true,
-            step: 'verify_method' as const,
-        }
-        const result = await registerUserFromSignupDraft(merged)
-        await refresh()
-        if (result.isBroker && result.requiresBrokerDocuments) {
-            router.push('/onboarding/broker?mode=signup')
-            return
-        }
-        router.push(resolvePostAuthRoute(result, '/meus-imoveis'))
-    }, [refresh, router])
+        markSignupDraftEmailVerified('verify_method')
+        return draft.userType
+    }, [router])
+
+    const handleSignupEmailVerified = useCallback(async () => {
+        const draftUserType = markEmailVerifiedAndContinueSignup()
+        if (!draftUserType) return
+        router.push('/cadastro/verificar-metodo')
+    }, [markEmailVerifiedAndContinueSignup, router])
 
     useEffect(() => {
         if (!draftReady) return
@@ -126,6 +122,14 @@ export default function VerificacaoPage() {
         async (silent = false) => {
             if (!email) return
 
+            const isCooldownExpired = (key: string, windowMs: number) => {
+                const raw = window.sessionStorage.getItem(key)
+                if (!raw) return true
+                const ts = Number(raw)
+                if (!Number.isFinite(ts)) return true
+                return Date.now() - ts >= windowMs
+            }
+
             if (!silent && typeof window !== 'undefined') {
                 const raw = window.sessionStorage.getItem(emailOtpCacheKey(email))
                 if (raw) {
@@ -139,21 +143,21 @@ export default function VerificacaoPage() {
             }
 
             if (silent && typeof window !== 'undefined') {
-                const raw = window.sessionStorage.getItem(emailOtpCacheKey(email))
-                if (raw) {
-                    const ts = Number(raw)
-                    if (Number.isFinite(ts) && Date.now() - ts < EMAIL_OTP_CACHE_MS) {
-                        setCodeSent(true)
-                        setVerificationExpired(false)
-                        return
-                    }
+                if (!isCooldownExpired(emailOtpCacheKey(email), EMAIL_VERIFICATION_AUTO_SEND_GUARD_MS)) {
+                    setCodeSent(true)
+                    setVerificationExpired(false)
+                    return
                 }
             }
 
             setResending(true)
             setError(null)
             try {
-                const response = await sendEmailVerificationCode(email)
+                const isSignupDraftFlow = isSignupFlowRef.current
+                const draft = isSignupDraftFlow ? loadSignupDraft() : null
+                const response = isSignupDraftFlow && draft?.draftId && draft?.draftToken
+                    ? await sendSignupDraftEmailCode(draft.draftId, draft.draftToken)
+                    : await sendEmailVerificationCode(email)
                 const now = new Date()
                 setCodeSent(true)
                 setVerificationExpired(false)
@@ -169,9 +173,9 @@ export default function VerificacaoPage() {
                 if (response.delivery === 'already_verified') {
                     setSuccess(true)
                     if (isSignupFlowRef.current) {
-                        setSuccessMessage('E-mail já confirmado. Finalizando cadastro...')
+                        setSuccessMessage('E-mail já confirmado.')
                         try {
-                            await completeSignupAfterEmail()
+                            await handleSignupEmailVerified()
                         } catch {
                             setSuccess(false)
                             setCodeSent(true)
@@ -183,6 +187,9 @@ export default function VerificacaoPage() {
                 const apiErr = err as ApiError
                 if ('status' in apiErr && apiErr.status === 429) {
                     setError('Muitas tentativas. Aguarde e tente novamente.')
+                    if (typeof window !== 'undefined') {
+                        window.sessionStorage.setItem(emailOtpCacheKey(email), String(Date.now()))
+                    }
                 } else {
                     setError('Erro ao enviar código. Tente novamente.')
                 }
@@ -193,11 +200,20 @@ export default function VerificacaoPage() {
                 setResending(false)
             }
         },
-        [completeSignupAfterEmail, email],
+        [handleSignupEmailVerified, email],
     )
 
     useEffect(() => {
         if (!draftReady || !email || autoSendTriggeredRef.current) return
+        if (typeof window !== 'undefined') {
+            const raw = window.sessionStorage.getItem(emailOtpCacheKey(email))
+            const ts = Number(raw)
+            if (Number.isFinite(ts) && Date.now() - ts < EMAIL_VERIFICATION_AUTO_SEND_GUARD_MS) {
+                autoSendTriggeredRef.current = true
+                setCodeSent(true)
+                return
+            }
+        }
         autoSendTriggeredRef.current = true
         void handleSendCode(true)
     }, [draftReady, email, handleSendCode])
@@ -217,37 +233,40 @@ export default function VerificacaoPage() {
         setSubmitting(true)
         setError(null)
         try {
-            await verifyEmailCode(email, fullCode)
-
             if (isSignupFlowRef.current) {
-                setSuccessMessage('Conta criada! Redirecionando...')
-                try {
-                    markSignupDraftEmailVerified('verify_method')
-                    await completeSignupAfterEmail()
-                    setSuccess(true)
-                } catch {
-                    setError('Não foi possível concluir o cadastro. Tente novamente.')
-                }
-                return
-            }
-
-            setSuccess(true)
-
-            await refresh()
-            setTimeout(() => {
-                if (!session) {
-                    router.push('/meus-imoveis')
+                const draft = loadSignupDraft()
+                if (!draft?.draftId || !draft.draftToken) {
+                    setError('Fluxo de cadastro incompleto. Retorne à etapa anterior.')
                     return
                 }
-                const refreshedSession = {
-                    ...session,
-                    user: {
-                        ...session.user,
-                        email_verified: true,
-                    },
-                }
-                router.push(resolvePostAuthRoute(refreshedSession, '/meus-imoveis'))
-            }, 2000)
+                await confirmSignupDraftEmailCode(draft.draftId, draft.draftToken, fullCode)
+                await handleSignupEmailVerified()
+            } else {
+                await verifyEmailCode(email, fullCode)
+
+                setSuccess(true)
+                await refresh()
+                setTimeout(() => {
+                    if (!session) {
+                        router.push('/meus-imoveis')
+                        return
+                    }
+                    const refreshedSession = {
+                        ...session,
+                        user: {
+                            ...session.user,
+                            email_verified: true,
+                        },
+                    }
+                    router.push(resolvePostAuthRoute(refreshedSession, '/meus-imoveis'))
+                }, 2000)
+            }
+
+            if (isSignupFlowRef.current) {
+                setSuccessMessage('E-mail validado! Retornando para o método de verificação.')
+                setSuccess(true)
+                return
+            }
         } catch (err) {
             const apiErr = err as ApiError
             if ('status' in apiErr && apiErr.status === 410) {
@@ -265,7 +284,7 @@ export default function VerificacaoPage() {
         } finally {
             setSubmitting(false)
         }
-    }, [code, completeSignupAfterEmail, email, refresh, router, session])
+    }, [code, handleSignupEmailVerified, email, refresh, router, session])
 
     useEffect(() => {
         const isComplete = code.every((digit) => digit.trim().length === 1)
@@ -325,16 +344,26 @@ export default function VerificacaoPage() {
         setCode(next)
     }
 
+    const handleReviewSignupData = () => {
+        if (!isSignupFlow) return
+        const hasDraft = rewindSignupDraftToAddress()
+        if (!hasDraft) {
+            router.replace('/auth/cadastro')
+            return
+        }
+        router.replace('/auth/cadastro')
+    }
+
     if ((loading && !isSignupFlow) || !draftReady) {
         return (
-            <div className="min-h-[60vh] flex items-center justify-center">
+            <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
                 <p className="text-sm text-slate-600">Carregando...</p>
             </div>
         )
     }
 
     return (
-        <div className="min-h-[70vh] flex items-center justify-center px-4 py-12 bg-gradient-to-b from-slate-50 to-slate-100">
+        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-3 pt-24 pb-10 sm:px-4 sm:pt-36 sm:pb-16 bg-gradient-to-b from-slate-50/95 to-slate-100/95">
             <div className="w-full max-w-md bg-white rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-100 p-8 space-y-6">
                 {success ? (
                     <div className="text-center space-y-4">
@@ -441,13 +470,24 @@ export default function VerificacaoPage() {
                             >
                                 {isSignupFlow ? 'Voltar e escolher outro método' : 'Trocar e-mail'}
                             </Link>
-                            <Link
-                                href={isSignupFlow ? '/auth/cadastro' : '/meus-imoveis'}
-                                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700"
-                            >
-                                <ArrowLeft className="w-4 h-4" />
-                                {isSignupFlow ? 'Revisar dados do cadastro' : 'Pular por agora'}
-                            </Link>
+                            {isSignupFlow ? (
+                                <button
+                                    type="button"
+                                    onClick={handleReviewSignupData}
+                                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                                >
+                                    <ArrowLeft className="w-4 h-4" />
+                                    Revisar dados do cadastro
+                                </button>
+                            ) : (
+                                <Link
+                                    href="/meus-imoveis"
+                                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                                >
+                                    <ArrowLeft className="w-4 h-4" />
+                                    Pular por agora
+                                </Link>
+                            )}
                         </div>
                     </>
                 )}

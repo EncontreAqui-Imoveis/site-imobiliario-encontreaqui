@@ -41,6 +41,8 @@ export interface SignupDraft {
     step: SignupStep
     emailVerified: boolean
     phoneVerified: boolean
+    draftId: string | null
+    draftToken: string | null
     data: SignupDraftData
     updatedAt: string
 }
@@ -83,7 +85,11 @@ function isExpired(timestampKey: string) {
 }
 
 export function createSignupDraft(
-    input?: Partial<Omit<SignupDraft, 'data' | 'updatedAt'>> & { data?: Partial<SignupDraftData> },
+    input?: Partial<Omit<SignupDraft, 'data' | 'updatedAt'>> & {
+        data?: Partial<SignupDraftData>
+        draftId?: string | null
+        draftToken?: string | null
+    },
 ): SignupDraft {
     return {
         source: input?.source ?? 'email',
@@ -91,6 +97,8 @@ export function createSignupDraft(
         step: input?.step ?? 'profile',
         emailVerified: input?.emailVerified ?? input?.source === 'google',
         phoneVerified: input?.phoneVerified ?? false,
+        draftId: input?.draftId ?? null,
+        draftToken: input?.draftToken ?? null,
         data: {
             ...EMPTY_DATA,
             ...(input?.data ?? {}),
@@ -116,6 +124,8 @@ export function loadSignupDraft(): SignupDraft | null {
             step: parsed.step,
             emailVerified: parsed.emailVerified,
             phoneVerified: parsed.phoneVerified,
+            draftId: parsed.draftId ?? null,
+            draftToken: parsed.draftToken ?? null,
             data: parsed.data,
         })
     } catch {

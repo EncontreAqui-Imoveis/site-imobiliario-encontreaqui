@@ -116,7 +116,7 @@ function isProfileComplete(user: User): boolean {
     )
 }
 
-function mapAuthResponseToSession(response: AuthResponse): UserSession {
+export function mapAuthResponseToSession(response: AuthResponse): UserSession {
     return {
         user: response.user,
         isBroker: response.user.role === 'broker' || response.broker?.status != null,

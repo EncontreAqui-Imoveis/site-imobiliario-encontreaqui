@@ -33,12 +33,65 @@ const properties = Array.from({ length: 25 }, (_, index) => {
   };
 });
 
+const draftStore = new Map();
+const draftState = { seq: 0 };
+
+function randomDraftId() {
+    draftState.seq += 1
+    return `draft-${Date.now()}-${draftState.seq}`
+}
+
+function randomDraftToken() {
+    return `draft-token-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`
+}
+
+function parseDraftId(pathname) {
+    const prefix = '/auth/register/draft/';
+    const relative = pathname.slice(prefix.length);
+    return decodeURIComponent(relative.split('/')[0]);
+}
+
+function draftFromBody(body = {}) {
+    return {
+        draftId: body.draftId || body.id,
+        profileType: body.profileType || 'client',
+        email: String(body.email || ''),
+        name: String(body.name || ''),
+        phone: body.phone || null,
+        street: body.street || null,
+        number: body.number || null,
+        complement: body.complement || null,
+        bairro: body.bairro || null,
+        city: body.city || null,
+        state: body.state || null,
+        cep: body.cep || null,
+        withoutNumber: Boolean(body.withoutNumber),
+        creci: body.creci || null,
+        needsEmailVerification: true,
+        needsPhoneVerification: Boolean(body.phone),
+        currentStep: body.currentStep || 'IDENTITY',
+        status: 'DRAFT',
+    }
+}
+
+function getDraftRecord(draftId, draftToken) {
+    const record = draftStore.get(draftId)
+    if (!record || record.draftToken !== draftToken) {
+        return null
+    }
+    return record
+}
+
+function draftError(message = 'Draft inválido') {
+    return { error: message }
+}
+
 function json(res, status, payload, origin = 'http://127.0.0.1:3101') {
   res.writeHead(status, {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-draft-token',
     'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
   });
   res.end(JSON.stringify(payload));
@@ -134,7 +187,7 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': origin,
       'Access-Control-Allow-Credentials': 'true',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-draft-token',
       'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
     });
     res.end();
@@ -251,6 +304,206 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === 'POST' && url.pathname === '/auth/otp/verify') {
+    json(res, 200, { ok: true }, origin);
+    return;
+  }
+
+  if (req.method === 'POST' && url.pathname === '/auth/register/draft') {
+    const body = await readBody(req);
+    const draftId = randomDraftId();
+    const draftToken = randomDraftToken();
+    const draft = draftFromBody(body);
+    draftStore.set(draftId, {
+      draftId,
+      draftToken,
+      draft: {
+        ...draft,
+        draftId,
+        needsEmailVerification: true,
+        needsPhoneVerification: false,
+      },
+    });
+    json(
+      res,
+      201,
+      {
+        draftId,
+        draftToken,
+        draft: {
+          ...draft,
+          draftId,
+          needsEmailVerification: true,
+          needsPhoneVerification: false,
+        },
+        expiresAtMinutes: 20,
+      },
+      origin,
+    );
+    return;
+  }
+
+  if (req.method === 'GET' && /^\/auth\/register\/draft\/[^/]+$/.test(url.pathname)) {
+    const draftId = parseDraftId(url.pathname);
+    const draftToken = String(req.headers['x-draft-token'] || '');
+    const record = getDraftRecord(draftId, draftToken);
+    if (!record) {
+      json(res, 404, draftError('Draft não encontrado'), origin);
+      return;
+    }
+    json(res, 200, { draft: { ...record.draft } }, origin);
+    return;
+  }
+
+  if (req.method === 'PATCH' && /^\/auth\/register\/draft\/[^/]+$/.test(url.pathname)) {
+    const draftId = parseDraftId(url.pathname);
+    const draftToken = String(req.headers['x-draft-token'] || '');
+    const record = getDraftRecord(draftId, draftToken);
+    if (!record) {
+      json(res, 401, draftError('Token inválido'), origin);
+      return;
+    }
+    const body = await readBody(req);
+    record.draft = {
+      ...record.draft,
+      ...body,
+      draftId,
+    };
+    draftStore.set(draftId, record);
+    json(res, 200, { draft: { ...record.draft } }, origin);
+    return;
+  }
+
+  if (req.method === 'POST' && /^\/auth\/register\/draft\/[^/]+\/verify-email$/.test(url.pathname)) {
+    const draftId = parseDraftId(url.pathname);
+    const draftToken = String(req.headers['x-draft-token'] || '');
+    const record = getDraftRecord(draftId, draftToken);
+    if (!record) {
+      json(res, 401, draftError('Token inválido'), origin);
+      return;
+    }
+    record.draft.needsEmailVerification = false;
+    json(
+      res,
+      200,
+      {
+        status: 'ok',
+        expiresAt: '2026-04-08T10:00:00.000Z',
+        cooldownSec: 0,
+        dailyRemaining: 5,
+      },
+      origin,
+    );
+    return;
+  }
+
+  if (req.method === 'POST' && /^\/auth\/register\/draft\/[^/]+\/verify-email\/confirm$/.test(url.pathname)) {
+    const draftId = parseDraftId(url.pathname);
+    const draftToken = String(req.headers['x-draft-token'] || '');
+    const record = getDraftRecord(draftId, draftToken);
+    if (!record) {
+      json(res, 401, draftError('Token inválido'), origin);
+      return;
+    }
+    record.draft.needsEmailVerification = false;
+    json(res, 200, { ok: true }, origin);
+    return;
+  }
+
+  if (req.method === 'POST' && /^\/auth\/register\/draft\/[^/]+\/verify-phone$/.test(url.pathname)) {
+    const draftId = parseDraftId(url.pathname);
+    const draftToken = String(req.headers['x-draft-token'] || '');
+    const record = getDraftRecord(draftId, draftToken);
+    if (!record) {
+      json(res, 401, draftError('Token inválido'), origin);
+      return;
+    }
+    json(
+      res,
+      200,
+      {
+        sessionToken: 'draft-otp-session',
+        expiresAt: '2026-04-08T10:00:00.000Z',
+      },
+      origin,
+    );
+    return;
+  }
+
+  if (req.method === 'POST' && /^\/auth\/register\/draft\/[^/]+\/verify-phone\/confirm$/.test(url.pathname)) {
+    const draftId = parseDraftId(url.pathname);
+    const draftToken = String(req.headers['x-draft-token'] || '');
+    const record = getDraftRecord(draftId, draftToken);
+    if (!record) {
+      json(res, 401, draftError('Token inválido'), origin);
+      return;
+    }
+    record.draft.needsPhoneVerification = false;
+    json(res, 200, { ok: true }, origin);
+    return;
+  }
+
+  if (req.method === 'POST' && /^\/auth\/register\/draft\/[^/]+\/submit-documents$/.test(url.pathname)) {
+    const draftId = parseDraftId(url.pathname);
+    const draftToken = String(req.headers['x-draft-token'] || '');
+    const record = getDraftRecord(draftId, draftToken);
+    if (!record) {
+      json(res, 401, draftError('Token inválido'), origin);
+      return;
+    }
+    json(res, 200, { ok: true }, origin);
+    return;
+  }
+
+  if (req.method === 'POST' && /^\/auth\/register\/draft\/[^/]+\/finalize$/.test(url.pathname)) {
+    const draftId = parseDraftId(url.pathname);
+    const draftToken = String(req.headers['x-draft-token'] || '');
+    const record = getDraftRecord(draftId, draftToken);
+    if (!record) {
+      json(res, 401, draftError('Token inválido'), origin);
+      return;
+    }
+    const body = await readBody(req);
+    const isBroker = String(record.draft.profileType || '') === 'broker';
+    const action = String(body.action || '');
+    const requiresDocuments = isBroker && (action === 'broker_submit_documents' || action === 'submit_documents');
+    json(
+      res,
+      200,
+      {
+        token: isBroker ? 'site-broker-token' : 'site-client-token',
+        user: {
+          id: isBroker ? 20 : 10,
+          name: String(record.draft.name || (isBroker ? 'Corretor E2E' : 'Cliente E2E')),
+          email: String(record.draft.email || (isBroker ? 'broker-e2e@example.com' : 'cliente-e2e@example.com')),
+          role: isBroker ? 'broker' : 'client',
+          email_verified: !record.draft.needsEmailVerification,
+          phone: String(record.draft.phone || '62999999999'),
+          street: String(record.draft.street || 'Rua Teste'),
+          number: String(record.draft.number || '100'),
+          bairro: String(record.draft.bairro || 'Centro'),
+          city: String(record.draft.city || 'Goiânia'),
+          state: String(record.draft.state || 'GO'),
+          cep: String(record.draft.cep || '74000000'),
+          creci: record.draft.creci || (isBroker ? '12345-F' : ''),
+          token_hint: isBroker ? 'site-broker-token' : 'site-client-token',
+        },
+        needsCompletion: false,
+        requiresDocuments,
+      },
+      origin,
+    );
+    return;
+  }
+
+  if (req.method === 'POST' && /^\/auth\/register\/draft\/[^/]+\/discard$/.test(url.pathname)) {
+    const draftId = parseDraftId(url.pathname);
+    const draftToken = String(req.headers['x-draft-token'] || '');
+    const record = getDraftRecord(draftId, draftToken);
+    if (!record) {
+      json(res, 404, draftError('Draft não encontrado'), origin);
+      return;
+    }
+    draftStore.delete(draftId);
     json(res, 200, { ok: true }, origin);
     return;
   }

@@ -7,7 +7,13 @@ import { useUser } from '@/contexts/UserContext'
 import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { checkCreci } from '@/lib/api/auth'
 import { requestBrokerUpgrade, uploadBrokerDocuments } from '@/lib/api/broker'
+import { finalizeSignupDraft, submitSignupDraftDocuments } from '@/lib/api/signupDraft'
 import type { ApiError } from '@/lib/api/client'
+import {
+    clearSignupDraft,
+    loadSignupDraft,
+    patchSignupDraft,
+} from '@/lib/authSignupDraft'
 import { validateDocumentFile } from '@/lib/sanitize'
 import { BadgeCheck, Upload, Camera, CreditCard, AlertCircle, CheckCircle, Clock } from 'lucide-react'
 
@@ -17,6 +23,17 @@ export default function BrokerOnboardingPage() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const { session, loading, refresh } = useUser()
+    const mode = searchParams.get('mode') === 'signup' ? 'signup' : 'upgrade'
+    const queryCreci = searchParams.get('creci')?.trim() ?? ''
+    const isSignupMode = mode === 'signup'
+    const signupDraft = loadSignupDraft()
+    const hasSignupDraft = Boolean(signupDraft?.draftId && signupDraft?.draftToken)
+    const brokerStatus = session?.broker?.status ?? session?.user?.broker_status ?? null
+    const resolvedCreci = session?.broker?.creci?.trim() ?? ''
+    const signupDraftCreci = signupDraft?.data.creci.trim() ?? ''
+    const effectiveSignupCreci = (signupDraftCreci || queryCreci).trim().toUpperCase()
+    const requiresDocuments =
+        mode === 'upgrade' && (session?.requiresBrokerDocuments === true || brokerStatus === 'rejected')
 
     const [step, setStep] = useState<Step>('creci')
     const [creci, setCreci] = useState('')
@@ -30,25 +47,34 @@ export default function BrokerOnboardingPage() {
     const creciBackRef = useRef<HTMLInputElement>(null)
     const selfieRef = useRef<HTMLInputElement>(null)
 
-    const mode = searchParams.get('mode') === 'signup' ? 'signup' : 'upgrade'
-    const brokerStatus = session?.broker?.status ?? session?.user?.broker_status ?? null
-    const requiresDocuments = session?.requiresBrokerDocuments === true || brokerStatus === 'rejected'
-
     useEffect(() => {
-        if (!loading && !session) {
+        if (!loading && !isSignupMode && !session) {
             router.replace('/auth/login?next=/onboarding/broker')
             return
         }
-
-        const gateRoute = resolveOperationalGateRoute(session)
-        if (!loading && gateRoute && gateRoute !== '/onboarding/broker') {
-            router.replace(gateRoute)
+        if (!loading && isSignupMode && !hasSignupDraft) {
+            router.replace('/auth/cadastro')
+            return
         }
-    }, [loading, router, session])
+        if (!isSignupMode && session) {
+            const gateRoute = resolveOperationalGateRoute(session)
+            if (gateRoute && gateRoute !== '/onboarding/broker') {
+                router.replace(gateRoute)
+            }
+        }
+    }, [hasSignupDraft, isSignupMode, loading, router, session])
 
     useEffect(() => {
+        if (isSignupMode && effectiveSignupCreci && step !== 'waiting') {
+            setCreci(effectiveSignupCreci)
+            setStep('documents')
+            return
+        }
+        if (isSignupMode && !effectiveSignupCreci) {
+            setStep('creci')
+            return
+        }
         if (!session) return
-        const resolvedCreci = session.broker?.creci ?? ''
         if (resolvedCreci) {
             setCreci(resolvedCreci)
         }
@@ -58,19 +84,13 @@ export default function BrokerOnboardingPage() {
             return
         }
 
-        if (mode === 'signup') {
-            if (requiresDocuments) {
-                setStep('documents')
-                return
-            }
-            if (brokerStatus === 'pending_verification') {
-                setStep('waiting')
-                return
-            }
+        if (brokerStatus === 'pending_verification') {
+            setStep('waiting')
+            return
         }
 
-        if (brokerStatus === 'pending_verification' && !requiresDocuments) {
-            setStep('waiting')
+        if (requiresDocuments) {
+            setStep('documents')
             return
         }
 
@@ -80,32 +100,73 @@ export default function BrokerOnboardingPage() {
         }
 
         setStep('creci')
-    }, [brokerStatus, mode, requiresDocuments, router, session])
+    }, [brokerStatus, isSignupMode, mode, requiresDocuments, router, session, effectiveSignupCreci, resolvedCreci, step])
 
     const handleUpgradeRequest = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!creci.trim()) {
+        const trimmedCreci = creci.trim().toUpperCase()
+        if (!trimmedCreci) {
             setError('Informe seu número CRECI.')
             return
         }
         setSubmitting(true)
         setError(null)
         try {
-            const normalizedCreci = creci.trim().toUpperCase()
-            const currentCreci = (session?.broker?.creci ?? '').trim().toUpperCase()
-            if (normalizedCreci && normalizedCreci !== currentCreci) {
-                const creciStatus = await checkCreci(normalizedCreci)
+            if (isSignupMode) {
+                const currentCreci = (effectiveSignupCreci || '').trim().toUpperCase()
+                if (!currentCreci) {
+                    setCreci(trimmedCreci)
+                }
+                const creciStatus = await checkCreci(trimmedCreci)
+                if (creciStatus.exists) {
+                    setError('Já existe um corretor com este CRECI.')
+                    return
+                }
+                setCreci(trimmedCreci)
+                setStep('documents')
+                return
+            }
+            const currentCreci = (effectiveSignupCreci || (session?.broker?.creci ?? '')).trim().toUpperCase()
+            if (trimmedCreci !== currentCreci) {
+                const creciStatus = await checkCreci(trimmedCreci)
                 if (creciStatus.exists) {
                     setError('Já existe um corretor com este CRECI.')
                     return
                 }
             }
-            await requestBrokerUpgrade({ creci: creci.trim() })
+            await requestBrokerUpgrade({ creci: trimmedCreci })
             await refresh()
             setStep('documents')
         } catch (err) {
             const apiErr = err as ApiError
             setError(apiErr?.message || 'Erro ao solicitar upgrade. Tente novamente.')
+        } finally {
+            setSubmitting(false)
+        }
+    }
+
+    const handleSkipDocuments = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setSubmitting(true)
+        setError(null)
+        setStep('waiting')
+        try {
+            if (isSignupMode) {
+                const draftId = signupDraft?.draftId
+                const draftToken = signupDraft?.draftToken
+                if (!draftId || !draftToken) {
+                    throw new Error('Rascunho de cadastro não encontrado.')
+                }
+                await finalizeSignupDraft(draftId, draftToken, 'broker_send_later')
+                clearSignupDraft()
+                await refresh()
+                setStep('waiting')
+                return
+            }
+            await refresh()
+        } catch (err) {
+            const apiErr = err as ApiError
+            setError(apiErr?.message || 'Não foi possível registrar a pendência documental.')
         } finally {
             setSubmitting(false)
         }
@@ -127,13 +188,31 @@ export default function BrokerOnboardingPage() {
         setSubmitting(true)
         setError(null)
         try {
-            await uploadBrokerDocuments({
-                creciFront,
-                creciBack,
-                selfie,
-            })
-            await refresh()
+            if (isSignupMode) {
+                const draftId = signupDraft?.draftId
+                const draftToken = signupDraft?.draftToken
+                if (!draftId || !draftToken) {
+                    throw new Error('Rascunho de cadastro não encontrado.')
+                }
+                await submitSignupDraftDocuments(draftId, draftToken, {
+                    creciFront,
+                    creciBack,
+                    selfie,
+                })
+                await finalizeSignupDraft(draftId, draftToken, 'broker_submit_documents')
+                clearSignupDraft()
+                await refresh()
+            } else {
+                await uploadBrokerDocuments({
+                    creciFront,
+                    creciBack,
+                    selfie,
+                })
+            }
             setStep('waiting')
+            if (!isSignupMode) {
+                await refresh()
+            }
         } catch (err) {
             const apiErr = err as ApiError
             setError(apiErr?.message || 'Erro ao enviar documentos.')
@@ -142,7 +221,7 @@ export default function BrokerOnboardingPage() {
         }
     }
 
-    if (loading || !session) {
+    if (loading || (!isSignupMode && !session)) {
         return (
             <div className="min-h-[60vh] flex items-center justify-center">
                 <p className="text-sm text-slate-600">Carregando seu perfil...</p>
@@ -151,7 +230,7 @@ export default function BrokerOnboardingPage() {
     }
 
     return (
-        <div className="min-h-[70vh] flex items-center justify-center px-4 py-12 bg-gradient-to-b from-slate-50 to-slate-100">
+        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-3 pt-24 pb-10 sm:px-4 sm:pt-36 sm:pb-16 bg-gradient-to-b from-slate-50/95 to-slate-100/95">
             <div className="w-full max-w-lg space-y-6 rounded-2xl border border-slate-100 bg-white p-8 shadow-xl shadow-slate-200/70">
                 {brokerStatus && (
                     <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium ${brokerStatus === 'approved'
@@ -221,6 +300,11 @@ export default function BrokerOnboardingPage() {
                             <p className="text-sm text-slate-600">
                                 Envie as fotos do seu CRECI, frente e verso, e uma selfie para validação.
                             </p>
+                            {isSignupMode && effectiveSignupCreci ? (
+                                <p className="text-xs text-slate-500">
+                                    CRECI informado no cadastro: {effectiveSignupCreci}
+                                </p>
+                            ) : null}
                         </div>
 
                         <form onSubmit={handleDocumentsUpload} className="space-y-4">
@@ -285,11 +369,41 @@ export default function BrokerOnboardingPage() {
                             >
                                 {submitting ? 'Enviando...' : 'Enviar documentos'}
                             </button>
+                            {isSignupMode ? (
+                                <button
+                                    type="button"
+                                    onClick={handleSkipDocuments}
+                                    disabled={submitting}
+                                    className="w-full inline-flex items-center justify-center rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold px-4 py-2.5 hover:bg-slate-50 transition-colors disabled:opacity-60"
+                                >
+                                    Enviar depois
+                                </button>
+                            ) : null}
+                            {isSignupMode ? (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const draft = loadSignupDraft()
+                                        if (draft) {
+                                            patchSignupDraft({
+                                                ...draft,
+                                                step: 'address',
+                                                data: draft.data,
+                                            })
+                                        }
+                                        router.push('/auth/cadastro')
+                                    }}
+                                    disabled={submitting}
+                                    className="w-full inline-flex items-center justify-center rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold px-4 py-2.5 hover:bg-slate-50 transition-colors disabled:opacity-60"
+                                >
+                                    Corrigir dados
+                                </button>
+                            ) : null}
                         </form>
                     </>
                 )}
 
-                {step === 'waiting' && brokerStatus === 'pending_verification' && (
+                {step === 'waiting' && (
                     <div className="text-center space-y-4 py-6">
                         <div className="w-16 h-16 mx-auto bg-amber-50 rounded-full flex items-center justify-center">
                             <Clock className="w-8 h-8 text-amber-500" />

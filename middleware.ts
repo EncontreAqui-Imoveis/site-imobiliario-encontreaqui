@@ -45,8 +45,13 @@ export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl
   const token = request.cookies.get(authTokenCookieName)?.value?.trim()
   const hasToken = Boolean(token)
+  const isSignupBrokerOnboarding =
+    pathname === '/onboarding/broker' && request.nextUrl.searchParams.get('mode') === 'signup'
 
   if (isProtectedRoute(pathname) && !hasToken) {
+    if (isSignupBrokerOnboarding) {
+      return NextResponse.next()
+    }
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = '/auth/login'
     loginUrl.search = ''
