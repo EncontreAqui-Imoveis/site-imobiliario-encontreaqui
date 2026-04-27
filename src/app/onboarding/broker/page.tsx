@@ -30,6 +30,9 @@ export default function BrokerOnboardingPage() {
     const isSignupMode = mode === 'signup'
     const signupDraft = loadSignupDraft()
     const hasSignupDraft = Boolean(signupDraft?.draftId && signupDraft?.draftToken)
+    const signupDraftIdentity = isSignupMode && signupDraft?.draftId && signupDraft?.draftToken
+        ? `${signupDraft.draftId}:${signupDraft.draftToken}`
+        : ''
     const brokerStatus = session?.broker?.status ?? session?.user?.broker_status ?? null
     const resolvedCreci = session?.broker?.creci?.trim() ?? ''
     const signupDraftCreci = signupDraft?.data.creci.trim() ?? ''
@@ -46,10 +49,57 @@ export default function BrokerOnboardingPage() {
     const [error, setError] = useState<string | null>(null)
     const [finalizedSignup, setFinalizedSignup] = useState(false)
     const [waitingOutcome, setWaitingOutcome] = useState<WaitingOutcome | null>(null)
+    const [documentSelectionValid, setDocumentSelectionValid] = useState(false)
 
     const creciFrontRef = useRef<HTMLInputElement>(null)
     const creciBackRef = useRef<HTMLInputElement>(null)
     const selfieRef = useRef<HTMLInputElement>(null)
+    const activeDraftIdentityRef = useRef<string>('')
+    const selectedDraftIdentityRef = useRef<string | null>(null)
+
+    const clearSelectedDocuments = () => {
+        setCreciFront(null)
+        setCreciBack(null)
+        setSelfie(null)
+        selectedDraftIdentityRef.current = null
+        setDocumentSelectionValid(false)
+
+        if (creciFrontRef.current) {
+            creciFrontRef.current.value = ''
+        }
+        if (creciBackRef.current) {
+            creciBackRef.current.value = ''
+        }
+        if (selfieRef.current) {
+            selfieRef.current.value = ''
+        }
+    }
+
+    const markDraftDocumentSelection = () => {
+        if (!signupDraftIdentity) {
+            setDocumentSelectionValid(false)
+            return
+        }
+        selectedDraftIdentityRef.current = signupDraftIdentity
+        setDocumentSelectionValid(true)
+    }
+
+    useEffect(() => {
+        if (!isSignupMode) {
+            activeDraftIdentityRef.current = ''
+            clearSelectedDocuments()
+            return
+        }
+        if (!signupDraftIdentity) {
+            activeDraftIdentityRef.current = ''
+            clearSelectedDocuments()
+            return
+        }
+        if (activeDraftIdentityRef.current !== signupDraftIdentity) {
+            clearSelectedDocuments()
+        }
+        activeDraftIdentityRef.current = signupDraftIdentity
+    }, [isSignupMode, signupDraftIdentity, loading, hasSignupDraft])
 
     useEffect(() => {
         if (!loading && !isSignupMode && !session) {
@@ -178,6 +228,7 @@ export default function BrokerOnboardingPage() {
                 setStep('waiting')
                 await refresh()
                 clearSignupDraft()
+                clearSelectedDocuments()
                 return
             }
             await refresh()
@@ -192,6 +243,14 @@ export default function BrokerOnboardingPage() {
 
     const handleDocumentsUpload = async (e: React.FormEvent) => {
         e.preventDefault()
+        if (!signupDraftIdentity || selectedDraftIdentityRef.current !== signupDraftIdentity) {
+            setError('Selecione os documentos novamente para este cadastro.')
+            return
+        }
+        if (!documentSelectionValid) {
+            setError('Selecione os documentos antes de enviar.')
+            return
+        }
         if (!creciFront || !creciBack || !selfie) {
             setError('Todos os 3 documentos são obrigatórios.')
             return
@@ -226,6 +285,7 @@ export default function BrokerOnboardingPage() {
                 setStep('waiting')
                 await refresh()
                 clearSignupDraft()
+                clearSelectedDocuments()
             } else {
                 await uploadBrokerDocuments({
                     creciFront,
@@ -345,7 +405,15 @@ export default function BrokerOnboardingPage() {
                                     type="file"
                                     accept="image/*"
                                     className="hidden"
-                                    onChange={(e) => setCreciFront(e.target.files?.[0] || null)}
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0] || null
+                                        setCreciFront(file)
+                                        if (file) {
+                                            markDraftDocumentSelection()
+                                            return
+                                        }
+                                        setDocumentSelectionValid(false)
+                                    }}
                                 />
                             </div>
 
@@ -361,7 +429,15 @@ export default function BrokerOnboardingPage() {
                                     type="file"
                                     accept="image/*"
                                     className="hidden"
-                                    onChange={(e) => setCreciBack(e.target.files?.[0] || null)}
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0] || null
+                                        setCreciBack(file)
+                                        if (file) {
+                                            markDraftDocumentSelection()
+                                            return
+                                        }
+                                        setDocumentSelectionValid(false)
+                                    }}
                                 />
                             </div>
 
@@ -377,7 +453,15 @@ export default function BrokerOnboardingPage() {
                                     type="file"
                                     accept="image/*"
                                     className="hidden"
-                                    onChange={(e) => setSelfie(e.target.files?.[0] || null)}
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0] || null
+                                        setSelfie(file)
+                                        if (file) {
+                                            markDraftDocumentSelection()
+                                            return
+                                        }
+                                        setDocumentSelectionValid(false)
+                                    }}
                                 />
                             </div>
 
@@ -389,7 +473,7 @@ export default function BrokerOnboardingPage() {
 
                             <button
                                 type="submit"
-                                disabled={submitting || !creciFront || !creciBack || !selfie}
+                                disabled={submitting || !creciFront || !creciBack || !selfie || !documentSelectionValid}
                                 className="w-full inline-flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 disabled:bg-primary-300 text-white text-sm font-semibold px-4 py-2.5 shadow-md shadow-primary-500/20 transition-colors"
                             >
                                 {submitting ? 'Enviando...' : 'Enviar documentos'}

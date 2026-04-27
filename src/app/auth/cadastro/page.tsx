@@ -72,7 +72,17 @@ function normalizePhone(value: string) {
     return value.replace(/\D/g, '')
 }
 
+function normalizeCreci(value: string) {
+    return value.replace(/\s+/g, '').toUpperCase().trim()
+}
+
+function formatFieldError(fieldLabel: string, values?: string[]) {
+    if (!values || values.length === 0) return `${fieldLabel} inválido.`
+    return `${fieldLabel} inválido. ${values.join(', ')}`
+}
+
 function hasRequiredAddress(draft: SignupDraft) {
+    if (draft.userType !== 'broker') return true
     return Boolean(
         draft.data.street.trim() &&
         (draft.data.semNumero || draft.data.number.trim()) &&
@@ -146,11 +156,12 @@ function getDraftValidationError(error: unknown, step: 'profile' | 'basic' | 'ad
     }
 
     const code = String(apiError.payload.code).toUpperCase()
+    const fields = apiError.payload.fields as Record<string, string[]> | undefined
     if (
         (code === 'CRECI_INVALID' || code === 'DRAFT_CRICI_INVALID')
-        && ['basic', 'address', 'verify_method', 'documents', 'email', 'phone'].includes(step)
+        && ['profile', 'basic', 'address', 'verify_method', 'documents', 'email', 'phone'].includes(step)
     ) {
-        return 'CRECI inválido.'
+        return formatFieldError('CRECI', fields?.creci)
     }
     if (code === 'DRAFT_ADDRESS_INVALID' && step === 'address') {
         return 'Endereço inválido.'
@@ -275,7 +286,7 @@ export default function CadastroPage() {
     ) => {
         const authProvider: 'google' | 'email' = next.source === 'google' ? 'google' : 'email'
         const includeAddress = shouldIncludeAddressPayload(remoteStep, next)
-        const normalizedCreci = next.data.creci.trim()
+        const normalizedCreci = normalizeCreci(next.data.creci)
         const normalizedState = next.data.state.trim().toUpperCase()
         const includeCreci = remoteStep !== 'profile' && normalizedCreci && next.userType === 'broker'
         const normalizedPhone = normalizePhone(next.data.phone)
@@ -477,8 +488,8 @@ export default function CadastroPage() {
                 })
 
                 if (googleDraft.userType) {
-                    const hasRemoteDraft = Boolean(googleDraft.draftId && googleDraft.draftToken)
-                    const shouldCreateDraftRemotely = googleDraft.userType === 'client'
+                const hasRemoteDraft = Boolean(googleDraft.draftId && googleDraft.draftToken)
+                const shouldCreateDraftRemotely = googleDraft.userType === 'client'
                     if (hasRemoteDraft || shouldCreateDraftRemotely) {
                         googleDraft = await syncDraftWithServer(googleDraft, {
                             remoteStep: 'profile',
@@ -511,17 +522,6 @@ export default function CadastroPage() {
             if (validationError) {
                 setError(validationError)
             } else if (!handleDraftConflict(apiErr)) {
-                const code = String(apiErr?.payload?.code || '').toUpperCase()
-                const message = String(apiErr?.message || '').toLowerCase()
-                if (
-                    code === 'CRECI_INVALID'
-                    || code === 'CRECI_MISSING'
-                    || code === 'DRAFT_CRICI_INVALID'
-                    || message.includes('creci')
-                ) {
-                    setError('Não foi possível concluir o cadastro. Tente novamente.')
-                    return
-                }
                 setError(apiErr?.message || 'Erro ao conectar com o Google. Tente novamente.')
             }
         } finally {
@@ -571,12 +571,14 @@ export default function CadastroPage() {
             setSubmitting(false)
             return
         }
-        if (normalizePhone(phone).length < 10) {
+        const normalizedPhone = normalizePhone(phone)
+        if (draft.userType === 'broker' && normalizedPhone.length < 10) {
             setError('Informe um telefone válido.')
             setSubmitting(false)
             return
         }
-        if (draft.userType === 'broker' && !creci.trim()) {
+        const normalizedCreci = normalizeCreci(creci)
+        if (draft.userType === 'broker' && !normalizedCreci) {
             setError('O CRECI é obrigatório para corretores.')
             setSubmitting(false)
             return
@@ -593,7 +595,8 @@ export default function CadastroPage() {
             }
 
             if (draft.userType === 'broker') {
-                const creciStatus = await checkCreci(creci.trim().toUpperCase())
+                const normalizedCreci = normalizeCreci(creci)
+                const creciStatus = await checkCreci(normalizedCreci)
                 if (creciStatus.exists) {
                     setError('Já existe um corretor com este CRECI.')
                     setSubmitting(false)
@@ -608,7 +611,7 @@ export default function CadastroPage() {
                     email: email.trim().toLowerCase(),
                     password,
                     phone: formatPhoneInput(phone),
-                    creci: creci.trim().toUpperCase(),
+                    creci: normalizedCreci,
                 },
             })
             const syncedDraft = await syncDraftWithServer(next, { remoteStep: 'basic' })
@@ -974,11 +977,10 @@ export default function CadastroPage() {
                         )}
 
                         <div className="space-y-1.5">
-                            <label htmlFor="phone" className="block text-sm font-medium text-slate-700">Telefone *</label>
+                            <label htmlFor="phone" className="block text-sm font-medium text-slate-700">Telefone</label>
                             <input
                                 id="phone"
                                 type="tel"
-                                required
                                 value={draft.data.phone}
                                 onChange={(e) => updateDraft({ phone: formatPhoneInput(e.target.value) })}
                                 maxLength={15}
@@ -995,7 +997,7 @@ export default function CadastroPage() {
                                     type="text"
                                     required
                                     value={draft.data.creci}
-                                    onChange={(e) => updateDraft({ creci: e.target.value.toUpperCase() })}
+                                    onChange={(e) => updateDraft({ creci: normalizeCreci(e.target.value) })}
                                     maxLength={25}
                                     className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                                     placeholder="Ex: 12345-F"
@@ -1047,7 +1049,7 @@ export default function CadastroPage() {
                                     {cepLoading && <p role="status" aria-live="polite" className="text-xs text-primary-500">Buscando CEP...</p>}
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label htmlFor="state" className="block text-xs font-medium text-slate-600">Estado *</label>
+                                    <label htmlFor="state" className="block text-xs font-medium text-slate-600">Estado</label>
                                     <select
                                         id="state"
                                         value={draft.data.state}

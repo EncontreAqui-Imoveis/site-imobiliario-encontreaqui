@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import CadastroPage from '@/app/auth/cadastro/page'
 import VerificacaoPage from '@/app/verificacao/page'
 import VerificarMetodoPage from '@/app/cadastro/verificar-metodo/page'
+import BrokerOnboardingPage from '@/app/onboarding/broker/page'
 
 const mockPush = jest.fn()
 const mockReplace = jest.fn()
@@ -25,6 +26,10 @@ const mockCreateSignupDraftRemote = jest.fn()
 const mockPatchSignupDraftRemote = jest.fn()
 const mockDiscardSignupDraft = jest.fn()
 const mockSendSignupDraftEmailCode = jest.fn()
+const mockFinalizeSignupDraft = jest.fn()
+const mockSubmitSignupDraftDocuments = jest.fn()
+const mockRequestBrokerUpgrade = jest.fn()
+const mockUploadBrokerDocuments = jest.fn()
 
 function createDraftConflictError(code: string) {
     return Object.assign(new Error('Conflito de cadastro'), {
@@ -118,6 +123,13 @@ jest.mock('@/lib/api/signupDraft', () => ({
     patchSignupDraftRemote: (...args: unknown[]) => mockPatchSignupDraftRemote(...args),
     discardSignupDraft: (...args: unknown[]) => mockDiscardSignupDraft(...args),
     sendSignupDraftEmailCode: (...args: unknown[]) => mockSendSignupDraftEmailCode(...args),
+    finalizeSignupDraft: (...args: unknown[]) => mockFinalizeSignupDraft(...args),
+    submitSignupDraftDocuments: (...args: unknown[]) => mockSubmitSignupDraftDocuments(...args),
+}))
+
+jest.mock('@/lib/api/broker', () => ({
+    requestBrokerUpgrade: (...args: unknown[]) => mockRequestBrokerUpgrade(...args),
+    uploadBrokerDocuments: (...args: unknown[]) => mockUploadBrokerDocuments(...args),
 }))
 
 jest.mock('@/lib/registerFromSignupDraft', () => ({
@@ -159,6 +171,16 @@ describe('signup flow', () => {
         mockSearchParamsGet.mockReturnValue(null)
         mockCheckEmail.mockResolvedValue({ exists: false })
         mockCheckCreci.mockResolvedValue({ exists: false })
+        mockFinalizeSignupDraft.mockResolvedValue({
+            token: 'broker-finalized-token',
+            user: { role: 'broker', email_verified: true, phone: '' },
+            isBroker: true,
+            profileStatus: 'complete',
+            requiresBrokerDocuments: false,
+        })
+        mockSubmitSignupDraftDocuments.mockResolvedValue({ message: 'ok' })
+        mockRequestBrokerUpgrade.mockResolvedValue({ success: true })
+        mockUploadBrokerDocuments.mockResolvedValue({ success: true })
         mockIsGooglePendingAuthResult.mockReturnValue(false)
         mockLoginWithGooglePopup.mockReset()
         mockCreateSignupDraftRemote.mockResolvedValue({
@@ -380,7 +402,7 @@ describe('signup flow', () => {
 
         await waitFor(() => {
             expect(mockCreateSignupDraftRemote).toHaveBeenCalledTimes(1)
-            expect(screen.getByText('CRECI inválido.')).toBeInTheDocument()
+            expect(screen.getByText('CRECI inválido. CRECI inválido')).toBeInTheDocument()
         })
     })
 
@@ -918,5 +940,75 @@ describe('signup flow', () => {
         await waitFor(() => {
             expect(mockReplace).toHaveBeenCalledWith('/onboarding/broker?mode=signup&creci=GO123')
         })
+    })
+
+    it('novo draft não herda documentos locais do draft anterior', async () => {
+        mockSearchParamsGet.mockImplementation((key: string) => {
+            if (key === 'mode') return 'signup'
+            return null
+        })
+
+        const makeDraft = (draftId: string) => ({
+            source: 'google',
+            userType: 'broker',
+            step: 'verify_method',
+            emailVerified: true,
+            phoneVerified: false,
+            draftId,
+            draftToken: `${draftId}-token`,
+            data: {
+                name: 'Corretor Teste',
+                email: 'corretor-test@example.com',
+                password: '',
+                phone: '62999998888',
+                street: 'Rua A',
+                number: '100',
+                semNumero: false,
+                complement: '',
+                bairro: 'Centro',
+                city: 'Anapolis',
+                state: 'GO',
+                cep: '75900000',
+                creci: 'GO123',
+                googleIdToken: 'google-token',
+                googleUid: 'google-uid',
+            },
+            updatedAt: new Date().toISOString(),
+        })
+
+        const setInputFile = (input: HTMLInputElement, fileName: string) => {
+            const file = new File(['conteudo'], fileName, { type: 'image/jpeg' })
+            Object.defineProperty(input, 'files', {
+                value: [file],
+                writable: false,
+                configurable: true,
+            })
+            fireEvent.change(input)
+        }
+
+        mockLoadSignupDraft.mockReturnValue(makeDraft('draft-old'))
+        const { container, rerender } = render(<BrokerOnboardingPage />)
+
+        const fileInputs = container.querySelectorAll('input[type="file"]')
+        expect(fileInputs).toHaveLength(3)
+
+        setInputFile(fileInputs[0] as HTMLInputElement, 'creci-front-old.jpg')
+        setInputFile(fileInputs[1] as HTMLInputElement, 'creci-back-old.jpg')
+        setInputFile(fileInputs[2] as HTMLInputElement, 'selfie-old.jpg')
+
+        expect(screen.getByText('creci-front-old.jpg')).toBeInTheDocument()
+        expect(screen.getByText('creci-back-old.jpg')).toBeInTheDocument()
+        expect(screen.getByText('selfie-old.jpg')).toBeInTheDocument()
+
+        mockLoadSignupDraft.mockReturnValue(makeDraft('draft-new'))
+        rerender(<BrokerOnboardingPage />)
+
+        expect(screen.getByText('CRECI — Frente')).toBeInTheDocument()
+        expect(screen.getByText('CRECI — Verso')).toBeInTheDocument()
+        expect(screen.getByText('Selfie')).toBeInTheDocument()
+        expect(screen.queryByText('creci-front-old.jpg')).not.toBeInTheDocument()
+        expect(screen.queryByText('creci-back-old.jpg')).not.toBeInTheDocument()
+        expect(screen.queryByText('selfie-old.jpg')).not.toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /^enviar documentos$/i })).toBeDisabled()
     })
 })

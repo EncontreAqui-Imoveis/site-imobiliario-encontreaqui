@@ -216,12 +216,11 @@ export default function OnboardingPage() {
                     {/* Telefone */}
                     <div className="space-y-1.5">
                         <label htmlFor="phone" className="block text-sm font-medium text-slate-700">
-                            Telefone *
+                            Telefone
                         </label>
                         <input
                             id="phone"
                             type="tel"
-                            required
                             value={phone}
                             onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
                             maxLength={15}
@@ -234,11 +233,10 @@ export default function OnboardingPage() {
                         <legend className="text-sm font-semibold text-slate-800 pb-2">Endereço de Cadastro</legend>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1.5">
-                                <label htmlFor="cep" className="block text-xs font-medium text-slate-600">CEP *</label>
+                                <label htmlFor="cep" className="block text-xs font-medium text-slate-600">CEP</label>
                                 <input
                                     id="cep"
                                     type="text"
-                                    required
                                     value={cep}
                                     onChange={(e) => setCep(formatCep(e.target.value))}
                                     onBlur={handleCepBlur}
@@ -248,10 +246,9 @@ export default function OnboardingPage() {
                                 {cepLoading && <p role="status" aria-live="polite" className="text-xs text-primary-500">Buscando CEP...</p>}
                             </div>
                             <div className="space-y-1.5">
-                                <label htmlFor="state" className="block text-xs font-medium text-slate-600">Estado *</label>
+                                <label htmlFor="state" className="block text-xs font-medium text-slate-600">Estado</label>
                                 <select
                                     id="state"
-                                    required
                                     value={state}
                                     onChange={(e) => setState(e.target.value)}
                                     className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -266,11 +263,10 @@ export default function OnboardingPage() {
 
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1.5">
-                                <label htmlFor="city" className="block text-xs font-medium text-slate-600">Cidade *</label>
+                                <label htmlFor="city" className="block text-xs font-medium text-slate-600">Cidade</label>
                                 <input
                                     id="city"
                                     type="text"
-                                    required
                                     value={city}
                                     onChange={(e) => setCity(e.target.value)}
                                     maxLength={25}
@@ -279,11 +275,10 @@ export default function OnboardingPage() {
                                 />
                             </div>
                             <div className="space-y-1.5">
-                                <label htmlFor="bairro" className="block text-xs font-medium text-slate-600">Bairro *</label>
+                                <label htmlFor="bairro" className="block text-xs font-medium text-slate-600">Bairro</label>
                                 <input
                                     id="bairro"
                                     type="text"
-                                    required
                                     value={bairro}
                                     onChange={(e) => setBairro(e.target.value)}
                                     maxLength={120}
@@ -294,11 +289,10 @@ export default function OnboardingPage() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label htmlFor="street" className="block text-xs font-medium text-slate-600">Rua *</label>
+                            <label htmlFor="street" className="block text-xs font-medium text-slate-600">Rua</label>
                             <input
                                 id="street"
                                 type="text"
-                                required
                                 value={street}
                                 onChange={(e) => setStreet(e.target.value)}
                                 maxLength={120}

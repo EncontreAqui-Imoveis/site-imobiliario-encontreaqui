@@ -105,15 +105,13 @@ export interface GooglePendingAuthResult {
 export type GoogleAuthResult = UserSession | GooglePendingAuthResult
 
 function isProfileComplete(user: User): boolean {
-    return Boolean(
-        user.phone &&
-        user.street &&
-        user.number &&
-        user.bairro &&
-        user.city &&
-        user.state &&
-        user.cep,
-    )
+    if (!user) return false
+    // Se for corretor, exige telefone.
+    if (user.role === 'broker') {
+        return Boolean(user.phone && String(user.phone).trim().length >= 8)
+    }
+    // Para clientes, nome já basta (vem do Auth).
+    return true
 }
 
 export function mapAuthResponseToSession(response: AuthResponse): UserSession {

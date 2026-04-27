@@ -9,7 +9,7 @@ export interface CloudinarySignature {
 }
 
 export async function getUploadSignature(folder: string = 'properties'): Promise<CloudinarySignature> {
-  const data = await apiClient<{
+  const data = await apiClient.get<{
     timestamp: number;
     signature: string;
     cloudName: string;
