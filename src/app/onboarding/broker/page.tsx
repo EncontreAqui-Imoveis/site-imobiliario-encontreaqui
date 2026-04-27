@@ -19,6 +19,7 @@ import { validateDocumentFile } from '@/lib/sanitize'
 import { BadgeCheck, Upload, Camera, CreditCard, AlertCircle, CheckCircle, Clock } from 'lucide-react'
 
 type Step = 'creci' | 'documents' | 'waiting'
+type WaitingOutcome = 'send-later' | 'documents-sent' | 'pending-verification'
 
 export default function BrokerOnboardingPage() {
     const router = useRouter()
@@ -44,6 +45,7 @@ export default function BrokerOnboardingPage() {
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [finalizedSignup, setFinalizedSignup] = useState(false)
+    const [waitingOutcome, setWaitingOutcome] = useState<WaitingOutcome | null>(null)
 
     const creciFrontRef = useRef<HTMLInputElement>(null)
     const creciBackRef = useRef<HTMLInputElement>(null)
@@ -67,12 +69,17 @@ export default function BrokerOnboardingPage() {
     }, [hasSignupDraft, isSignupMode, loading, router, session, finalizedSignup])
 
     useEffect(() => {
+        if (isSignupMode && step === 'waiting' && waitingOutcome === 'send-later') {
+            return
+        }
         if (isSignupMode && effectiveSignupCreci && step !== 'waiting') {
             setCreci(effectiveSignupCreci)
+            setWaitingOutcome(null)
             setStep('documents')
             return
         }
         if (isSignupMode && !effectiveSignupCreci) {
+            setWaitingOutcome(null)
             setStep('creci')
             return
         }
@@ -87,22 +94,26 @@ export default function BrokerOnboardingPage() {
         }
 
         if (brokerStatus === 'pending_verification') {
+            setWaitingOutcome('pending-verification')
             setStep('waiting')
             return
         }
 
         if (requiresDocuments) {
+            setWaitingOutcome(null)
             setStep('documents')
             return
         }
 
         if (brokerStatus === 'rejected') {
+            setWaitingOutcome(null)
             setStep('documents')
             return
         }
 
+        setWaitingOutcome(null)
         setStep('creci')
-    }, [brokerStatus, isSignupMode, mode, requiresDocuments, router, session, effectiveSignupCreci, resolvedCreci, step])
+    }, [brokerStatus, isSignupMode, mode, requiresDocuments, router, session, effectiveSignupCreci, resolvedCreci, step, waitingOutcome])
 
     const handleUpgradeRequest = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -151,7 +162,6 @@ export default function BrokerOnboardingPage() {
         e.preventDefault()
         setSubmitting(true)
         setError(null)
-        setStep('waiting')
         try {
             if (isSignupMode) {
                 const draftId = signupDraft?.draftId
@@ -164,9 +174,10 @@ export default function BrokerOnboardingPage() {
                     persistAuthToken(finalized.token)
                 }
                 setFinalizedSignup(true)
+                setWaitingOutcome('send-later')
+                setStep('waiting')
                 await refresh()
                 clearSignupDraft()
-                setStep('waiting')
                 return
             }
             await refresh()
@@ -211,6 +222,8 @@ export default function BrokerOnboardingPage() {
                     persistAuthToken(finalized.token)
                 }
                 setFinalizedSignup(true)
+                setWaitingOutcome('documents-sent')
+                setStep('waiting')
                 await refresh()
                 clearSignupDraft()
             } else {
@@ -420,16 +433,33 @@ export default function BrokerOnboardingPage() {
                         <div className="w-16 h-16 mx-auto bg-amber-50 rounded-full flex items-center justify-center">
                             <Clock className="w-8 h-8 text-amber-500" />
                         </div>
-                        <h1 className="text-2xl font-bold text-slate-900">Documentos enviados!</h1>
+                        {waitingOutcome === 'send-later' ? (
+                            <h1 className="text-2xl font-bold text-slate-900">Cadastro de corretor criado. Documentos pendentes.</h1>
+                        ) : (
+                            <h1 className="text-2xl font-bold text-slate-900">Documentos enviados!</h1>
+                        )}
                         <p className="text-sm text-slate-600 max-w-sm mx-auto">
-                            Seus documentos estão sendo analisados pela equipe. Você será notificado quando a verificação for concluída.
+                            {waitingOutcome === 'send-later'
+                                ? 'Seu cadastro foi criado e ficará pendente até o envio dos documentos.'
+                                : waitingOutcome === 'documents-sent' || waitingOutcome === 'pending-verification'
+                                    ? 'Seus documentos estão sendo analisados pela equipe. Você será notificado quando a verificação for concluída.'
+                                    : 'Seu cadastro está em etapa de análise.'}
                         </p>
-                        <Link
-                            href="/imoveis"
-                            className="inline-flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold px-6 py-2.5 shadow-md shadow-primary-500/20 transition-colors"
-                        >
-                            Explorar imóveis
-                        </Link>
+                        {waitingOutcome === 'send-later' ? (
+                            <Link
+                                href="/meus-imoveis"
+                                className="inline-flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold px-6 py-2.5 shadow-md shadow-primary-500/20 transition-colors"
+                            >
+                                Ir para Meus imóveis
+                            </Link>
+                        ) : (
+                            <Link
+                                href="/imoveis"
+                                className="inline-flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold px-6 py-2.5 shadow-md shadow-primary-500/20 transition-colors"
+                            >
+                                Explorar imóveis
+                            </Link>
+                        )}
                     </div>
                 )}
             </div>

@@ -311,7 +311,7 @@ describe('signup flow', () => {
         expect(screen.getByRole('button', { name: 'Trocar de conta' })).toBeInTheDocument()
     })
 
-    it('na seleção de perfil + Google de corretor, cria draft sem campo creci e continua no passo básico', async () => {
+    it('na seleção de perfil + Google de corretor, segue para passo básico sem criar draft remoto sem CRECI', async () => {
         mockIsGooglePendingAuthResult.mockReturnValue(true)
         mockLoginWithGooglePopup.mockResolvedValue({
             pending: {
@@ -328,27 +328,10 @@ describe('signup flow', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Continuar com Google' }))
 
         await waitFor(() => {
-            expect(mockCreateSignupDraftRemote).toHaveBeenCalledTimes(1)
+            expect(mockCreateSignupDraftRemote).not.toHaveBeenCalled()
         })
 
-        const payload = mockCreateSignupDraftRemote.mock.calls[0]?.[0]
-        logDraftPayload('google-broker-profile', payload)
-        expect(payload).toMatchObject({
-            profileType: 'broker',
-            source: 'google',
-            email: 'corretor-google-test@example.com',
-            name: 'Corretor Google',
-            authProvider: 'google',
-            currentStep: 'IDENTITY',
-        })
-        expect(payload).not.toHaveProperty('creci')
-        expect(payload).not.toHaveProperty('street')
-        expect(payload).not.toHaveProperty('number')
-        expect(payload).not.toHaveProperty('bairro')
-        expect(payload).not.toHaveProperty('city')
-        expect(payload).not.toHaveProperty('state')
-        expect(payload).not.toHaveProperty('cep')
-
+        expect(screen.getByLabelText(/CRECI/i)).toBeInTheDocument()
         expect(mockSaveSignupDraft).toHaveBeenCalledWith(
             expect.objectContaining({
                 source: 'google',
@@ -361,7 +344,7 @@ describe('signup flow', () => {
         )
     })
 
-    it('Google broker no fluxo de perfil não exibe CRECI inválido quando o backend retorna esse código', async () => {
+    it('Google broker no fluxo de perfil mapeia erro de CRECI inválido ao validar dados', async () => {
         mockIsGooglePendingAuthResult.mockReturnValue(true)
         mockLoginWithGooglePopup.mockResolvedValue({
             pending: {
@@ -371,22 +354,33 @@ describe('signup flow', () => {
                 googleUid: 'google-uid',
             },
         })
-        const validationError = createDraftValidationError('CRECI_INVALID', {
+        const validationError = createDraftValidationError('DRAFT_CRICI_INVALID', {
             error: 'CRECI inválido',
             fields: { creci: ['CRECI inválido'] },
         })
         mockCreateSignupDraftRemote.mockRejectedValueOnce(validationError)
-        logDraftValidationError('google-broker-profile', validationError)
+        logDraftValidationError('google-broker-basic', validationError)
         render(<CadastroPage />)
 
         fireEvent.click(screen.getByRole('button', { name: /quero cadastrar como corretor/i }))
         fireEvent.click(screen.getByRole('button', { name: 'Continuar com Google' }))
 
         await waitFor(() => {
-            expect(screen.queryByText('CRECI inválido.')).not.toBeInTheDocument()
+            expect(screen.getByLabelText('Telefone *')).toBeInTheDocument()
+            expect(screen.getByLabelText(/CRECI/i)).toBeInTheDocument()
         })
+
+        fireEvent.change(screen.getByLabelText('Telefone *'), {
+            target: { value: '(62) 98888-7777' },
+        })
+        fireEvent.change(screen.getByLabelText(/CRECI/i), {
+            target: { value: 'ABC123' },
+        })
+        fireEvent.click(screen.getByRole('button', { name: /^continuar$/i }))
+
         await waitFor(() => {
-            expect(screen.getByText('Não foi possível concluir o cadastro. Tente novamente.')).toBeInTheDocument()
+            expect(mockCreateSignupDraftRemote).toHaveBeenCalledTimes(1)
+            expect(screen.getByText('CRECI inválido.')).toBeInTheDocument()
         })
     })
 

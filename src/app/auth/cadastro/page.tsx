@@ -146,7 +146,10 @@ function getDraftValidationError(error: unknown, step: 'profile' | 'basic' | 'ad
     }
 
     const code = String(apiError.payload.code).toUpperCase()
-    if (code === 'CRECI_INVALID' && ['basic', 'address', 'verify_method', 'documents', 'email', 'phone'].includes(step)) {
+    if (
+        (code === 'CRECI_INVALID' || code === 'DRAFT_CRICI_INVALID')
+        && ['basic', 'address', 'verify_method', 'documents', 'email', 'phone'].includes(step)
+    ) {
         return 'CRECI inválido.'
     }
     if (code === 'DRAFT_ADDRESS_INVALID' && step === 'address') {
@@ -474,9 +477,13 @@ export default function CadastroPage() {
                 })
 
                 if (googleDraft.userType) {
-                    googleDraft = await syncDraftWithServer(googleDraft, {
-                        remoteStep: 'profile',
-                    })
+                    const hasRemoteDraft = Boolean(googleDraft.draftId && googleDraft.draftToken)
+                    const shouldCreateDraftRemotely = googleDraft.userType === 'client'
+                    if (hasRemoteDraft || shouldCreateDraftRemotely) {
+                        googleDraft = await syncDraftWithServer(googleDraft, {
+                            remoteStep: 'profile',
+                        })
+                    }
                 }
 
                 persistDraft(googleDraft)
@@ -506,7 +513,12 @@ export default function CadastroPage() {
             } else if (!handleDraftConflict(apiErr)) {
                 const code = String(apiErr?.payload?.code || '').toUpperCase()
                 const message = String(apiErr?.message || '').toLowerCase()
-                if (code === 'CRECI_INVALID' || code === 'CRECI_MISSING' || message.includes('creci')) {
+                if (
+                    code === 'CRECI_INVALID'
+                    || code === 'CRECI_MISSING'
+                    || code === 'DRAFT_CRICI_INVALID'
+                    || message.includes('creci')
+                ) {
                     setError('Não foi possível concluir o cadastro. Tente novamente.')
                     return
                 }

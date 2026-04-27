@@ -48,6 +48,7 @@ import { useUser } from '@/contexts/UserContext'
 import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
 import { areaUnitLabel } from '@/lib/areaUnits'
+import { getUploadSignature, uploadToCloudinaryBrowser } from '@/lib/api/cloudinaryUpload'
 
 type WizardStep = 1 | 2 | 3 | 4 | 5 | 6
 type CepLookupResult = { logradouro: string; bairro: string; localidade: string; uf: string }
@@ -158,6 +159,7 @@ export default function AnunciePage() {
     const [cepLoading, setCepLoading] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [uploadStatus, setUploadStatus] = useState<string | null>(null)
 
     const isApprovedBroker = Boolean(session?.user?.role === 'broker' && session.user.broker_status === 'approved')
     const isBrokerPending = Boolean(session?.user?.role === 'broker' && !isApprovedBroker)
@@ -378,16 +380,55 @@ export default function AnunciePage() {
         if (!actorMode) return
         setSubmitting(true)
         setError(null)
+        setUploadStatus('Obtendo autorização para upload...')
+        
         try {
-            const formData = buildCreatePropertyFormData({ ...form, actorMode, images, video })
+            let finalImageUrls: string[] = []
+            let finalVideoUrl: string | null = null
+
+            if (images.length > 0 || video) {
+                const signatureData = await getUploadSignature()
+                
+                if (images.length > 0) {
+                    setUploadStatus('Enviando imagens (0%)...')
+                    const uploadedImages = await Promise.all(
+                        images.map(async (file, index) => {
+                            const res = await uploadToCloudinaryBrowser(file, signatureData, (progress) => {
+                                setUploadStatus(`Enviando imagens... ${progress}%`)
+                            })
+                            return res.url
+                        })
+                    )
+                    finalImageUrls = uploadedImages
+                }
+
+                if (video) {
+                    setUploadStatus('Enviando vídeo (0%)...')
+                    const res = await uploadToCloudinaryBrowser(video, signatureData, (progress) => {
+                        setUploadStatus(`Enviando vídeo... ${progress}%`)
+                    })
+                    finalVideoUrl = res.url
+                }
+            }
+
+            setUploadStatus('Salvando anúncio...')
+            
+            const formData = buildCreatePropertyFormData({
+                ...form,
+                actorMode,
+                images: finalImageUrls,
+                video: finalVideoUrl
+            })
+            
             const result = await createProperty(formData, actorMode)
             clearDraft()
             router.push(`/meus-imoveis?created=${result.id}`)
         } catch (submissionError) {
             const apiError = submissionError as ApiError
-            setError(apiError?.message || 'Erro ao cadastrar imóvel.')
+            setError(apiError?.message || 'Erro ao cadastrar imóvel ou falha no upload.')
         } finally {
             setSubmitting(false)
+            setUploadStatus(null)
         }
     }
 
@@ -945,7 +986,7 @@ export default function AnunciePage() {
                     ) : (
                         <button type="button" onClick={handleSubmit} disabled={submitting} className="inline-flex items-center gap-2 rounded-xl bg-primary-700 px-6 py-2.5 text-sm font-semibold text-white hover:bg-primary-800 disabled:bg-primary-300">
                             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                            {submitting ? 'Cadastrando...' : 'Enviar para análise'}
+                            {submitting ? (uploadStatus || 'Cadastrando...') : 'Enviar para análise'}
                         </button>
                     )}
                 </div>

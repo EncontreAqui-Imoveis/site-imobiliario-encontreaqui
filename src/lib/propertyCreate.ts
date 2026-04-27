@@ -68,8 +68,8 @@ export type CreatePropertyDraftData = {
 }
 
 export type CreatePropertyPayload = CreatePropertyDraftData & {
-    images: File[]
-    video: File | null
+    images: Array<File | string>
+    video: File | string | null
 }
 
 const LOT_REQUIRED_TYPES = new Set<string>([

@@ -357,7 +357,9 @@ test('corretor cria pendência documental com Enviar depois sem exigir CRECI nov
     await expect(page).toHaveURL(/\/onboarding\/broker\?mode=signup&creci=GO987/i)
 
     await page.getByRole('button', { name: /enviar depois/i }).click()
-    await expect(page.getByText(/Documentos enviados!/i)).toBeVisible()
+    await expect(page.getByText(/Cadastro de corretor criado\. Documentos pendentes\./i)).toBeVisible()
+    await expect(page.getByRole('link', { name: /Ir para Meus imóveis/i })).toBeVisible()
+    await expect(page.getByText(/Documentos enviados!/i)).not.toBeVisible()
     expect(finalizeAction).toBe('broker_send_later')
 
     expect(upgradeCalls).toBe(0)
