@@ -1,4 +1,37 @@
-import { apiClient } from '@/lib/api/client'
+import { apiClient, ApiError } from '@/lib/api/client'
+
+function isDraftDebugEnabled() {
+    if (typeof window === 'undefined') return false
+    return (
+        process.env.NEXT_PUBLIC_SIGNUP_DRAFT_DEBUG === '1'
+        || window.localStorage.getItem('ea_signup_draft_debug') === '1'
+    )
+}
+
+function logDraftRequest(method: 'POST' | 'PATCH', path: string, payload: unknown) {
+    if (!isDraftDebugEnabled()) return
+    // eslint-disable-next-line no-console
+    console.log(`[${method}] ${path}`, payload)
+}
+
+function logDraftResponse(path: string, response: unknown) {
+    if (!isDraftDebugEnabled()) return
+    // eslint-disable-next-line no-console
+    console.log('[DRAFT RESPONSE]', { path, response })
+}
+
+function logDraftError(path: string, status: number, payload: ApiError['payload']) {
+    if (!isDraftDebugEnabled()) return
+    // eslint-disable-next-line no-console
+    console.error('[DRAFT ERROR]', {
+        path,
+        status,
+        code: payload?.code,
+        error: payload?.error,
+        fields: payload?.fields,
+        payload,
+    })
+}
 
 export interface DraftProfileType {
     draftId: string
@@ -67,28 +100,41 @@ export async function createSignupDraftRemote(payload: {
     authProvider?: 'email' | 'google'
     currentStep?: DraftPayload['currentStep']
 }): Promise<DraftProfileType> {
-    const response = await apiClient.post<{ draftId: string; draftToken: string; draft: Record<string, unknown>; expiresAtMinutes: number }>(
-        '/auth/register/draft',
-        {
-            email: payload.email,
-            name: payload.name,
-            password: payload.password,
-            phone: payload.phone,
-            street: payload.street,
-            number: payload.number,
-            complement: payload.complement,
-            bairro: payload.bairro,
-            city: payload.city,
-            state: payload.state,
-            cep: payload.cep,
-            withoutNumber: payload.withoutNumber,
-            profileType: payload.userType,
-            creci: payload.creci,
-            googleUid: payload.googleUid,
-            authProvider: payload.source === 'google' ? 'google' : payload.authProvider ?? 'email',
-            currentStep: payload.currentStep,
-        },
-    )
+    const requestPayload = {
+        email: payload.email,
+        name: payload.name,
+        password: payload.password,
+        phone: payload.phone,
+        street: payload.street,
+        number: payload.number,
+        complement: payload.complement,
+        bairro: payload.bairro,
+        city: payload.city,
+        state: payload.state,
+        cep: payload.cep,
+        withoutNumber: payload.withoutNumber,
+        profileType: payload.userType,
+        creci: payload.creci,
+        googleUid: payload.googleUid,
+        authProvider: payload.source === 'google' ? 'google' : payload.authProvider ?? 'email',
+        currentStep: payload.currentStep,
+    }
+    logDraftRequest('POST', '/auth/register/draft', requestPayload)
+
+    let response: { draftId: string; draftToken: string; draft: Record<string, unknown>; expiresAtMinutes: number }
+    try {
+        response = await apiClient.post<{ draftId: string; draftToken: string; draft: Record<string, unknown>; expiresAtMinutes: number }>(
+            '/auth/register/draft',
+            requestPayload,
+        )
+    } catch (error) {
+        const apiError = error as ApiError
+        if (apiError instanceof ApiError) {
+            logDraftError('/auth/register/draft', apiError.status, apiError.payload)
+        }
+        throw error
+    }
+    logDraftResponse('/auth/register/draft', response)
 
     return {
         draftId: response.draftId,
@@ -122,15 +168,27 @@ export async function patchSignupDraftRemote(
     draftToken: string,
     payload: DraftPayload,
 ): Promise<SignupDraftRemoteResponse> {
-    return apiClient.patch<SignupDraftRemoteResponse & { draft: Record<string, unknown> }>(
-        `/auth/register/draft/${encodeURIComponent(draftId)}`,
-        payload,
-        {
-            headers: {
-                'x-draft-token': draftToken,
+    const path = `/auth/register/draft/${encodeURIComponent(draftId)}`
+    logDraftRequest('PATCH', path, payload)
+    try {
+        const response = await apiClient.patch<SignupDraftRemoteResponse & { draft: Record<string, unknown> }>(
+            path,
+            payload,
+            {
+                headers: {
+                    'x-draft-token': draftToken,
+                },
             },
-        },
-    )
+        )
+        logDraftResponse(path, response)
+        return response
+    } catch (error) {
+        const apiError = error as ApiError
+        if (apiError instanceof ApiError) {
+            logDraftError(path, apiError.status, apiError.payload)
+        }
+        throw error
+    }
 }
 
 export async function getSignupDraftRemote(draftId: string, draftToken: string): Promise<SignupDraftRemoteResponse> {
@@ -236,13 +294,31 @@ export async function finalizeSignupDraft(
     needsCompletion?: boolean
     action: string
 }> {
-    return apiClient.post(`/auth/register/draft/${encodeURIComponent(draftId)}/finalize`, {
-        action,
-    }, {
-        headers: {
-            'x-draft-token': draftToken,
-        },
-    })
+    const path = `/auth/register/draft/${encodeURIComponent(draftId)}/finalize`
+    const requestPayload = { action }
+    type FinalizeSignupDraftResponse = {
+        token: string
+        user: Record<string, unknown>
+        requiresDocuments?: boolean
+        needsCompletion?: boolean
+        action: string
+    }
+    logDraftRequest('POST', path, requestPayload)
+    try {
+        const response = (await apiClient.post<FinalizeSignupDraftResponse>(path, requestPayload, {
+            headers: {
+                'x-draft-token': draftToken,
+            },
+        })) as FinalizeSignupDraftResponse
+        logDraftResponse(path, response)
+        return response
+    } catch (error) {
+        const apiError = error as ApiError
+        if (apiError instanceof ApiError) {
+            logDraftError(path, apiError.status, apiError.payload)
+        }
+        throw error
+    }
 }
 
 export async function discardSignupDraft(draftId: string, draftToken: string): Promise<void> {

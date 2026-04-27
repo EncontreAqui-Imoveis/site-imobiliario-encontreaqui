@@ -9,6 +9,7 @@ import { checkCreci } from '@/lib/api/auth'
 import { requestBrokerUpgrade, uploadBrokerDocuments } from '@/lib/api/broker'
 import { finalizeSignupDraft, submitSignupDraftDocuments } from '@/lib/api/signupDraft'
 import type { ApiError } from '@/lib/api/client'
+import { persistAuthToken } from '@/lib/auth/tokenStore'
 import {
     clearSignupDraft,
     loadSignupDraft,
@@ -42,6 +43,7 @@ export default function BrokerOnboardingPage() {
     const [selfie, setSelfie] = useState<File | null>(null)
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [finalizedSignup, setFinalizedSignup] = useState(false)
 
     const creciFrontRef = useRef<HTMLInputElement>(null)
     const creciBackRef = useRef<HTMLInputElement>(null)
@@ -52,7 +54,7 @@ export default function BrokerOnboardingPage() {
             router.replace('/auth/login?next=/onboarding/broker')
             return
         }
-        if (!loading && isSignupMode && !hasSignupDraft) {
+        if (!loading && isSignupMode && !hasSignupDraft && !finalizedSignup) {
             router.replace('/auth/cadastro')
             return
         }
@@ -62,7 +64,7 @@ export default function BrokerOnboardingPage() {
                 router.replace(gateRoute)
             }
         }
-    }, [hasSignupDraft, isSignupMode, loading, router, session])
+    }, [hasSignupDraft, isSignupMode, loading, router, session, finalizedSignup])
 
     useEffect(() => {
         if (isSignupMode && effectiveSignupCreci && step !== 'waiting') {
@@ -157,15 +159,20 @@ export default function BrokerOnboardingPage() {
                 if (!draftId || !draftToken) {
                     throw new Error('Rascunho de cadastro não encontrado.')
                 }
-                await finalizeSignupDraft(draftId, draftToken, 'broker_send_later')
-                clearSignupDraft()
+                const finalized = await finalizeSignupDraft(draftId, draftToken, 'broker_send_later')
+                if (finalized.token) {
+                    persistAuthToken(finalized.token)
+                }
+                setFinalizedSignup(true)
                 await refresh()
+                clearSignupDraft()
                 setStep('waiting')
                 return
             }
             await refresh()
         } catch (err) {
             const apiErr = err as ApiError
+            setFinalizedSignup(false)
             setError(apiErr?.message || 'Não foi possível registrar a pendência documental.')
         } finally {
             setSubmitting(false)
@@ -199,9 +206,13 @@ export default function BrokerOnboardingPage() {
                     creciBack,
                     selfie,
                 })
-                await finalizeSignupDraft(draftId, draftToken, 'broker_submit_documents')
-                clearSignupDraft()
+                const finalized = await finalizeSignupDraft(draftId, draftToken, 'broker_submit_documents')
+                if (finalized.token) {
+                    persistAuthToken(finalized.token)
+                }
+                setFinalizedSignup(true)
                 await refresh()
+                clearSignupDraft()
             } else {
                 await uploadBrokerDocuments({
                     creciFront,
@@ -215,6 +226,7 @@ export default function BrokerOnboardingPage() {
             }
         } catch (err) {
             const apiErr = err as ApiError
+            setFinalizedSignup(false)
             setError(apiErr?.message || 'Erro ao enviar documentos.')
         } finally {
             setSubmitting(false)

@@ -274,14 +274,16 @@ export default function CadastroPage() {
         const includeAddress = shouldIncludeAddressPayload(remoteStep, next)
         const normalizedCreci = next.data.creci.trim()
         const normalizedState = next.data.state.trim().toUpperCase()
-    const includeCreci = remoteStep !== 'profile' && normalizedCreci && next.userType === 'broker'
+        const includeCreci = remoteStep !== 'profile' && normalizedCreci && next.userType === 'broker'
+        const normalizedPhone = normalizePhone(next.data.phone)
+        const includePhone = Boolean(normalizedPhone)
 
         if (!includeAddress) {
             return {
                 profileType: next.userType ?? 'client',
                 email: next.data.email.trim().toLowerCase(),
                 name: next.data.name.trim(),
-                phone: normalizePhone(next.data.phone),
+                ...(includePhone ? { phone: normalizedPhone } : {}),
                 authProvider,
                 googleUid: next.data.googleUid,
                 ...(includePassword && next.source !== 'google' ? { password: next.data.password } : {}),
@@ -294,7 +296,7 @@ export default function CadastroPage() {
             profileType: next.userType ?? 'client',
             email: next.data.email.trim().toLowerCase(),
             name: next.data.name.trim(),
-            phone: normalizePhone(next.data.phone),
+            ...(includePhone ? { phone: normalizedPhone } : {}),
             street: next.data.street.trim(),
             number: next.data.number.trim(),
             complement: next.data.complement.trim(),
@@ -503,7 +505,8 @@ export default function CadastroPage() {
                 setError(validationError)
             } else if (!handleDraftConflict(apiErr)) {
                 const code = String(apiErr?.payload?.code || '').toUpperCase()
-                if (code === 'CRECI_INVALID') {
+                const message = String(apiErr?.message || '').toLowerCase()
+                if (code === 'CRECI_INVALID' || code === 'CRECI_MISSING' || message.includes('creci')) {
                     setError('Não foi possível concluir o cadastro. Tente novamente.')
                     return
                 }

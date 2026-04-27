@@ -33,11 +33,33 @@ function createDraftConflictError(code: string) {
     })
 }
 
-function createDraftValidationError(code: string) {
+type DraftValidationErrorPayload = {
+    code: string
+    error?: string
+    fields?: Record<string, string[]>
+}
+
+function createDraftValidationError(code: string, options?: { error?: string; fields?: Record<string, string[]> }) {
     return Object.assign(new Error('Erro de validação de cadastro'), {
         status: 400,
-        payload: { code },
+        payload: {
+            code,
+            error: options?.error ?? 'erro de validação',
+            fields: options?.fields ?? {},
+        } as DraftValidationErrorPayload,
     })
+}
+
+function logDraftValidationError(label: string, error: unknown) {
+    if (!error || typeof error !== 'object') return
+    const anyError = error as { status?: unknown; payload?: DraftValidationErrorPayload }
+    // eslint-disable-next-line no-console
+    console.log(`[POST /auth/register/draft] ${label} 400:`, JSON.stringify({
+        status: anyError.status,
+        code: anyError.payload?.code,
+        error: anyError.payload?.error,
+        fields: anyError.payload?.fields,
+    }))
 }
 
 function createNetworkFailure() {
@@ -349,7 +371,12 @@ describe('signup flow', () => {
                 googleUid: 'google-uid',
             },
         })
-        mockCreateSignupDraftRemote.mockRejectedValueOnce(createDraftValidationError('CRECI_INVALID'))
+        const validationError = createDraftValidationError('CRECI_INVALID', {
+            error: 'CRECI inválido',
+            fields: { creci: ['CRECI inválido'] },
+        })
+        mockCreateSignupDraftRemote.mockRejectedValueOnce(validationError)
+        logDraftValidationError('google-broker-profile', validationError)
         render(<CadastroPage />)
 
         fireEvent.click(screen.getByRole('button', { name: /quero cadastrar como corretor/i }))
@@ -657,7 +684,12 @@ describe('signup flow', () => {
     })
 
     it('mapeia DRAFT_ADDRESS_INVALID para erro de endereço na etapa de endereço', async () => {
-        mockPatchSignupDraftRemote.mockRejectedValueOnce(createDraftValidationError('DRAFT_ADDRESS_INVALID'))
+        const validationError = createDraftValidationError('DRAFT_ADDRESS_INVALID', {
+            error: 'Endereço inválido',
+            fields: { address: ['Endereço inválido'] },
+        })
+        mockPatchSignupDraftRemote.mockRejectedValueOnce(validationError)
+        logDraftValidationError('email-address-draft-invalid', validationError)
 
         render(<CadastroPage />)
 
