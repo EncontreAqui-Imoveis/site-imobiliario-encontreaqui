@@ -466,6 +466,36 @@ const server = http.createServer(async (req, res) => {
     const isBroker = String(record.draft.profileType || '') === 'broker';
     const action = String(body.action || '');
     const requiresDocuments = isBroker && (action === 'broker_submit_documents' || action === 'submit_documents');
+    const acceptedTerms = body.acceptedTerms === true
+    const acceptedPrivacyPolicy = body.acceptedPrivacyPolicy === true
+    const acceptedBrokerAgreement = body.acceptedBrokerAgreement === true
+    const termsVersion = String(body.termsVersion || '')
+    const privacyPolicyVersion = String(body.privacyPolicyVersion || '')
+    const brokerAgreementVersion = String(body.brokerAgreementVersion || '')
+
+    if (!acceptedTerms || !acceptedPrivacyPolicy) {
+      json(res, 422, { error: 'Termos e Política obrigatórios', code: 'TERMS_PRIVACY_NOT_ACCEPTED' }, origin);
+      return;
+    }
+
+    if (action === 'broker_send_later' || action === 'broker_submit_documents') {
+      if (!acceptedBrokerAgreement || !brokerAgreementVersion) {
+        json(res, 422, { error: 'Termo de adesão obrigatório', code: 'BROKER_AGREEMENT_NOT_ACCEPTED' }, origin);
+        return;
+      }
+    }
+
+    if (action === 'client_finalize') {
+      if (!termsVersion || !privacyPolicyVersion) {
+        json(res, 422, { error: 'Versões dos documentos obrigatórias', code: 'LEGAL_VERSIONS_MISSING' }, origin);
+        return;
+      }
+    }
+
+    if ((action === 'broker_send_later' || action === 'broker_submit_documents') && (!termsVersion || !privacyPolicyVersion || !brokerAgreementVersion)) {
+      json(res, 422, { error: 'Versões dos documentos obrigatórias', code: 'LEGAL_VERSIONS_MISSING' }, origin);
+      return;
+    }
     json(
       res,
       200,

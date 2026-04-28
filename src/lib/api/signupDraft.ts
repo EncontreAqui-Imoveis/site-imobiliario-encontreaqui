@@ -287,6 +287,14 @@ export async function finalizeSignupDraft(
     draftId: string,
     draftToken: string,
     action: 'client_finalize' | 'broker_send_later' | 'broker_submit_documents',
+    legalAcceptancePayload: {
+        acceptedTerms?: boolean
+        acceptedPrivacyPolicy?: boolean
+        acceptedBrokerAgreement?: boolean
+        termsVersion?: string
+        privacyPolicyVersion?: string
+        brokerAgreementVersion?: string
+    } = {},
 ): Promise<{
     token: string
     user: Record<string, unknown>
@@ -295,7 +303,13 @@ export async function finalizeSignupDraft(
     action: string
 }> {
     const path = `/auth/register/draft/${encodeURIComponent(draftId)}/finalize`
-    const requestPayload = { action }
+    const requestPayload = {
+        action,
+        ...Object.fromEntries(
+            Object.entries(legalAcceptancePayload)
+                .filter(([, value]) => value !== undefined),
+        ),
+    }
     type FinalizeSignupDraftResponse = {
         token: string
         user: Record<string, unknown>

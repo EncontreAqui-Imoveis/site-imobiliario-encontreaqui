@@ -29,6 +29,7 @@ import {
     patchSignupDraftRemote,
 } from '@/lib/api/signupDraft'
 import { CheckCircle2, Eye, EyeOff } from 'lucide-react'
+import SignupLegalNotice from '@/components/legal/SignupLegalNotice'
 
 const BRAZILIAN_STATES = [
     'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
@@ -897,6 +898,8 @@ export default function CadastroPage() {
                             </p>
                         )}
 
+                        <SignupLegalNotice />
+
                         <button
                             type="submit"
                             disabled={!draft.userType}
@@ -1010,6 +1013,8 @@ export default function CadastroPage() {
                                 {error}
                             </p>
                         )}
+
+                        <SignupLegalNotice />
 
                         <div className="flex flex-wrap gap-2">
                             <button
@@ -1160,6 +1165,8 @@ export default function CadastroPage() {
                                 {error}
                             </p>
                         )}
+
+                        <SignupLegalNotice />
 
                         <div className="flex flex-wrap gap-2">
                             <button

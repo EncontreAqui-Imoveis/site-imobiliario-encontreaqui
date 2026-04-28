@@ -9,6 +9,7 @@ import { loginWithEmailHybrid } from '@/lib/auth/hybridEmailLogin'
 import { loginWithGooglePopup } from '@/lib/auth/googleFlow'
 import { resolvePostAuthRoute } from '@/lib/auth/routeResolution'
 import SignupDraftNotice from '@/components/auth/SignupDraftNotice'
+import SignupLegalNotice from '@/components/legal/SignupLegalNotice'
 import { useUser } from '@/contexts/UserContext'
 import { createSignupDraft, saveSignupDraft } from '@/lib/authSignupDraft'
 import type { ApiError } from '@/lib/api/client'
@@ -215,6 +216,8 @@ export default function LoginPage() {
                             {error}
                         </p>
                     )}
+
+                    <SignupLegalNotice />
 
                     <button
                         type="submit"

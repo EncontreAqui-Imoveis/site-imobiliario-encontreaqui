@@ -290,7 +290,7 @@ describe('signup flow', () => {
         fireEvent.change(screen.getByLabelText('Senha *'), {
             target: { value: '123456' },
         })
-        fireEvent.change(screen.getByLabelText('Telefone *'), {
+        fireEvent.change(screen.getByLabelText(/Telefone/), {
             target: { value: '(62) 98888-8888' },
         })
 
@@ -319,7 +319,7 @@ describe('signup flow', () => {
         fireEvent.change(screen.getByLabelText('Senha *'), {
             target: { value: '123456' },
         })
-        fireEvent.change(screen.getByLabelText('Telefone *'), {
+        fireEvent.change(screen.getByLabelText(/Telefone/), {
             target: { value: '(62) 97777-7777' },
         })
 
@@ -388,11 +388,11 @@ describe('signup flow', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Continuar com Google' }))
 
         await waitFor(() => {
-            expect(screen.getByLabelText('Telefone *')).toBeInTheDocument()
+            expect(screen.getByLabelText(/Telefone/)).toBeInTheDocument()
             expect(screen.getByLabelText(/CRECI/i)).toBeInTheDocument()
         })
 
-        fireEvent.change(screen.getByLabelText('Telefone *'), {
+        fireEvent.change(screen.getByLabelText(/Telefone/), {
             target: { value: '(62) 98888-7777' },
         })
         fireEvent.change(screen.getByLabelText(/CRECI/i), {
@@ -421,7 +421,7 @@ describe('signup flow', () => {
         fireEvent.change(screen.getByLabelText('Senha *'), {
             target: { value: '123456' },
         })
-        fireEvent.change(screen.getByLabelText('Telefone *'), {
+        fireEvent.change(screen.getByLabelText(/Telefone/), {
             target: { value: '(62) 98888-8888' },
         })
 
@@ -468,7 +468,7 @@ describe('signup flow', () => {
         fireEvent.change(screen.getByLabelText('Senha *'), {
             target: { value: '123456' },
         })
-        fireEvent.change(screen.getByLabelText('Telefone *'), {
+        fireEvent.change(screen.getByLabelText(/Telefone/), {
             target: { value: '(62) 98888-9999' },
         })
 
@@ -566,7 +566,7 @@ describe('signup flow', () => {
         fireEvent.change(screen.getByLabelText('Senha *'), {
             target: { value: '123456' },
         })
-        fireEvent.change(screen.getByLabelText('Telefone *'), {
+        fireEvent.change(screen.getByLabelText(/Telefone/), {
             target: { value: '(62) 97777-7777' },
         })
 
@@ -687,7 +687,7 @@ describe('signup flow', () => {
         fireEvent.change(screen.getByLabelText('Senha *'), {
             target: { value: '123456' },
         })
-        fireEvent.change(screen.getByLabelText('Telefone *'), {
+        fireEvent.change(screen.getByLabelText('Telefone'), {
             target: { value: '(62) 99999-9999' },
         })
 
@@ -721,20 +721,20 @@ describe('signup flow', () => {
         fireEvent.change(screen.getByLabelText('Senha *'), {
             target: { value: '123456' },
         })
-        fireEvent.change(screen.getByLabelText('Telefone *'), {
+        fireEvent.change(screen.getByLabelText('Telefone'), {
             target: { value: '(62) 98888-7777' },
         })
 
         fireEvent.click(screen.getByRole('button', { name: /^continuar$/i }))
 
         await waitFor(() => {
-            expect(screen.getByLabelText('CEP (opcional)')).toBeInTheDocument()
+            expect(screen.getByLabelText(/CEP/i)).toBeInTheDocument()
         })
 
         fireEvent.change(screen.getByLabelText(/CEP \(opcional\)/), {
             target: { value: '74000-000' },
         })
-        fireEvent.change(screen.getByLabelText('Estado *'), {
+        fireEvent.change(screen.getByLabelText(/Estado/), {
             target: { value: 'GO' },
         })
         fireEvent.change(screen.getByLabelText('Cidade'), {
@@ -746,7 +746,7 @@ describe('signup flow', () => {
         fireEvent.change(screen.getByLabelText('Rua'), {
             target: { value: 'Rua das Flores' },
         })
-        fireEvent.change(screen.getByLabelText('Número *'), {
+        fireEvent.change(screen.getByLabelText(/Número/), {
             target: { value: '100' },
         })
 

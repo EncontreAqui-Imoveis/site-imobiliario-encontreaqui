@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     description: 'Política de Privacidade da plataforma Encontre Aqui Imóveis.',
 }
 
-export default function PrivacyPage() {
+export default function PrivacyPolicyPage() {
     return (
         <LegalDocumentPage
             title="Política de Privacidade"

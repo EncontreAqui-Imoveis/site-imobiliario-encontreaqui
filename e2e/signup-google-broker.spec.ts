@@ -48,12 +48,12 @@ test('cadastro corretor em fluxo Google pendente segue para onboarding de docume
     await page.getByLabel('CRECI *').fill('12345-F')
     await page.getByRole('button', { name: /^continuar$/i }).click()
 
-    await page.getByLabel('CEP (opcional)').fill('74000000')
-    await page.getByLabel('Estado *').selectOption('GO')
+    await page.getByLabel(/CEP/).fill('74000000')
+    await page.getByLabel(/Estado/).selectOption('GO')
     await page.getByLabel('Cidade').fill('Goiânia')
     await page.getByLabel('Bairro').fill('Centro')
     await page.getByLabel('Rua').fill('Rua Broker')
-    await page.getByLabel('Número *').fill('200')
+    await page.getByLabel(/Número/).fill('200')
     await page.getByRole('button', { name: /ir para a página de verificação/i }).click()
     await expect(page).toHaveURL(/\/cadastro\/verificar-metodo/)
     await expect(page.getByText(/Seu e-mail já foi (confirmado|verificado)\. Você quer verificar seu telefone\?/i)).toBeVisible()
@@ -103,10 +103,14 @@ test('Google após escolha prévia de perfil mantém o tipo e inicia em Dados b�
 
 test('Não, continuar sem verificar em verificar-método leva cliente para meus imóveis', async ({ page }) => {
     let finalizeAction: string | null = null
+    let finalizeBody: Record<string, unknown> | null = null
     await page.route('**/auth/register/draft/*/finalize', async (route) => {
         if (route.request().method() === 'POST') {
             const body = route.request().postData()
             const parsed = body ? JSON.parse(body) : {}
+            if (parsed && typeof parsed === 'object') {
+                finalizeBody = parsed as Record<string, unknown>
+            }
             if (parsed && typeof parsed === 'object' && 'action' in parsed) {
                 finalizeAction = String(parsed.action)
             }
@@ -201,6 +205,13 @@ test('Não, continuar sem verificar em verificar-método leva cliente para meus 
     await page.getByRole('button', { name: /Não, continuar sem verificar/i }).click()
     await expect(page).toHaveURL('/meus-imoveis')
     expect(finalizeAction).toBe('client_finalize')
+    expect(finalizeBody).toMatchObject({
+        acceptedTerms: true,
+        acceptedPrivacyPolicy: true,
+        action: 'client_finalize',
+        termsVersion: '2026-04-28',
+        privacyPolicyVersion: '2026-04-28',
+    })
 })
 
 test('Google com e-mail já verificado não mostra escolha de método de verificação por e-mail', async ({ page }) => {
@@ -251,6 +262,8 @@ test('Google com e-mail já verificado não mostra escolha de método de verific
 test('corretor cria pendência documental com Enviar depois sem exigir CRECI novamente', async ({ page }) => {
     let upgradeCalls = 0
     let finalizeAction: string | null = null
+    let finalizeBody: Record<string, unknown> | null = null
+    let usersRegisterCalls = 0
     await page.route('**/brokers/me/request-upgrade', async (route) => {
         upgradeCalls += 1
         await route.fulfill({
@@ -263,6 +276,9 @@ test('corretor cria pendência documental com Enviar depois sem exigir CRECI nov
         if (route.request().method() === 'POST') {
             const body = route.request().postData()
             const parsed = body ? JSON.parse(body) : {}
+            if (parsed && typeof parsed === 'object') {
+                finalizeBody = parsed as Record<string, unknown>
+            }
             if (parsed && typeof parsed === 'object' && 'action' in parsed) {
                 finalizeAction = String(parsed.action)
             }
@@ -291,6 +307,12 @@ test('corretor cria pendência documental com Enviar depois sem exigir CRECI nov
                 }),
             })
             return
+        }
+        await route.continue()
+    })
+    await page.route('**/users/register', async (route) => {
+        if (route.request().method() === 'POST') {
+            usersRegisterCalls += 1
         }
         await route.continue()
     })
@@ -355,14 +377,28 @@ test('corretor cria pendência documental com Enviar depois sem exigir CRECI nov
     await page.goto('/cadastro/verificar-metodo')
     await page.getByRole('button', { name: /prosseguir com verificação de corretor/i }).click()
     await expect(page).toHaveURL(/\/onboarding\/broker\?mode=signup&creci=GO987/i)
+    await page.getByTestId('broker-agreement-content').evaluate((element) => {
+        element.scrollTop = element.scrollHeight
+    })
+    await page.getByRole('checkbox', { name: /li e aceito integralmente o termo de adesão de corretor/i }).check()
 
     await page.getByRole('button', { name: /enviar depois/i }).click()
     await expect(page.getByText(/Cadastro de corretor criado\. Documentos pendentes\./i)).toBeVisible()
     await expect(page.getByRole('link', { name: /Ir para Meus imóveis/i })).toBeVisible()
     await expect(page.getByText(/Documentos enviados!/i)).not.toBeVisible()
     expect(finalizeAction).toBe('broker_send_later')
+    expect(finalizeBody).toMatchObject({
+        acceptedTerms: true,
+        acceptedPrivacyPolicy: true,
+        acceptedBrokerAgreement: true,
+        termsVersion: '2026-04-28',
+        privacyPolicyVersion: '2026-04-28',
+        brokerAgreementVersion: '2026-04-28',
+        action: 'broker_send_later',
+    })
 
     expect(upgradeCalls).toBe(0)
+    expect(usersRegisterCalls).toBe(0)
 })
 
 test('enviar documentos leva para etapa de análise', async ({ page }) => {
@@ -371,6 +407,7 @@ test('enviar documentos leva para etapa de análise', async ({ page }) => {
     let finalizeCalls = 0
     let createDraftCalls = 0
     let usersRegisterCalls = 0
+    let finalizeBody: Record<string, unknown> | null = null
     await page.route('**/auth/register/draft/*/submit-documents', async (route) => {
         if (route.request().method() === 'POST') {
             submitDocumentsCalls += 1
@@ -381,6 +418,9 @@ test('enviar documentos leva para etapa de análise', async ({ page }) => {
         if (route.request().method() === 'POST') {
             const body = route.request().postData()
             const parsed = body ? JSON.parse(body) : {}
+            if (parsed && typeof parsed === 'object') {
+                finalizeBody = parsed as Record<string, unknown>
+            }
             if (parsed && typeof parsed === 'object' && 'action' in parsed) {
                 finalizeAction = String(parsed.action)
             }
@@ -495,6 +535,10 @@ test('enviar documentos leva para etapa de análise', async ({ page }) => {
     await page.goto('/cadastro/verificar-metodo')
     await page.getByRole('button', { name: /prosseguir com verificação de corretor/i }).click()
     await expect(page.getByRole('heading', { name: /enviar documentos/i })).toBeVisible()
+    await page.getByTestId('broker-agreement-content').evaluate((element) => {
+        element.scrollTop = element.scrollHeight
+    })
+    await page.getByRole('checkbox', { name: /li e aceito integralmente o termo de adesão de corretor/i }).check()
 
     const fileChooser = page.locator('input[type="file"]')
     await fileChooser.first().setInputFiles({
@@ -519,6 +563,15 @@ test('enviar documentos leva para etapa de análise', async ({ page }) => {
     await expect(page.getByText(/Documentos enviados!/i)).toBeVisible()
     await expect(page.getByRole('link', { name: /Explorar imóveis/i })).toBeVisible()
     expect(finalizeAction).toBe('broker_submit_documents')
+    expect(finalizeBody).toMatchObject({
+        acceptedTerms: true,
+        acceptedPrivacyPolicy: true,
+        acceptedBrokerAgreement: true,
+        termsVersion: '2026-04-28',
+        privacyPolicyVersion: '2026-04-28',
+        brokerAgreementVersion: '2026-04-28',
+        action: 'broker_submit_documents',
+    })
     expect(submitDocumentsCalls).toBe(1)
     expect(finalizeCalls).toBe(1)
     expect(createDraftCalls).toBe(0)

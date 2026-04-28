@@ -13,9 +13,9 @@ import { persistAuthToken } from '@/lib/auth/tokenStore'
 import {
     clearSignupDraft,
     loadSignupDraft,
-    patchSignupDraft,
 } from '@/lib/authSignupDraft'
 import { validateDocumentFile } from '@/lib/sanitize'
+import { BROKER_ADHESION_CONTENT, LEGAL_DOCUMENT_VERSION } from '@/lib/legalDocuments'
 import { BadgeCheck, Upload, Camera, CreditCard, AlertCircle, CheckCircle, Clock } from 'lucide-react'
 
 type Step = 'creci' | 'documents' | 'waiting'
@@ -50,10 +50,13 @@ export default function BrokerOnboardingPage() {
     const [finalizedSignup, setFinalizedSignup] = useState(false)
     const [waitingOutcome, setWaitingOutcome] = useState<WaitingOutcome | null>(null)
     const [documentSelectionValid, setDocumentSelectionValid] = useState(false)
+    const [brokerAgreementAccepted, setBrokerAgreementAccepted] = useState(false)
+    const [brokerAgreementScrolledToEnd, setBrokerAgreementScrolledToEnd] = useState(false)
 
     const creciFrontRef = useRef<HTMLInputElement>(null)
     const creciBackRef = useRef<HTMLInputElement>(null)
     const selfieRef = useRef<HTMLInputElement>(null)
+    const brokerAgreementRef = useRef<HTMLDivElement>(null)
     const activeDraftIdentityRef = useRef<string>('')
     const selectedDraftIdentityRef = useRef<string | null>(null)
 
@@ -63,6 +66,8 @@ export default function BrokerOnboardingPage() {
         setSelfie(null)
         selectedDraftIdentityRef.current = null
         setDocumentSelectionValid(false)
+        setBrokerAgreementAccepted(false)
+        setBrokerAgreementScrolledToEnd(false)
 
         if (creciFrontRef.current) {
             creciFrontRef.current.value = ''
@@ -84,6 +89,32 @@ export default function BrokerOnboardingPage() {
         setDocumentSelectionValid(true)
     }
 
+    const isBrokerAgreementReady = isSignupMode ? (brokerAgreementAccepted && brokerAgreementScrolledToEnd) : true
+
+    const ensureBrokerAgreementAcceptance = () => {
+        if (!isSignupMode) {
+            return true
+        }
+        if (!brokerAgreementScrolledToEnd) {
+            setError('Role até o fim do termo de adesão para habilitar o aceite.')
+            return false
+        }
+        if (!brokerAgreementAccepted) {
+            setError('É necessário aceitar o termo de adesão para continuar.')
+            return false
+        }
+        return true
+    }
+
+    const handleBrokerAgreementScroll = () => {
+        const container = brokerAgreementRef.current
+        if (!container) return
+        const isAtBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 4
+        if (isAtBottom) {
+            setBrokerAgreementScrolledToEnd(true)
+        }
+    }
+
     useEffect(() => {
         if (!isSignupMode) {
             activeDraftIdentityRef.current = ''
@@ -100,6 +131,21 @@ export default function BrokerOnboardingPage() {
         }
         activeDraftIdentityRef.current = signupDraftIdentity
     }, [isSignupMode, signupDraftIdentity, loading, hasSignupDraft])
+
+    useEffect(() => {
+        if (step !== 'documents') {
+            setBrokerAgreementAccepted(false)
+            setBrokerAgreementScrolledToEnd(false)
+        }
+    }, [step, isSignupMode])
+
+    useEffect(() => {
+        const container = brokerAgreementRef.current
+        if (!container) return
+        if (container.scrollHeight <= container.clientHeight + 4) {
+            setBrokerAgreementScrolledToEnd(true)
+        }
+    }, [step])
 
     useEffect(() => {
         if (!loading && !isSignupMode && !session) {
@@ -212,6 +258,10 @@ export default function BrokerOnboardingPage() {
         e.preventDefault()
         setSubmitting(true)
         setError(null)
+        if (isSignupMode && !ensureBrokerAgreementAcceptance()) {
+            setSubmitting(false)
+            return
+        }
         try {
             if (isSignupMode) {
                 const draftId = signupDraft?.draftId
@@ -219,7 +269,19 @@ export default function BrokerOnboardingPage() {
                 if (!draftId || !draftToken) {
                     throw new Error('Rascunho de cadastro não encontrado.')
                 }
-                const finalized = await finalizeSignupDraft(draftId, draftToken, 'broker_send_later')
+                const finalized = await finalizeSignupDraft(
+                    draftId,
+                    draftToken,
+                    'broker_send_later',
+                    {
+                        acceptedTerms: true,
+                        acceptedPrivacyPolicy: true,
+                        acceptedBrokerAgreement: true,
+                        termsVersion: LEGAL_DOCUMENT_VERSION,
+                        privacyPolicyVersion: LEGAL_DOCUMENT_VERSION,
+                        brokerAgreementVersion: LEGAL_DOCUMENT_VERSION,
+                    },
+                )
                 if (finalized.token) {
                     persistAuthToken(finalized.token)
                 }
@@ -243,6 +305,9 @@ export default function BrokerOnboardingPage() {
 
     const handleDocumentsUpload = async (e: React.FormEvent) => {
         e.preventDefault()
+        if (isSignupMode && !ensureBrokerAgreementAcceptance()) {
+            return
+        }
         if (!signupDraftIdentity || selectedDraftIdentityRef.current !== signupDraftIdentity) {
             setError('Selecione os documentos novamente para este cadastro.')
             return
@@ -276,7 +341,19 @@ export default function BrokerOnboardingPage() {
                     creciBack,
                     selfie,
                 })
-                const finalized = await finalizeSignupDraft(draftId, draftToken, 'broker_submit_documents')
+                const finalized = await finalizeSignupDraft(
+                    draftId,
+                    draftToken,
+                    'broker_submit_documents',
+                    {
+                        acceptedTerms: true,
+                        acceptedPrivacyPolicy: true,
+                        acceptedBrokerAgreement: true,
+                        termsVersion: LEGAL_DOCUMENT_VERSION,
+                        privacyPolicyVersion: LEGAL_DOCUMENT_VERSION,
+                        brokerAgreementVersion: LEGAL_DOCUMENT_VERSION,
+                    },
+                )
                 if (finalized.token) {
                     persistAuthToken(finalized.token)
                 }
@@ -393,6 +470,39 @@ export default function BrokerOnboardingPage() {
                         </div>
 
                         <form onSubmit={handleDocumentsUpload} className="space-y-4">
+                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                                <h2 className="text-base font-semibold text-slate-900">Termo de adesão para corretor</h2>
+                                <p className="text-xs text-slate-600">Versão: {LEGAL_DOCUMENT_VERSION}</p>
+                                <div
+                                    ref={brokerAgreementRef}
+                                    onScroll={handleBrokerAgreementScroll}
+                                    role="region"
+                                    aria-label="Termo de adesão para corretores"
+                                    data-testid="broker-agreement-content"
+                                    className="h-40 overflow-y-auto rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs leading-relaxed text-slate-700"
+                                >
+                                    <pre className="whitespace-pre-wrap">{BROKER_ADHESION_CONTENT}</pre>
+                                </div>
+                                {!brokerAgreementScrolledToEnd ? (
+                                    <p className="text-xs text-amber-600">Role até o fim para habilitar o aceite.</p>
+                                ) : null}
+                                <label className="flex items-start gap-2 text-sm text-slate-700">
+                                    <input
+                                        type="checkbox"
+                                        checked={brokerAgreementAccepted}
+                                        onChange={(event) => setBrokerAgreementAccepted(event.currentTarget.checked)}
+                                        disabled={!brokerAgreementScrolledToEnd}
+                                        className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                                    />
+                                    <span>
+                                        Li e aceito integralmente o termo de adesão de corretor.
+                                        <Link href="/termos-de-adesao-corretor" className="ml-1 text-primary-600 hover:text-primary-700">
+                                            Ler termo completo
+                                        </Link>
+                                    </span>
+                                </label>
+                            </div>
+
                             <div
                                 onClick={() => creciFrontRef.current?.click()}
                                 className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center cursor-pointer hover:border-primary-400 hover:bg-primary-50/30 transition-colors"
@@ -473,7 +583,7 @@ export default function BrokerOnboardingPage() {
 
                             <button
                                 type="submit"
-                                disabled={submitting || !creciFront || !creciBack || !selfie || !documentSelectionValid}
+                                disabled={submitting || !isBrokerAgreementReady || !creciFront || !creciBack || !selfie || !documentSelectionValid}
                                 className="w-full inline-flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 disabled:bg-primary-300 text-white text-sm font-semibold px-4 py-2.5 shadow-md shadow-primary-500/20 transition-colors"
                             >
                                 {submitting ? 'Enviando...' : 'Enviar documentos'}
@@ -482,30 +592,10 @@ export default function BrokerOnboardingPage() {
                                 <button
                                     type="button"
                                     onClick={handleSkipDocuments}
-                                    disabled={submitting}
+                                    disabled={submitting || !isBrokerAgreementReady}
                                     className="w-full inline-flex items-center justify-center rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold px-4 py-2.5 hover:bg-slate-50 transition-colors disabled:opacity-60"
                                 >
                                     Enviar depois
-                                </button>
-                            ) : null}
-                            {isSignupMode ? (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const draft = loadSignupDraft()
-                                        if (draft) {
-                                            patchSignupDraft({
-                                                ...draft,
-                                                step: 'address',
-                                                data: draft.data,
-                                            })
-                                        }
-                                        router.push('/auth/cadastro')
-                                    }}
-                                    disabled={submitting}
-                                    className="w-full inline-flex items-center justify-center rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold px-4 py-2.5 hover:bg-slate-50 transition-colors disabled:opacity-60"
-                                >
-                                    Corrigir dados
                                 </button>
                             ) : null}
                         </form>

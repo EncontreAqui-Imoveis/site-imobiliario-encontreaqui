@@ -1,5 +1,4 @@
 import { Metadata } from 'next'
-import type { Metadata as MetaType } from 'next'
 import LegalDocumentPage from '@/components/legal/LegalDocumentPage'
 import { LEGAL_DOCUMENT_VERSION, TERMS_OF_USE_CONTENT } from '@/lib/legalDocuments'
 
@@ -8,7 +7,7 @@ export const metadata: Metadata = {
     description: 'Termos de Uso da plataforma Encontre Aqui Imóveis.',
 }
 
-export default function TermsPage() {
+export default function TermsOfUsePage() {
     return (
         <LegalDocumentPage
             title="Termos de Uso"

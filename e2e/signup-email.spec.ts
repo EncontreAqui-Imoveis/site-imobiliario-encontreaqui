@@ -9,8 +9,10 @@ async function fillSixDigitCode(page: import('@playwright/test').Page) {
 
 test('cadastro cliente por e-mail conclui e redireciona para meus imóveis', async ({ page }) => {
     let authRegisterCalls = 0
+    let usersRegisterCalls = 0
     let draftFinalizeCalls = 0
     let draftFinalizeAction: string | null = null
+    let draftFinalizeBody: Record<string, unknown> | null = null
 
     let viacepCalls = 0
     await page.route('**/viacep.com.br/ws/74000000/json/**', async (route) => {
@@ -53,11 +55,22 @@ test('cadastro cliente por e-mail conclui e redireciona para meus imóveis', asy
             }),
         })
     })
+    await page.route('**/users/register', async (route) => {
+        usersRegisterCalls += route.request().method() === 'POST' ? 1 : 0
+        await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({ ok: true }),
+        })
+    })
     await page.route('**/auth/register/draft/*/finalize', async (route) => {
         if (route.request().method() === 'POST') {
             draftFinalizeCalls += 1
             const body = route.request().postData()
             const parsed = body ? JSON.parse(body) : {}
+            if (parsed && typeof parsed === 'object') {
+                draftFinalizeBody = parsed as Record<string, unknown>
+            }
             if (parsed && typeof parsed === 'object' && 'action' in parsed) {
                 draftFinalizeAction = String(parsed.action)
             }
@@ -73,15 +86,15 @@ test('cadastro cliente por e-mail conclui e redireciona para meus imóveis', asy
     await page.getByLabel('Nome completo *').fill('Cliente E2E')
     await page.getByLabel('E-mail *').fill('cliente-e2e@example.com')
     await page.getByLabel('Senha *').fill('123456')
-    await page.getByLabel('Telefone *').fill('62999999999')
+    await page.getByLabel(/Telefone/).fill('62999999999')
     await page.getByRole('button', { name: /^continuar$/i }).click()
 
-    await page.getByLabel('CEP (opcional)').fill('74000000')
+    await page.getByLabel(/CEP/).fill('74000000')
     await expect(page.getByLabel('Rua')).toHaveValue('Rua Teste')
     await expect(page.getByLabel('Bairro')).toHaveValue('Centro')
     await expect(page.getByLabel('Cidade')).toHaveValue('Goiânia')
-    await expect(page.getByLabel('Estado *')).toHaveValue('GO')
-    await page.getByLabel('Número *').fill('100')
+    await expect(page.getByLabel(/Estado/)).toHaveValue('GO')
+    await page.getByLabel(/Número/).fill('100')
 
     await expect.poll(async () => viacepCalls).toBe(1)
 
@@ -100,7 +113,15 @@ test('cadastro cliente por e-mail conclui e redireciona para meus imóveis', asy
 
     expect(draftFinalizeCalls).toBe(1)
     expect(draftFinalizeAction).toBe('client_finalize')
+    expect(draftFinalizeBody).toMatchObject({
+        acceptedTerms: true,
+        acceptedPrivacyPolicy: true,
+        termsVersion: '2026-04-28',
+        privacyPolicyVersion: '2026-04-28',
+        action: 'client_finalize',
+    })
     expect(authRegisterCalls).toBe(0)
+    expect(usersRegisterCalls).toBe(0)
 })
 
 test('cadastro cliente com e-mail já existente é bloqueado na etapa de dados', async ({ page }) => {
@@ -126,7 +147,7 @@ test('cadastro cliente com e-mail já existente é bloqueado na etapa de dados',
     await page.getByLabel('Nome completo *').fill('Cliente Duplicado')
     await page.getByLabel('E-mail *').fill('duplicado@example.com')
     await page.getByLabel('Senha *').fill('123456')
-    await page.getByLabel('Telefone *').fill('62999999999')
+    await page.getByLabel(/Telefone/).fill('62999999999')
     await page.getByRole('button', { name: /^continuar$/i }).click()
 
     await expect(page.getByText('Já existe uma conta com este e-mail.')).toBeVisible()
@@ -142,14 +163,14 @@ test('cadastro cliente conclui endereço sem informar CEP', async ({ page }) => 
     await page.getByLabel('Nome completo *').fill('Cliente Sem CEP')
     await page.getByLabel('E-mail *').fill('cliente-sem-cep@example.com')
     await page.getByLabel('Senha *').fill('123456')
-    await page.getByLabel('Telefone *').fill('62999999999')
+    await page.getByLabel(/Telefone/).fill('62999999999')
     await page.getByRole('button', { name: /^continuar$/i }).click()
 
-    await page.getByLabel('Estado *').selectOption('GO')
+    await page.getByLabel(/Estado/).selectOption('GO')
     await page.getByLabel('Cidade').fill('Goiânia')
     await page.getByLabel('Bairro').fill('Centro')
     await page.getByLabel('Rua').fill('Rua Teste')
-    await page.getByLabel('Número *').fill('100')
+    await page.getByLabel(/Número/).fill('100')
 
     await page.getByRole('button', { name: /ir para a página de verificação/i }).click()
     await expect(page).toHaveURL(/\/cadastro\/verificar-metodo/)
@@ -179,7 +200,7 @@ test('retorno de 409 com EMAIL_ALREADY_EXISTS direciona para login', async ({ pa
     await page.getByLabel('Nome completo *').fill('Cliente E2E')
     await page.getByLabel('E-mail *').fill('cliente-conflict@example.com')
     await page.getByLabel('Senha *').fill('123456')
-    await page.getByLabel('Telefone *').fill('62999999999')
+    await page.getByLabel(/Telefone/).fill('62999999999')
     await page.getByRole('button', { name: /^continuar$/i }).click()
 
     await expect(page.getByText('Este e-mail já está cadastrado. Faça login para continuar.')).toBeVisible()
@@ -273,10 +294,10 @@ test('correção no draft existente usa PATCH e não cria novo POST', async ({ p
 
     await page.goto('/auth/cadastro')
     await page.getByRole('textbox', { name: 'Rua' }).fill('Rua Atualizada')
-    await page.getByLabel('Número *').fill('10')
+    await page.getByLabel(/Número/).fill('10')
     await page.getByLabel('Bairro').fill('Centro')
     await page.getByLabel('Cidade').fill('Goiânia')
-    await page.getByLabel('Estado *').selectOption('GO')
+    await page.getByLabel(/Estado/).selectOption('GO')
 
     await page.getByRole('button', { name: /ir para a página de verificação/i }).click()
 

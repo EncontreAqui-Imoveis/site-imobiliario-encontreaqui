@@ -133,13 +133,13 @@ export default function Footer() {
                         </p>
                         <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                             <Link
-                                href="/termos"
+                                href="/termos-de-uso"
                                 className="inline-flex min-h-[44px] items-center rounded-lg px-3 text-sm text-slate-500 transition-colors hover:bg-slate-800/80 hover:text-slate-200"
                             >
                                 Termos de Uso
                             </Link>
                             <Link
-                                href="/privacidade"
+                                href="/politica-de-privacidade"
                                 className="inline-flex min-h-[44px] items-center rounded-lg px-3 text-sm text-slate-500 transition-colors hover:bg-slate-800/80 hover:text-slate-200"
                             >
                                 Privacidade

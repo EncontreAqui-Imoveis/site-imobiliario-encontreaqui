@@ -3,6 +3,7 @@ import { clearSignupDraft } from '@/lib/authSignupDraft'
 import { persistAuthToken } from '@/lib/auth/tokenStore'
 import { finalizeSignupDraft } from '@/lib/api/signupDraft'
 import { mapAuthResponseToSession, type UserSession } from '@/lib/api/auth'
+import { LEGAL_DOCUMENT_VERSION } from '@/lib/legalDocuments'
 
 
 /**
@@ -18,7 +19,25 @@ export async function registerUserFromSignupDraft(draft: SignupDraft): Promise<U
     }
 
     const action = draft.userType === 'broker' ? 'broker_submit_documents' : 'client_finalize'
-    const finalize = await finalizeSignupDraft(draft.draftId, draft.draftToken, action)
+    const legalPayload = {
+        acceptedTerms: true,
+        acceptedPrivacyPolicy: true,
+        termsVersion: LEGAL_DOCUMENT_VERSION,
+        privacyPolicyVersion: LEGAL_DOCUMENT_VERSION,
+        ...(action === 'broker_submit_documents'
+            ? {
+                acceptedBrokerAgreement: true,
+                brokerAgreementVersion: LEGAL_DOCUMENT_VERSION,
+            }
+            : {}),
+    }
+
+    const finalize = await finalizeSignupDraft(
+        draft.draftId,
+        draft.draftToken,
+        action,
+        legalPayload,
+    )
 
     if (finalize.token) {
         persistAuthToken(finalize.token)
