@@ -204,11 +204,11 @@ test('Não, continuar sem verificar em verificar-método leva cliente para meus 
     await page.goto('/cadastro/verificar-metodo')
     await page.getByRole('button', { name: /Não, continuar sem verificar/i }).click()
     await expect(page).toHaveURL('/meus-imoveis')
-    expect(finalizeAction).toBe('client_finalize')
+    expect(finalizeAction).toBe('submit_documents')
     expect(finalizeBody).toMatchObject({
         acceptedTerms: true,
         acceptedPrivacyPolicy: true,
-        action: 'client_finalize',
+        action: 'submit_documents',
         termsVersion: '2026-04-28',
         privacyPolicyVersion: '2026-04-28',
     })
@@ -386,7 +386,7 @@ test('corretor cria pendência documental com Enviar depois sem exigir CRECI nov
     await expect(page.getByText(/Cadastro de corretor criado\. Documentos pendentes\./i)).toBeVisible()
     await expect(page.getByRole('link', { name: /Ir para Meus imóveis/i })).toBeVisible()
     await expect(page.getByText(/Documentos enviados!/i)).not.toBeVisible()
-    expect(finalizeAction).toBe('broker_send_later')
+    expect(finalizeAction).toBe('send_later')
     expect(finalizeBody).toMatchObject({
         acceptedTerms: true,
         acceptedPrivacyPolicy: true,
@@ -394,7 +394,7 @@ test('corretor cria pendência documental com Enviar depois sem exigir CRECI nov
         termsVersion: '2026-04-28',
         privacyPolicyVersion: '2026-04-28',
         brokerAgreementVersion: '2026-04-28',
-        action: 'broker_send_later',
+        action: 'send_later',
     })
 
     expect(upgradeCalls).toBe(0)
@@ -562,7 +562,7 @@ test('enviar documentos leva para etapa de análise', async ({ page }) => {
     await page.getByRole('button', { name: /enviar documentos/i }).click()
     await expect(page.getByText(/Documentos enviados!/i)).toBeVisible()
     await expect(page.getByRole('link', { name: /Explorar imóveis/i })).toBeVisible()
-    expect(finalizeAction).toBe('broker_submit_documents')
+    expect(finalizeAction).toBe('submit_documents')
     expect(finalizeBody).toMatchObject({
         acceptedTerms: true,
         acceptedPrivacyPolicy: true,
@@ -570,7 +570,7 @@ test('enviar documentos leva para etapa de análise', async ({ page }) => {
         termsVersion: '2026-04-28',
         privacyPolicyVersion: '2026-04-28',
         brokerAgreementVersion: '2026-04-28',
-        action: 'broker_submit_documents',
+        action: 'submit_documents',
     })
     expect(submitDocumentsCalls).toBe(1)
     expect(finalizeCalls).toBe(1)

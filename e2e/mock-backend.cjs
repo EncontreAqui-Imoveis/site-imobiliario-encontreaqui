@@ -464,8 +464,16 @@ const server = http.createServer(async (req, res) => {
     }
     const body = await readBody(req);
     const isBroker = String(record.draft.profileType || '') === 'broker';
-    const action = String(body.action || '');
-    const requiresDocuments = isBroker && (action === 'broker_submit_documents' || action === 'submit_documents');
+    const rawAction = String(body.action || '');
+    const action = (
+      rawAction === 'broker_send_later' || rawAction === 'send_later'
+        ? 'send_later'
+        : rawAction === 'broker_submit_documents' || rawAction === 'client_finalize' || rawAction === 'submit_documents'
+          ? 'submit_documents'
+          : rawAction
+    );
+    const requiresDocuments = isBroker && action === 'submit_documents';
+    const requiresBrokerAgreement = isBroker && action === 'submit_documents';
     const acceptedTerms = body.acceptedTerms === true
     const acceptedPrivacyPolicy = body.acceptedPrivacyPolicy === true
     const acceptedBrokerAgreement = body.acceptedBrokerAgreement === true
@@ -478,21 +486,21 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (action === 'broker_send_later' || action === 'broker_submit_documents') {
+    if (requiresBrokerAgreement) {
       if (!acceptedBrokerAgreement || !brokerAgreementVersion) {
         json(res, 422, { error: 'Termo de adesão obrigatório', code: 'BROKER_AGREEMENT_NOT_ACCEPTED' }, origin);
         return;
       }
     }
 
-    if (action === 'client_finalize') {
+    if (action === 'submit_documents') {
       if (!termsVersion || !privacyPolicyVersion) {
         json(res, 422, { error: 'Versões dos documentos obrigatórias', code: 'LEGAL_VERSIONS_MISSING' }, origin);
         return;
       }
     }
 
-    if ((action === 'broker_send_later' || action === 'broker_submit_documents') && (!termsVersion || !privacyPolicyVersion || !brokerAgreementVersion)) {
+    if (action === 'submit_documents' && (!termsVersion || !privacyPolicyVersion || (requiresBrokerAgreement && !brokerAgreementVersion))) {
       json(res, 422, { error: 'Versões dos documentos obrigatórias', code: 'LEGAL_VERSIONS_MISSING' }, origin);
       return;
     }

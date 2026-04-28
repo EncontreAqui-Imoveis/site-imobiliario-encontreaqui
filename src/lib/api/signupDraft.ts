@@ -303,8 +303,14 @@ export async function finalizeSignupDraft(
     action: string
 }> {
     const path = `/auth/register/draft/${encodeURIComponent(draftId)}/finalize`
+    const normalizedAction =
+        action === 'broker_send_later'
+            ? 'send_later'
+            : action === 'broker_submit_documents' || action === 'client_finalize'
+                ? 'submit_documents'
+                : action
     const requestPayload = {
-        action,
+        action: normalizedAction,
         ...Object.fromEntries(
             Object.entries(legalAcceptancePayload)
                 .filter(([, value]) => value !== undefined),

@@ -53,6 +53,15 @@ export default function BrokerOnboardingPage() {
     const [brokerAgreementAccepted, setBrokerAgreementAccepted] = useState(false)
     const [brokerAgreementScrolledToEnd, setBrokerAgreementScrolledToEnd] = useState(false)
 
+    const getFinalizeErrorMessage = (error: unknown, fallback: string): string => {
+        const apiError = error as ApiError
+        const code = apiError?.payload?.code
+        if (apiError?.status === 400 && code) {
+            return `${String(code)}: ${apiError.payload?.error || apiError.message || fallback}`
+        }
+        return apiError instanceof Error ? apiError.message : fallback
+    }
+
     const creciFrontRef = useRef<HTMLInputElement>(null)
     const creciBackRef = useRef<HTMLInputElement>(null)
     const selfieRef = useRef<HTMLInputElement>(null)
@@ -295,9 +304,8 @@ export default function BrokerOnboardingPage() {
             }
             await refresh()
         } catch (err) {
-            const apiErr = err as ApiError
             setFinalizedSignup(false)
-            setError(apiErr?.message || 'Não foi possível registrar a pendência documental.')
+            setError(getFinalizeErrorMessage(err, 'Não foi possível registrar a pendência documental.'))
         } finally {
             setSubmitting(false)
         }
@@ -375,9 +383,8 @@ export default function BrokerOnboardingPage() {
                 await refresh()
             }
         } catch (err) {
-            const apiErr = err as ApiError
             setFinalizedSignup(false)
-            setError(apiErr?.message || 'Erro ao enviar documentos.')
+            setError(getFinalizeErrorMessage(err, 'Erro ao enviar documentos.'))
         } finally {
             setSubmitting(false)
         }

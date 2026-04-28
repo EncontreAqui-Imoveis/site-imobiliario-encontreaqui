@@ -112,13 +112,13 @@ test('cadastro cliente por e-mail conclui e redireciona para meus imóveis', asy
     await expect(page.getByRole('heading', { name: /meus imóveis/i })).toBeVisible()
 
     expect(draftFinalizeCalls).toBe(1)
-    expect(draftFinalizeAction).toBe('client_finalize')
+    expect(draftFinalizeAction).toBe('submit_documents')
     expect(draftFinalizeBody).toMatchObject({
         acceptedTerms: true,
         acceptedPrivacyPolicy: true,
         termsVersion: '2026-04-28',
         privacyPolicyVersion: '2026-04-28',
-        action: 'client_finalize',
+        action: 'submit_documents',
     })
     expect(authRegisterCalls).toBe(0)
     expect(usersRegisterCalls).toBe(0)

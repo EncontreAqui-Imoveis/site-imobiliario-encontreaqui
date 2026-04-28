@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, Mail, Smartphone } from 'lucide-react'
 import { useUser } from '@/contexts/UserContext'
 import { resolvePostAuthRoute } from '@/lib/auth/routeResolution'
+import { ApiError } from '@/lib/api/client'
 
 import {
     loadSignupDraft,
@@ -25,6 +26,15 @@ export default function VerificarMetodoPage() {
     const isMountedRef = useRef(true)
     const isBrokerSignup = draft?.userType === 'broker'
     const signupCreci = draft?.data.creci.trim() ?? ''
+
+    const getFinalizeErrorMessage = (error: unknown): string => {
+        const apiError = error as ApiError
+        const code = apiError?.payload?.code
+        if (apiError?.status === 400 && code) {
+            return `${String(code)}: ${apiError.payload?.error || apiError.message || 'Não foi possível concluir o cadastro agora.'}`
+        }
+        return apiError instanceof Error ? apiError.message : 'Não foi possível concluir o cadastro agora.'
+    }
 
     useEffect(() => {
         return () => {
@@ -92,11 +102,7 @@ export default function VerificarMetodoPage() {
             router.replace(resolvePostAuthRoute(result, '/meus-imoveis'))
         } catch (signupError) {
             if (!isMountedRef.current) return
-            setError(
-                signupError instanceof Error
-                    ? signupError.message
-                    : 'Não foi possível concluir o cadastro agora.',
-            )
+            setError(getFinalizeErrorMessage(signupError))
         } finally {
             if (isMountedRef.current) {
                 setAutoCompleting(false)
