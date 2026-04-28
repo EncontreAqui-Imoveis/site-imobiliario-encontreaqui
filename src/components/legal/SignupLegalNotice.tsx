@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function SignupLegalNotice() {
     return (
-        <p className="text-sm text-slate-600 leading-relaxed">
+        <p className="text-center text-sm text-slate-600 leading-relaxed">
             Ao continuar, você concorda com os{' '}
             <Link
                 href="/termos-de-uso"
