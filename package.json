@@ -19,19 +19,19 @@
     "test:sast": "cross-env PYTHONUTF8=1 semgrep scan --config auto src middleware.ts next.config.js"
   },
   "dependencies": {
-    "@tailwindcss/postcss": "^4.2.1",
+    "@tailwindcss/postcss": "^4.2.4",
     "embla-carousel-autoplay": "^8.5.1",
     "embla-carousel-react": "^8.5.1",
-    "firebase": "^12.10.0",
+    "firebase": "^12.12.1",
     "fslightbox-react": "^2.0.3",
     "lucide-react": "^0.469.0",
-    "next": "^16.1.6",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "next": "^16.2.4",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
-    "@next/eslint-plugin-next": "^16.1.6",
+    "@next/eslint-plugin-next": "^16.2.4",
     "@playwright/test": "^1.59.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -39,18 +39,18 @@
     "@types/node": "^22.19.15",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.0.0",
-    "autoprefixer": "^10.4.27",
+    "autoprefixer": "^10.5.0",
     "cross-env": "^10.1.0",
     "eslint": "^9.39.4",
-    "eslint-config-next": "^16.1.6",
-    "globals": "^17.4.0",
+    "eslint-config-next": "^16.2.4",
+    "globals": "^17.5.0",
     "jest": "^30.3.0",
     "jest-axe": "^10.0.0",
     "jest-environment-jsdom": "^30.3.0",
-    "postcss": "^8.5.8",
+    "postcss": "^8.5.13",
     "tailwindcss": "^4.2.1",
-    "ts-jest": "^29.4.6",
+    "ts-jest": "^29.4.9",
     "typescript": "^5.7.0",
-    "typescript-eslint": "^8.57.0"
+    "typescript-eslint": "^8.59.1"
   }
 }
