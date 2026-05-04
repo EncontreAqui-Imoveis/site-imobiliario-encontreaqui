@@ -472,11 +472,11 @@ export default function CadastroPage() {
         try {
             const result = await loginWithGooglePopup()
             if (isGooglePendingAuthResult(result)) {
-                let googleDraft = createSignupDraft({
+                const googleDraft = createSignupDraft({
                     ...draft,
                     source: 'google',
-                    step: draft.userType ? 'basic' : 'profile',
-                    userType: draft.userType,
+                    step: 'profile',
+                    userType: null,
                     emailVerified: true,
                     data: {
                         ...draft.data,
@@ -488,22 +488,10 @@ export default function CadastroPage() {
                     },
                 })
 
-                if (googleDraft.userType) {
-                const hasRemoteDraft = Boolean(googleDraft.draftId && googleDraft.draftToken)
-                const shouldCreateDraftRemotely = googleDraft.userType === 'client'
-                    if (hasRemoteDraft || shouldCreateDraftRemotely) {
-                        googleDraft = await syncDraftWithServer(googleDraft, {
-                            remoteStep: 'profile',
-                        })
-                    }
-                }
-
                 persistDraft(googleDraft)
                 setRestoredDraft(false)
                 setError(null)
-                if (googleDraft.userType) {
-                    setDraft(googleDraft)
-                }
+                setDraft(googleDraft)
                 return
             }
             await refresh()

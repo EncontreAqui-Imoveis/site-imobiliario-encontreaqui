@@ -29,6 +29,8 @@ import {
     clampCountInput,
     CreatePropertyActor,
     CreatePropertyDraftData,
+    PROPERTY_CANONICAL_AMENITIES,
+    PropertyAmenity,
     digitsOnly,
     formatCepInput,
     isOptionalBairroPropertyType,
@@ -69,7 +71,7 @@ const INITIAL: CreatePropertyDraftData = {
     actorMode: null, propertyType: '', purpose: '', title: '', description: '', ownerName: '', ownerPhone: '',
     priceSale: '', priceRent: '', cep: '', semCep: false, state: 'GO', city: '', bairro: '', address: '', numero: '', complemento: '',
     quadra: '', lote: '', semNumero: false, semQuadra: false, semLote: false,
-    bedrooms: '', bathrooms: '', garageSpots: '',
+    bedrooms: '', bathrooms: '', suites: '', garageSpots: '', amenities: [],
     areaConstruida: '', areaConstruidaUnidade: 'm2', areaTerreno: '', areaTerrenoUnidade: 'm2', hasWifi: false, temPiscina: false, temAutomacao: false,
     temArCondicionado: false, ehMobiliada: false,
 }
@@ -80,6 +82,9 @@ function parseDraft(data: Record<string, unknown>): CreatePropertyDraftData {
         ...Object.fromEntries(Object.entries(INITIAL).map(([key, fallback]) => {
             const value = data[key]
             if (typeof fallback === 'boolean') return [key, Boolean(value)]
+            if (Array.isArray(fallback)) {
+                return [key, Array.isArray(value) ? value.filter((item) => String(item).trim().length > 0) : []]
+            }
             return [key, String(value ?? fallback)]
         })),
         actorMode: data.actorMode === 'broker' || data.actorMode === 'client-owner' ? data.actorMode : null,
@@ -96,7 +101,7 @@ function validOwnerPhone(value: string) {
     return digits.length === 0 || (digits.length >= 10 && digits.length <= 13)
 }
 
-type CountFieldKey = 'bedrooms' | 'bathrooms' | 'garageSpots'
+type CountFieldKey = 'bedrooms' | 'bathrooms' | 'garageSpots' | 'suites'
 type CountFieldMode = 'none' | 'count'
 
 function resolveCountFieldMode(value: string): CountFieldMode {
@@ -235,6 +240,22 @@ export default function AnunciePage() {
         setError(null)
     }
 
+    function toggleAmenity(amenity: PropertyAmenity, checked: boolean) {
+        setForm((current) => {
+            if (checked) {
+                return {
+                    ...current,
+                    amenities: Array.from(new Set([...current.amenities, amenity])),
+                }
+            }
+            return {
+                ...current,
+                amenities: current.amenities.filter((entry) => entry !== amenity),
+            }
+        })
+        setError(null)
+    }
+
     async function restoreDraft() {
         const draft = loadDraft()
         if (!draft) return
@@ -365,6 +386,7 @@ export default function AnunciePage() {
                     Number(form.areaTerreno) <= MAX_PROPERTY_AREA &&
                     isValidCountFieldValue(form.bedrooms) &&
                     isValidCountFieldValue(form.bathrooms) &&
+                        isValidCountFieldValue(form.suites) &&
                     isValidCountFieldValue(form.garageSpots)
                 )
             case 4:
@@ -654,11 +676,11 @@ export default function AnunciePage() {
                         </div>
 
                         <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
-                            <h3 className="text-sm font-semibold text-slate-900">Quartos, banheiros e garagem</h3>
+                            <h3 className="text-sm font-semibold text-slate-900">Quartos, banheiros, suítes e garagem</h3>
                             <p className="mt-1 text-xs text-slate-600">
                                 Escolha “Sem ...” quando não se aplica ou informe a quantidade (inclui valor 0).
                             </p>
-                            <div className="mt-4 grid gap-4 md:grid-cols-3">
+                            <div className="mt-4 grid gap-4 md:grid-cols-4">
                                 <div className="rounded-xl border border-slate-200 bg-white p-3">
                                     <label className={LABEL}>Quartos</label>
                                     <select
@@ -722,6 +744,27 @@ export default function AnunciePage() {
                                         />
                                     )}
                                 </div>
+                                <div className="rounded-xl border border-slate-200 bg-white p-3">
+                                    <label className={LABEL}>Suítes</label>
+                                    <select
+                                        value={resolveCountFieldMode(form.suites)}
+                                        onChange={(e) => setCountFieldMode('suites', e.target.value as CountFieldMode)}
+                                        className={INPUT}
+                                    >
+                                        <option value="none">Sem suíte</option>
+                                        <option value="count">Informar quantidade</option>
+                                    </select>
+                                    {resolveCountFieldMode(form.suites) === 'count' && (
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max={MAX_PROPERTY_COUNT}
+                                            value={form.suites}
+                                            onChange={(e) => updateField('suites', clampCountInput(e.target.value))}
+                                            className={`${INPUT} mt-2`}
+                                        />
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </>
@@ -742,6 +785,22 @@ export default function AnunciePage() {
                                     <span>{label}</span>
                                 </label>
                             ))}
+                        </div>
+                        <div className="mt-4 border-t border-slate-100 pt-4">
+                            <p className={`${LABEL} mt-0`}>Outras comodidades</p>
+                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                {PROPERTY_CANONICAL_AMENITIES.filter((amenity) => amenity !== 'MOBILIADA').map((amenity) => (
+                                    <label key={amenity} className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50">
+                                        <input
+                                            type="checkbox"
+                                            checked={form.amenities.includes(amenity)}
+                                            onChange={(event) => toggleAmenity(amenity, event.target.checked)}
+                                            className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                                        />
+                                        <span>{amenity}</span>
+                                    </label>
+                                ))}
+                            </div>
                         </div>
                     </>
                 )}
@@ -877,6 +936,10 @@ export default function AnunciePage() {
                                             <p className={REVIEW_LABEL}>Garagens</p>
                                             <p className={REVIEW_VALUE}>{form.garageSpots || 'Sem garagem'}</p>
                                         </div>
+                                        <div className="min-w-0">
+                                            <p className={REVIEW_LABEL}>Suítes</p>
+                                            <p className={REVIEW_VALUE}>{form.suites || 'Sem suítes'}</p>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -902,7 +965,8 @@ export default function AnunciePage() {
                                                 form.temPiscina && 'Piscina',
                                                 form.temAutomacao && 'Automação',
                                                 form.temArCondicionado && 'Ar-condicionado',
-                                                form.ehMobiliada && 'Mobiliado',
+                                                form.ehMobiliada && 'Mobiliada',
+                                                ...form.amenities,
                                             ].filter(Boolean).join(', ') || 'Nenhuma selecionada'}</p>
                                         </div>
                                         <div className="grid gap-3 sm:grid-cols-2">

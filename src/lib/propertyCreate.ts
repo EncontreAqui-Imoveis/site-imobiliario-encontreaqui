@@ -26,6 +26,23 @@ export const BRAZILIAN_STATES = [
     'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
 ] as const
 
+export const PROPERTY_CANONICAL_AMENITIES = [
+    'POÇO ARTESIANO',
+    'MOBILIADA',
+    'PLANEJADOS',
+    'ELEVADOR',
+    'ACADEMIA',
+    'CHURRASQUEIRA',
+    'SALÃO DE FESTAS',
+    'QUADRA',
+    'CONDOMÍNIO FECHADO',
+    'ACEITA PETS',
+    'SISTEMA DE SEGURANÇA/CÂMARA',
+    'SAUNA',
+] as const
+
+export type PropertyAmenity = (typeof PROPERTY_CANONICAL_AMENITIES)[number]
+
 export type CreatePropertyActor = 'broker' | 'client-owner'
 
 export type CreatePropertyDraftData = {
@@ -54,12 +71,14 @@ export type CreatePropertyDraftData = {
     bedrooms: string
     bathrooms: string
     garageSpots: string
+    suites: string
     areaConstruida: string
     /** m2 | hectare | alqueire — o backend converte para m² em `area_construida`. */
     areaConstruidaUnidade: 'm2' | 'hectare' | 'alqueire'
     areaTerreno: string
     /** m2 | hectare | alqueire — unidade informada para a área de terreno. */
     areaTerrenoUnidade: 'm2' | 'hectare' | 'alqueire'
+    amenities: PropertyAmenity[]
     hasWifi: boolean
     temPiscina: boolean
     temAutomacao: boolean
@@ -97,6 +116,17 @@ function appendIfPresent(
 
 function normalizeText(value: string): string {
     return value.trim()
+}
+
+function normalizeAmenitySelections(amenities: string[]): PropertyAmenity[] {
+    const cleaned = amenities
+        .map((amenity) => String(amenity).trim())
+        .filter((amenity) => PROPERTY_CANONICAL_AMENITIES.includes(amenity as PropertyAmenity))
+    const unique = new Set<PropertyAmenity>()
+    for (const amenity of cleaned) {
+        unique.add(amenity as PropertyAmenity)
+    }
+    return [...unique]
 }
 
 export function digitsOnly(value: string): string {
@@ -186,6 +216,7 @@ export function buildCreatePropertyFormData(payload: CreatePropertyPayload): For
     const basePrice = saleEnabled ? salePrice : rentEnabled ? rentPrice : 0
     const bedrooms = Math.min(MAX_PROPERTY_COUNT, normalizeDecimalInput(payload.bedrooms))
     const bathrooms = Math.min(MAX_PROPERTY_COUNT, normalizeDecimalInput(payload.bathrooms))
+    const suites = Math.min(MAX_PROPERTY_COUNT, normalizeDecimalInput(payload.suites ?? ''))
     const garageSpots = Math.min(MAX_PROPERTY_COUNT, normalizeDecimalInput(payload.garageSpots))
     const areaConstruida = Math.min(MAX_PROPERTY_AREA, normalizeDecimalInput(payload.areaConstruida))
     const areaTerreno = Math.min(MAX_PROPERTY_AREA, normalizeDecimalInput(payload.areaTerreno))
@@ -216,6 +247,7 @@ export function buildCreatePropertyFormData(payload: CreatePropertyPayload): For
 
     appendIfPresent(formData, 'bedrooms', bedrooms, { allowZero: true })
     appendIfPresent(formData, 'bathrooms', bathrooms, { allowZero: true })
+    appendIfPresent(formData, 'suites', suites, { allowZero: true })
     appendIfPresent(formData, 'garage_spots', garageSpots, { allowZero: true })
     appendIfPresent(formData, 'area_construida', areaConstruida)
     formData.append('area_construida_unidade', payload.areaConstruidaUnidade)
@@ -227,6 +259,9 @@ export function buildCreatePropertyFormData(payload: CreatePropertyPayload): For
     formData.append('tem_automacao', payload.temAutomacao ? '1' : '0')
     formData.append('tem_ar_condicionado', payload.temArCondicionado ? '1' : '0')
     formData.append('eh_mobiliada', payload.ehMobiliada ? '1' : '0')
+    for (const amenity of normalizeAmenitySelections(payload.amenities)) {
+        formData.append('amenities', amenity)
+    }
 
     for (const image of payload.images) {
         formData.append('images', image)

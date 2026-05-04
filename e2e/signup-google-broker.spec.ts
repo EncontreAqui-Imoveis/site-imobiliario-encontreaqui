@@ -59,9 +59,8 @@ test('cadastro corretor em fluxo Google pendente segue para onboarding de docume
     await expect(page.getByText(/Seu e-mail já foi (confirmado|verificado)\. Você quer verificar seu telefone\?/i)).toBeVisible()
     await page.getByRole('button', { name: /prosseguir com verificação de corretor/i }).click()
     await expect(page).toHaveURL(/\/onboarding\/broker\?mode=signup/)
-    await expect(page.getByRole('heading', { name: /enviar documentos/i })).toBeVisible()
-    await expect(page.getByText(/creci informado no cadastro/i)).toBeVisible()
-    await expect(page.getByRole('textbox', { name: /número creci/i })).not.toBeVisible()
+    await expect(page.getByRole('heading', { name: /Quero ser corretor/i })).toBeVisible()
+    await expect(page.getByRole('textbox', { name: /número creci/i })).toBeVisible()
 })
 
 test('Google após escolha prévia de perfil mantém o tipo e inicia em Dados básicos', async ({ page }) => {
@@ -264,6 +263,7 @@ test('corretor cria pendência documental com Enviar depois sem exigir CRECI nov
     let finalizeAction: string | null = null
     let finalizeBody: Record<string, unknown> | null = null
     let usersRegisterCalls = 0
+    let submitDocumentsCalls = 0
     await page.route('**/brokers/me/request-upgrade', async (route) => {
         upgradeCalls += 1
         await route.fulfill({
@@ -309,6 +309,23 @@ test('corretor cria pendência documental com Enviar depois sem exigir CRECI nov
             return
         }
         await route.continue()
+    })
+    await page.route('**/auth/register/draft/*/submit-documents', async (route) => {
+        if (route.request().method() === 'POST') {
+            submitDocumentsCalls += 1
+        }
+        await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({ ok: true }),
+        })
+    })
+    await page.route('**/auth/check-creci*', async (route) => {
+        await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({ exists: false }),
+        })
     })
     await page.route('**/users/register', async (route) => {
         if (route.request().method() === 'POST') {
@@ -377,15 +394,19 @@ test('corretor cria pendência documental com Enviar depois sem exigir CRECI nov
     await page.goto('/cadastro/verificar-metodo')
     await page.getByRole('button', { name: /prosseguir com verificação de corretor/i }).click()
     await expect(page).toHaveURL(/\/onboarding\/broker\?mode=signup&creci=GO987/i)
+    await expect(page.getByRole('heading', { name: /Quero ser corretor/i })).toBeVisible()
+    await expect(page.getByLabel(/Número CRECI/i)).toHaveValue('GO987')
+    await page.getByRole('button', { name: /solicitar upgrade para corretor/i }).click()
+    await expect(page.getByRole('heading', { name: /enviar documentos/i })).toBeVisible()
     await page.getByTestId('broker-agreement-content').evaluate((element) => {
         element.scrollTop = element.scrollHeight
     })
     await page.getByRole('checkbox', { name: /li e aceito integralmente o termo de adesão de corretor/i }).check()
 
     await page.getByRole('button', { name: /enviar depois/i }).click()
-    await expect(page.getByText(/Cadastro de corretor criado\. Documentos pendentes\./i)).toBeVisible()
+    await expect(page.getByText(/Envie seus documentos para iniciar a análise/i)).toBeVisible()
     await expect(page.getByRole('link', { name: /Ir para Meus imóveis/i })).toBeVisible()
-    await expect(page.getByText(/Documentos enviados!/i)).not.toBeVisible()
+    await expect(page.getByText(/Documentos enviados \/ em análise\./i)).not.toBeVisible()
     expect(finalizeAction).toBe('send_later')
     expect(finalizeBody).toMatchObject({
         acceptedTerms: true,
@@ -396,6 +417,7 @@ test('corretor cria pendência documental com Enviar depois sem exigir CRECI nov
         brokerAgreementVersion: '2026-04-28',
         action: 'send_later',
     })
+    expect(submitDocumentsCalls).toBe(0)
 
     expect(upgradeCalls).toBe(0)
     expect(usersRegisterCalls).toBe(0)
@@ -408,6 +430,13 @@ test('enviar documentos leva para etapa de análise', async ({ page }) => {
     let createDraftCalls = 0
     let usersRegisterCalls = 0
     let finalizeBody: Record<string, unknown> | null = null
+    await page.route('**/auth/check-creci*', async (route) => {
+        await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({ exists: false }),
+        })
+    })
     await page.route('**/auth/register/draft/*/submit-documents', async (route) => {
         if (route.request().method() === 'POST') {
             submitDocumentsCalls += 1
@@ -534,6 +563,9 @@ test('enviar documentos leva para etapa de análise', async ({ page }) => {
 
     await page.goto('/cadastro/verificar-metodo')
     await page.getByRole('button', { name: /prosseguir com verificação de corretor/i }).click()
+    await expect(page.getByRole('heading', { name: /Quero ser corretor/i })).toBeVisible()
+    await expect(page.getByLabel(/Número CRECI/i)).toHaveValue('GO988')
+    await page.getByRole('button', { name: /solicitar upgrade para corretor/i }).click()
     await expect(page.getByRole('heading', { name: /enviar documentos/i })).toBeVisible()
     await page.getByTestId('broker-agreement-content').evaluate((element) => {
         element.scrollTop = element.scrollHeight
@@ -560,7 +592,7 @@ test('enviar documentos leva para etapa de análise', async ({ page }) => {
     })
 
     await page.getByRole('button', { name: /enviar documentos/i }).click()
-    await expect(page.getByText(/Documentos enviados!/i)).toBeVisible()
+    await expect(page.getByText(/Documentos enviados \/ em análise\./i)).toBeVisible()
     await expect(page.getByRole('link', { name: /Explorar imóveis/i })).toBeVisible()
     expect(finalizeAction).toBe('submit_documents')
     expect(finalizeBody).toMatchObject({

@@ -58,6 +58,18 @@ function toImageUrlList(raw: unknown): string[] {
     return []
 }
 
+function normalizeAmenities(raw: unknown): string[] {
+    if (!Array.isArray(raw)) return []
+    const normalized = new Set<string>()
+    for (const item of raw) {
+        const value = typeof item === 'string' ? item.trim() : String(item).trim()
+        if (value) {
+            normalized.add(value)
+        }
+    }
+    return [...normalized]
+}
+
 function normalizeStatus(rawStatus: unknown): Property['status'] {
     const normalized = String(rawStatus ?? 'approved').trim().toLowerCase()
     if (normalized === 'approved') return 'approved'
@@ -176,11 +188,13 @@ export function normalizeProperty(raw: unknown): Property | null {
             return 'm2' as const
         })(),
         garageSpots: toNumber(item.garageSpots ?? item.garage_spots),
+        suites: toNumber(item.suites),
         hasWifi: toBoolean(item.hasWifi ?? item.has_wifi),
         temPiscina: toBoolean(item.temPiscina ?? item.tem_piscina),
         temEnergiaSolar: toBoolean(item.temEnergiaSolar ?? item.tem_energia_solar),
         temAutomacao: toBoolean(item.temAutomacao ?? item.tem_automacao),
         temArCondicionado: toBoolean(item.temArCondicionado ?? item.tem_ar_condicionado),
+        amenities: normalizeAmenities(item.amenities),
         ehMobiliada: toBoolean(item.ehMobiliada ?? item.eh_mobiliada),
         valorCondominio: toNumber(item.valorCondominio ?? item.valor_condominio),
         valorIptu: toNumber(item.valorIptu ?? item.valor_iptu),

@@ -15,6 +15,41 @@ import { createSignupDraft, saveSignupDraft } from '@/lib/authSignupDraft'
 import type { ApiError } from '@/lib/api/client'
 import { createSignupDraftRemote } from '@/lib/api/signupDraft'
 
+type LoginProfile = 'client' | 'broker'
+
+function normalizeProfile(rawProfile: unknown): LoginProfile | null {
+    if (typeof rawProfile !== 'string') return null
+    const value = rawProfile.trim().toLowerCase()
+    if (value === 'client') return 'client'
+    if (value === 'broker') return 'broker'
+    return null
+}
+
+function getProfileMismatchError(apiErr: ApiError): string | null {
+    const payload = apiErr.payload ?? {}
+    const requestedProfile = normalizeProfile((payload as { requestedProfile?: unknown }).requestedProfile)
+    const actualProfile = normalizeProfile(
+        (payload as { role?: unknown }).role
+        ?? (payload as { accountRole?: unknown }).accountRole
+        ?? (payload as { requestedRole?: unknown }).requestedRole
+        ?? (payload as { actualRole?: unknown }).actualRole,
+    )
+
+    if (!requestedProfile || !actualProfile || requestedProfile === actualProfile) {
+        return null
+    }
+
+    if (requestedProfile === 'client' && actualProfile === 'broker') {
+        return 'Esta conta é de corretor. Selecione Corretor para entrar.'
+    }
+
+    if (requestedProfile === 'broker' && actualProfile === 'client') {
+        return 'Esta conta é de cliente. Selecione Cliente para entrar.'
+    }
+
+    return null
+}
+
 function isGooglePopupClosedError(err: unknown): boolean {
     const code = (err as { code?: unknown }).code
     const message = (err as { message?: unknown }).message
@@ -58,7 +93,10 @@ export default function LoginPage() {
             const apiErr = err as ApiError
             if ('status' in apiErr) {
                 if (apiErr.status === 401) {
-                    setError('Credenciais inválidas. Verifique seu e-mail e senha.')
+                    setError(
+                        getProfileMismatchError(apiErr)
+                        ?? 'Credenciais inválidas. Verifique seu e-mail e senha.',
+                    )
                 } else {
                     setError(apiErr.message || 'Não foi possível entrar. Tente novamente.')
                 }

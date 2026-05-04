@@ -18,6 +18,7 @@ export interface Property {
     semCep?: boolean
     bedrooms?: number
     bathrooms?: number
+    suites?: number
     areaConstruida?: number
     /** Unidade em que o usuário cadastrou a área construída; `areaConstruida` no API é sempre m². */
     areaConstruidaUnidade?: 'm2' | 'alqueire' | 'hectare'
@@ -27,6 +28,7 @@ export interface Property {
     /** Unidade em que o usuário cadastrou a área do terreno; `areaTerreno` no API é sempre m². */
     areaTerrenoUnidade?: 'm2' | 'alqueire' | 'hectare'
     garageSpots?: number
+    amenities?: string[]
     hasWifi?: boolean
     temPiscina?: boolean
     temEnergiaSolar?: boolean

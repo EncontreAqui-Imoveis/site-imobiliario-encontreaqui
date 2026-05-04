@@ -1,5 +1,6 @@
 import {
     buildCreatePropertyFormData,
+    PROPERTY_CANONICAL_AMENITIES,
     requiresLotFields,
     resolveCreatePropertyPath,
     supportsRent,
@@ -54,10 +55,15 @@ describe('propertyCreate helpers', () => {
             bedrooms: '0',
             bathrooms: '0',
             garageSpots: '0',
+            suites: '0',
             areaConstruida: '0',
             areaConstruidaUnidade: 'm2',
             areaTerreno: '360',
             areaTerrenoUnidade: 'hectare',
+            amenities: [
+                PROPERTY_CANONICAL_AMENITIES[1],
+                PROPERTY_CANONICAL_AMENITIES[9],
+            ],
             hasWifi: false,
             temPiscina: false,
             temAutomacao: true,
@@ -83,7 +89,11 @@ describe('propertyCreate helpers', () => {
         expect(formData.get('bedrooms')).toBe('0')
         expect(formData.get('bathrooms')).toBe('0')
         expect(formData.get('garage_spots')).toBe('0')
+        expect(formData.get('suites')).toBe('0')
         expect(formData.get('tem_automacao')).toBe('1')
+        expect(formData.getAll('amenities')).toEqual(
+            expect.arrayContaining(['MOBILIADA', 'ACEITA PETS']),
+        )
         expect(formData.get('video')).toBe(video)
         expect(formData.getAll('images')).toHaveLength(1)
     })
@@ -118,10 +128,12 @@ describe('propertyCreate helpers', () => {
             bedrooms: '3',
             bathrooms: '2',
             garageSpots: '2',
+            suites: '1',
             areaConstruida: '180',
             areaConstruidaUnidade: 'm2',
             areaTerreno: '250',
             areaTerrenoUnidade: 'm2',
+            amenities: [],
             hasWifi: false,
             temPiscina: false,
             temAutomacao: false,

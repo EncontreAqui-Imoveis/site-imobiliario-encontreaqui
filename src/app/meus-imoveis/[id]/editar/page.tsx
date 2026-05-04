@@ -28,6 +28,7 @@ import {
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/currencyInput'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
 import { Property } from '@/types/property'
+import { PROPERTY_CANONICAL_AMENITIES, PropertyAmenity } from '@/lib/propertyCreate'
 import {
     ArrowLeft, Loader2, Save, Home, ChevronRight,
     AlertTriangle, CheckCircle
@@ -56,7 +57,7 @@ export default function EditPropertyPage() {
         priceSale: '', priceRent: '',
         address: '', numero: '', quadra: '', lote: '', bairro: '',
         complemento: '', city: '', state: 'GO', cep: '', semCep: false,
-        bedrooms: '', bathrooms: '', garageSpots: '',
+        bedrooms: '', bathrooms: '', suites: '', garageSpots: '', amenities: [] as PropertyAmenity[],
         areaConstruida: '', areaTerreno: '',
         areaConstruidaUnidade: 'm2' as AreaConstruidaUnidade,
         semQuadra: false, semLote: false,
@@ -124,7 +125,14 @@ export default function EditPropertyPage() {
                 semCep: p.semCep ?? false,
                 bedrooms: p.bedrooms ? String(p.bedrooms) : '',
                 bathrooms: p.bathrooms ? String(p.bathrooms) : '',
+                suites: p.suites ? String(p.suites) : '',
                 garageSpots: p.garageSpots ? String(p.garageSpots) : '',
+                amenities: Array.isArray(p.amenities)
+                    ? p.amenities
+                        .map((item) => String(item).trim())
+                        .filter((item) => PROPERTY_CANONICAL_AMENITIES.includes(item as PropertyAmenity))
+                        .filter((value, index, values) => values.indexOf(value) === index) as PropertyAmenity[]
+                    : [],
                 areaConstruida:
                     p.areaConstruida != null
                         ? squareMetersToAreaInput(p.areaConstruida, unit)
@@ -162,6 +170,23 @@ export default function EditPropertyPage() {
         setSaveError(null)
     }
 
+    function updateAmenity(amenity: PropertyAmenity, checked: boolean) {
+        setForm((prev) => {
+            if (checked) {
+                return {
+                    ...prev,
+                    amenities: Array.from(new Set([...prev.amenities, amenity])),
+                }
+            }
+            return {
+                ...prev,
+                amenities: prev.amenities.filter((value) => value !== amenity),
+            }
+        })
+        setSaved(false)
+        setSaveError(null)
+    }
+
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
         if (!property) return
@@ -193,12 +218,14 @@ export default function EditPropertyPage() {
                 semCep: form.semCep,
                 bedrooms: parseInt(form.bedrooms) || 0,
                 bathrooms: parseInt(form.bathrooms) || 0,
+                suites: parseInt(form.suites) || 0,
                 garageSpots: parseInt(form.garageSpots) || 0,
                 areaConstruida: Number.isFinite(areaConstruidaM2) ? areaConstruidaM2 : 0,
                 areaConstruidaUnidade: unit,
                 semQuadra: form.semQuadra,
                 semLote: form.semLote,
                 areaTerreno: normalizeDecimalInput(form.areaTerreno) || 0,
+                amenities: form.amenities,
                 hasWifi: form.hasWifi,
                 temPiscina: form.temPiscina,
                 temEnergiaSolar: form.temEnergiaSolar,
@@ -474,6 +501,10 @@ export default function EditPropertyPage() {
                                 <label className={labelClass}>Vagas</label>
                                 <input type="number" value={form.garageSpots} onChange={e => updateField('garageSpots', clampCountInput(e.target.value))} className={inputClass} min="0" max={MAX_PROPERTY_COUNT} />
                             </div>
+                            <div>
+                                <label className={labelClass}>Suítes</label>
+                                <input type="number" value={form.suites} onChange={e => updateField('suites', clampCountInput(e.target.value))} className={inputClass} min="0" max={MAX_PROPERTY_COUNT} />
+                            </div>
                             <div className="col-span-2 sm:col-span-1 sm:col-start-4">
                                 <label className={labelClass}>Área construída</label>
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
@@ -524,6 +555,19 @@ export default function EditPropertyPage() {
                                         className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                                     />
                                     <span className="text-sm font-medium text-gray-700">{label}</span>
+                                </label>
+                            ))}
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {PROPERTY_CANONICAL_AMENITIES.filter((amenity) => amenity !== 'MOBILIADA').map((amenity) => (
+                                <label key={amenity} className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
+                                    <input
+                                        type="checkbox"
+                                        checked={form.amenities.includes(amenity)}
+                                        onChange={(event) => updateAmenity(amenity, event.target.checked)}
+                                        className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                                    />
+                                    <span className="text-sm font-medium text-gray-700">{amenity}</span>
                                 </label>
                             ))}
                         </div>

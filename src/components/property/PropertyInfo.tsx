@@ -50,6 +50,7 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
     const statusLabel = displayStatusLabel(property.status, property.purpose)
     const isPurposeBadgeDuplicate = statusLabel.trim().toLowerCase() === (property.purpose ?? '').trim().toLowerCase()
     const [shareMessage, setShareMessage] = useState<string | null>(null)
+    const genericAmenities = Array.from(new Set((property.amenities ?? []).map((amenity) => String(amenity).trim()).filter(Boolean)))
 
     // Build comfort amenities
     const comfortAmenities = [
@@ -146,7 +147,7 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                 </div>
 
                 {/* Key Stats Grid */}
-                <div className="grid grid-cols-2 gap-4 rounded-2xl border border-gray-100 bg-gray-50 p-6 md:grid-cols-4">
+                <div className="grid grid-cols-2 gap-4 rounded-2xl border border-gray-100 bg-gray-50 p-6 md:grid-cols-5">
                     <div className="flex flex-col items-center justify-center gap-2 text-center">
                         <Bed className="h-6 w-6 shrink-0 text-primary-600" />
                         <span className="text-xl font-bold text-gray-900">{property.bedrooms || 0}</span>
@@ -167,6 +168,11 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                         <span className="text-xs font-medium uppercase tracking-wide text-gray-600">
                             {formatUnit(property.garageSpots || 0, 'Garagem', 'Garagens')}
                         </span>
+                    </div>
+                    <div className="flex flex-col items-center justify-center gap-2 text-center">
+                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">Suítes</span>
+                        <span className="text-xl font-bold text-gray-900">{property.suites || 0}</span>
+                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">{formatUnit(property.suites || 0, 'Suíte', 'Suítes')}</span>
                     </div>
                     <div className="flex flex-col items-center justify-center gap-2 text-center">
                         <Maximize className="h-6 w-6 shrink-0 text-primary-600" />
@@ -293,6 +299,18 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                         </div>
                     ))}
                 </div>
+                {genericAmenities.length > 0 && (
+                    <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50 p-4">
+                        <p className="text-sm font-medium text-gray-700">Outras comodidades</p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                            {genericAmenities.map((amenity) => (
+                                <span key={amenity} className="rounded-full bg-white border border-gray-200 px-3 py-1 text-sm text-gray-700">
+                                    {amenity}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Extra Details (Lot Type, Total Area, etc) */}

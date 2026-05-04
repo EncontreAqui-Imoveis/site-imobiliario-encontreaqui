@@ -177,13 +177,12 @@ export default function BrokerOnboardingPage() {
         if (isSignupMode && step === 'waiting' && waitingOutcome === 'send-later') {
             return
         }
-        if (isSignupMode && effectiveSignupCreci && step !== 'waiting') {
+        if (isSignupMode && step === 'creci' && effectiveSignupCreci) {
             setCreci(effectiveSignupCreci)
             setWaitingOutcome(null)
-            setStep('documents')
             return
         }
-        if (isSignupMode && !effectiveSignupCreci) {
+        if (isSignupMode && !effectiveSignupCreci && step !== 'creci') {
             setWaitingOutcome(null)
             setStep('creci')
             return
@@ -617,13 +616,13 @@ export default function BrokerOnboardingPage() {
                         {waitingOutcome === 'send-later' ? (
                             <h1 className="text-2xl font-bold text-slate-900">Cadastro de corretor criado. Documentos pendentes.</h1>
                         ) : (
-                            <h1 className="text-2xl font-bold text-slate-900">Documentos enviados!</h1>
+                            <h1 className="text-2xl font-bold text-slate-900">Documentos enviados / em análise.</h1>
                         )}
                         <p className="text-sm text-slate-600 max-w-sm mx-auto">
                             {waitingOutcome === 'send-later'
-                                ? 'Seu cadastro foi criado e ficará pendente até o envio dos documentos.'
+                                ? 'Envie seus documentos para iniciar a análise.'
                                 : waitingOutcome === 'documents-sent' || waitingOutcome === 'pending-verification'
-                                    ? 'Seus documentos estão sendo analisados pela equipe. Você será notificado quando a verificação for concluída.'
+                                    ? 'Seus documentos foram enviados e serão analisados pela equipe. Você será notificado quando a verificação for concluída.'
                                     : 'Seu cadastro está em etapa de análise.'}
                         </p>
                         {waitingOutcome === 'send-later' ? (

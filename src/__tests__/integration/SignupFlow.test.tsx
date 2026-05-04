@@ -333,7 +333,7 @@ describe('signup flow', () => {
         expect(screen.getByRole('button', { name: 'Trocar de conta' })).toBeInTheDocument()
     })
 
-    it('na seleção de perfil + Google de corretor, segue para passo básico sem criar draft remoto sem CRECI', async () => {
+    it('Google no cadastro não força perfil pré-selecionado; permanece no passo de perfil e não cria draft remoto imediato', async () => {
         mockIsGooglePendingAuthResult.mockReturnValue(true)
         mockLoginWithGooglePopup.mockResolvedValue({
             pending: {
@@ -353,12 +353,13 @@ describe('signup flow', () => {
             expect(mockCreateSignupDraftRemote).not.toHaveBeenCalled()
         })
 
-        expect(screen.getByLabelText(/CRECI/i)).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /quero cadastrar como cliente/i })).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /quero cadastrar como corretor/i })).toBeInTheDocument()
         expect(mockSaveSignupDraft).toHaveBeenCalledWith(
             expect.objectContaining({
                 source: 'google',
-                step: 'basic',
-                userType: 'broker',
+                step: 'profile',
+                userType: null,
                 data: expect.objectContaining({
                     email: 'corretor-google-test@example.com',
                 }),
@@ -366,7 +367,7 @@ describe('signup flow', () => {
         )
     })
 
-    it('Google broker no fluxo de perfil mapeia erro de CRECI inválido ao validar dados', async () => {
+    it('Google de corretor precisa confirmar perfil no fluxo antes de validar CRECI', async () => {
         mockIsGooglePendingAuthResult.mockReturnValue(true)
         mockLoginWithGooglePopup.mockResolvedValue({
             pending: {
@@ -388,9 +389,10 @@ describe('signup flow', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Continuar com Google' }))
 
         await waitFor(() => {
-            expect(screen.getByLabelText(/Telefone/)).toBeInTheDocument()
-            expect(screen.getByLabelText(/CRECI/i)).toBeInTheDocument()
+            expect(screen.getByRole('button', { name: /quero cadastrar como cliente/i })).toBeInTheDocument()
         })
+        fireEvent.click(screen.getByRole('button', { name: /quero cadastrar como corretor/i }))
+        fireEvent.click(screen.getByRole('button', { name: /^continuar$/i }))
 
         fireEvent.change(screen.getByLabelText(/Telefone/), {
             target: { value: '(62) 98888-7777' },
@@ -637,7 +639,7 @@ describe('signup flow', () => {
         ).toBeInTheDocument()
     })
 
-    it('preserva perfil escolhido antes do Google e avança para dados básicos', async () => {
+    it('ignora perfil escolhido antes do Google e mantém confirmação no passo de perfil', async () => {
         mockIsGooglePendingAuthResult.mockReturnValue(true)
         mockLoginWithGooglePopup.mockResolvedValue({
             pending: {
@@ -654,11 +656,13 @@ describe('signup flow', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Continuar com Google' }))
 
         await waitFor(() => {
+            expect(screen.getByRole('button', { name: /quero cadastrar como cliente/i })).toBeInTheDocument()
+            expect(screen.getByRole('button', { name: /quero cadastrar como corretor/i })).toBeInTheDocument()
             expect(mockSaveSignupDraft).toHaveBeenCalledWith(
                 expect.objectContaining({
                     source: 'google',
-                    step: 'basic',
-                    userType: 'client',
+                    step: 'profile',
+                    userType: null,
                     data: expect.objectContaining({
                         email: 'cliente-google@example.com',
                     }),
@@ -666,9 +670,8 @@ describe('signup flow', () => {
             )
         })
 
-        expect(screen.getByLabelText('Nome completo *')).toBeInTheDocument()
-        expect(screen.getByLabelText('E-mail *')).toBeInTheDocument()
-        expect(screen.queryByRole('button', { name: /quero cadastrar como cliente/i })).not.toBeInTheDocument()
+        expect(screen.getByText(/Selecione seu tipo de perfil para avançarmos para o próximo passo/i)).toBeInTheDocument()
+        expect(screen.queryByRole('button', { name: /^continuar$/i })).toBeInTheDocument()
     })
 
     it('bloqueia e-mail já existente na etapa de dados antes de avançar', async () => {
@@ -989,6 +992,18 @@ describe('signup flow', () => {
         mockLoadSignupDraft.mockReturnValue(makeDraft('draft-old'))
         const { container, rerender } = render(<BrokerOnboardingPage />)
 
+        await waitFor(() => {
+            expect(screen.getByRole('button', { name: 'Solicitar upgrade para corretor' })).toBeInTheDocument()
+        })
+        fireEvent.click(screen.getByRole('button', { name: 'Solicitar upgrade para corretor' }))
+
+        await waitFor(() => {
+            expect(screen.getByRole('button', { name: /^enviar documentos$/i })).toBeInTheDocument()
+        })
+        expect(screen.getByText('CRECI — Frente')).toBeInTheDocument()
+        expect(screen.getByText('CRECI — Verso')).toBeInTheDocument()
+        expect(screen.getByText('Selfie')).toBeInTheDocument()
+
         const fileInputs = container.querySelectorAll('input[type="file"]')
         expect(fileInputs).toHaveLength(3)
 
@@ -1003,6 +1018,9 @@ describe('signup flow', () => {
         mockLoadSignupDraft.mockReturnValue(makeDraft('draft-new'))
         rerender(<BrokerOnboardingPage />)
 
+        await waitFor(() => {
+            expect(screen.getByRole('button', { name: /^enviar documentos$/i })).toBeInTheDocument()
+        })
         expect(screen.getByText('CRECI — Frente')).toBeInTheDocument()
         expect(screen.getByText('CRECI — Verso')).toBeInTheDocument()
         expect(screen.getByText('Selfie')).toBeInTheDocument()

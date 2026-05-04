@@ -79,6 +79,83 @@ describe('login page', () => {
         expect(mockPush).not.toHaveBeenCalled()
     })
 
+    it('mostra mensagem de divergência de perfil quando backend informa cliente versus corretor', async () => {
+        mockLoginWithEmailHybrid.mockRejectedValueOnce({
+            status: 401,
+            message: 'Credenciais inválidas.',
+            payload: {
+                requestedProfile: 'client',
+                accountRole: 'broker',
+            },
+        })
+
+        render(<LoginPage />)
+
+        fireEvent.change(screen.getByLabelText('E-mail'), {
+            target: { value: 'client-user@example.com' },
+        })
+        fireEvent.change(screen.getByLabelText('Senha'), {
+            target: { value: '123456' },
+        })
+
+        fireEvent.click(screen.getByRole('button', { name: 'Entrar' }))
+
+        await waitFor(() => {
+            expect(screen.getByRole('alert')).toHaveTextContent('Esta conta é de corretor. Selecione Corretor para entrar.')
+        })
+    })
+
+    it('mostra mensagem de divergência de perfil no sentido inverso', async () => {
+        mockLoginWithEmailHybrid.mockRejectedValueOnce({
+            status: 401,
+            message: 'Credenciais inválidas.',
+            payload: {
+                requestedProfile: 'broker',
+                role: 'client',
+            },
+        })
+
+        render(<LoginPage />)
+
+        fireEvent.change(screen.getByLabelText('E-mail'), {
+            target: { value: 'broker-user@example.com' },
+        })
+        fireEvent.change(screen.getByLabelText('Senha'), {
+            target: { value: '123456' },
+        })
+
+        fireEvent.click(screen.getByRole('button', { name: 'Entrar' }))
+
+        await waitFor(() => {
+            expect(screen.getByRole('alert')).toHaveTextContent('Esta conta é de cliente. Selecione Cliente para entrar.')
+        })
+    })
+
+    it('mantém erro genérico quando backend não informa informação de perfil no 401', async () => {
+        mockLoginWithEmailHybrid.mockRejectedValueOnce({
+            status: 401,
+            message: 'Credenciais inválidas.',
+            payload: {
+                message: 'Credenciais inválidas.',
+            },
+        })
+
+        render(<LoginPage />)
+
+        fireEvent.change(screen.getByLabelText('E-mail'), {
+            target: { value: 'unknown@example.com' },
+        })
+        fireEvent.change(screen.getByLabelText('Senha'), {
+            target: { value: '123456' },
+        })
+
+        fireEvent.click(screen.getByRole('button', { name: 'Entrar' }))
+
+        await waitFor(() => {
+            expect(screen.getByRole('alert')).toHaveTextContent('Credenciais inválidas. Verifique seu e-mail e senha.')
+        })
+    })
+
     it('aplica espaçamento de topo para evitar sobreposição com navbar', () => {
         const { container } = render(<LoginPage />)
         const shell = container.firstElementChild

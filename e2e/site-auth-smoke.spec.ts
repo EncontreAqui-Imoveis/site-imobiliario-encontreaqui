@@ -87,6 +87,36 @@ test('login permite entrar com credenciais de teste e remove bloqueio de sessão
   await expect(page).toHaveURL('/meus-imoveis')
 })
 
+test('login mostra erro específico quando 401 retorna papel divergente', async ({ page }) => {
+    await page.route('**/auth/login', async (route) => {
+        if (route.request().method() !== 'POST') {
+            await route.continue()
+            return
+        }
+
+        await route.fulfill({
+            status: 401,
+            contentType: 'application/json',
+            body: JSON.stringify({
+                message: 'Credenciais inválidas.',
+                requestedProfile: 'client',
+                role: 'broker',
+            }),
+        })
+    })
+
+    await page.goto('/auth/login')
+
+    await page.getByLabel('E-mail').fill('cliente-e2e@example.com')
+    await page.locator('#password').fill('123456')
+    await page.getByRole('button', { name: 'Entrar', exact: true }).click()
+
+    await expect(page.locator('#login-error')).toHaveText(
+        'Esta conta é de corretor. Selecione Corretor para entrar.',
+    )
+    await expect(page).toHaveURL('/auth/login')
+})
+
 test('usuario autenticado não acessa /auth/login nem /auth/cadastro', async ({ page }) => {
   await page.route('**/users/me', async (route) => {
     await route.fulfill({
