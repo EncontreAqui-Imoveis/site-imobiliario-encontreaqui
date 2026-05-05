@@ -55,14 +55,13 @@ describe('propertyCreate helpers', () => {
             bedrooms: '0',
             bathrooms: '0',
             garageSpots: '0',
-            suites: '0',
             areaConstruida: '0',
             areaConstruidaUnidade: 'm2',
             areaTerreno: '360',
             areaTerrenoUnidade: 'hectare',
             amenities: [
-                PROPERTY_CANONICAL_AMENITIES[1],
-                PROPERTY_CANONICAL_AMENITIES[9],
+            'MOBILIADA',
+            'ACEITA PETS',
             ],
             hasWifi: false,
             temPiscina: false,
@@ -91,7 +90,6 @@ describe('propertyCreate helpers', () => {
         expect(formData.get('bedrooms')).toBe('0')
         expect(formData.get('bathrooms')).toBe('0')
         expect(formData.get('garage_spots')).toBe('0')
-        expect(formData.get('suites')).toBe('0')
         expect(formData.get('tem_automacao')).toBe('1')
         expect(formData.getAll('amenities')).toEqual(
             expect.arrayContaining(['MOBILIADA', 'ACEITA PETS']),
@@ -130,7 +128,6 @@ describe('propertyCreate helpers', () => {
             bedrooms: '3',
             bathrooms: '2',
             garageSpots: '2',
-            suites: '1',
             areaConstruida: '180',
             areaConstruidaUnidade: 'm2',
             areaTerreno: '250',

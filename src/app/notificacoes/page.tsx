@@ -50,7 +50,7 @@ function resolveNotificationHref(notification: Notification): string | null {
     }
 
     if (notification.relatedEntityType === 'negotiation') {
-        return '/propostas'
+        return '/documentos?tab=propostas'
     }
 
     if (notification.relatedEntityType === 'property' && notification.relatedEntityId) {

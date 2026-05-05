@@ -23,7 +23,6 @@ import type { ApiError } from '@/lib/api/client'
 import { createProperty } from '@/lib/api/user'
 import {
     clearDraft,
-    hasDraft as checkHasDraft,
     isPropertyDraftStaleError,
     loadDraft,
     loadDraftMedia,
@@ -57,7 +56,7 @@ import { validateImageFile, validateVideoFile } from '@/lib/sanitize'
 import { useUser } from '@/contexts/UserContext'
 import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
-import { areaUnitLabel } from '@/lib/areaUnits'
+import { areaInputToSquareMeters, areaUnitLabel } from '@/lib/areaUnits'
 import { getUploadSignature, uploadToCloudinaryBrowser } from '@/lib/api/cloudinaryUpload'
 
 type WizardStep = 1 | 2 | 3 | 4 | 5 | 6
@@ -79,7 +78,7 @@ const INITIAL: CreatePropertyDraftData = {
     actorMode: null, propertyType: '', purpose: '', title: '', description: '', ownerName: '', ownerPhone: '',
     priceSale: '', priceRent: '', cep: '', semCep: false, state: 'GO', city: '', bairro: '', address: '', numero: '', complemento: '',
     quadra: '', lote: '', semNumero: false, semQuadra: false, semLote: false,
-    bedrooms: '', bathrooms: '', suites: '', garageSpots: '', amenities: [],
+    bedrooms: '', bathrooms: '', garageSpots: '', amenities: [],
     areaConstruida: '', areaConstruidaUnidade: 'm2', areaTerreno: '', areaTerrenoUnidade: 'm2', hasWifi: false, temPiscina: false, temAutomacao: false,
     temArCondicionado: false, ehMobiliada: false,
 }
@@ -109,7 +108,7 @@ function validOwnerPhone(value: string) {
     return digits.length === 0 || (digits.length >= 10 && digits.length <= 13)
 }
 
-type CountFieldKey = 'bedrooms' | 'bathrooms' | 'garageSpots' | 'suites'
+type CountFieldKey = 'bedrooms' | 'bathrooms' | 'garageSpots'
 type CountFieldMode = 'none' | 'count'
 
 function resolveCountFieldMode(value: string): CountFieldMode {
@@ -121,6 +120,23 @@ function isValidCountFieldValue(value: string): boolean {
     if (!/^\d+$/.test(value)) return false
     const parsed = Number(value)
     return Number.isInteger(parsed) && parsed >= 0 && parsed <= MAX_PROPERTY_COUNT
+}
+
+function toSentenceCase(value: string): string {
+    return value
+        .toLowerCase()
+        .split(' ')
+        .map((word) => (word ? `${word[0].toUpperCase()}${word.slice(1)}` : word))
+        .join(' ')
+}
+
+function isDraftRecoverable(raw: ReturnType<typeof loadDraft>): boolean {
+    if (!raw) return false
+    const actorMode = String(raw.data?.actorMode ?? '').trim()
+    if (actorMode !== 'broker' && actorMode !== 'client-owner') return false
+    const step = Number(raw.currentStep)
+    if (!Number.isInteger(step) || step < 1 || step > 6) return false
+    return true
 }
 
 async function lookupCep(cep: string): Promise<CepLookupResult | null> {
@@ -169,6 +185,7 @@ export default function AnunciePage() {
     const [cityOptions, setCityOptions] = useState<string[]>([])
     const [showDraftBanner, setShowDraftBanner] = useState(false)
     const [draftDecisionResolved, setDraftDecisionResolved] = useState(false)
+    const [showClientOwnerOnboarding, setShowClientOwnerOnboarding] = useState(false)
     const [cepLoading, setCepLoading] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -191,15 +208,22 @@ export default function AnunciePage() {
             router.replace(gateRoute)
             return
         }
-        if (!authLoading && isApprovedBroker) setActorMode('broker')
+        if (!authLoading && isApprovedBroker) {
+            setActorMode('broker')
+            setShowClientOwnerOnboarding(false)
+        }
         if (!authLoading && isBrokerPending) router.replace('/onboarding/broker')
     }, [authLoading, session, isApprovedBroker, isBrokerPending, router])
 
     useEffect(() => {
         setDraftDecisionResolved(false)
-        if (checkHasDraft()) {
+        const draft = loadDraft()
+        if (draft && isDraftRecoverable(draft)) {
             setShowDraftBanner(true)
         } else {
+            if (draft && !isDraftRecoverable(draft)) {
+                clearDraft()
+            }
             setDraftDecisionResolved(true)
         }
     }, [])
@@ -276,6 +300,7 @@ export default function AnunciePage() {
         if (draft.data.actorMode === 'broker' || draft.data.actorMode === 'client-owner') {
             setActorMode(draft.data.actorMode)
         }
+        setShowClientOwnerOnboarding(false)
         setImages(media.images)
         setImagePreviews(media.images.map((file) => URL.createObjectURL(file)))
         setVideo(media.video)
@@ -294,6 +319,7 @@ export default function AnunciePage() {
         clearDraft()
         setShowDraftBanner(false)
         setDraftDecisionResolved(true)
+        setShowClientOwnerOnboarding(false)
         if (draftErrorMessage) setError(draftErrorMessage)
     }
 
@@ -301,6 +327,7 @@ export default function AnunciePage() {
         clearDraft()
         setShowDraftBanner(false)
         setDraftDecisionResolved(true)
+        setShowClientOwnerOnboarding(false)
     }
 
     async function handleCepBlur() {
@@ -396,14 +423,14 @@ export default function AnunciePage() {
                             ((form.semQuadra || form.quadra.trim()) && (form.semLote || form.lote.trim()))),
                 )
             case 3:
+                const areaConstruida = form.areaConstruida.trim().length > 0 ? Number(form.areaConstruida) : 0
+                const areaTerreno = Number(form.areaTerreno)
+                if (areaTerreno <= 0 || areaTerreno > MAX_PROPERTY_AREA) return false
+                if (areaConstruida < 0 || areaConstruida > MAX_PROPERTY_AREA) return false
+                if (areaConstruida > 0 && areaTerreno > 0 && areaConstruida > areaTerreno) return false
                 return (
-                    Number(form.areaConstruida) > 0 &&
-                    Number(form.areaTerreno) > 0 &&
-                    Number(form.areaConstruida) <= MAX_PROPERTY_AREA &&
-                    Number(form.areaTerreno) <= MAX_PROPERTY_AREA &&
                     isValidCountFieldValue(form.bedrooms) &&
                     isValidCountFieldValue(form.bathrooms) &&
-                        isValidCountFieldValue(form.suites) &&
                     isValidCountFieldValue(form.garageSpots)
                 )
             case 4:
@@ -420,6 +447,24 @@ export default function AnunciePage() {
         setSubmitting(true)
         setError(null)
         setUploadStatus('Obtendo autorização para upload...')
+
+        const areaConstruida = Number(form.areaConstruida)
+        const areaTerreno = Number(form.areaTerreno)
+        const areaTerrenoM2 = areaInputToSquareMeters(areaTerreno, form.areaTerrenoUnidade)
+        const areaConstruidaM2 = areaInputToSquareMeters(areaConstruida || 0, form.areaConstruidaUnidade)
+        const areaConstruidaInformada = Number.isFinite(areaConstruida) && areaConstruida > 0
+        if (!Number.isFinite(areaTerrenoM2) || areaTerrenoM2 <= 0) {
+            setSubmitting(false)
+            setUploadStatus(null)
+            setError('Informe a área do terreno maior que zero.')
+            return
+        }
+        if (areaConstruidaInformada && areaConstruidaM2 > areaTerrenoM2) {
+            setSubmitting(false)
+            setUploadStatus(null)
+            setError('A área construída não pode ser maior que a área do terreno.')
+            return
+        }
         
         try {
             let finalImageUrls: string[] = []
@@ -507,7 +552,14 @@ export default function AnunciePage() {
                     <p className="mt-2 max-w-2xl text-sm text-slate-600">Escolha como você quer continuar no site.</p>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
-                    <button type="button" onClick={() => setActorMode('client-owner')} className="rounded-2xl border border-primary-200 bg-white p-6 text-left shadow-sm hover:border-primary-400 hover:shadow-md">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setActorMode('client-owner')
+                            setShowClientOwnerOnboarding(true)
+                        }}
+                        className="rounded-2xl border border-primary-200 bg-white p-6 text-left shadow-sm hover:border-primary-400 hover:shadow-md"
+                    >
                         <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
                             <Home className="h-6 w-6" />
                         </div>
@@ -521,6 +573,36 @@ export default function AnunciePage() {
                         <h2 className="text-lg font-bold text-slate-900">Quero me tornar corretor</h2>
                         <p className="mt-2 text-sm text-slate-600">Siga para o fluxo de corretor para operar de forma profissional na plataforma.</p>
                     </Link>
+                </div>
+            </div>
+        )
+    }
+
+    if (actorMode === 'client-owner' && showClientOwnerOnboarding) {
+        return (
+            <div className="mx-auto max-w-4xl px-4 py-8 pt-24 sm:px-6">
+                <div className="rounded-2xl border border-primary-100 bg-primary-50/30 p-6">
+                    <h1 className="text-2xl font-bold text-slate-900">Anunciar como proprietário</h1>
+                    <p className="mt-2 text-sm text-slate-600">
+                        Antes de cadastrar, confirme que o imóvel é seu e que você autoriza a publicação da ficha para análise.
+                    </p>
+                    <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-slate-700">
+                        <li>Preencha os dados do imóvel com foto, endereço e documentação do anúncio.</li>
+                        <li>Informe a disponibilidade para contato para análise e visita.</li>
+                        <li>Revise todas as informações antes da etapa final.</li>
+                    </ol>
+                    <div className="mt-6 rounded-xl border border-white bg-white p-4 text-sm text-slate-700">
+                        <p className="font-medium text-slate-900">Dica rápida</p>
+                        <p className="mt-1">Campos com * são obrigatórios, fotos são obrigatórias e os imóveis sem documentação completa podem levar mais tempo para aprovação.</p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setShowClientOwnerOnboarding(false)}
+                        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700"
+                    >
+                        <ArrowRight className="h-4 w-4" />
+                        Entendi, continuar
+                    </button>
                 </div>
             </div>
         )
@@ -673,9 +755,32 @@ export default function AnunciePage() {
                             </p>
                             <div className="mt-4 grid gap-4 sm:grid-cols-2">
                                 <div>
-                                    <label className={LABEL}>Área construída *</label>
+                                    <label className={LABEL}>Área construída</label>
+                                    <label className="mb-2 inline-flex items-center gap-2 text-xs text-slate-600">
+                                        <input
+                                            type="checkbox"
+                                            checked={!form.areaConstruida.trim()}
+                                            onChange={(event) => {
+                                                if (event.target.checked) {
+                                                    updateField('areaConstruida', '')
+                                                }
+                                            }}
+                                            className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                                        />
+                                        Sem área construída
+                                    </label>
                                     <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
-                                        <input type="number" min="0" max={MAX_PROPERTY_AREA} step="0.01" value={form.areaConstruida} onChange={(e) => updateField('areaConstruida', clampAreaInput(e.target.value))} className={`${INPUT} min-w-0 flex-1`} />
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max={MAX_PROPERTY_AREA}
+                                            step="0.01"
+                                            disabled={!form.areaConstruida.trim()}
+                                            value={form.areaConstruida}
+                                            onChange={(e) => updateField('areaConstruida', clampAreaInput(e.target.value))}
+                                            placeholder={form.areaConstruida.trim() ? undefined : 'Informe a área'}
+                                            className={`${INPUT} min-w-0 flex-1 disabled:bg-slate-50 disabled:text-slate-400`}
+                                        />
                                         <select value={form.areaConstruidaUnidade} onChange={(e) => updateField('areaConstruidaUnidade', e.target.value as CreatePropertyDraftData['areaConstruidaUnidade'])} className={`${INPUT} shrink-0 sm:w-44`}>
                                             {AREA_UNIT_OPTIONS.map((option) => (
                                                 <option key={option.value} value={option.value}>{option.label}</option>
@@ -698,11 +803,11 @@ export default function AnunciePage() {
                         </div>
 
                         <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
-                            <h3 className="text-sm font-semibold text-slate-900">Quartos, banheiros, suítes e garagem</h3>
+                            <h3 className="text-sm font-semibold text-slate-900">Quartos, banheiros e vagas</h3>
                             <p className="mt-1 text-xs text-slate-600">
                                 Escolha “Sem ...” quando não se aplica ou informe a quantidade (inclui valor 0).
                             </p>
-                            <div className="mt-4 grid gap-4 md:grid-cols-4">
+                            <div className="mt-4 grid gap-4 md:grid-cols-3">
                                 <div className="rounded-xl border border-slate-200 bg-white p-3">
                                     <label className={LABEL}>Quartos</label>
                                     <select
@@ -746,7 +851,7 @@ export default function AnunciePage() {
                                     )}
                                 </div>
                                 <div className="rounded-xl border border-slate-200 bg-white p-3">
-                                    <label className={LABEL}>Garagem</label>
+                                    <label className={LABEL}>Vagas</label>
                                     <select
                                         value={resolveCountFieldMode(form.garageSpots)}
                                         onChange={(e) => setCountFieldMode('garageSpots', e.target.value as CountFieldMode)}
@@ -766,27 +871,6 @@ export default function AnunciePage() {
                                         />
                                     )}
                                 </div>
-                                <div className="rounded-xl border border-slate-200 bg-white p-3">
-                                    <label className={LABEL}>Suítes</label>
-                                    <select
-                                        value={resolveCountFieldMode(form.suites)}
-                                        onChange={(e) => setCountFieldMode('suites', e.target.value as CountFieldMode)}
-                                        className={INPUT}
-                                    >
-                                        <option value="none">Sem suíte</option>
-                                        <option value="count">Informar quantidade</option>
-                                    </select>
-                                    {resolveCountFieldMode(form.suites) === 'count' && (
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            max={MAX_PROPERTY_COUNT}
-                                            value={form.suites}
-                                            onChange={(e) => updateField('suites', clampCountInput(e.target.value))}
-                                            className={`${INPUT} mt-2`}
-                                        />
-                                    )}
-                                </div>
                             </div>
                         </div>
                     </>
@@ -794,22 +878,22 @@ export default function AnunciePage() {
 
                 {step === 4 && (
                     <>
-                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
+                            <p className={`${REVIEW_LABEL} text-xs uppercase tracking-[0.12em]`}>Comodidades</p>
+                            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                             {([
-                                ['hasWifi', 'Wi‑Fi'],
-                                ['temPiscina', 'Piscina'],
-                                ['temAutomacao', 'Automação residencial'],
-                                ['temArCondicionado', 'Ar-condicionado'],
-                                ['ehMobiliada', 'Imóvel mobiliado'],
-                            ] as const).map(([key, label]) => (
-                                <label key={key} className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50">
-                                    <input type="checkbox" checked={form[key]} onChange={(e) => updateField(key, e.target.checked)} className="rounded border-slate-300 text-primary-600 focus:ring-primary-500" />
-                                    <span>{label}</span>
-                                </label>
-                            ))}
-                        </div>
-                        <div className="mt-4 border-t border-slate-100 pt-4">
-                            <p className={`${LABEL} mt-0`}>Outras comodidades</p>
+                                    ['hasWifi', 'Wi‑Fi'],
+                                    ['temPiscina', 'Piscina'],
+                                    ['temAutomacao', 'Automação residencial'],
+                                    ['temArCondicionado', 'Ar-condicionado'],
+                                    ['ehMobiliada', 'Imóvel mobiliado'],
+                                ] as const).map(([key, label]) => (
+                                    <label key={key} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 hover:bg-slate-50">
+                                        <input type="checkbox" checked={form[key]} onChange={(e) => updateField(key, e.target.checked)} className="rounded border-slate-300 text-primary-600 focus:ring-primary-500" />
+                                        <span>{label}</span>
+                                    </label>
+                                ))}
+                            </div>
                             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                                 {PROPERTY_CANONICAL_AMENITIES.filter((amenity) => amenity !== 'MOBILIADA').map((amenity) => (
                                     <label key={amenity} className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50">
@@ -819,7 +903,7 @@ export default function AnunciePage() {
                                             onChange={(event) => toggleAmenity(amenity, event.target.checked)}
                                             className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
                                         />
-                                        <span>{amenity}</span>
+                                        <span>{toSentenceCase(amenity)}</span>
                                     </label>
                                 ))}
                             </div>
@@ -932,12 +1016,7 @@ export default function AnunciePage() {
                                         <div className="min-w-0">
                                             <p className={REVIEW_LABEL}>Área construída</p>
                                             <p className={REVIEW_VALUE}>
-                                                {form.areaConstruida || '—'}{' '}
-                                                {form.areaConstruidaUnidade === 'hectare'
-                                                    ? 'ha'
-                                                    : form.areaConstruidaUnidade === 'alqueire'
-                                                      ? 'alqueire'
-                                                      : 'm²'}
+                                                {form.areaConstruida ? `${form.areaConstruida} ${areaUnitLabel(form.areaConstruidaUnidade)}` : 'Sem área construída'}
                                             </p>
                                         </div>
                                         <div className="min-w-0">
@@ -957,10 +1036,6 @@ export default function AnunciePage() {
                                         <div className="min-w-0">
                                             <p className={REVIEW_LABEL}>Garagens</p>
                                             <p className={REVIEW_VALUE}>{form.garageSpots || 'Sem garagem'}</p>
-                                        </div>
-                                        <div className="min-w-0">
-                                            <p className={REVIEW_LABEL}>Suítes</p>
-                                            <p className={REVIEW_VALUE}>{form.suites || 'Sem suítes'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -988,7 +1063,7 @@ export default function AnunciePage() {
                                                 form.temAutomacao && 'Automação',
                                                 form.temArCondicionado && 'Ar-condicionado',
                                                 form.ehMobiliada && 'Mobiliada',
-                                                ...form.amenities,
+                                            ...form.amenities.map((amenity) => toSentenceCase(amenity)),
                                             ].filter(Boolean).join(', ') || 'Nenhuma selecionada'}</p>
                                         </div>
                                         <div className="grid gap-3 sm:grid-cols-2">

@@ -131,8 +131,8 @@ describe('Profile Page - Integration', () => {
         const notificacoes = screen.getByText('Notificações').closest('a')
         expect(notificacoes).toHaveAttribute('href', '/notificacoes')
 
-        const contratos = screen.getByText('Contratos').closest('a')
-        expect(contratos).toHaveAttribute('href', '/contratos')
+        const documentos = screen.getByText('Documentos').closest('a')
+        expect(documentos).toHaveAttribute('href', '/documentos?tab=contratos')
     })
 
     it('renders notification link with description', () => {

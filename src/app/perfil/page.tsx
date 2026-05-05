@@ -243,14 +243,14 @@ export default function PerfilPage() {
                 </button>
 
                 <Link
-                    href="/contratos"
+                    href="/documentos?tab=contratos"
                     className="flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors"
                 >
                     <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
                         <Briefcase className="w-5 h-5 text-purple-600" />
                     </div>
                     <div>
-                        <p className="text-sm font-semibold text-slate-900">Contratos</p>
+                        <p className="text-sm font-semibold text-slate-900">Documentos</p>
                         <p className="text-xs text-slate-500">Acompanhe seus contratos ativos</p>
                     </div>
                 </Link>

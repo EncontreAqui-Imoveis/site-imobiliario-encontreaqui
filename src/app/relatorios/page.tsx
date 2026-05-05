@@ -146,14 +146,14 @@ export default function RelatoriosPage() {
                                 Meus imóveis
                             </Link>
                             <Link
-                                href="/propostas"
+                                href="/documentos?tab=propostas"
                                 className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
                             >
                                 <ShoppingBag className="w-4 h-4" />
                                 Propostas
                             </Link>
                             <Link
-                                href="/contratos"
+                                href="/documentos?tab=contratos"
                                 className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
                             >
                                 <DollarSign className="w-4 h-4" />

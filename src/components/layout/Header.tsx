@@ -21,21 +21,20 @@ const navLinks = [
 
 const authNavLinks = [
     { href: '/favoritos', label: 'Favoritos', icon: Heart },
-    { href: '/propostas', label: 'Propostas', icon: FileText },
+    { href: '/documentos', label: 'Documentos', icon: FileText },
     { href: '/notificacoes', label: 'Notificações', icon: Bell },
 ]
 
 const userMenuLinks = [
     { href: '/perfil', label: 'Meu Perfil', icon: User },
     { href: '/anuncie', label: 'Anunciar Imóvel', icon: PlusCircle },
+    { href: '/meus-imoveis', label: 'Meus Imóveis', icon: Building2 },
     { href: '/favoritos', label: 'Favoritos', icon: Heart },
-    { href: '/propostas', label: 'Minhas Propostas', icon: FileText },
-    { href: '/contratos', label: 'Contratos', icon: FileText },
+    { href: '/documentos', label: 'Documentos', icon: FileText },
     { href: '/notificacoes', label: 'Notificações', icon: Bell },
 ]
 
 const brokerMenuLinks = [
-    { href: '/meus-imoveis', label: 'Meus Imóveis', icon: Building2 },
     { href: '/relatorios', label: 'Relatórios', icon: BarChart3 },
 ]
 
@@ -155,12 +154,8 @@ export default function Header() {
     const userName = session?.user?.name?.split(' ')[0] || 'Usuário'
     const userInitial = userName.charAt(0).toUpperCase()
     const pendingAction = resolvePendingAction(session)
-    const resolvedAuthNavLinks = isBroker
-        ? authNavLinks
-        : authNavLinks.filter((link) => link.href !== '/propostas')
-    const resolvedUserMenuLinks = isBroker
-        ? userMenuLinks
-        : userMenuLinks.filter((link) => link.href !== '/propostas')
+    const resolvedAuthNavLinks = authNavLinks
+    const resolvedUserMenuLinks = userMenuLinks
     const blockMandatoryBrokerNav = pendingAction?.href === '/onboarding/broker' && pathname === '/onboarding/broker'
     const logoHref = blockMandatoryBrokerNav ? '/onboarding/broker' : '/'
 

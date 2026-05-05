@@ -174,7 +174,7 @@ describe('Notifications Page - Integration', () => {
         fireEvent.click(screen.getByText('Nova proposta'))
 
         await waitFor(() => {
-            expect(mockPush).toHaveBeenCalledWith('/propostas')
+            expect(mockPush).toHaveBeenCalledWith('/documentos?tab=propostas')
         })
     })
 

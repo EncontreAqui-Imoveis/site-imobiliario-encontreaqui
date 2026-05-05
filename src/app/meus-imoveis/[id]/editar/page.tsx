@@ -12,7 +12,6 @@ import {
     clampCountInput,
     digitsOnly,
     isOptionalBairroPropertyType,
-    MAX_PROPERTY_AREA,
     MAX_PROPERTY_COUNT,
     PROPERTY_TYPES,
     PROPERTY_PURPOSES,
@@ -21,6 +20,7 @@ import {
 } from '@/lib/propertyCreate'
 import {
     normalizeAreaUnidade,
+    areaInputToSquareMeters,
     squareMetersToAreaInput,
     type AreaConstruidaUnidade,
 } from '@/lib/areaUnits'
@@ -35,6 +35,14 @@ import {
 } from 'lucide-react'
 
 const STATES = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO']
+
+function toSentenceCase(value: string): string {
+    return value
+        .toLowerCase()
+        .split(' ')
+        .map((word) => (word ? `${word[0].toUpperCase()}${word.slice(1)}` : word))
+        .join(' ')
+}
 
 export default function EditPropertyPage() {
     const router = useRouter()
@@ -57,7 +65,7 @@ export default function EditPropertyPage() {
         priceSale: '', priceRent: '',
         address: '', numero: '', quadra: '', lote: '', bairro: '',
         complemento: '', city: '', state: 'GO', cep: '', semCep: false,
-        bedrooms: '', bathrooms: '', suites: '', garageSpots: '', amenities: [] as PropertyAmenity[],
+        bedrooms: '', bathrooms: '', garageSpots: '', amenities: [] as PropertyAmenity[],
         areaConstruida: '', areaTerreno: '',
         areaConstruidaUnidade: 'm2' as AreaConstruidaUnidade,
         areaTerrenoUnidade: 'm2' as AreaConstruidaUnidade,
@@ -137,7 +145,6 @@ export default function EditPropertyPage() {
                 semCep: p.semCep ?? false,
                 bedrooms: p.bedrooms ? String(p.bedrooms) : '',
                 bathrooms: p.bathrooms ? String(p.bathrooms) : '',
-                suites: p.suites ? String(p.suites) : '',
                 garageSpots: p.garageSpots ? String(p.garageSpots) : '',
                 amenities: Array.isArray(p.amenities)
                     ? p.amenities
@@ -210,6 +217,17 @@ export default function EditPropertyPage() {
             const terrainUnit = normalizeAreaUnidade(form.areaTerrenoUnidade)
             const areaConstruidaValor = normalizeDecimalInput(form.areaConstruida)
             const areaTerrenoValor = normalizeDecimalInput(form.areaTerreno)
+            const areaConstruidaM2 = areaInputToSquareMeters(Number.isFinite(areaConstruidaValor) ? areaConstruidaValor : 0, unit)
+            const areaTerrenoM2 = areaInputToSquareMeters(Number.isFinite(areaTerrenoValor) ? areaTerrenoValor : 0, terrainUnit)
+            if (!Number.isFinite(areaTerrenoValor) || areaTerrenoValor <= 0 || !Number.isFinite(areaTerrenoM2) || areaTerrenoM2 <= 0) {
+                throw new Error('Informe a área do terreno em um valor válido.')
+            }
+            if (!Number.isFinite(areaConstruidaValor) || areaConstruidaValor < 0 || !Number.isFinite(areaConstruidaM2) || areaConstruidaM2 < 0) {
+                throw new Error('Informe a área construída em um valor válido ou deixe em branco.')
+            }
+            if (areaConstruidaValor > 0 && areaConstruidaM2 > areaTerrenoM2) {
+                throw new Error('A área construída não pode ser maior que a área do terreno.')
+            }
             const payload = {
                 title: form.title.trim(),
                 description: form.description.trim(),
@@ -229,7 +247,6 @@ export default function EditPropertyPage() {
                 semCep: form.semCep,
                 bedrooms: parseInt(form.bedrooms) || 0,
                 bathrooms: parseInt(form.bathrooms) || 0,
-                suites: parseInt(form.suites) || 0,
                 garageSpots: parseInt(form.garageSpots) || 0,
                 area_construida_valor: Number.isFinite(areaConstruidaValor) ? areaConstruidaValor : 0,
                 area_construida_unidade: unit,
@@ -500,7 +517,7 @@ export default function EditPropertyPage() {
                     {/* Characteristics */}
                     <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-4">
                         <h2 className="text-lg font-bold text-gray-900">Características</h2>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                             <div>
                                 <label className={labelClass}>Quartos</label>
                                 <input type="number" value={form.bedrooms} onChange={e => updateField('bedrooms', clampCountInput(e.target.value))} className={inputClass} min="0" max={MAX_PROPERTY_COUNT} />
@@ -512,10 +529,6 @@ export default function EditPropertyPage() {
                             <div>
                                 <label className={labelClass}>Vagas</label>
                                 <input type="number" value={form.garageSpots} onChange={e => updateField('garageSpots', clampCountInput(e.target.value))} className={inputClass} min="0" max={MAX_PROPERTY_COUNT} />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Suítes</label>
-                                <input type="number" value={form.suites} onChange={e => updateField('suites', clampCountInput(e.target.value))} className={inputClass} min="0" max={MAX_PROPERTY_COUNT} />
                             </div>
                             <div className="col-span-2 sm:col-span-1 sm:col-start-4">
                                 <label className={labelClass}>Área construída</label>
@@ -598,7 +611,7 @@ export default function EditPropertyPage() {
                                         onChange={(event) => updateAmenity(amenity, event.target.checked)}
                                         className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                                     />
-                                    <span className="text-sm font-medium text-gray-700">{amenity}</span>
+                                    <span className="text-sm font-medium text-gray-700">{toSentenceCase(amenity)}</span>
                                 </label>
                             ))}
                         </div>

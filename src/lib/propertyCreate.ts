@@ -29,7 +29,6 @@ export const BRAZILIAN_STATES = [
 export const PROPERTY_CANONICAL_AMENITIES = [
     'POÇO ARTESIANO',
     'MOBILIADA',
-    'PLANEJADOS',
     'ELEVADOR',
     'ACADEMIA',
     'CHURRASQUEIRA',
@@ -71,7 +70,6 @@ export type CreatePropertyDraftData = {
     bedrooms: string
     bathrooms: string
     garageSpots: string
-    suites: string
     areaConstruida: string
     /** Unidade em que `areaConstruida` foi informada (`m2`, `hectare`, `alqueire`). */
     areaConstruidaUnidade: 'm2' | 'hectare' | 'alqueire'
@@ -216,7 +214,6 @@ export function buildCreatePropertyFormData(payload: CreatePropertyPayload): For
     const basePrice = saleEnabled ? salePrice : rentEnabled ? rentPrice : 0
     const bedrooms = Math.min(MAX_PROPERTY_COUNT, normalizeDecimalInput(payload.bedrooms))
     const bathrooms = Math.min(MAX_PROPERTY_COUNT, normalizeDecimalInput(payload.bathrooms))
-    const suites = Math.min(MAX_PROPERTY_COUNT, normalizeDecimalInput(payload.suites ?? ''))
     const garageSpots = Math.min(MAX_PROPERTY_COUNT, normalizeDecimalInput(payload.garageSpots))
     const areaConstruida = Math.min(MAX_PROPERTY_AREA, normalizeDecimalInput(payload.areaConstruida))
     const areaTerreno = Math.min(MAX_PROPERTY_AREA, normalizeDecimalInput(payload.areaTerreno))
@@ -247,7 +244,6 @@ export function buildCreatePropertyFormData(payload: CreatePropertyPayload): For
 
     appendIfPresent(formData, 'bedrooms', bedrooms, { allowZero: true })
     appendIfPresent(formData, 'bathrooms', bathrooms, { allowZero: true })
-    appendIfPresent(formData, 'suites', suites, { allowZero: true })
     appendIfPresent(formData, 'garage_spots', garageSpots, { allowZero: true })
     appendIfPresent(formData, 'area_construida_valor', areaConstruida, { allowZero: true })
     formData.append('area_construida_unidade', payload.areaConstruidaUnidade)

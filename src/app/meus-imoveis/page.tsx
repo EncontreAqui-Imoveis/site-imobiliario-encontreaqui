@@ -43,7 +43,7 @@ function getNegotiationAction(property: PropertySummary) {
         }
     }
     return {
-        href: '/contratos',
+        href: '/documentos?tab=contratos',
         label: 'Ir para contratos',
         className: 'text-slate-700 border-slate-200 hover:bg-slate-50',
     }

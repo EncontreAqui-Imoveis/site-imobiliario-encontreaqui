@@ -26,6 +26,14 @@ const statusColors: Record<string, { bg: string; text: string }> = {
     rented: { bg: 'bg-purple-100', text: 'text-purple-700' },
 }
 
+function toSentenceCase(value: string): string {
+    return value
+        .toLowerCase()
+        .split(' ')
+        .map((word) => (word ? `${word[0].toUpperCase()}${word.slice(1)}` : word))
+        .join(' ')
+}
+
 function formatDate(date?: string): string {
     if (!date) return ''
     return new Date(date).toLocaleDateString('pt-BR', {
@@ -61,6 +69,10 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
         { icon: Wind, label: 'Ar Condicionado', active: property.temArCondicionado },
         { icon: Sofa, label: 'Mobiliada', active: property.ehMobiliada },
     ]
+    const mappedComfortAmenities = new Set(comfortAmenities.map((item) => toSentenceCase(item.label)))
+    const groupedGenericAmenities = genericAmenities
+        .filter((amenity) => !mappedComfortAmenities.has(toSentenceCase(amenity)))
+        .map((amenity) => toSentenceCase(amenity))
 
     // Build additional characteristics
     const additionalInfo = [
@@ -284,7 +296,7 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
             <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100">
                 <h2 className="font-display text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
                     <Waves className="w-5 h-5 text-primary-500" />
-                    Comodidades e Lazer
+                    Comodidades
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {comfortAmenities.map((item, index) => (
@@ -298,18 +310,14 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                             {item.active && <CheckCircle className="w-4 h-4 text-primary-500 ml-auto" />}
                         </div>
                     ))}
-                </div>
-                {genericAmenities.length > 0 && (
-                    <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50 p-4">
-                        <p className="text-sm font-medium text-gray-700">Outras comodidades</p>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                            {genericAmenities.map((amenity) => (
-                                <span key={amenity} className="rounded-full bg-white border border-gray-200 px-3 py-1 text-sm text-gray-700">
-                                    {amenity}
-                                </span>
-                            ))}
+                    {groupedGenericAmenities.map((amenity) => (
+                        <div key={amenity} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                            <span className="text-sm font-medium text-gray-700">{amenity}</span>
                         </div>
-                    </div>
+                    ))}
+                </div>
+                {groupedGenericAmenities.length === 0 && (
+                    <p className="mt-4 text-sm text-gray-500">Nenhuma outra comodidade informada.</p>
                 )}
             </div>
 

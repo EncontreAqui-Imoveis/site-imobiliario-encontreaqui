@@ -76,12 +76,12 @@ export default function PropostasPage() {
             if (propertyId > 0) {
                 return `/propostas/nova?propertyId=${propertyId}`
             }
-            return '/propostas'
+            return '/documentos?tab=propostas'
         }
         if (resolveProposalBucket(status) === 'signed') {
-            return '/propostas'
+            return '/documentos?tab=contratos'
         }
-        return '/contratos'
+        return '/documentos?tab=propostas'
     }
 
     const resolveActionLabel = (negotiation: NegotiationSummary) => {

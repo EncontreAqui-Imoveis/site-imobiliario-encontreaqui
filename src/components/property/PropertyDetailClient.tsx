@@ -168,7 +168,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
             return {
                 title: 'Proposta aprovada',
                 description: 'A negociação avançou. Continue o processo no módulo de contratos.',
-                href: '/contratos',
+                href: '/documentos?tab=contratos',
                 tone: 'success' as const,
                 label: 'Ir para contratos',
             }
@@ -178,7 +178,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
             return {
                 title: 'Proposta em revisão',
                 description: 'Acompanhe a análise. O imóvel segue recebendo propostas até que uma assinatura seja aprovada.',
-                href: '/propostas',
+                href: '/documentos?tab=propostas',
                 tone: 'neutral' as const,
                 label: 'Acompanhar propostas',
             }
@@ -198,7 +198,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
             ? {
                 title: 'Acompanhar propostas',
                 description: 'Use a trilha de propostas para acompanhar quando ele segue em análise ou vai para histórico.',
-                href: '/propostas',
+                href: '/documentos?tab=propostas',
                 tone: 'neutral' as const,
                 label: 'Ver propostas',
             }
@@ -393,7 +393,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                                 <>
                                     {/* View Proposals */}
                                     <Link
-                                        href="/propostas"
+                                        href="/documentos?tab=propostas"
                                         className="flex flex-col items-center gap-2 px-4 py-5 hover:bg-gray-50 transition-colors text-center group"
                                     >
                                         <div className="w-10 h-10 rounded-xl bg-indigo-100 group-hover:bg-indigo-200 flex items-center justify-center transition-colors">
@@ -404,7 +404,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
 
                                     {/* View Contracts */}
                                     <Link
-                                        href="/contratos"
+                                        href="/documentos?tab=contratos"
                                         className="flex flex-col items-center gap-2 px-4 py-5 hover:bg-gray-50 transition-colors text-center group"
                                     >
                                         <div className="w-10 h-10 rounded-xl bg-slate-100 group-hover:bg-slate-200 flex items-center justify-center transition-colors">

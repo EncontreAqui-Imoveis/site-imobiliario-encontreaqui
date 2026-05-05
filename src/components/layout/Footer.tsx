@@ -16,8 +16,8 @@ const footerLinks = [
 
 const accountLinks = [
     { href: '/favoritos', label: 'Favoritos' },
-    { href: '/propostas', label: 'Propostas' },
-    { href: '/contratos', label: 'Contratos' },
+    { href: '/documentos', label: 'Documentos' },
+    { href: '/meus-imoveis', label: 'Meus Imóveis' },
     { href: '/perfil', label: 'Meu perfil' },
 ]
 
