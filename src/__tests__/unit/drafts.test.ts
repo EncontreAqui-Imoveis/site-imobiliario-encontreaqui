@@ -1,7 +1,9 @@
 /**
  * Unit tests for the draft system (localStorage persistence)
  */
-import { saveDraft, loadDraft, hasDraft, clearDraft } from '@/lib/drafts'
+import { clearRemoteDraftIfStale, clearDraft, hasDraft, loadDraft, saveDraft } from '@/lib/drafts'
+
+const fetchMock = jest.spyOn(global, 'fetch')
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -22,6 +24,11 @@ describe('Draft System', () => {
     beforeEach(() => {
         localStorageMock.clear()
         jest.clearAllMocks()
+        fetchMock.mockReset()
+    })
+
+    afterAll(() => {
+        fetchMock.mockRestore()
     })
 
     describe('saveDraft / loadDraft', () => {
@@ -44,6 +51,26 @@ describe('Draft System', () => {
             expect(draft!.data.city).toBe('Goiânia')
             expect(draft!.currentStep).toBe(2)
         })
+
+        it('preserves remote draft identifiers across saves', () => {
+            localStorageMock.setItem(
+                'encontreaqui_property_draft',
+                JSON.stringify({
+                    currentStep: 1,
+                    data: { title: 'Casa Legado', actorMode: 'client-owner' },
+                    updatedAt: new Date().toISOString(),
+                    draftId: 'legacy-id',
+                    draftToken: 'legacy-token',
+                }),
+            )
+            localStorageMock.setItem('encontreaqui_property_draft_ts', Date.now().toString())
+
+            saveDraft(2, { city: 'Goiânia' })
+            const draft = loadDraft()
+
+            expect(draft?.draftId).toBe('legacy-id')
+            expect(draft?.draftToken).toBe('legacy-token')
+        })
     })
 
     describe('hasDraft', () => {
@@ -65,6 +92,56 @@ describe('Draft System', () => {
             clearDraft()
             expect(hasDraft()).toBe(false)
             expect(loadDraft()).toBeNull()
+        })
+    })
+
+    describe('remote draft validation', () => {
+        it('clears draft when remote response is DRAFT_NOT_FOUND (404)', async () => {
+            const draft = {
+                currentStep: 3,
+                data: { title: 'Casa com problema', actorMode: 'client-owner' },
+                updatedAt: new Date().toISOString(),
+                draftId: 'draft-legacy-1',
+                draftToken: 'token-legacy-1',
+            }
+            localStorageMock.setItem('encontreaqui_property_draft', JSON.stringify(draft))
+            localStorageMock.setItem('encontreaqui_property_draft_ts', Date.now().toString())
+
+            fetchMock.mockResolvedValue(
+                new Response(JSON.stringify({ code: 'DRAFT_NOT_FOUND' }), { status: 404, headers: { 'Content-Type': 'application/json' } }),
+            )
+
+            const loadedDraft = loadDraft()
+            expect(loadedDraft).not.toBeNull()
+            expect(await clearRemoteDraftIfStale(loadedDraft!)).toBe(true)
+            expect(hasDraft()).toBe(false)
+        })
+
+        it('does not clear draft when no remote ids are present', async () => {
+            saveDraft(1, { title: 'Mantido' })
+            const draft = loadDraft()
+            expect(draft).not.toBeNull()
+            expect(await clearRemoteDraftIfStale(draft!)).toBe(false)
+            expect(hasDraft()).toBe(true)
+        })
+
+        it('clears draft when backend returns 401', async () => {
+            const draft = {
+                currentStep: 2,
+                data: { title: 'Casa pendente', actorMode: 'client-owner' },
+                updatedAt: new Date().toISOString(),
+                draftId: 'draft-legacy-2',
+                draftToken: 'token-legacy-2',
+            }
+            localStorageMock.setItem('encontreaqui_property_draft', JSON.stringify(draft))
+            localStorageMock.setItem('encontreaqui_property_draft_ts', Date.now().toString())
+
+            fetchMock.mockResolvedValue(new Response(null, { status: 401 }))
+
+            const loadedDraft = loadDraft()
+            expect(loadedDraft).not.toBeNull()
+            expect(await clearRemoteDraftIfStale(loadedDraft!)).toBe(true)
+            expect(hasDraft()).toBe(false)
         })
     })
 

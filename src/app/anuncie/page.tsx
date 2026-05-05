@@ -21,7 +21,15 @@ import {
 
 import type { ApiError } from '@/lib/api/client'
 import { createProperty } from '@/lib/api/user'
-import { clearDraft, hasDraft as checkHasDraft, loadDraft, loadDraftMedia, saveDraft, saveDraftMedia } from '@/lib/drafts'
+import {
+    clearDraft,
+    clearRemoteDraftIfStale,
+    hasDraft as checkHasDraft,
+    loadDraft,
+    loadDraftMedia,
+    saveDraft,
+    saveDraftMedia,
+} from '@/lib/drafts'
 import {
     BRAZILIAN_STATES,
     buildCreatePropertyFormData,
@@ -188,12 +196,33 @@ export default function AnunciePage() {
     }, [authLoading, session, isApprovedBroker, isBrokerPending, router])
 
     useEffect(() => {
-        const hasExistingDraft = checkHasDraft()
-        if (hasExistingDraft) {
-            setShowDraftBanner(true)
-            return
+        let cancelled = false
+        const ensureDraftState = async () => {
+            const draft = loadDraft()
+            if (!draft) {
+                if (!cancelled) setDraftDecisionResolved(true)
+                return
+            }
+
+            const wasCleared = await clearRemoteDraftIfStale(draft)
+            if (cancelled) return
+            if (wasCleared) {
+                setShowDraftBanner(false)
+                setDraftDecisionResolved(true)
+                return
+            }
+
+            if (checkHasDraft()) {
+                setShowDraftBanner(true)
+            } else {
+                setDraftDecisionResolved(true)
+            }
         }
-        setDraftDecisionResolved(true)
+        void ensureDraftState()
+
+        return () => {
+            cancelled = true
+        }
     }, [])
 
     useEffect(() => {
