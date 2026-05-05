@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
 import { formatCurrencyInput } from '@/lib/currencyInput'
+import { buildPublicPropertyUrl } from '@/lib/propertyLinks'
 
 /* ─── Types ─── */
 
@@ -175,7 +176,7 @@ export default function ProposalWizardPage() {
     useEffect(() => {
         if (!property) return
         if (canGenerateForProperty) return
-        router.replace(`/imoveis/${property.id}?proposalBlocked=1`)
+        router.replace(`${buildPublicPropertyUrl(property)}?proposalBlocked=1`)
     }, [canGenerateForProperty, property, router])
 
     useEffect(() => {
@@ -432,7 +433,7 @@ export default function ProposalWizardPage() {
                 <nav className="mb-6 flex items-center gap-2 text-sm text-gray-500">
                     <Link href="/" className="hover:text-primary-600 transition-colors"><Home className="w-4 h-4" /></Link>
                     <ChevronRight className="w-4 h-4" />
-                    <Link href={`/imoveis/${property.id}`} className="hover:text-primary-600 transition-colors truncate max-w-[200px]">{property.title}</Link>
+                    <Link href={buildPublicPropertyUrl(property)} className="hover:text-primary-600 transition-colors truncate max-w-[200px]">{property.title}</Link>
                     <ChevronRight className="w-4 h-4" />
                     <span className="font-medium text-gray-900">Gerar Proposta</span>
                 </nav>

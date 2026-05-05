@@ -24,6 +24,12 @@ describe('propertiesApi', () => {
             status: 'approved',
             purpose: 'Venda',
             price: 100,
+            area_construida_valor: 120,
+            area_construida_unidade: 'm2',
+            area_construida_m2: 120,
+            area_terreno_valor: 2332,
+            area_terreno_unidade: 'ha',
+            area_terreno_m2: 23320000,
             price_sale: 300000,
             price_rent: 1800,
             address: 'Rua A',
@@ -38,6 +44,8 @@ describe('propertiesApi', () => {
             tem_automacao: 1,
             tem_ar_condicionado: 0,
             eh_mobiliada: 1,
+            public_code: 'AB12CD',
+            slug: 'casa-com-quintal-rio-verde-AB12CD',
             valor_condominio: 0,
             valor_iptu: 900,
             images: [{ image_url: 'https://cdn/imovel.jpg' }],
@@ -53,6 +61,13 @@ describe('propertiesApi', () => {
         expect(normalized?.priceSale).toBe(300000)
         expect(normalized?.priceRent).toBe(1800)
         expect(normalized?.areaConstruida).toBe(120)
+        expect(normalized?.areaConstruidaValor).toBe(120)
+        expect(normalized?.areaConstruidaUnidade).toBe('m2')
+        expect(normalized?.areaTerreno).toBe(23320000)
+        expect(normalized?.areaTerrenoValor).toBe(2332)
+        expect(normalized?.areaTerrenoUnidade).toBe('hectare')
+        expect(normalized?.public_code).toBe('AB12CD')
+        expect(normalized?.slug).toBe('casa-com-quintal-rio-verde-AB12CD')
         expect(normalized?.images[0]).toContain('https://cdn/imovel.jpg')
         expect(normalized?.brokerName).toBe('Corretor')
         expect(normalized?.semCep).toBe(true)
@@ -159,6 +174,37 @@ describe('propertiesApi', () => {
             expect.objectContaining({ cache: 'no-store' })
         )
         expect(result?.title).toBe('Imóvel 44')
+    })
+
+    it('fetches property by slug/public_code', async () => {
+        ;(global.fetch as jest.Mock).mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                data: {
+                    id: 99,
+                    public_code: 'AB12CD',
+                    slug: 'casa-com-quintal-rio-verde-AB12CD',
+                    title: 'Casa com quintal',
+                    type: 'Casa',
+                    status: 'approved',
+                    purpose: 'Venda',
+                    price: 600000,
+                    address: 'Rua L',
+                    city: 'Brasília',
+                    state: 'GO',
+                    images: ['https://cdn/99.jpg'],
+                    created_at: '2026-01-01T00:00:00.000Z',
+                },
+            }),
+        })
+
+        const result = await fetchPropertyById('casa-com-quintal-rio-verde-AB12CD')
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining('/public/properties/casa-com-quintal-rio-verde-AB12CD'),
+            expect.objectContaining({ cache: 'no-store' })
+        )
+        expect(result?.public_code).toBe('AB12CD')
+        expect(result?.slug).toBe('casa-com-quintal-rio-verde-AB12CD')
     })
 
     it('consumes public detail payload when the backend returns the property object directly', async () => {

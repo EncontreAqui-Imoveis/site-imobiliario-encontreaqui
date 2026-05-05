@@ -20,12 +20,16 @@ export interface Property {
     bathrooms?: number
     suites?: number
     areaConstruida?: number
-    /** Unidade em que o usuário cadastrou a área construída; `areaConstruida` no API é sempre m². */
+    /** Valor original informado para área construída (ex.: 2332). */
+    areaConstruidaValor?: number
+    /** Unidade informada para a área construída (`m2`, `hectare`, `alqueire`). */
     areaConstruidaUnidade?: 'm2' | 'alqueire' | 'hectare'
     semQuadra?: boolean
     semLote?: boolean
     areaTerreno?: number
-    /** Unidade em que o usuário cadastrou a área do terreno; `areaTerreno` no API é sempre m². */
+    /** Valor original informado para a área do terreno (ex.: 2332). */
+    areaTerrenoValor?: number
+    /** Unidade informada para a área do terreno (`m2`, `alqueire`, `hectare`). */
     areaTerrenoUnidade?: 'm2' | 'alqueire' | 'hectare'
     garageSpots?: number
     amenities?: string[]
@@ -48,6 +52,8 @@ export interface Property {
     pendingEditRequestId?: number
     createdAt: string
     code?: string
+    public_code?: string
+    slug?: string
     latitude?: number
     longitude?: number
     // Location details

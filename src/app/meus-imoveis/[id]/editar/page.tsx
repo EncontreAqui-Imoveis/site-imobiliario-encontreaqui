@@ -20,7 +20,6 @@ import {
     requiresLotFields,
 } from '@/lib/propertyCreate'
 import {
-    areaInputToSquareMeters,
     normalizeAreaUnidade,
     squareMetersToAreaInput,
     type AreaConstruidaUnidade,
@@ -29,6 +28,7 @@ import { formatCurrencyInput, parseCurrencyInput } from '@/lib/currencyInput'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
 import { Property } from '@/types/property'
 import { PROPERTY_CANONICAL_AMENITIES, PropertyAmenity } from '@/lib/propertyCreate'
+import { buildPublicPropertyUrl } from '@/lib/propertyLinks'
 import {
     ArrowLeft, Loader2, Save, Home, ChevronRight,
     AlertTriangle, CheckCircle
@@ -60,6 +60,7 @@ export default function EditPropertyPage() {
         bedrooms: '', bathrooms: '', suites: '', garageSpots: '', amenities: [] as PropertyAmenity[],
         areaConstruida: '', areaTerreno: '',
         areaConstruidaUnidade: 'm2' as AreaConstruidaUnidade,
+        areaTerrenoUnidade: 'm2' as AreaConstruidaUnidade,
         semQuadra: false, semLote: false,
         hasWifi: false, temPiscina: false, temEnergiaSolar: false,
         temAutomacao: false, temArCondicionado: false, ehMobiliada: false,
@@ -106,6 +107,17 @@ export default function EditPropertyPage() {
             const p: Property = await fetchEditableProperty(propertyId)
             setProperty(p)
             const unit = normalizeAreaUnidade(p.areaConstruidaUnidade)
+            const terrenoUnit = normalizeAreaUnidade(p.areaTerrenoUnidade)
+            const areaConstruida = p.areaConstruidaValor != null
+                ? String(p.areaConstruidaValor)
+                : p.areaConstruida != null
+                    ? squareMetersToAreaInput(p.areaConstruida, unit)
+                    : ''
+            const areaTerreno = p.areaTerrenoValor != null
+                ? String(p.areaTerrenoValor)
+                : p.areaTerreno != null
+                    ? squareMetersToAreaInput(p.areaTerreno, terrenoUnit)
+                    : ''
             setForm({
                 title: p.title || '',
                 description: p.description || '',
@@ -133,12 +145,10 @@ export default function EditPropertyPage() {
                         .filter((item) => PROPERTY_CANONICAL_AMENITIES.includes(item as PropertyAmenity))
                         .filter((value, index, values) => values.indexOf(value) === index) as PropertyAmenity[]
                     : [],
-                areaConstruida:
-                    p.areaConstruida != null
-                        ? squareMetersToAreaInput(p.areaConstruida, unit)
-                        : '',
-                areaTerreno: p.areaTerreno ? String(p.areaTerreno) : '',
+                areaConstruida,
+                areaTerreno,
                 areaConstruidaUnidade: unit,
+                areaTerrenoUnidade: terrenoUnit,
                 semQuadra: p.semQuadra ?? false,
                 semLote: p.semLote ?? false,
                 hasWifi: p.hasWifi || false,
@@ -197,8 +207,9 @@ export default function EditPropertyPage() {
 
         try {
             const unit = normalizeAreaUnidade(form.areaConstruidaUnidade)
-            const areaInputVal = normalizeDecimalInput(form.areaConstruida)
-            const areaConstruidaM2 = areaInputToSquareMeters(areaInputVal, unit)
+            const terrainUnit = normalizeAreaUnidade(form.areaTerrenoUnidade)
+            const areaConstruidaValor = normalizeDecimalInput(form.areaConstruida)
+            const areaTerrenoValor = normalizeDecimalInput(form.areaTerreno)
             const payload = {
                 title: form.title.trim(),
                 description: form.description.trim(),
@@ -220,11 +231,12 @@ export default function EditPropertyPage() {
                 bathrooms: parseInt(form.bathrooms) || 0,
                 suites: parseInt(form.suites) || 0,
                 garageSpots: parseInt(form.garageSpots) || 0,
-                areaConstruida: Number.isFinite(areaConstruidaM2) ? areaConstruidaM2 : 0,
-                areaConstruidaUnidade: unit,
+                area_construida_valor: Number.isFinite(areaConstruidaValor) ? areaConstruidaValor : 0,
+                area_construida_unidade: unit,
+                area_terreno_valor: Number.isFinite(areaTerrenoValor) ? areaTerrenoValor : 0,
+                area_terreno_unidade: terrainUnit,
                 semQuadra: form.semQuadra,
                 semLote: form.semLote,
-                areaTerreno: normalizeDecimalInput(form.areaTerreno) || 0,
                 amenities: form.amenities,
                 hasWifi: form.hasWifi,
                 temPiscina: form.temPiscina,
@@ -317,7 +329,7 @@ export default function EditPropertyPage() {
                                 </p>
                                 <div className="pt-2">
                                     <Link
-                                        href={`/imoveis/${property.id}`}
+                                        href={buildPublicPropertyUrl(property)}
                                         className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700"
                                     >
                                         Voltar ao imóvel
@@ -530,8 +542,27 @@ export default function EditPropertyPage() {
                             </div>
                         </div>
                         <div>
-                            <label className={labelClass}>Área Total (m²)</label>
-                            <input type="number" value={form.areaTerreno} onChange={e => updateField('areaTerreno', clampAreaInput(e.target.value))} className={inputClass} step="0.01" min="0" max={MAX_PROPERTY_AREA} />
+                            <label className={labelClass}>Área do terreno</label>
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+                                <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={form.areaTerreno}
+                                    onChange={e => updateField('areaTerreno', clampAreaInput(e.target.value))}
+                                    className={`${inputClass} sm:flex-1`}
+                                />
+                                <select
+                                    value={form.areaTerrenoUnidade}
+                                    onChange={e => updateField('areaTerrenoUnidade', e.target.value as AreaConstruidaUnidade)}
+                                    className={`${inputClass} sm:w-44 sm:shrink-0`}
+                                    aria-label="Unidade da área do terreno"
+                                >
+                                    <option value="m2">m²</option>
+                                    <option value="hectare">Hectare (ha)</option>
+                                    <option value="alqueire">Alqueire paulista</option>
+                                </select>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">O valor é mantido na unidade selecionada.</p>
                         </div>
                     </section>
 

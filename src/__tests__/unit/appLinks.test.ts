@@ -9,6 +9,7 @@ describe('appLinks', () => {
     it('returns generic deep link when id is missing', () => {
         const link = buildAppDeepLink()
         expect(link).not.toContain('{id}')
+        expect(link).not.toContain('{slug}')
         expect(link.length).toBeGreaterThan(0)
     })
 

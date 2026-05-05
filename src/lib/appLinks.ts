@@ -1,6 +1,6 @@
 const DEFAULT_ANDROID_STORE_URL = 'https://play.google.com/store'
 const DEFAULT_IOS_STORE_URL = 'https://apps.apple.com'
-const DEFAULT_DEEP_LINK_TEMPLATE = 'encontreaqui://imoveis/{id}'
+const DEFAULT_DEEP_LINK_TEMPLATE = 'encontreaqui://imoveis/{slug}'
 
 export const APP_LINKS = {
     androidStore: process.env.NEXT_PUBLIC_ANDROID_STORE_URL || DEFAULT_ANDROID_STORE_URL,
@@ -17,13 +17,22 @@ export function buildAppDeepLink(propertyId?: string | number): string {
     const template = APP_LINKS.deepLinkTemplate
 
     if (propertyId === undefined || propertyId === null || String(propertyId).trim() === '') {
-        return template.replace('/{id}', '').replace('{id}', '').replace('/:id', '').replace(':id', '')
+        return template
+            .replace('/{id}', '')
+            .replace('{id}', '')
+            .replace('/{slug}', '')
+            .replace('{slug}', '')
+            .replace('/:id', '')
+            .replace(':id', '')
     }
 
     const encoded = encodeURIComponent(String(propertyId))
 
     if (template.includes('{id}')) {
         return template.replace('{id}', encoded)
+    }
+    if (template.includes('{slug}')) {
+        return template.replace('{slug}', encoded)
     }
 
     if (template.includes(':id')) {

@@ -16,16 +16,17 @@ interface PropertySidebarProps {
 
 export default function PropertySidebar({ property, visitorProposalHref }: PropertySidebarProps) {
     const [storeUrl, setStoreUrl] = useState('https://play.google.com/store')
+    const publicReference = property.public_code || property.slug
+    const deepLink = buildAppDeepLink(publicReference || property.id)
 
     useEffect(() => {
         setStoreUrl(getStoreUrlClient())
     }, [])
 
     const whatsappMessage =
-        `Olá! Vi o imóvel "${property.title}" (Cód: ${property.code || property.id}) no Encontre Aqui Imóveis e gostaria de mais informações.`
+        `Olá! Vi o imóvel "${property.title}"${publicReference ? ` (Referência: ${publicReference})` : ''} no Encontre Aqui Imóveis e gostaria de mais informações.`
     const whatsappLink = buildWhatsappLink(property.brokerPhone, whatsappMessage)
     const phoneLink = buildPhoneLink(property.brokerPhone)
-    const deepLink = buildAppDeepLink(property.id)
 
     return (
         <aside className="lg:col-span-1" aria-label="Resumo e ações do imóvel">
@@ -125,11 +126,11 @@ export default function PropertySidebar({ property, visitorProposalHref }: Prope
                             Converse com o corretor, faça propostas e acompanhe todo o processo diretamente no Encontre Aqui.
                         </p>
                     </div>
-                    {property.code && (
+                    {publicReference && (
                         <div className="mt-4 pt-4 border-t border-primary-100 flex items-center justify-between text-sm">
-                            <span className="text-primary-700 font-medium">Código do Imóvel</span>
+                            <span className="text-primary-700 font-medium">Referência</span>
                             <span className="rounded-md border border-primary-100 bg-white px-2 py-1 font-bold text-primary-900 shadow-sm">
-                                {property.code}
+                                {publicReference}
                             </span>
                         </div>
                     )}

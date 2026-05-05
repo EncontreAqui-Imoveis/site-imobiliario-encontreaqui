@@ -15,6 +15,7 @@ import {
     Bell, Building2, Users, FileText, CheckCheck, Loader2,
     Trash2, X, AlertTriangle, Megaphone
 } from 'lucide-react'
+import { buildPublicPropertyUrl } from '@/lib/propertyLinks'
 
 const entityIcons: Record<string, typeof Bell> = {
     property: Building2,
@@ -53,7 +54,14 @@ function resolveNotificationHref(notification: Notification): string | null {
     }
 
     if (notification.relatedEntityType === 'property' && notification.relatedEntityId) {
-        return `/imoveis/${notification.relatedEntityId}`
+        const propertyPublicRef =
+            toStringOrNull(metadata.publicCode) ??
+            toStringOrNull(metadata.public_code) ??
+            toStringOrNull(metadata.publicCodeSlug) ??
+            toStringOrNull(metadata.slug)
+        return propertyPublicRef
+            ? buildPublicPropertyUrl({ id: notification.relatedEntityId, slug: propertyPublicRef })
+            : `/imoveis/${notification.relatedEntityId}`
     }
 
     if (notification.relatedEntityType === 'broker' || notification.relatedEntityType === 'user') {

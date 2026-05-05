@@ -8,6 +8,7 @@ import Image from 'next/image'
 import { useUser } from '@/contexts/UserContext'
 import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { getMyProperties, type PropertySummary } from '@/lib/api/user'
+import { buildPublicPropertyUrl } from '@/lib/propertyLinks'
 import { Building2, Plus, Edit, Loader2, Eye, MapPin } from 'lucide-react'
 
 function formatPrice(price: number) {
@@ -289,7 +290,7 @@ export default function MeusImoveisPage() {
                                     <p className="text-lg font-bold text-primary-600">{formatPrice(property.price)}</p>
                                     <div className="flex items-center gap-2 pt-2">
                                         <Link
-                                            href={`/imoveis/${property.id}`}
+                                            href={buildPublicPropertyUrl(property)}
                                             className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
                                         >
                                             <Eye className="w-3.5 h-3.5" />

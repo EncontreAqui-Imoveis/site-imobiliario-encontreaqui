@@ -12,13 +12,13 @@ describe('webShare', () => {
         const result = await shareOrCopy({
             title: 'Casa teste',
             text: 'Confira este imóvel',
-            url: 'https://example.com/imoveis/1',
+            url: 'https://example.com/imoveis/casa-com-quintal-rio-verde-AB12CD',
         })
 
         expect(share).toHaveBeenCalledWith({
             title: 'Casa teste',
             text: 'Confira este imóvel',
-            url: 'https://example.com/imoveis/1',
+            url: 'https://example.com/imoveis/casa-com-quintal-rio-verde-AB12CD',
         })
         expect(result).toEqual({ kind: 'shared' })
     })
@@ -33,10 +33,10 @@ describe('webShare', () => {
         const result = await shareOrCopy({
             title: 'Casa teste',
             text: 'Confira este imóvel',
-            url: 'https://example.com/imoveis/1',
+            url: 'https://example.com/imoveis/casa-com-quintal-rio-verde-AB12CD',
         })
 
-        expect(writeText).toHaveBeenCalledWith('https://example.com/imoveis/1')
+        expect(writeText).toHaveBeenCalledWith('https://example.com/imoveis/casa-com-quintal-rio-verde-AB12CD')
         expect(result).toEqual({ kind: 'copied' })
     })
 })

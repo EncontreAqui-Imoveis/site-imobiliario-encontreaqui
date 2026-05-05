@@ -14,6 +14,7 @@ import {
 import { capitalizePropertyTitle } from '@/lib/propertyTitleDisplay'
 import { formatUnit } from '@/lib/propertyLabels'
 import { areaUnitLabel, normalizeAreaUnidade, squareMetersToAreaInput } from '@/lib/areaUnits'
+import { buildPublicPropertyUrl } from '@/lib/propertyLinks'
 import FavoriteButton from '@/components/property/FavoriteButton'
 import PhotoWatermark from '@/components/property/PhotoWatermark'
 
@@ -72,7 +73,7 @@ export default function PropertyCard({ property, variant = 'default' }: Property
 
     return (
         <Link
-            href={`/imoveis/${property.id}`}
+            href={buildPublicPropertyUrl(property)}
             className={`group block bg-white rounded-[28px] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${isFeatured ? 'ring-2 ring-slate-200 border border-slate-200' : 'border border-gray-100'
                 }`}
         >

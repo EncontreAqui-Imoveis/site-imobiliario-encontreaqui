@@ -2,6 +2,7 @@ import { Property } from '@/types/property'
 import { reportObservedError } from '@/lib/observability'
 import { apiClient, API_BASE_URL, ApiError } from '@/lib/api/client'
 import { hasAuthTokenInBrowser, hasAuthTokenInServer } from '@/lib/auth/tokenStore'
+import { normalizeAreaUnidade } from '@/lib/areaUnits'
 
 type ErrorPayload = {
     message?: string
@@ -20,6 +21,11 @@ function toStringOrUndefined(value: unknown): string | undefined {
     if (value === null || value === undefined) return undefined
     const normalized = String(value).trim()
     return normalized.length > 0 ? normalized : undefined
+}
+
+function normalizeAreaField(raw: unknown): Property['areaConstruidaUnidade'] {
+    if (raw == null) return 'm2'
+    return normalizeAreaUnidade(String(raw))
 }
 
 function toBoolean(value: unknown): boolean | undefined {
@@ -77,6 +83,12 @@ function normalizeStatus(rawStatus: unknown): Property['status'] {
     if (normalized === 'rented') return 'rented'
     if (normalized === 'rejected') return 'rejected'
     return 'pending_approval'
+}
+
+export function buildPublicPropertyRouteKey(raw: unknown): string | undefined {
+    if (raw == null) return undefined
+    const normalized = String(raw).trim()
+    return normalized.length > 0 ? normalized : undefined
 }
 
 function normalizeType(rawType: unknown): Property['type'] {
@@ -141,6 +153,23 @@ export function normalizeProperty(raw: unknown): Property | null {
         toStringOrUndefined(item.created_at) ??
         new Date().toISOString()
 
+    const areaConstruidaUnidade = normalizeAreaField(
+        item.areaConstruidaUnidade ??
+            item.area_construida_unidade ??
+            item.areaTerrenoUnidade ??
+            item.area_terreno_unidade,
+    )
+    const areaTerrenoUnidade = normalizeAreaField(
+        item.areaTerrenoUnidade ??
+            item.area_terreno_unidade ??
+            item.areaConstruidaUnidade ??
+            item.area_construida_unidade,
+    )
+    const areaConstruidaM2 = toNumber(item.area_construida_m2 ?? item.areaConstruida ?? item.area_construida)
+    const areaTerrenoM2 = toNumber(item.area_terreno_m2 ?? item.areaTerreno ?? item.area_terreno)
+    const areaConstruidaValor = toNumber(item.area_construida_valor ?? item.areaConstruidaValor)
+    const areaTerrenoValor = toNumber(item.area_terreno_valor ?? item.areaTerrenoValor)
+
     const imagesFromImages = toImageUrlList(item.images)
     const imagesFromPropertyImages = toImageUrlList(item.property_images)
     const imagesFromImageUrls = toImageUrlList(item.image_urls)
@@ -169,24 +198,14 @@ export function normalizeProperty(raw: unknown): Property | null {
         cep: toStringOrUndefined(item.cep),
         bedrooms: toNumber(item.bedrooms ?? item.quartos),
         bathrooms: toNumber(item.bathrooms ?? item.banheiros),
-        areaConstruida: toNumber(item.areaConstruida ?? item.area_construida),
-        areaConstruidaUnidade: (() => {
-            const raw = item.areaConstruidaUnidade ?? item.area_construida_unidade
-            const s = String(raw ?? 'm2').trim().toLowerCase()
-            if (s === 'hectare' || s === 'ha') return 'hectare' as const
-            if (s === 'alqueire' || s === 'alq') return 'alqueire' as const
-            return 'm2' as const
-        })(),
+        areaConstruida: areaConstruidaM2 ?? areaConstruidaValor,
+        areaConstruidaUnidade,
+        areaConstruidaValor,
         semQuadra: toBoolean(item.semQuadra ?? item.sem_quadra) ?? false,
         semLote: toBoolean(item.semLote ?? item.sem_lote) ?? false,
-        areaTerreno: toNumber(item.areaTerreno ?? item.area_terreno),
-        areaTerrenoUnidade: (() => {
-            const raw = item.areaTerrenoUnidade ?? item.area_terreno_unidade
-            const s = String(raw ?? 'm2').trim().toLowerCase()
-            if (s === 'hectare' || s === 'ha') return 'hectare' as const
-            if (s === 'alqueire' || s === 'alq') return 'alqueire' as const
-            return 'm2' as const
-        })(),
+        areaTerreno: areaTerrenoM2 ?? areaTerrenoValor,
+        areaTerrenoUnidade: areaTerrenoUnidade,
+        areaTerrenoValor,
         garageSpots: toNumber(item.garageSpots ?? item.garage_spots),
         suites: toNumber(item.suites),
         hasWifi: toBoolean(item.hasWifi ?? item.has_wifi),
@@ -212,6 +231,8 @@ export function normalizeProperty(raw: unknown): Property | null {
         ),
         createdAt,
         code: toStringOrUndefined(item.code),
+        public_code: buildPublicPropertyRouteKey(item.public_code) ?? buildPublicPropertyRouteKey(item.publicCode),
+        slug: buildPublicPropertyRouteKey(item.slug) ?? buildPublicPropertyRouteKey(item.public_slug),
         latitude: toNumber(item.latitude),
         longitude: toNumber(item.longitude),
         numero: toStringOrUndefined(item.numero),

@@ -55,6 +55,8 @@ const mockProperty: Property = {
     description: 'Description',
     price: 1000000,
     priceSale: 1000000,
+    public_code: 'AB12CD',
+    slug: 'casa-com-quintal-rio-verde-AB12CD',
     bairro: 'Test Neighborhood',
     city: 'Test City',
     state: 'SP',
@@ -84,6 +86,13 @@ describe('PropertyCard', () => {
         expect(screen.getByText('3 Quartos')).toBeInTheDocument()
         expect(screen.getByText(/R\$\s1\.000\.000/)).toBeInTheDocument()
         expect(screen.getAllByText('Venda')[0]).toBeInTheDocument()
+    })
+
+    it('uses public slug in detail link', () => {
+        const { container } = render(<PropertyCard property={mockProperty} />)
+        const link = container.querySelector('a')
+
+        expect(link).toHaveAttribute('href', '/imoveis/casa-com-quintal-rio-verde-AB12CD')
     })
 
     it('renders "Aluguel" badge correctly', () => {

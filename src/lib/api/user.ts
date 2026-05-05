@@ -32,6 +32,8 @@ export interface PropertySummary {
     createdAt: string
     hasPendingEditRequest?: boolean
     pendingEditRequestId?: number
+    public_code?: string
+    slug?: string
     negotiationId?: string
     negotiationStatus?: string
 }
@@ -55,6 +57,8 @@ export async function getMyProperties(): Promise<PropertySummary[]> {
             createdAt: item.createdAt,
             hasPendingEditRequest: item.hasPendingEditRequest,
             pendingEditRequestId: item.pendingEditRequestId,
+            public_code: item.public_code,
+            slug: item.slug,
             negotiationId: item.negotiationId,
             negotiationStatus: item.negotiation?.status,
         }))

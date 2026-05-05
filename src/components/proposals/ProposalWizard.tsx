@@ -11,6 +11,7 @@ import { maskCpf } from '@/lib/privacy'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/currencyInput'
 import { useUser } from '@/contexts/UserContext'
+import { buildPublicPropertyUrl } from '@/lib/propertyLinks'
 
 interface ProposalWizardProps {
     property: Property
@@ -67,7 +68,7 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
 
     useEffect(() => {
         if (authLoading || canGenerateProposal) return
-        router.replace(`/imoveis/${property.id}?proposalBlocked=1`)
+        router.replace(`${buildPublicPropertyUrl(property)}?proposalBlocked=1`)
     }, [authLoading, canGenerateProposal, property.id, router])
 
     const payment = useMemo<PaymentDetails>(

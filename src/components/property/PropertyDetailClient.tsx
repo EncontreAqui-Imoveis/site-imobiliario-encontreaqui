@@ -136,7 +136,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
 
     const whatsappMessage =
         property
-            ? `Olá! Vi o imóvel "${property.title}" (Cód: ${property.code || property.id}) no Encontre Aqui e gostaria de mais informações.`
+            ? `Olá! Vi o imóvel "${property.title}"${property.public_code || property.slug ? ` (Referência: ${property.public_code || property.slug})` : ''} no Encontre Aqui e gostaria de mais informações.`
             : ''
     const whatsappLink = buildWhatsappLink(property?.brokerPhone, whatsappMessage)
 

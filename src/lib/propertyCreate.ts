@@ -73,10 +73,10 @@ export type CreatePropertyDraftData = {
     garageSpots: string
     suites: string
     areaConstruida: string
-    /** m2 | hectare | alqueire — o backend converte para m² em `area_construida`. */
+    /** Unidade em que `areaConstruida` foi informada (`m2`, `hectare`, `alqueire`). */
     areaConstruidaUnidade: 'm2' | 'hectare' | 'alqueire'
     areaTerreno: string
-    /** m2 | hectare | alqueire — unidade informada para a área de terreno. */
+    /** Unidade em que `areaTerreno` foi informado (`m2`, `hectare`, `alqueire`). */
     areaTerrenoUnidade: 'm2' | 'hectare' | 'alqueire'
     amenities: PropertyAmenity[]
     hasWifi: boolean
@@ -249,9 +249,9 @@ export function buildCreatePropertyFormData(payload: CreatePropertyPayload): For
     appendIfPresent(formData, 'bathrooms', bathrooms, { allowZero: true })
     appendIfPresent(formData, 'suites', suites, { allowZero: true })
     appendIfPresent(formData, 'garage_spots', garageSpots, { allowZero: true })
-    appendIfPresent(formData, 'area_construida', areaConstruida)
+    appendIfPresent(formData, 'area_construida_valor', areaConstruida, { allowZero: true })
     formData.append('area_construida_unidade', payload.areaConstruidaUnidade)
-    appendIfPresent(formData, 'area_terreno', areaTerreno)
+    appendIfPresent(formData, 'area_terreno_valor', areaTerreno, { allowZero: true })
     formData.append('area_terreno_unidade', payload.areaTerrenoUnidade)
 
     formData.append('has_wifi', payload.hasWifi ? '1' : '0')
