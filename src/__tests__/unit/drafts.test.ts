@@ -1,9 +1,14 @@
 /**
  * Unit tests for the draft system (localStorage persistence)
  */
-import { clearRemoteDraftIfStale, clearDraft, hasDraft, loadDraft, saveDraft } from '@/lib/drafts'
-
-const fetchMock = jest.spyOn(global, 'fetch')
+import {
+    clearRemoteDraftIfStale,
+    clearDraft,
+    hasDraft,
+    isPropertyDraftStaleError,
+    loadDraft,
+    saveDraft,
+} from '@/lib/drafts'
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -24,11 +29,6 @@ describe('Draft System', () => {
     beforeEach(() => {
         localStorageMock.clear()
         jest.clearAllMocks()
-        fetchMock.mockReset()
-    })
-
-    afterAll(() => {
-        fetchMock.mockRestore()
     })
 
     describe('saveDraft / loadDraft', () => {
@@ -96,7 +96,7 @@ describe('Draft System', () => {
     })
 
     describe('remote draft validation', () => {
-        it('clears draft when remote response is DRAFT_NOT_FOUND (404)', async () => {
+        it('clears draft when remote validator marks it as stale', async () => {
             const draft = {
                 currentStep: 3,
                 data: { title: 'Casa com problema', actorMode: 'client-owner' },
@@ -107,13 +107,9 @@ describe('Draft System', () => {
             localStorageMock.setItem('encontreaqui_property_draft', JSON.stringify(draft))
             localStorageMock.setItem('encontreaqui_property_draft_ts', Date.now().toString())
 
-            fetchMock.mockResolvedValue(
-                new Response(JSON.stringify({ code: 'DRAFT_NOT_FOUND' }), { status: 404, headers: { 'Content-Type': 'application/json' } }),
-            )
-
             const loadedDraft = loadDraft()
             expect(loadedDraft).not.toBeNull()
-            expect(await clearRemoteDraftIfStale(loadedDraft!)).toBe(true)
+            expect(await clearRemoteDraftIfStale(loadedDraft!, async () => true)).toBe(true)
             expect(hasDraft()).toBe(false)
         })
 
@@ -125,10 +121,10 @@ describe('Draft System', () => {
             expect(hasDraft()).toBe(true)
         })
 
-        it('clears draft when backend returns 401', async () => {
+        it('does not clear draft on transport errors', async () => {
             const draft = {
                 currentStep: 2,
-                data: { title: 'Casa pendente', actorMode: 'client-owner' },
+                data: { title: 'Falha de rede', actorMode: 'client-owner' },
                 updatedAt: new Date().toISOString(),
                 draftId: 'draft-legacy-2',
                 draftToken: 'token-legacy-2',
@@ -136,12 +132,25 @@ describe('Draft System', () => {
             localStorageMock.setItem('encontreaqui_property_draft', JSON.stringify(draft))
             localStorageMock.setItem('encontreaqui_property_draft_ts', Date.now().toString())
 
-            fetchMock.mockResolvedValue(new Response(null, { status: 401 }))
-
             const loadedDraft = loadDraft()
             expect(loadedDraft).not.toBeNull()
-            expect(await clearRemoteDraftIfStale(loadedDraft!)).toBe(true)
-            expect(hasDraft()).toBe(false)
+            expect(
+                await clearRemoteDraftIfStale(loadedDraft!, async () => {
+                    throw new Error('network down')
+                }),
+            ).toBe(false)
+            expect(hasDraft()).toBe(true)
+        })
+    })
+
+    describe('isPropertyDraftStaleError', () => {
+        it('detects remote stale indicators', () => {
+            expect(isPropertyDraftStaleError({ status: 401 })).toBe(true)
+            expect(isPropertyDraftStaleError({ status: 404 })).toBe(true)
+            expect(isPropertyDraftStaleError({ status: 200, payload: { code: 'DRAFT_NOT_FOUND' } })).toBe(true)
+            expect(isPropertyDraftStaleError({ status: 200, payload: { code: 'DRAFT_EXPIRED' } })).toBe(true)
+            expect(isPropertyDraftStaleError({ status: 409, payload: { code: 'DRAFT_NOT_OPEN' } })).toBe(false)
+            expect(isPropertyDraftStaleError({ status: 500, payload: { code: 'INTERNAL' } })).toBe(false)
         })
     })
 

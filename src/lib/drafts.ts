@@ -2,7 +2,6 @@
  * Draft system for the property creation wizard (/anuncie).
  * Mirrors mobile's `rascunho_cadastro` feature using localStorage.
  */
-import { API_BASE_URL } from '@/lib/api/client'
 
 const DRAFT_KEY = 'encontreaqui_property_draft'
 const DRAFT_TIMESTAMP_KEY = 'encontreaqui_property_draft_ts'
@@ -10,7 +9,6 @@ const DRAFT_MEDIA_DB = 'encontreaqui_property_draft_media'
 const DRAFT_MEDIA_STORE = 'property_draft_media'
 const DRAFT_MEDIA_IMAGES_KEY = 'images'
 const DRAFT_MEDIA_VIDEO_KEY = 'video'
-const REMOTE_DRAFT_VALIDATION_ENDPOINT = `${API_BASE_URL}/properties/drafts/validate`
 const REMOTE_DRAFT_STALE_CODES = new Set(['DRAFT_NOT_FOUND', 'DRAFT_EXPIRED'])
 
 /** Max age for a draft: 7 days */
@@ -29,6 +27,14 @@ export interface PropertyDraft {
     draftToken?: string
 }
 
+type DraftApiError = {
+    status?: unknown
+    payload?: {
+        code?: unknown
+        [key: string]: unknown
+    }
+}
+
 function parseDraftRemoteErrorCode(payload: unknown): string {
     if (!payload || typeof payload !== 'object') return ''
     const raw = (payload as { code?: unknown }).code
@@ -36,46 +42,32 @@ function parseDraftRemoteErrorCode(payload: unknown): string {
     return raw.trim().toUpperCase()
 }
 
-async function isRemoteDraftStillValid(draft: PropertyDraft): Promise<boolean> {
-    if (!draft.draftId || !draft.draftToken) {
+export function isPropertyDraftStaleError(error: unknown): boolean {
+    if (!error || typeof error !== 'object') return false
+    const apiError = error as DraftApiError
+    const status = Number(apiError.status)
+    if (status === 401 || status === 404) {
         return true
     }
-
-    try {
-        const response = await fetch(REMOTE_DRAFT_VALIDATION_ENDPOINT, {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ draftId: draft.draftId, draftToken: draft.draftToken }),
-        })
-
-        if (response.ok) return true
-        if (response.status === 401 || response.status === 404) return false
-
-        if (!response.ok) {
-            let payload: unknown = null
-            try {
-                payload = await response.json()
-            } catch {
-                payload = null
-            }
-            const code = parseDraftRemoteErrorCode(payload)
-            if (code && REMOTE_DRAFT_STALE_CODES.has(code)) return false
-        }
-
-        return true
-    } catch {
-        return true
-    }
+    const code = parseDraftRemoteErrorCode(apiError.payload)
+    return REMOTE_DRAFT_STALE_CODES.has(code)
 }
 
-export async function clearRemoteDraftIfStale(draft: PropertyDraft): Promise<boolean> {
-    const isValid = await isRemoteDraftStillValid(draft)
-    if (!isValid) {
-        clearDraft()
-        return true
+export async function clearRemoteDraftIfStale(
+    draft: PropertyDraft,
+    checkRemoteDraft?: (draft: PropertyDraft) => Promise<boolean>,
+): Promise<boolean> {
+    if (!checkRemoteDraft) return false
+    try {
+        const stale = await checkRemoteDraft(draft)
+        if (stale) {
+            clearDraft()
+            return true
+        }
+        return false
+    } catch {
+        return false
     }
-    return false
 }
 
 type DraftMediaRecord = {

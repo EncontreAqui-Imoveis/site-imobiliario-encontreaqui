@@ -23,8 +23,8 @@ import type { ApiError } from '@/lib/api/client'
 import { createProperty } from '@/lib/api/user'
 import {
     clearDraft,
-    clearRemoteDraftIfStale,
     hasDraft as checkHasDraft,
+    isPropertyDraftStaleError,
     loadDraft,
     loadDraftMedia,
     saveDraft,
@@ -196,32 +196,11 @@ export default function AnunciePage() {
     }, [authLoading, session, isApprovedBroker, isBrokerPending, router])
 
     useEffect(() => {
-        let cancelled = false
-        const ensureDraftState = async () => {
-            const draft = loadDraft()
-            if (!draft) {
-                if (!cancelled) setDraftDecisionResolved(true)
-                return
-            }
-
-            const wasCleared = await clearRemoteDraftIfStale(draft)
-            if (cancelled) return
-            if (wasCleared) {
-                setShowDraftBanner(false)
-                setDraftDecisionResolved(true)
-                return
-            }
-
-            if (checkHasDraft()) {
-                setShowDraftBanner(true)
-            } else {
-                setDraftDecisionResolved(true)
-            }
-        }
-        void ensureDraftState()
-
-        return () => {
-            cancelled = true
+        setDraftDecisionResolved(false)
+        if (checkHasDraft()) {
+            setShowDraftBanner(true)
+        } else {
+            setDraftDecisionResolved(true)
         }
     }, [])
 
@@ -288,6 +267,8 @@ export default function AnunciePage() {
     async function restoreDraft() {
         const draft = loadDraft()
         if (!draft) return
+
+        setDraftDecisionResolved(false)
         const media = await loadDraftMedia()
         imagePreviews.forEach((preview) => URL.revokeObjectURL(preview))
         if (videoPreview) URL.revokeObjectURL(videoPreview)
@@ -301,12 +282,19 @@ export default function AnunciePage() {
         setVideoPreview(media.video ? URL.createObjectURL(media.video) : null)
         setStep(Math.min(Math.max(Number(draft.currentStep || 1), 1), 6) as WizardStep)
         setShowDraftBanner(false)
-        setDraftDecisionResolved(true)
         const expectedImages = Number(draft.data.mediaImageCount ?? 0)
         const expectedVideo = draft.data.mediaVideoSelected === true
         if ((expectedImages > 0 && media.images.length === 0) || (expectedVideo && !media.video)) {
             setError('O formulário foi restaurado, mas as mídias deste rascunho precisam ser selecionadas novamente.')
         }
+        setDraftDecisionResolved(true)
+    }
+
+    function fallbackToFreshFlow(draftErrorMessage?: string) {
+        clearDraft()
+        setShowDraftBanner(false)
+        setDraftDecisionResolved(true)
+        if (draftErrorMessage) setError(draftErrorMessage)
     }
 
     function discardDraft() {
@@ -476,6 +464,11 @@ export default function AnunciePage() {
             router.push(`/meus-imoveis?created=${result.id}`)
         } catch (submissionError) {
             const apiError = submissionError as ApiError
+            if (isPropertyDraftStaleError(apiError)) {
+                const draftErrorMessage = 'Seu rascunho ficou inválido no servidor. O cadastro continuará em fluxo normal e será salvo novamente.'
+                fallbackToFreshFlow(draftErrorMessage)
+                return
+            }
             setError(apiError?.message || 'Erro ao cadastrar imóvel ou falha no upload.')
         } finally {
             setSubmitting(false)
