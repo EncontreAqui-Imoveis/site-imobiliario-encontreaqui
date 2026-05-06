@@ -4,7 +4,6 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
-    AlertTriangle,
     ArrowLeft,
     ArrowRight,
     Building2,
@@ -58,6 +57,7 @@ import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
 import { areaInputToSquareMeters, areaUnitLabel } from '@/lib/areaUnits'
 import { getUploadSignature, uploadToCloudinaryBrowser } from '@/lib/api/cloudinaryUpload'
+import { TEAM_CONTACT_CHANNEL_URL } from '@/lib/contactLinks'
 
 type WizardStep = 1 | 2 | 3 | 4 | 5 | 6
 type CepLookupResult = { logradouro: string; bairro: string; localidade: string; uf: string }
@@ -176,6 +176,7 @@ export default function AnunciePage() {
     const imageInputRef = useRef<HTMLInputElement>(null)
     const videoInputRef = useRef<HTMLInputElement>(null)
     const [actorMode, setActorMode] = useState<CreatePropertyActor | null>(null)
+    const [showOwnershipQuestion, setShowOwnershipQuestion] = useState(false)
     const [step, setStep] = useState<WizardStep>(1)
     const [form, setForm] = useState<CreatePropertyDraftData>(INITIAL)
     const [images, setImages] = useState<File[]>([])
@@ -185,15 +186,14 @@ export default function AnunciePage() {
     const [cityOptions, setCityOptions] = useState<string[]>([])
     const [showDraftBanner, setShowDraftBanner] = useState(false)
     const [draftDecisionResolved, setDraftDecisionResolved] = useState(false)
-    const [showClientOwnerOnboarding, setShowClientOwnerOnboarding] = useState(false)
     const [cepLoading, setCepLoading] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [uploadStatus, setUploadStatus] = useState<string | null>(null)
 
-    const isApprovedBroker = Boolean(session?.user?.role === 'broker' && session.user.broker_status === 'approved')
-    const isBrokerPending = Boolean(session?.user?.role === 'broker' && !isApprovedBroker)
-    const isClient = Boolean(session && session.user.role !== 'broker')
+    const brokerStatus = session?.user?.broker_status ?? session?.broker?.status ?? null
+    const isApprovedBroker = Boolean(session?.user?.role === 'broker' && brokerStatus === 'approved')
+    const isBrokerPendingOrRestricted = Boolean(session?.user?.role === 'broker' && !isApprovedBroker)
     const saleEnabled = useMemo(() => supportsSale(form.purpose), [form.purpose])
     const rentEnabled = useMemo(() => supportsRent(form.purpose), [form.purpose])
     const needsLotFields = useMemo(() => requiresLotFields(form.propertyType), [form.propertyType])
@@ -204,16 +204,12 @@ export default function AnunciePage() {
     useEffect(() => {
         if (!authLoading && !session) router.replace('/auth/login?next=/anuncie')
         const gateRoute = resolveOperationalGateRoute(session)
-        if (!authLoading && gateRoute) {
+        const skipBrokerOnboardingGate = isBrokerPendingOrRestricted && gateRoute === '/onboarding/broker'
+        if (!authLoading && gateRoute && !skipBrokerOnboardingGate) {
             router.replace(gateRoute)
             return
         }
-        if (!authLoading && isApprovedBroker) {
-            setActorMode('broker')
-            setShowClientOwnerOnboarding(false)
-        }
-        if (!authLoading && isBrokerPending) router.replace('/onboarding/broker')
-    }, [authLoading, session, isApprovedBroker, isBrokerPending, router])
+    }, [authLoading, session, isBrokerPendingOrRestricted, router])
 
     useEffect(() => {
         setDraftDecisionResolved(false)
@@ -297,10 +293,20 @@ export default function AnunciePage() {
         imagePreviews.forEach((preview) => URL.revokeObjectURL(preview))
         if (videoPreview) URL.revokeObjectURL(videoPreview)
         setForm(parseDraft(draft.data))
-        if (draft.data.actorMode === 'broker' || draft.data.actorMode === 'client-owner') {
-            setActorMode(draft.data.actorMode)
+        const draftActorMode =
+            draft.data.actorMode === 'broker' || draft.data.actorMode === 'client-owner'
+                ? draft.data.actorMode
+                : null
+        if (draftActorMode === 'broker' && isBrokerPendingOrRestricted) {
+            setDraftDecisionResolved(true)
+            clearDraft()
+            setShowOwnershipQuestion(false)
+            setError('Seu fluxo anterior foi de corretor e não pode continuar nesse acesso. Selecione novamente.')
+            return
         }
-        setShowClientOwnerOnboarding(false)
+        if (draftActorMode) {
+            setActorMode(draftActorMode)
+        }
         setImages(media.images)
         setImagePreviews(media.images.map((file) => URL.createObjectURL(file)))
         setVideo(media.video)
@@ -319,7 +325,7 @@ export default function AnunciePage() {
         clearDraft()
         setShowDraftBanner(false)
         setDraftDecisionResolved(true)
-        setShowClientOwnerOnboarding(false)
+        setShowOwnershipQuestion(false)
         if (draftErrorMessage) setError(draftErrorMessage)
     }
 
@@ -327,7 +333,21 @@ export default function AnunciePage() {
         clearDraft()
         setShowDraftBanner(false)
         setDraftDecisionResolved(true)
-        setShowClientOwnerOnboarding(false)
+        setShowOwnershipQuestion(false)
+    }
+
+    function openClientOwnerFlow() {
+        setActorMode('client-owner')
+        setShowOwnershipQuestion(false)
+    }
+
+    function openBrokerFlow() {
+        setShowOwnershipQuestion(false)
+        if (isApprovedBroker) {
+            setActorMode('broker')
+            return
+        }
+        router.push('/onboarding/broker')
     }
 
     async function handleCepBlur() {
@@ -529,81 +549,83 @@ export default function AnunciePage() {
         )
     }
 
-    if (isBrokerPending) {
-        return (
-            <div className="min-h-[60vh] flex items-center justify-center px-4">
-                <div className="max-w-md rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center">
-                    <AlertTriangle className="mx-auto mb-3 h-10 w-10 text-amber-600" />
-                    <h1 className="text-lg font-bold text-amber-950">Seu perfil ainda não está liberado para anunciar</h1>
-                    <p className="mt-2 text-sm text-amber-800">Conclua a etapa de corretor para anunciar imóveis profissionalmente.</p>
-                    <Link href="/onboarding/broker" className="mt-4 inline-flex rounded-xl bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-amber-700">
-                        Ir para o onboarding
-                    </Link>
-                </div>
-            </div>
-        )
-    }
-
-    if (!actorMode && isClient) {
+    if (!actorMode) {
         return (
             <div className="mx-auto flex min-h-[60vh] max-w-5xl flex-col gap-6 px-4 py-8 pt-24">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900">Anunciar imóvel</h1>
-                    <p className="mt-2 max-w-2xl text-sm text-slate-600">Escolha como você quer continuar no site.</p>
+                    <h1 className="text-3xl font-bold text-slate-900">
+                        {showOwnershipQuestion ? 'Você é proprietário do imóvel?' : 'Como você quer anunciar?'}
+                    </h1>
+                    {!showOwnershipQuestion ? (
+                        <p className="mt-2 max-w-2xl text-sm text-slate-600">
+                            Escolha a trilha de cadastro que combina com seu perfil.
+                        </p>
+                    ) : null}
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
+                    {!showOwnershipQuestion ? (
+                        <>
+                            <button
+                                type="button"
+                                onClick={() => setShowOwnershipQuestion(true)}
+                                className="rounded-2xl border border-primary-200 bg-white p-6 text-left shadow-sm hover:border-primary-400 hover:shadow-md"
+                            >
+                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
+                                    <Home className="h-6 w-6" />
+                                </div>
+                                <h2 className="text-lg font-bold text-slate-900">Anunciar você mesmo</h2>
+                                <p className="mt-2 text-sm text-slate-600">Envie seu imóvel como proprietário para análise.</p>
+                            </button>
+                            <a
+                                href={TEAM_CONTACT_CHANNEL_URL}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="rounded-2xl border border-accent-200 bg-accent-50 p-6 text-left shadow-sm hover:border-accent-400 hover:shadow-md block"
+                            >
+                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-100 text-accent-700">
+                                    <UserRound className="h-6 w-6" />
+                                </div>
+                                <h2 className="text-lg font-bold text-slate-900">Entrar em contato com a equipe</h2>
+                                <p className="mt-2 text-sm text-slate-600">Fale com a equipe para orientação profissional.</p>
+                            </a>
+                        </>
+                    ) : (
+                        <>
+                            <button
+                                type="button"
+                                onClick={openClientOwnerFlow}
+                                className="rounded-2xl border border-primary-200 bg-white p-6 text-left shadow-sm hover:border-primary-400 hover:shadow-md"
+                            >
+                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
+                                    <Home className="h-6 w-6" />
+                                </div>
+                                <h2 className="text-lg font-bold text-slate-900">Sim, sou proprietário</h2>
+                                <p className="mt-2 text-sm text-slate-600">Abra o fluxo de proprietário/cliente.</p>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={openBrokerFlow}
+                                className="rounded-2xl border border-accent-200 bg-accent-50 p-6 text-left shadow-sm hover:border-accent-400 hover:shadow-md"
+                            >
+                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-100 text-accent-700">
+                                    <UserRound className="h-6 w-6" />
+                                </div>
+                                <h2 className="text-lg font-bold text-slate-900">Não, quero anunciar de outra pessoa</h2>
+                                <p className="mt-2 text-sm text-slate-600">Continue no fluxo profissional ou regularização com a equipe.</p>
+                            </button>
+                        </>
+                    )}
+                </div>
+                {showOwnershipQuestion ? (
                     <button
                         type="button"
-                        onClick={() => {
-                            setActorMode('client-owner')
-                            setShowClientOwnerOnboarding(true)
-                        }}
-                        className="rounded-2xl border border-primary-200 bg-white p-6 text-left shadow-sm hover:border-primary-400 hover:shadow-md"
+                        onClick={() => setShowOwnershipQuestion(false)}
+                        className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700"
                     >
-                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
-                            <Home className="h-6 w-6" />
-                        </div>
-                        <h2 className="text-lg font-bold text-slate-900">Anunciar meu próprio imóvel</h2>
-                        <p className="mt-2 text-sm text-slate-600">Use o fluxo de cliente-proprietário para enviar o imóvel para análise.</p>
+                        <ArrowLeft className="h-4 w-4" />
+                        Voltar
                     </button>
-                    <Link href="/onboarding/broker" className="rounded-2xl border border-accent-200 bg-accent-50 p-6 text-left shadow-sm hover:border-accent-400 hover:shadow-md">
-                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-100 text-accent-700">
-                            <UserRound className="h-6 w-6" />
-                        </div>
-                        <h2 className="text-lg font-bold text-slate-900">Quero me tornar corretor</h2>
-                        <p className="mt-2 text-sm text-slate-600">Siga para o fluxo de corretor para operar de forma profissional na plataforma.</p>
-                    </Link>
-                </div>
-            </div>
-        )
-    }
-
-    if (actorMode === 'client-owner' && showClientOwnerOnboarding) {
-        return (
-            <div className="mx-auto max-w-4xl px-4 py-8 pt-24 sm:px-6">
-                <div className="rounded-2xl border border-primary-100 bg-primary-50/30 p-6">
-                    <h1 className="text-2xl font-bold text-slate-900">Anunciar como proprietário</h1>
-                    <p className="mt-2 text-sm text-slate-600">
-                        Antes de cadastrar, confirme que o imóvel é seu e que você autoriza a publicação da ficha para análise.
-                    </p>
-                    <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-slate-700">
-                        <li>Preencha os dados do imóvel com foto, endereço e documentação do anúncio.</li>
-                        <li>Informe a disponibilidade para contato para análise e visita.</li>
-                        <li>Revise todas as informações antes da etapa final.</li>
-                    </ol>
-                    <div className="mt-6 rounded-xl border border-white bg-white p-4 text-sm text-slate-700">
-                        <p className="font-medium text-slate-900">Dica rápida</p>
-                        <p className="mt-1">Campos com * são obrigatórios, fotos são obrigatórias e os imóveis sem documentação completa podem levar mais tempo para aprovação.</p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => setShowClientOwnerOnboarding(false)}
-                        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700"
-                    >
-                        <ArrowRight className="h-4 w-4" />
-                        Entendi, continuar
-                    </button>
-                </div>
+                ) : null}
             </div>
         )
     }

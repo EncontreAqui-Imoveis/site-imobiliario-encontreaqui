@@ -2,12 +2,10 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Download, Instagram, MessageCircle } from 'lucide-react'
 import { APP_LINKS } from '@/lib/appLinks'
+import { TEAM_CONTACT_CHANNEL_URL } from '@/lib/contactLinks'
 
 const INSTAGRAM_URL =
     'https://www.instagram.com/encontre.aquiimoveis?igsh=MXI2N3ZmZzY4a281eQ=='
-/** Placeholder até haver número oficial da empresa */
-const WHATSAPP_PLACEHOLDER_URL = 'https://wa.me/5511999999999'
-
 const footerLinks = [
     { href: '/', label: 'Início' },
     { href: '/imoveis', label: 'Imóveis' },
@@ -52,12 +50,12 @@ export default function Footer() {
                                 <Instagram className="h-5 w-5" aria-hidden />
                             </a>
                             <a
-                                href={WHATSAPP_PLACEHOLDER_URL}
+                                href={TEAM_CONTACT_CHANNEL_URL}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-slate-200 transition-colors hover:border-emerald-500/60 hover:text-emerald-400"
-                                aria-label="WhatsApp (número em atualização)"
-                                title="Número da empresa em breve"
+                                aria-label="WhatsApp da equipe"
+                                title="Fale com a equipe"
                             >
                                 <MessageCircle className="h-5 w-5" aria-hidden />
                             </a>

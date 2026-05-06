@@ -90,7 +90,10 @@ export default function MeusImoveisPage() {
             return
         }
         const gateRoute = resolveOperationalGateRoute(session)
-        if (!authLoading && gateRoute) {
+        const brokerStatus = session?.user?.broker_status ?? session?.broker?.status
+        const isBrokerRestrictedForProfessional = session?.user?.role === 'broker' && brokerStatus !== 'approved'
+        const skipBrokerOnboardingGate = isBrokerRestrictedForProfessional && gateRoute === '/onboarding/broker'
+        if (!authLoading && gateRoute && !skipBrokerOnboardingGate) {
             router.replace(gateRoute)
         }
     }, [authLoading, session, router])

@@ -2,6 +2,7 @@ import React from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import AnunciePage from '@/app/anuncie/page'
+import { TEAM_CONTACT_CHANNEL_URL, TEAM_CONTACT_PHONE } from '@/lib/contactLinks'
 
 const mockRouter = {
     back: jest.fn(),
@@ -44,16 +45,33 @@ jest.mock('lucide-react', () => {
     })
 })
 
+const mockClientSession = {
+    user: {
+        id: 10,
+        name: 'Cliente Teste',
+        role: 'client',
+        email: 'cliente@test.com',
+    },
+}
+
+const mockBrokerPendingSession = {
+    user: {
+        id: 20,
+        name: 'Broker Pendente',
+        role: 'broker',
+        email: 'brokerpendente@teste.com',
+        broker_status: 'pending_verification' as const,
+        email_verified: true,
+    },
+}
+
+let mockUserContextValue = {
+    session: mockClientSession,
+}
+
 jest.mock('@/contexts/UserContext', () => ({
     useUser: () => ({
-        session: {
-            user: {
-                id: 10,
-                name: 'Cliente Teste',
-                role: 'client',
-                email: 'cliente@test.com',
-            },
-        },
+        session: mockUserContextValue.session,
         loading: false,
     }),
 }))
@@ -65,6 +83,9 @@ jest.mock('@/lib/api/user', () => ({
 
 beforeEach(() => {
     jest.clearAllMocks()
+    mockUserContextValue = {
+        session: mockClientSession,
+    }
     global.fetch = jest.fn().mockResolvedValue({
         ok: true,
         json: () => Promise.resolve([]),
@@ -72,20 +93,77 @@ beforeEach(() => {
 })
 
 describe('Anuncie flow', () => {
-    it('exibe o bloco de orientação para proprietário e avança para o formulário', async () => {
+    beforeEach(() => {
+        mockRouter.push.mockClear()
+        mockRouter.replace.mockClear()
+        mockRouter.back.mockClear()
+    })
+
+    it('exibe o fluxo em duas perguntas e avança para o formulário com proprietário', async () => {
         render(<AnunciePage />)
 
-        expect(await screen.findByText('Anunciar meu próprio imóvel')).toBeInTheDocument()
+        expect(await screen.findByText('Como você quer anunciar?')).toBeInTheDocument()
+        expect(await screen.findByText('Anunciar você mesmo')).toBeInTheDocument()
+        expect(screen.getByText('Entrar em contato com a equipe')).toBeInTheDocument()
 
-        fireEvent.click(screen.getByText('Anunciar meu próprio imóvel'))
+        fireEvent.click(screen.getByText('Anunciar você mesmo'))
+        expect(await screen.findByText('Você é proprietário do imóvel?')).toBeInTheDocument()
 
-        expect(await screen.findByText('Anunciar como proprietário')).toBeInTheDocument()
+        fireEvent.click(screen.getByText('Sim, sou proprietário'))
+        expect(await screen.findByText('Cadastrar imóvel')).toBeInTheDocument()
+        expect(screen.getByText('Fluxo de cliente-proprietário')).toBeInTheDocument()
+        expect(screen.queryByText('Como você quer anunciar?')).not.toBeInTheDocument()
+        expect(screen.queryByText('Você é proprietário do imóvel?')).not.toBeInTheDocument()
+    })
 
-        fireEvent.click(screen.getByText('Entendi, continuar'))
+    it('permite broker pendente seguir como proprietário sem entrar no fluxo profissional', async () => {
+        mockUserContextValue = {
+            session: mockBrokerPendingSession,
+        }
+        render(<AnunciePage />)
+
+        fireEvent.click(await screen.findByText('Anunciar você mesmo'))
+        fireEvent.click(await screen.findByText('Sim, sou proprietário'))
+
+        expect(await screen.findByText('Cadastrar imóvel')).toBeInTheDocument()
+        expect(screen.getByText('Fluxo de cliente-proprietário')).toBeInTheDocument()
+        expect(mockRouter.push).not.toHaveBeenCalledWith('/onboarding/broker')
+        expect(mockRouter.replace).not.toHaveBeenCalledWith('/onboarding/broker')
+    })
+
+    it('redireciona para fluxo profissional apenas quando selecionado', async () => {
+        mockUserContextValue = {
+            session: mockBrokerPendingSession,
+        }
+        render(<AnunciePage />)
+
+        fireEvent.click(await screen.findByText('Anunciar você mesmo'))
+        fireEvent.click(await screen.findByText('Não, quero anunciar de outra pessoa'))
+
+        await waitFor(() => {
+            expect(mockRouter.push).toHaveBeenCalledWith('/onboarding/broker')
+        })
+    })
+
+    it('expõe o contato da equipe no primeiro passo', async () => {
+        render(<AnunciePage />)
+
+        const contact = await screen.findByText('Entrar em contato com a equipe')
+        expect(contact.closest('a')).toHaveAttribute('href', TEAM_CONTACT_CHANNEL_URL)
+        expect(TEAM_CONTACT_CHANNEL_URL).not.toContain('5511999999999')
+        expect(TEAM_CONTACT_CHANNEL_URL).toBe(`https://wa.me/${TEAM_CONTACT_PHONE}`)
+    })
+
+    it('garante que as perguntas de escolha não reaparecem após abrir formulário', async () => {
+        render(<AnunciePage />)
+
+        fireEvent.click(await screen.findByText('Anunciar você mesmo'))
+        fireEvent.click(await screen.findByText('Sim, sou proprietário'))
 
         await waitFor(() => {
             expect(screen.getByText('Cadastrar imóvel')).toBeInTheDocument()
-            expect(screen.getByText('Fluxo de cliente-proprietário')).toBeInTheDocument()
         })
+        expect(screen.queryByText('Como você quer anunciar?')).not.toBeInTheDocument()
+        expect(screen.queryByText('Você é proprietário do imóvel?')).not.toBeInTheDocument()
     })
 })
