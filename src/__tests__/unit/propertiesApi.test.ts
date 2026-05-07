@@ -275,6 +275,40 @@ describe('propertiesApi', () => {
         expect(result?.ownerId).toBe(99)
     })
 
+    it('fallbacks to authenticated endpoint when public endpoint returns sucesso sem dados úteis', async () => {
+        ; (global.fetch as jest.Mock).mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                message: 'Não encontrado',
+                status: 'not_found',
+            }),
+        })
+        const getSpy = jest.spyOn(apiClient, 'get').mockResolvedValue({
+            id: 77,
+            title: 'Imóvel privado sem retorno público',
+            type: 'Casa',
+            status: 'pending_approval',
+            purpose: 'Venda',
+            price: 350000,
+            address: 'Rua Q',
+            city: 'Goiânia',
+            state: 'GO',
+            created_at: '2026-01-07T12:00:00.000Z',
+            owner_id: 101,
+        })
+        document.cookie = 'ea_auth_token=token-de-teste'
+
+        const result = await fetchPropertyById('77')
+
+        expect(global.fetch).toHaveBeenCalledWith(
+            `${API_BASE_URL}/public/properties/77`,
+            expect.objectContaining({ cache: 'no-store' }),
+        )
+        expect(getSpy).toHaveBeenCalledWith('/properties/77')
+        expect(result?.status).toBe('pending_approval')
+        expect(result?.ownerId).toBe(101)
+    })
+
     it('consumes public detail payload when the backend returns the property object directly', async () => {
         ; (global.fetch as jest.Mock).mockResolvedValue({
             ok: true,

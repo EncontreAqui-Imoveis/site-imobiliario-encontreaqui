@@ -239,8 +239,8 @@ export default function AnunciePage() {
     const [uploadStatus, setUploadStatus] = useState<string | null>(null)
 
     const brokerStatus = session?.user?.broker_status ?? session?.broker?.status ?? null
-    const isApprovedBroker = Boolean(session?.user?.role === 'broker' && brokerStatus === 'approved')
-    const isBrokerPendingOrRestricted = Boolean(session?.user?.role === 'broker' && !isApprovedBroker)
+    const isBrokerUser = Boolean(session?.isBroker || session?.user?.role === 'broker' || brokerStatus != null)
+    const isBrokerPendingOrRestricted = Boolean(isBrokerUser && brokerStatus !== 'approved')
     const saleEnabled = useMemo(() => supportsSale(form.purpose), [form.purpose])
     const rentEnabled = useMemo(() => supportsRent(form.purpose), [form.purpose])
     const needsLotFields = useMemo(() => requiresLotFields(form.propertyType), [form.propertyType])
@@ -432,9 +432,28 @@ export default function AnunciePage() {
         setError(message ? `Seu pedido de contato foi enviado: ${message}` : 'Seu pedido de contato foi enviado.')
     }
 
+    function openTeamContactLink(url: string | null, actionLabel: string) {
+        if (!url) {
+            setContactError('Não foi possível abrir o canal de contato da equipe.')
+            return
+        }
+
+        if (typeof window !== 'undefined' && window.open) {
+            window.open(url, '_blank', 'noopener,noreferrer')
+            showContactRequestSent(`abrimos ${actionLabel}`)
+            return
+        }
+
+        if (typeof window !== 'undefined') {
+            window.location.href = url
+            showContactRequestSent(`abrimos ${actionLabel}`)
+        } else {
+            setContactError('Não foi possível abrir o canal de contato desta plataforma.')
+        }
+    }
+
     function handleTeamWhatsappClick() {
-        window.location.href = TEAM_CONTACT_CHANNEL_URL
-        showContactRequestSent('abrimos o WhatsApp')
+        openTeamContactLink(TEAM_CONTACT_CHANNEL_URL, 'o WhatsApp da equipe')
     }
 
     function handleTeamPhoneClick() {
@@ -443,8 +462,7 @@ export default function AnunciePage() {
             setContactError('Não foi possível formatar o número da equipe.')
             return
         }
-        window.location.href = phoneLink
-        showContactRequestSent('abrimos o discador')
+        openTeamContactLink(phoneLink, 'o discador')
     }
 
     async function handleCopyTeamPhone() {

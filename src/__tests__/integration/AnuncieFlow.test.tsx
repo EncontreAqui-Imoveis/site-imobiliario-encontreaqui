@@ -65,6 +65,17 @@ const mockBrokerPendingSession = {
     },
 }
 
+const mockBrokerPendingDocumentsSession = {
+    user: {
+        id: 21,
+        name: 'Broker Pendente Documentos',
+        role: 'broker',
+        email: 'brokerdoc@teste.com',
+        broker_status: 'pending_documents' as unknown as 'pending_verification',
+        email_verified: true,
+    },
+}
+
 let mockUserContextValue = {
     session: mockClientSession,
 }
@@ -86,6 +97,11 @@ beforeEach(() => {
     mockUserContextValue = {
         session: mockClientSession,
     }
+    Object.defineProperty(window, 'open', {
+        configurable: true,
+        writable: true,
+        value: jest.fn(),
+    })
     global.fetch = jest.fn().mockResolvedValue({
         ok: true,
         json: () => Promise.resolve([]),
@@ -119,6 +135,21 @@ describe('Anuncie flow', () => {
     it('permite broker pendente seguir como proprietário sem entrar no fluxo profissional', async () => {
         mockUserContextValue = {
             session: mockBrokerPendingSession,
+        }
+        render(<AnunciePage />)
+
+        fireEvent.click(await screen.findByText('Anunciar você mesmo'))
+        fireEvent.click(await screen.findByText('Sim, sou proprietário'))
+
+        expect(await screen.findByText('Cadastrar imóvel')).toBeInTheDocument()
+        expect(screen.getByText('Fluxo de cliente-proprietário')).toBeInTheDocument()
+        expect(mockRouter.push).not.toHaveBeenCalledWith('/onboarding/broker')
+        expect(mockRouter.replace).not.toHaveBeenCalledWith('/onboarding/broker')
+    })
+
+    it('permite broker pendente com pending_documents seguir como proprietário', async () => {
+        mockUserContextValue = {
+            session: mockBrokerPendingDocumentsSession,
         }
         render(<AnunciePage />)
 
@@ -167,6 +198,17 @@ describe('Anuncie flow', () => {
         expect(await screen.findByText('Ligar para a equipe')).toBeInTheDocument()
         expect(await screen.findByText('Copiar telefone')).toBeInTheDocument()
         expect(TEAM_CONTACT_CHANNEL_URL).toBe(`https://wa.me/${TEAM_CONTACT_PHONE}`)
+    })
+
+    it('aciona ações reais de contato ao clicar nos botões', async () => {
+        render(<AnunciePage />)
+
+        fireEvent.click(await screen.findByText('Entrar em contato com a equipe'))
+        fireEvent.click(await screen.findByText(/Abrir WhatsApp/))
+        expect(window.open).toHaveBeenCalledWith(TEAM_CONTACT_CHANNEL_URL, '_blank', 'noopener,noreferrer')
+
+        fireEvent.click(await screen.findByText('Ligar para a equipe'))
+        expect(window.open).toHaveBeenCalledWith(`tel:+${TEAM_CONTACT_PHONE}`, '_blank', 'noopener,noreferrer')
     })
 
     it('garante que as perguntas de escolha não reaparecem após abrir formulário', async () => {

@@ -400,13 +400,13 @@ export async function fetchPropertyById(id: string | number): Promise<Property |
         const response = await fetch(`${API_BASE_URL}/public/properties/${normalizedId}`, {
             cache: 'no-store',
         })
+        const hasSessionToken =
+            typeof window !== 'undefined'
+                ? hasAuthTokenInBrowser()
+                : await hasAuthTokenInServer()
 
         if (!response.ok) {
             await logFailedResponse('Error fetching property details:', response)
-            const hasSessionToken =
-                typeof window !== 'undefined'
-                    ? hasAuthTokenInBrowser()
-                    : await hasAuthTokenInServer()
             if (!hasSessionToken) {
                 return null
             }
@@ -423,7 +423,23 @@ export async function fetchPropertyById(id: string | number): Promise<Property |
 
         const payload = await response.json()
         const raw = payload?.data ?? payload
-        return normalizeProperty(raw)
+        const publicProperty = normalizeProperty(raw)
+        if (publicProperty) {
+            return publicProperty
+        }
+
+        if (!hasSessionToken) {
+            return null
+        }
+        try {
+            const privatePayload = await apiClient.get<unknown>(`/properties/${normalizedId}`)
+            return normalizeProperty(privatePayload)
+        } catch (error) {
+            if (error instanceof ApiError && (error.status === 401 || error.status === 403 || error.status === 404)) {
+                return null
+            }
+            throw error
+        }
     } catch (error) {
         console.error('Error fetching property details:', error)
         reportObservedError(error, {

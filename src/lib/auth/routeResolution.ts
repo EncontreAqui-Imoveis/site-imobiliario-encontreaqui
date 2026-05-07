@@ -6,6 +6,23 @@ export interface PendingAction {
     description: string
 }
 
+function getBrokerStatus(session: UserSession | null | undefined): string | null {
+    if (!session) return null
+    const status = session.broker?.status ?? session.user?.broker_status
+    if (typeof status !== 'string') return null
+    return status
+}
+
+function isBrokerUser(session: UserSession | null | undefined): boolean {
+    if (!session) return false
+    return Boolean(session.isBroker || session.user?.role === 'broker' || getBrokerStatus(session) != null)
+}
+
+function isRestrictedBroker(session: UserSession | null | undefined): boolean {
+    if (!isBrokerUser(session)) return false
+    return getBrokerStatus(session) !== 'approved'
+}
+
 function hasVerifiedContact(session: UserSession): boolean {
     if (session.user.role === 'auxiliary_administrative') {
         return true
@@ -39,7 +56,7 @@ export function resolvePostAuthRoute(
         return '/onboarding'
     }
 
-    if (session.isBroker && session.broker?.status !== 'approved') {
+    if (isRestrictedBroker(session)) {
         return '/onboarding/broker'
     }
 
@@ -74,7 +91,7 @@ export function resolvePendingAction(
         }
     }
 
-    if (session.isBroker && session.broker?.status !== 'approved') {
+    if (isRestrictedBroker(session)) {
         return {
             href: '/onboarding/broker',
             title: session.requiresBrokerDocuments ? 'Enviar documentos' : 'Finalizar corretor',
