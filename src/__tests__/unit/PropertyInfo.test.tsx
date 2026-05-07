@@ -34,6 +34,8 @@ const propertyMock: Property = {
     status: 'approved',
     brokerId: 1,
     createdAt: new Date().toISOString(),
+    areaTerreno: 2000000,
+    areaTerrenoUnidade: 'hectare',
 }
 
 describe('PropertyInfo', () => {
@@ -49,5 +51,11 @@ describe('PropertyInfo', () => {
         expect(screen.queryByText('Complemento')).not.toBeInTheDocument()
         expect(screen.queryByText('CEP')).not.toBeInTheDocument()
         expect(screen.queryByText(/Goiânia • GO/)).not.toBeInTheDocument()
+    })
+
+    it('exibe área com unidade original', () => {
+        render(<PropertyInfo property={propertyMock} />)
+
+        expect(screen.getAllByText('200 ha')).toHaveLength(2)
     })
 })

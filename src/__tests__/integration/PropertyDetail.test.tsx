@@ -2,6 +2,11 @@ import React, { type ComponentPropsWithoutRef, type ReactNode } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import PropertyDetailClient from '@/components/property/PropertyDetailClient'
 import { Property } from '@/types/property'
+import * as propertiesEditorService from '@/lib/propertiesEditorService'
+
+jest.mock('@/lib/propertiesEditorService', () => ({
+    fetchEditableProperty: jest.fn(),
+}))
 
 // Mocks
 jest.mock('next/navigation', () => ({
@@ -72,12 +77,16 @@ jest.mock('@/components/property/CloseDealDialog', () => {
     }
 })
 
+let mockUserContextValue: { session: unknown } = {
+    session: null,
+}
+
 jest.mock('@/contexts/UserContext', () => ({
     useUser: () => ({
-        session: null,
+        session: mockUserContextValue.session,
         loading: false,
         isBroker: false,
-        isAuthenticated: false,
+        isAuthenticated: Boolean(mockUserContextValue.session),
     }),
 }))
 
@@ -114,6 +123,7 @@ describe('PropertyDetailClient', () => {
                 writeText: jest.fn(),
             },
         })
+        mockUserContextValue = { session: null }
         global.fetch = jest.fn().mockResolvedValue({
             ok: false,
             json: async () => ({}),
@@ -126,7 +136,7 @@ describe('PropertyDetailClient', () => {
     })
 
     it('renders property details', () => {
-        render(<PropertyDetailClient initialProperty={mockProperty} />)
+        render(<PropertyDetailClient propertyId="1" initialProperty={mockProperty} />)
 
         expect(
             screen.getByRole('main', { name: /detalhes do imóvel luxury villa/i })
@@ -143,6 +153,41 @@ describe('PropertyDetailClient', () => {
         expect(screen.getByText('Imóveis')).toBeInTheDocument()
     })
 
+    it('carrega versão privada do imóvel para proprietário autenticado quando propriedade inicial está ausente', async () => {
+        mockUserContextValue = {
+            session: {
+                user: {
+                    id: 101,
+                    role: 'client',
+                    email: 'proprietario@teste.com',
+                },
+            },
+        }
+        const ownedProperty: Property = {
+            ...mockProperty,
+            id: 88,
+            title: 'Imóvel reservado',
+            status: 'pending_approval',
+        }
+        const fetchEditableMock = propertiesEditorService.fetchEditableProperty as jest.Mock
+        fetchEditableMock.mockResolvedValue(ownedProperty)
+
+        render(<PropertyDetailClient propertyId="88" initialProperty={null} />)
+
+        await waitFor(() => {
+            expect(screen.getByTestId('property-gallery')).toHaveTextContent('Imóvel reservado')
+        })
+        expect(screen.queryByText('Imóvel não encontrado.')).not.toBeInTheDocument()
+        expect(fetchEditableMock).toHaveBeenCalledWith('88')
+    })
+
+    it('exibe não encontrado para usuário sem sessão quando não há imóvel inicial', () => {
+        mockUserContextValue = { session: null }
+        render(<PropertyDetailClient propertyId="999" initialProperty={null} />)
+
+        expect(screen.getByText('Imóvel não encontrado.')).toBeInTheDocument()
+    })
+
     it('fetches and renders similar properties', async () => {
         const mockSimilar = {
             data: [
@@ -156,7 +201,7 @@ describe('PropertyDetailClient', () => {
                 json: async () => mockSimilar,
             })
 
-        render(<PropertyDetailClient initialProperty={mockProperty} />)
+        render(<PropertyDetailClient propertyId="1" initialProperty={mockProperty} />)
 
         await waitFor(() => {
             expect(global.fetch).toHaveBeenCalledWith(expect.any(String))

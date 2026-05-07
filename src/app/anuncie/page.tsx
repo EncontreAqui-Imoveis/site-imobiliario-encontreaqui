@@ -12,6 +12,7 @@ import {
     Home,
     Info,
     Loader2,
+    Phone,
     Save,
     UserRound,
     Video,
@@ -57,7 +58,7 @@ import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
 import { areaInputToSquareMeters, areaUnitLabel } from '@/lib/areaUnits'
 import { getUploadSignature, uploadToCloudinaryBrowser } from '@/lib/api/cloudinaryUpload'
-import { TEAM_CONTACT_CHANNEL_URL } from '@/lib/contactLinks'
+import { TEAM_CONTACT_CHANNEL_URL, TEAM_CONTACT_PHONE, buildPhoneLink } from '@/lib/contactLinks'
 
 type WizardStep = 1 | 2 | 3 | 4 | 5 | 6
 type CepLookupResult = { logradouro: string; bairro: string; localidade: string; uf: string }
@@ -177,6 +178,10 @@ export default function AnunciePage() {
     const videoInputRef = useRef<HTMLInputElement>(null)
     const [actorMode, setActorMode] = useState<CreatePropertyActor | null>(null)
     const [showOwnershipQuestion, setShowOwnershipQuestion] = useState(false)
+    const [showContactFlow, setShowContactFlow] = useState(false)
+    const [showOtherOwnerWarning, setShowOtherOwnerWarning] = useState(false)
+    const [contactRequested, setContactRequested] = useState(false)
+    const [contactError, setContactError] = useState('')
     const [step, setStep] = useState<WizardStep>(1)
     const [form, setForm] = useState<CreatePropertyDraftData>(INITIAL)
     const [images, setImages] = useState<File[]>([])
@@ -301,12 +306,16 @@ export default function AnunciePage() {
             setDraftDecisionResolved(true)
             clearDraft()
             setShowOwnershipQuestion(false)
+            setShowContactFlow(false)
+            setShowOtherOwnerWarning(false)
             setError('Seu fluxo anterior foi de corretor e não pode continuar nesse acesso. Selecione novamente.')
             return
         }
         if (draftActorMode) {
             setActorMode(draftActorMode)
         }
+        setShowContactFlow(false)
+        setShowOtherOwnerWarning(false)
         setImages(media.images)
         setImagePreviews(media.images.map((file) => URL.createObjectURL(file)))
         setVideo(media.video)
@@ -326,6 +335,8 @@ export default function AnunciePage() {
         setShowDraftBanner(false)
         setDraftDecisionResolved(true)
         setShowOwnershipQuestion(false)
+        setShowContactFlow(false)
+        setShowOtherOwnerWarning(false)
         if (draftErrorMessage) setError(draftErrorMessage)
     }
 
@@ -334,20 +345,77 @@ export default function AnunciePage() {
         setShowDraftBanner(false)
         setDraftDecisionResolved(true)
         setShowOwnershipQuestion(false)
+        setShowContactFlow(false)
+        setShowOtherOwnerWarning(false)
     }
 
     function openClientOwnerFlow() {
         setActorMode('client-owner')
         setShowOwnershipQuestion(false)
+        setShowContactFlow(false)
+        setShowOtherOwnerWarning(false)
+        setContactRequested(false)
+        setContactError('')
     }
 
     function openBrokerFlow() {
         setShowOwnershipQuestion(false)
-        if (isApprovedBroker) {
-            setActorMode('broker')
+        setShowContactFlow(false)
+        setShowOtherOwnerWarning(false)
+        setShowOtherOwnerWarning(true)
+    }
+
+    function openContactFlow() {
+        setShowOwnershipQuestion(false)
+        setShowContactFlow(true)
+        setShowOtherOwnerWarning(false)
+        setContactRequested(false)
+        setContactError('')
+    }
+
+    function hideContactFlow() {
+        setShowContactFlow(false)
+        setContactRequested(false)
+        setContactError('')
+    }
+
+    function hideOtherOwnerWarning() {
+        setShowOtherOwnerWarning(false)
+        setContactError('')
+    }
+
+    function showContactRequestSent(message: string) {
+        setContactRequested(true)
+        setContactError('')
+        setError(message ? `Seu pedido de contato foi enviado: ${message}` : 'Seu pedido de contato foi enviado.')
+    }
+
+    function handleTeamWhatsappClick() {
+        window.location.href = TEAM_CONTACT_CHANNEL_URL
+        showContactRequestSent('abrimos o WhatsApp')
+    }
+
+    function handleTeamPhoneClick() {
+        const phoneLink = buildPhoneLink(TEAM_CONTACT_PHONE)
+        if (!phoneLink) {
+            setContactError('Não foi possível formatar o número da equipe.')
             return
         }
-        router.push('/onboarding/broker')
+        window.location.href = phoneLink
+        showContactRequestSent('abrimos o discador')
+    }
+
+    async function handleCopyTeamPhone() {
+        if (!navigator.clipboard?.writeText) {
+            setContactError('Recurso de cópia indisponível neste ambiente.')
+            return
+        }
+        try {
+            await navigator.clipboard.writeText(TEAM_CONTACT_PHONE)
+            showContactRequestSent('número copiado para a área de transferência')
+        } catch {
+            setContactError('Não foi possível copiar o número.')
+        }
     }
 
     async function handleCepBlur() {
@@ -554,16 +622,77 @@ export default function AnunciePage() {
             <div className="mx-auto flex min-h-[60vh] max-w-5xl flex-col gap-6 px-4 py-8 pt-24">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900">
-                        {showOwnershipQuestion ? 'Você é proprietário do imóvel?' : 'Como você quer anunciar?'}
+                        {showOtherOwnerWarning
+                            ? 'Não é possível continuar este fluxo'
+                            : showContactFlow
+                                ? 'Entre em contato com a equipe'
+                                : showOwnershipQuestion
+                                    ? 'Você é proprietário do imóvel?'
+                                    : 'Como você quer anunciar?'}
                     </h1>
-                    {!showOwnershipQuestion ? (
+                    {!showOwnershipQuestion && !showContactFlow && !showOtherOwnerWarning ? (
                         <p className="mt-2 max-w-2xl text-sm text-slate-600">
                             Escolha a trilha de cadastro que combina com seu perfil.
                         </p>
                     ) : null}
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
-                    {!showOwnershipQuestion ? (
+                    {showContactFlow ? (
+                        <div className="md:col-span-2 rounded-2xl border border-accent-200 bg-accent-50 p-6">
+                            <p className="text-sm text-slate-700">
+                                Registre seu contato com a equipe para orientação imediata.
+                                Seu pedido de contato também gera uma notificação interna para atendimento.
+                            </p>
+                            <div className="mt-4 space-y-3">
+                                <p className="text-sm font-semibold text-slate-900">
+                                    Telefone: <span className="font-mono text-base">{TEAM_CONTACT_PHONE}</span>
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={handleTeamWhatsappClick}
+                                    className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-left text-sm font-medium text-emerald-800 hover:bg-emerald-100"
+                                >
+                                    Abrir WhatsApp ({TEAM_CONTACT_CHANNEL_URL.includes('wa.me') ? 'canal oficial' : 'canal'})
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleTeamPhoneClick}
+                                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
+                                >
+                                    <span className="inline-flex items-center gap-2">
+                                        <Phone className="h-4 w-4" />
+                                        Ligar para a equipe
+                                    </span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleCopyTeamPhone}
+                                    className="w-full rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-left text-sm font-medium text-primary-700 hover:bg-primary-100"
+                                >
+                                    Copiar telefone
+                                </button>
+                                {contactError ? <p className="text-sm text-red-700">{contactError}</p> : null}
+                                {contactRequested ? <p className="text-sm text-emerald-700">Contato solicitado com sucesso.</p> : null}
+                            </div>
+                        </div>
+                    ) : showOtherOwnerWarning ? (
+                        <div className="md:col-span-2 rounded-2xl border border-amber-200 bg-amber-50 p-6">
+                            <p className="text-sm text-slate-700">
+                                A opção "Não, quero anunciar de outra pessoa" exige fluxo específico para anunciantes/profissionais e ainda não está disponível neste canal.
+                            </p>
+                            <p className="mt-2 text-sm text-slate-700">
+                                Para continuar, selecione a opção anterior e prossiga como proprietário.
+                            </p>
+                            <button
+                                type="button"
+                                onClick={hideOtherOwnerWarning}
+                                className="mt-4 inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100"
+                            >
+                                <ArrowLeft className="h-4 w-4" />
+                                Voltar
+                            </button>
+                        </div>
+                    ) : !showOwnershipQuestion ? (
                         <>
                             <button
                                 type="button"
@@ -576,10 +705,9 @@ export default function AnunciePage() {
                                 <h2 className="text-lg font-bold text-slate-900">Anunciar você mesmo</h2>
                                 <p className="mt-2 text-sm text-slate-600">Envie seu imóvel como proprietário para análise.</p>
                             </button>
-                            <a
-                                href={TEAM_CONTACT_CHANNEL_URL}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            <button
+                                type="button"
+                                onClick={openContactFlow}
                                 className="rounded-2xl border border-accent-200 bg-accent-50 p-6 text-left shadow-sm hover:border-accent-400 hover:shadow-md block"
                             >
                                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-100 text-accent-700">
@@ -587,7 +715,7 @@ export default function AnunciePage() {
                                 </div>
                                 <h2 className="text-lg font-bold text-slate-900">Entrar em contato com a equipe</h2>
                                 <p className="mt-2 text-sm text-slate-600">Fale com a equipe para orientação profissional.</p>
-                            </a>
+                            </button>
                         </>
                     ) : (
                         <>
@@ -620,6 +748,15 @@ export default function AnunciePage() {
                     <button
                         type="button"
                         onClick={() => setShowOwnershipQuestion(false)}
+                        className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                        Voltar
+                    </button>
+                ) : showContactFlow ? (
+                    <button
+                        type="button"
+                        onClick={hideContactFlow}
                         className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700"
                     >
                         <ArrowLeft className="h-4 w-4" />

@@ -95,6 +95,17 @@ describe('ActiveFilterChips', () => {
         expect(screen.queryByText('Limpar todos')).not.toBeInTheDocument()
     })
 
+    it('renderiza filtros de área com unidade selecionada', () => {
+        const params = new URLSearchParams({ minArea: '2', maxArea: '5', areaUnit: 'ha' })
+        ; (useSearchParams as jest.Mock).mockReturnValue(params)
+
+        render(<ActiveFilterChips />)
+
+        expect(screen.getByText('Área mín.: 2 ha')).toBeInTheDocument()
+        expect(screen.getByText('Área máx.: 5 ha')).toBeInTheDocument()
+        expect(screen.getByText('Unid. área: ha')).toBeInTheDocument()
+    })
+
     it('clears all filters when "Limpar todos" is clicked', () => {
         const params = new URLSearchParams({ type: 'Casa', city: 'SP' })
             ; (useSearchParams as jest.Mock).mockReturnValue(params)

@@ -36,9 +36,42 @@ export const PROPERTY_CANONICAL_AMENITIES = [
     'QUADRA',
     'CONDOMÍNIO FECHADO',
     'ACEITA PETS',
-    'SISTEMA DE SEGURANÇA/CÂMARA',
+    'SISTEMA DE SEGURANÇA/CÂMERA',
     'SAUNA',
 ] as const
+
+const SECURITY_CAMERA_AMENITY_CANONICAL = 'SISTEMA DE SEGURANÇA/CÂMERA'
+const SECURITY_CAMERA_AMENITY_NORMALIZED = 'SISTEMA DE SEGURANÇA/CÂMERA'
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+const SECURITY_CAMERA_AMENITY_LEGACY_NORMALIZED = 'SISTEMA DE SEGURANÇA/CÂMARA'
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+
+function normalizeAmenityAlias(amenity: string): PropertyAmenity | null {
+    const trimmed = amenity.trim()
+    if (!trimmed) return null
+
+    const normalized = trimmed
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase()
+
+    if (
+        normalized === SECURITY_CAMERA_AMENITY_NORMALIZED
+        || normalized === SECURITY_CAMERA_AMENITY_LEGACY_NORMALIZED
+    ) {
+        return SECURITY_CAMERA_AMENITY_CANONICAL
+    }
+
+    if (PROPERTY_CANONICAL_AMENITIES.includes(trimmed as PropertyAmenity)) {
+        return trimmed as PropertyAmenity
+    }
+
+    return null
+}
 
 export type PropertyAmenity = (typeof PROPERTY_CANONICAL_AMENITIES)[number]
 
@@ -118,8 +151,8 @@ function normalizeText(value: string): string {
 
 function normalizeAmenitySelections(amenities: string[]): PropertyAmenity[] {
     const cleaned = amenities
-        .map((amenity) => String(amenity).trim())
-        .filter((amenity) => PROPERTY_CANONICAL_AMENITIES.includes(amenity as PropertyAmenity))
+        .map((amenity) => normalizeAmenityAlias(String(amenity)) )
+        .filter((amenity): amenity is PropertyAmenity => Boolean(amenity))
     const unique = new Set<PropertyAmenity>()
     for (const amenity of cleaned) {
         unique.add(amenity as PropertyAmenity)

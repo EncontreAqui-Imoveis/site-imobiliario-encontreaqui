@@ -4,10 +4,12 @@ import {
     fetchRecentProperties,
     fetchPropertyById,
 } from '@/lib/propertiesApi'
+import { apiClient, API_BASE_URL } from '@/lib/api/client'
 
 describe('propertiesApi', () => {
     beforeEach(() => {
         jest.clearAllMocks()
+        document.cookie = ''
         jest.spyOn(console, 'error').mockImplementation(() => undefined)
     })
 
@@ -148,6 +150,33 @@ describe('propertiesApi', () => {
         await expect(fetchRecentProperties()).resolves.toEqual([])
     })
 
+    it('normaliza alias legado de segurança/câmera para câmera ao ler propriedade', async () => {
+        ;(global.fetch as jest.Mock).mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                data: {
+                    id: 22,
+                    title: 'Casa com câmera legado',
+                    type: 'Casa',
+                    status: 'approved',
+                    purpose: 'Venda',
+                    price: 300000,
+                    address: 'Rua Z',
+                    city: 'Brasil',
+                    state: 'GO',
+                    amenities: ['SISTEMA DE SEGURANÇA/CÂMARA'],
+                    images: ['https://cdn/22.jpg'],
+                    created_at: '2026-01-01T00:00:00.000Z',
+                },
+            }),
+        })
+
+        const result = await fetchPropertyById(22)
+
+        expect(result?.amenities).toContain('SISTEMA DE SEGURANÇA/CÂMERA')
+        expect(result?.amenities).not.toContain('SISTEMA DE SEGURANÇA/CÂMARA')
+    })
+
     it('fetches property by id and unwraps data field', async () => {
         ; (global.fetch as jest.Mock).mockResolvedValue({
             ok: true,
@@ -205,6 +234,44 @@ describe('propertiesApi', () => {
         )
         expect(result?.public_code).toBe('AB12CD')
         expect(result?.slug).toBe('casa-com-quintal-rio-verde-AB12CD')
+    })
+
+    it('fallbacks to authenticated endpoint when property is not public and user has token', async () => {
+        const publicFailure = {
+            ok: false,
+            status: 404,
+            headers: new Headers({
+                'Content-Type': 'application/json',
+                'x-request-id': 'req-private-404',
+            }),
+            json: async () => ({ message: 'Não encontrado' }),
+        }
+        ; (global.fetch as jest.Mock).mockResolvedValue(publicFailure)
+
+        const getSpy = jest.spyOn(apiClient, 'get').mockResolvedValue({
+            id: 66,
+            title: 'Imóvel privado',
+            type: 'Casa',
+            status: 'pending_approval',
+            purpose: 'Venda',
+            price: 450000,
+            address: 'Rua Z',
+            city: 'Goiânia',
+            state: 'GO',
+            created_at: '2026-01-06T12:00:00.000Z',
+            owner_id: 99,
+        })
+        document.cookie = 'ea_auth_token=token-de-teste'
+
+        const result = await fetchPropertyById('66')
+
+        expect(global.fetch).toHaveBeenCalledWith(
+            `${API_BASE_URL}/public/properties/66`,
+            expect.objectContaining({ cache: 'no-store' }),
+        )
+        expect(getSpy).toHaveBeenCalledWith('/properties/66')
+        expect(result?.status).toBe('pending_approval')
+        expect(result?.ownerId).toBe(99)
     })
 
     it('consumes public detail payload when the backend returns the property object directly', async () => {

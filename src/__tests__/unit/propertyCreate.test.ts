@@ -145,4 +145,60 @@ describe('propertyCreate helpers', () => {
         expect(formData.get('description')).toBe(description)
         expect(String(formData.get('description'))).toHaveLength(500)
     })
+
+    it('garante lista canônica de amenities sem Planejados', () => {
+        expect(PROPERTY_CANONICAL_AMENITIES).not.toContain('PLANEJADOS')
+        expect(PROPERTY_CANONICAL_AMENITIES).toContain('MOBILIADA')
+        expect(PROPERTY_CANONICAL_AMENITIES).toContain('ACEITA PETS')
+    })
+
+    it('aceita todas amenities canônicas no FormData e descarta inválidas', () => {
+        const formData = buildCreatePropertyFormData({
+            actorMode: 'client-owner',
+            propertyType: 'Casa',
+            purpose: 'Venda',
+            title: 'Casa para teste',
+            description: 'Descricao',
+            ownerName: 'Fulano',
+            ownerPhone: '(11) 98888-0000',
+            priceSale: '300000',
+            priceRent: '',
+            cep: '74000-000',
+            semCep: false,
+            state: 'GO',
+            city: 'Goiânia',
+            bairro: 'Centro',
+            address: 'Rua B',
+            numero: '10',
+            complemento: '',
+            quadra: '',
+            lote: '',
+            semNumero: false,
+            semQuadra: false,
+            semLote: false,
+            bedrooms: '2',
+            bathrooms: '1',
+            garageSpots: '1',
+            areaConstruida: '110',
+            areaConstruidaUnidade: 'm2',
+            areaTerreno: '120',
+            areaTerrenoUnidade: 'm2',
+            amenities: [...PROPERTY_CANONICAL_AMENITIES, 'PLANEJADOS', 'SISTEMA DE SEGURANÇA/CÂMARA'],
+            hasWifi: false,
+            temPiscina: false,
+            temAutomacao: false,
+            temArCondicionado: false,
+            ehMobiliada: false,
+            images: [new File(['img'], 'front.jpg', { type: 'image/jpeg' })],
+            video: null,
+        })
+
+        const amenitiesPayload = formData.getAll('amenities')
+        for (const amenity of PROPERTY_CANONICAL_AMENITIES) {
+            expect(amenitiesPayload).toContain(amenity)
+        }
+        expect(amenitiesPayload).not.toContain('PLANEJADOS')
+        expect(amenitiesPayload).toContain('SISTEMA DE SEGURANÇA/CÂMERA')
+        expect(amenitiesPayload).not.toContain('SISTEMA DE SEGURANÇA/CÂMARA')
+    })
 })

@@ -131,7 +131,7 @@ describe('Anuncie flow', () => {
         expect(mockRouter.replace).not.toHaveBeenCalledWith('/onboarding/broker')
     })
 
-    it('redireciona para fluxo profissional apenas quando selecionado', async () => {
+    it('mostra aviso quando seleciona "Não, quero anunciar de outra pessoa"', async () => {
         mockUserContextValue = {
             session: mockBrokerPendingSession,
         }
@@ -140,17 +140,32 @@ describe('Anuncie flow', () => {
         fireEvent.click(await screen.findByText('Anunciar você mesmo'))
         fireEvent.click(await screen.findByText('Não, quero anunciar de outra pessoa'))
 
-        await waitFor(() => {
-            expect(mockRouter.push).toHaveBeenCalledWith('/onboarding/broker')
-        })
+        expect(await screen.findByText('Não é possível continuar este fluxo')).toBeInTheDocument()
+        expect(mockRouter.push).not.toHaveBeenCalledWith('/onboarding/broker')
+        expect(mockRouter.push).not.toHaveBeenCalled()
+    })
+
+    it('permite apenas voltar no fluxo de anúncio de outra pessoa', async () => {
+        render(<AnunciePage />)
+
+        fireEvent.click(await screen.findByText('Anunciar você mesmo'))
+        fireEvent.click(await screen.findByText('Não, quero anunciar de outra pessoa'))
+
+        fireEvent.click(await screen.findByRole('button', { name: 'Voltar' }))
+        expect(screen.getByText('Como você quer anunciar?')).toBeInTheDocument()
+        expect(screen.getByText('Anunciar você mesmo')).toBeInTheDocument()
     })
 
     it('expõe o contato da equipe no primeiro passo', async () => {
         render(<AnunciePage />)
 
         const contact = await screen.findByText('Entrar em contato com a equipe')
-        expect(contact.closest('a')).toHaveAttribute('href', TEAM_CONTACT_CHANNEL_URL)
-        expect(TEAM_CONTACT_CHANNEL_URL).not.toContain('5511999999999')
+        fireEvent.click(contact)
+        expect(await screen.findByText('Entre em contato com a equipe')).toBeInTheDocument()
+        expect(await screen.findByText(new RegExp(TEAM_CONTACT_PHONE))).toBeInTheDocument()
+        expect(await screen.findByText(/Abrir WhatsApp/)).toBeInTheDocument()
+        expect(await screen.findByText('Ligar para a equipe')).toBeInTheDocument()
+        expect(await screen.findByText('Copiar telefone')).toBeInTheDocument()
         expect(TEAM_CONTACT_CHANNEL_URL).toBe(`https://wa.me/${TEAM_CONTACT_PHONE}`)
     })
 

@@ -131,4 +131,27 @@ describe('SearchFilters', () => {
 
         expect(screen.getByRole('option', { name: 'Nenhum bairro encontrado na cidade' })).toBeInTheDocument()
     })
+
+    it('mantém unidade de área ao aplicar faixa em hectares e alqueires', () => {
+        render(<SearchFilters />)
+
+        const areaUnitSelect = screen.getByText('Unidade').nextElementSibling as HTMLSelectElement
+        fireEvent.change(areaUnitSelect, { target: { value: 'hectare' } })
+
+        const minAreaInput = screen.getByPlaceholderText('0')
+        const maxAreaInput = screen.getByPlaceholderText('—')
+        fireEvent.change(minAreaInput, { target: { value: '2' } })
+        fireEvent.change(maxAreaInput, { target: { value: '5' } })
+
+        fireEvent.click(screen.getByText('Ver resultados'))
+
+        expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('minArea=2'))
+        expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('maxArea=5'))
+        expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('areaUnit=hectare'))
+
+        const params = new URLSearchParams(mockPush.mock.calls[0][0].replace('/imoveis?', ''))
+        expect(params.get('areaUnit')).toBe('hectare')
+        expect(params.get('minArea')).toBe('2')
+        expect(params.get('maxArea')).toBe('5')
+    })
 })

@@ -64,11 +64,42 @@ function toImageUrlList(raw: unknown): string[] {
     return []
 }
 
+const SECURITY_CAMERA_AMENITY_CANONICAL = 'SISTEMA DE SEGURANÇA/CÂMERA'
+const SECURITY_CAMERA_AMENITY_NORMALIZED = SECURITY_CAMERA_AMENITY_CANONICAL
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+const SECURITY_CAMERA_AMENITY_LEGACY_NORMALIZED = 'SISTEMA DE SEGURANÇA/CÂMARA'
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+
+function normalizeAmenityLabel(value: string): string {
+    const trimmed = value.trim()
+    if (!trimmed) return ''
+
+    const normalized = trimmed
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase()
+
+    if (
+        normalized === SECURITY_CAMERA_AMENITY_NORMALIZED
+        || normalized === SECURITY_CAMERA_AMENITY_LEGACY_NORMALIZED
+    ) {
+        return SECURITY_CAMERA_AMENITY_CANONICAL
+    }
+
+    return trimmed
+}
+
 function normalizeAmenities(raw: unknown): string[] {
     if (!Array.isArray(raw)) return []
     const normalized = new Set<string>()
     for (const item of raw) {
-        const value = typeof item === 'string' ? item.trim() : String(item).trim()
+        const value = typeof item === 'string'
+            ? normalizeAmenityLabel(item)
+            : normalizeAmenityLabel(String(item))
         if (value) {
             normalized.add(value)
         }
