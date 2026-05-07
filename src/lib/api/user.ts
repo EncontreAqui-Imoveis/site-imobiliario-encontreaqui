@@ -81,6 +81,17 @@ export async function createProperty(
     return { id }
 }
 
+export interface SupportRequestPayload {
+    source?: 'anuncie' | 'outro'
+    channel?: 'web'
+}
+
+export async function requestSupportContact(
+    payload: SupportRequestPayload = { source: 'anuncie', channel: 'web' },
+): Promise<void> {
+    await apiClient.post('/users/support-request', payload)
+}
+
 export async function updateProperty(id: number, formData: FormData): Promise<void> {
     await apiClient.put(`/properties/${id}`, formData)
 }

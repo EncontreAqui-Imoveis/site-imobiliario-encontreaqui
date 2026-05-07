@@ -12,15 +12,14 @@ import {
     Home,
     Info,
     Loader2,
-    Phone,
     Save,
     UserRound,
     Video,
     X,
 } from 'lucide-react'
 
-import type { ApiError } from '@/lib/api/client'
-import { createProperty } from '@/lib/api/user'
+import { ApiError } from '@/lib/api/client'
+import { createProperty, requestSupportContact } from '@/lib/api/user'
 import {
     clearDraft,
     isPropertyDraftStaleError,
@@ -58,7 +57,7 @@ import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
 import { areaInputToSquareMeters, areaUnitLabel } from '@/lib/areaUnits'
 import { getUploadSignature, uploadToCloudinaryBrowser } from '@/lib/api/cloudinaryUpload'
-import { TEAM_CONTACT_CHANNEL_URL, TEAM_CONTACT_PHONE, buildPhoneLink } from '@/lib/contactLinks'
+import { TEAM_CONTACT_PHONE } from '@/lib/contactLinks'
 
 type WizardStep = 1 | 2 | 3 | 4 | 5 | 6
 type CepLookupResult = { logradouro: string; bairro: string; localidade: string; uf: string }
@@ -221,9 +220,12 @@ export default function AnunciePage() {
     const [actorMode, setActorMode] = useState<CreatePropertyActor | null>(null)
     const [showOwnershipQuestion, setShowOwnershipQuestion] = useState(false)
     const [showContactFlow, setShowContactFlow] = useState(false)
+    const [showOwnerConfirmation, setShowOwnerConfirmation] = useState(false)
+    const [showContactConfirmation, setShowContactConfirmation] = useState(false)
     const [showOtherOwnerWarning, setShowOtherOwnerWarning] = useState(false)
     const [contactRequested, setContactRequested] = useState(false)
     const [contactError, setContactError] = useState('')
+    const [isSupportRequesting, setIsSupportRequesting] = useState(false)
     const [step, setStep] = useState<WizardStep>(1)
     const [form, setForm] = useState<CreatePropertyDraftData>(INITIAL)
     const [images, setImages] = useState<File[]>([])
@@ -378,6 +380,8 @@ export default function AnunciePage() {
         setDraftDecisionResolved(true)
         setShowOwnershipQuestion(false)
         setShowContactFlow(false)
+        setShowOwnerConfirmation(false)
+        setShowContactConfirmation(false)
         setShowOtherOwnerWarning(false)
         if (draftErrorMessage) setError(draftErrorMessage)
     }
@@ -388,6 +392,8 @@ export default function AnunciePage() {
         setDraftDecisionResolved(true)
         setShowOwnershipQuestion(false)
         setShowContactFlow(false)
+        setShowOwnerConfirmation(false)
+        setShowContactConfirmation(false)
         setShowOtherOwnerWarning(false)
     }
 
@@ -395,6 +401,8 @@ export default function AnunciePage() {
         setActorMode('client-owner')
         setShowOwnershipQuestion(false)
         setShowContactFlow(false)
+        setShowOwnerConfirmation(false)
+        setShowContactConfirmation(false)
         setShowOtherOwnerWarning(false)
         setContactRequested(false)
         setContactError('')
@@ -403,6 +411,8 @@ export default function AnunciePage() {
     function openBrokerFlow() {
         setShowOwnershipQuestion(false)
         setShowContactFlow(false)
+        setShowOwnerConfirmation(false)
+        setShowContactConfirmation(false)
         setShowOtherOwnerWarning(false)
         setShowOtherOwnerWarning(true)
     }
@@ -410,6 +420,8 @@ export default function AnunciePage() {
     function openContactFlow() {
         setShowOwnershipQuestion(false)
         setShowContactFlow(true)
+        setShowOwnerConfirmation(false)
+        setShowContactConfirmation(true)
         setShowOtherOwnerWarning(false)
         setContactRequested(false)
         setContactError('')
@@ -417,6 +429,22 @@ export default function AnunciePage() {
 
     function hideContactFlow() {
         setShowContactFlow(false)
+        setShowContactConfirmation(false)
+        setContactRequested(false)
+        setContactError('')
+        setIsSupportRequesting(false)
+    }
+
+    function hideOwnerConfirmation() {
+        setShowOwnerConfirmation(false)
+    }
+
+    function openOwnerConfirmation() {
+        setShowOwnershipQuestion(false)
+        setShowContactFlow(false)
+        setShowOtherOwnerWarning(false)
+        setShowOwnerConfirmation(true)
+        setShowContactConfirmation(false)
         setContactRequested(false)
         setContactError('')
     }
@@ -426,55 +454,32 @@ export default function AnunciePage() {
         setContactError('')
     }
 
-    function showContactRequestSent(message: string) {
-        setContactRequested(true)
+    function resolveSupportRequestErrorMessage(error: unknown): string {
+        if (error instanceof ApiError) {
+            if (error.status === 429) {
+                return 'Estamos recebendo muitas solicitações no momento. Tente novamente em alguns minutos.'
+            }
+            return error.message || 'Não foi possível enviar sua solicitação de contato.'
+        }
+        return 'Não foi possível enviar sua solicitação de contato. Tente novamente.'
+    }
+
+    async function sendSupportRequest() {
+        if (isSupportRequesting) return
+        setIsSupportRequesting(true)
         setContactError('')
-        setError(message ? `Seu pedido de contato foi enviado: ${message}` : 'Seu pedido de contato foi enviado.')
-    }
-
-    function openTeamContactLink(url: string | null, actionLabel: string) {
-        if (!url) {
-            setContactError('Não foi possível abrir o canal de contato da equipe.')
-            return
-        }
-
-        if (typeof window !== 'undefined' && window.open) {
-            window.open(url, '_blank', 'noopener,noreferrer')
-            showContactRequestSent(`abrimos ${actionLabel}`)
-            return
-        }
-
-        if (typeof window !== 'undefined') {
-            window.location.href = url
-            showContactRequestSent(`abrimos ${actionLabel}`)
-        } else {
-            setContactError('Não foi possível abrir o canal de contato desta plataforma.')
-        }
-    }
-
-    function handleTeamWhatsappClick() {
-        openTeamContactLink(TEAM_CONTACT_CHANNEL_URL, 'o WhatsApp da equipe')
-    }
-
-    function handleTeamPhoneClick() {
-        const phoneLink = buildPhoneLink(TEAM_CONTACT_PHONE)
-        if (!phoneLink) {
-            setContactError('Não foi possível formatar o número da equipe.')
-            return
-        }
-        openTeamContactLink(phoneLink, 'o discador')
-    }
-
-    async function handleCopyTeamPhone() {
-        if (!navigator.clipboard?.writeText) {
-            setContactError('Recurso de cópia indisponível neste ambiente.')
-            return
-        }
+        setContactRequested(false)
         try {
-            await navigator.clipboard.writeText(TEAM_CONTACT_PHONE)
-            showContactRequestSent('número copiado para a área de transferência')
-        } catch {
-            setContactError('Não foi possível copiar o número.')
+            await requestSupportContact({
+                source: 'anuncie',
+                channel: 'web',
+            })
+            setContactRequested(true)
+            setShowContactConfirmation(false)
+        } catch (error) {
+            setContactError(resolveSupportRequestErrorMessage(error))
+        } finally {
+            setIsSupportRequesting(false)
         }
     }
 
@@ -686,128 +691,171 @@ export default function AnunciePage() {
             <div className="mx-auto flex min-h-[60vh] max-w-5xl flex-col gap-6 px-4 py-8 pt-24">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900">
-                        {showOtherOwnerWarning
-                            ? 'Não é possível continuar este fluxo'
-                            : showContactFlow
-                                ? 'Entre em contato com a equipe'
-                                : showOwnershipQuestion
-                                    ? 'Você é proprietário do imóvel?'
-                                    : 'Como você quer anunciar?'}
+                        {showOwnershipQuestion
+                            ? 'Anunciar voce mesmo'
+                            : showContactFlow || showContactConfirmation || contactRequested || contactError || showOtherOwnerWarning
+                                ? 'Entrar em contato com a equipe'
+                                : 'Anunciar aqui'}
                     </h1>
-                    {!showOwnershipQuestion && !showContactFlow && !showOtherOwnerWarning ? (
-                        <p className="mt-2 max-w-2xl text-sm text-slate-600">
-                            Escolha a trilha de cadastro que combina com seu perfil.
-                        </p>
-                    ) : null}
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                    {showContactFlow ? (
-                        <div className="md:col-span-2 rounded-2xl border border-accent-200 bg-accent-50 p-6">
-                            <p className="text-sm text-slate-700">
-                                Registre seu contato com a equipe para orientação imediata.
-                                Seu pedido de contato também gera uma notificação interna para atendimento.
-                            </p>
-                            <div className="mt-4 space-y-3">
-                                <p className="text-sm font-semibold text-slate-900">
-                                    Telefone: <span className="font-mono text-base">{TEAM_CONTACT_PHONE}</span>
-                                </p>
-                                <button
-                                    type="button"
-                                    onClick={handleTeamWhatsappClick}
-                                    className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-left text-sm font-medium text-emerald-800 hover:bg-emerald-100"
-                                >
-                                    Abrir WhatsApp ({TEAM_CONTACT_CHANNEL_URL.includes('wa.me') ? 'canal oficial' : 'canal'})
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleTeamPhoneClick}
-                                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
-                                >
-                                    <span className="inline-flex items-center gap-2">
-                                        <Phone className="h-4 w-4" />
-                                        Ligar para a equipe
-                                    </span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleCopyTeamPhone}
-                                    className="w-full rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-left text-sm font-medium text-primary-700 hover:bg-primary-100"
-                                >
-                                    Copiar telefone
-                                </button>
-                                {contactError ? <p className="text-sm text-red-700">{contactError}</p> : null}
-                                {contactRequested ? <p className="text-sm text-emerald-700">Contato solicitado com sucesso.</p> : null}
-                            </div>
-                        </div>
-                    ) : showOtherOwnerWarning ? (
-                        <div className="md:col-span-2 rounded-2xl border border-amber-200 bg-amber-50 p-6">
-                            <p className="text-sm text-slate-700">
-                                A opção "Não, quero anunciar de outra pessoa" exige fluxo específico para anunciantes/profissionais e ainda não está disponível neste canal.
-                            </p>
-                            <p className="mt-2 text-sm text-slate-700">
-                                Para continuar, selecione a opção anterior e prossiga como proprietário.
-                            </p>
-                            <button
-                                type="button"
-                                onClick={hideOtherOwnerWarning}
-                                className="mt-4 inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100"
-                            >
-                                <ArrowLeft className="h-4 w-4" />
-                                Voltar
-                            </button>
-                        </div>
-                    ) : !showOwnershipQuestion ? (
-                        <>
-                            <button
-                                type="button"
-                                onClick={() => setShowOwnershipQuestion(true)}
-                                className="rounded-2xl border border-primary-200 bg-white p-6 text-left shadow-sm hover:border-primary-400 hover:shadow-md"
-                            >
-                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
-                                    <Home className="h-6 w-6" />
-                                </div>
-                                <h2 className="text-lg font-bold text-slate-900">Anunciar você mesmo</h2>
-                                <p className="mt-2 text-sm text-slate-600">Envie seu imóvel como proprietário para análise.</p>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={openContactFlow}
-                                className="rounded-2xl border border-accent-200 bg-accent-50 p-6 text-left shadow-sm hover:border-accent-400 hover:shadow-md block"
-                            >
-                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-100 text-accent-700">
-                                    <UserRound className="h-6 w-6" />
-                                </div>
-                                <h2 className="text-lg font-bold text-slate-900">Entrar em contato com a equipe</h2>
-                                <p className="mt-2 text-sm text-slate-600">Fale com a equipe para orientação profissional.</p>
-                            </button>
-                        </>
+                    {showOwnershipQuestion ? (
+                        <p className="mt-2 max-w-2xl text-sm text-slate-600">Você é proprietário do imóvel?</p>
                     ) : (
-                        <>
+                        <p className="mt-2 max-w-2xl text-sm text-slate-600">
+                            {showContactFlow || showContactConfirmation || contactRequested || contactError || showOtherOwnerWarning
+                                ? 'Use o fluxo abaixo para falar com nosso time.'
+                                : 'Como voce quer anunciar?'}
+                        </p>
+                    )}
+                </div>
+
+                {showOwnerConfirmation ? (
+                    <div className="rounded-2xl border border-accent-200 bg-accent-50 p-6">
+                        <p className="text-sm text-slate-700">
+                            Seu imóvel passará por análise antes de ser publicado no site. Deseja continuar?
+                        </p>
+                        <div className="mt-4 flex flex-wrap gap-3">
                             <button
                                 type="button"
                                 onClick={openClientOwnerFlow}
-                                className="rounded-2xl border border-primary-200 bg-white p-6 text-left shadow-sm hover:border-primary-400 hover:shadow-md"
+                                className="inline-flex items-center justify-center rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700"
                             >
-                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
-                                    <Home className="h-6 w-6" />
-                                </div>
-                                <h2 className="text-lg font-bold text-slate-900">Sim, sou proprietário</h2>
-                                <p className="mt-2 text-sm text-slate-600">Abra o fluxo de proprietário/cliente.</p>
+                                Sim, continuar
                             </button>
                             <button
                                 type="button"
-                                onClick={openBrokerFlow}
-                                className="rounded-2xl border border-accent-200 bg-accent-50 p-6 text-left shadow-sm hover:border-accent-400 hover:shadow-md"
+                                onClick={hideOwnerConfirmation}
+                                className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                             >
-                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-100 text-accent-700">
-                                    <UserRound className="h-6 w-6" />
-                                </div>
-                                <h2 className="text-lg font-bold text-slate-900">Não, quero anunciar de outra pessoa</h2>
-                                <p className="mt-2 text-sm text-slate-600">Continue no fluxo profissional ou regularização com a equipe.</p>
+                                Não
                             </button>
-                        </>
-                    )}
-                </div>
+                        </div>
+                    </div>
+                ) : null}
+
+                {showContactConfirmation ? (
+                    <div className="rounded-2xl border border-accent-200 bg-accent-50 p-6">
+                        <p className="text-sm text-slate-700">
+                            Deseja solicitar atendimento da equipe de suporte antes de continuar?
+                        </p>
+                        {contactError ? <p className="mt-2 text-sm text-red-700">{contactError}</p> : null}
+                        <div className="mt-4 flex flex-wrap gap-3">
+                            <button
+                                type="button"
+                                disabled={isSupportRequesting}
+                                onClick={sendSupportRequest}
+                                className="inline-flex items-center justify-center rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                            >
+                                {isSupportRequesting ? 'Enviando...' : 'Confirmar'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={hideContactFlow}
+                                className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                            >
+                                Não
+                            </button>
+                        </div>
+                    </div>
+                ) : null}
+
+                {contactRequested && !showContactConfirmation ? (
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
+                        <p className="text-sm text-emerald-700">
+                            Solicitação enviada com sucesso. Nossa equipe vai entrar em contato.
+                        </p>
+                        <p className="mt-2 text-sm text-emerald-700">Telefone de suporte: {TEAM_CONTACT_PHONE}</p>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                hideContactFlow()
+                                setContactRequested(false)
+                                setContactError('')
+                            }}
+                            className="mt-4 inline-flex items-center justify-center rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-100"
+                        >
+                            Fechar
+                        </button>
+                    </div>
+                ) : null}
+
+                {!showContactFlow ? (
+                    <div className="grid gap-4 md:grid-cols-2">
+                        {showOtherOwnerWarning ? (
+                            <div className="md:col-span-2 rounded-2xl border border-amber-200 bg-amber-50 p-6">
+                                <p className="text-sm text-slate-700">
+                                    Não é possível anunciar imóvel de outra pessoa pelo site/app.
+                                </p>
+                                <p className="mt-2 text-sm text-slate-700">Entre em contato com a equipe para avaliar seu caso.</p>
+                                <button
+                                    type="button"
+                                    onClick={openContactFlow}
+                                    className="mt-4 inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100"
+                                >
+                                    Entrar em contato com a equipe
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={hideOtherOwnerWarning}
+                                    className="mt-4 inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100"
+                                >
+                                    <ArrowLeft className="h-4 w-4" />
+                                    Voltar
+                                </button>
+                            </div>
+                        ) : !showOwnershipQuestion ? (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowOwnershipQuestion(true)}
+                                    className="rounded-2xl border border-primary-200 bg-white p-6 text-left shadow-sm hover:border-primary-400 hover:shadow-md"
+                                >
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
+                                        <Home className="h-6 w-6" />
+                                    </div>
+                                    <h2 className="text-lg font-bold text-slate-900">Anunciar você mesmo</h2>
+                                    <p className="mt-2 text-sm text-slate-600">Envie seu imóvel como proprietário para análise.</p>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={openContactFlow}
+                                    className="rounded-2xl border border-accent-200 bg-accent-50 p-6 text-left shadow-sm hover:border-accent-400 hover:shadow-md block"
+                                >
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-100 text-accent-700">
+                                        <UserRound className="h-6 w-6" />
+                                    </div>
+                                    <h2 className="text-lg font-bold text-slate-900">Entrar em contato com a equipe</h2>
+                                    <p className="mt-2 text-sm text-slate-600">Fale com a equipe para orientação profissional.</p>
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={openOwnerConfirmation}
+                                    className="rounded-2xl border border-primary-200 bg-white p-6 text-left shadow-sm hover:border-primary-400 hover:shadow-md"
+                                >
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
+                                        <Home className="h-6 w-6" />
+                                    </div>
+                                    <h2 className="text-lg font-bold text-slate-900">Sim, sou proprietário</h2>
+                                    <p className="mt-2 text-sm text-slate-600">Seu imóvel passará por análise antes da publicação.</p>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={openBrokerFlow}
+                                    className="rounded-2xl border border-accent-200 bg-accent-50 p-6 text-left shadow-sm hover:border-accent-400 hover:shadow-md"
+                                >
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-100 text-accent-700">
+                                        <UserRound className="h-6 w-6" />
+                                    </div>
+                                    <h2 className="text-lg font-bold text-slate-900">Não, quero anunciar de outra pessoa</h2>
+                                    <p className="mt-2 text-sm text-slate-600">Anunciar em nome de terceiros não é permitido no app/site.</p>
+                                </button>
+                            </>
+                        )}
+                    </div>
+                ) : null}
+
                 {showOwnershipQuestion ? (
                     <button
                         type="button"

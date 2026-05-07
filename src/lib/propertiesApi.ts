@@ -394,6 +394,29 @@ export async function fetchRecentProperties(limit = 8, deal: HomeDeal = 'sale'):
     return properties.slice(0, limit)
 }
 
+async function fetchPrivatePropertyByIdentifier(normalizedId: string): Promise<Property | null> {
+    const candidatePaths = [`/properties/${normalizedId}`, `/properties/code/${normalizedId}`] as const
+    for (let index = 0; index < candidatePaths.length; index += 1) {
+        const path = candidatePaths[index]
+        try {
+            const privatePayload = await apiClient.get<unknown>(path)
+            return normalizeProperty(privatePayload)
+        } catch (error) {
+            if (
+                error instanceof ApiError &&
+                (error.status === 404 || error.status === 403 || error.status === 401)
+            ) {
+                if (index < candidatePaths.length - 1) {
+                    continue
+                }
+                return null
+            }
+            throw error
+        }
+    }
+    return null
+}
+
 export async function fetchPropertyById(id: string | number): Promise<Property | null> {
     const normalizedId = encodeURIComponent(String(id))
     try {
@@ -410,15 +433,7 @@ export async function fetchPropertyById(id: string | number): Promise<Property |
             if (!hasSessionToken) {
                 return null
             }
-            try {
-                const privatePayload = await apiClient.get<unknown>(`/properties/${normalizedId}`)
-                return normalizeProperty(privatePayload)
-            } catch (error) {
-                if (error instanceof ApiError && (error.status === 401 || error.status === 403 || error.status === 404)) {
-                    return null
-                }
-                throw error
-            }
+            return await fetchPrivatePropertyByIdentifier(normalizedId)
         }
 
         const payload = await response.json()
@@ -431,15 +446,7 @@ export async function fetchPropertyById(id: string | number): Promise<Property |
         if (!hasSessionToken) {
             return null
         }
-        try {
-            const privatePayload = await apiClient.get<unknown>(`/properties/${normalizedId}`)
-            return normalizeProperty(privatePayload)
-        } catch (error) {
-            if (error instanceof ApiError && (error.status === 401 || error.status === 403 || error.status === 404)) {
-                return null
-            }
-            throw error
-        }
+        return await fetchPrivatePropertyByIdentifier(normalizedId)
     } catch (error) {
         console.error('Error fetching property details:', error)
         reportObservedError(error, {

@@ -10,14 +10,17 @@ describe('negotiations service', () => {
         jest.clearAllMocks()
     })
 
-    it('fetchMyNegotiations() delegates to apiClient.get', async () => {
+    it('fetchMyNegotiations() tenta endpoint primário e faz fallback em 404', async () => {
         const { apiClient } = await import('@/lib/api/client')
         const { fetchMyNegotiations } = await import('@/lib/negotiationsService')
-        ;(apiClient.get as jest.Mock).mockResolvedValueOnce([])
+        ;(apiClient.get as jest.Mock)
+            .mockRejectedValueOnce({ status: 404 })
+            .mockResolvedValueOnce([])
 
         await fetchMyNegotiations()
 
         expect(apiClient.get).toHaveBeenCalledWith('/negotiations/me')
+        expect(apiClient.get).toHaveBeenCalledWith('/me/negotiations')
     })
 
     it('createProposal() delegates to apiClient.post', async () => {

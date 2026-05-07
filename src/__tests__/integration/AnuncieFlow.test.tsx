@@ -1,8 +1,10 @@
 import React from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { ApiError } from '@/lib/api/client'
 
 import AnunciePage from '@/app/anuncie/page'
-import { TEAM_CONTACT_CHANNEL_URL, TEAM_CONTACT_PHONE } from '@/lib/contactLinks'
+import { TEAM_CONTACT_PHONE } from '@/lib/contactLinks'
+import * as userApi from '@/lib/api/user'
 
 const mockRouter = {
     back: jest.fn(),
@@ -90,10 +92,12 @@ jest.mock('@/contexts/UserContext', () => ({
 jest.mock('@/lib/negotiationsService')
 jest.mock('@/lib/api/user', () => ({
     createProperty: jest.fn(),
+    requestSupportContact: jest.fn(),
 }))
 
 beforeEach(() => {
     jest.clearAllMocks()
+    ;(userApi.requestSupportContact as jest.Mock).mockResolvedValue(undefined)
     mockUserContextValue = {
         session: mockClientSession,
     }
@@ -118,7 +122,7 @@ describe('Anuncie flow', () => {
     it('exibe o fluxo em duas perguntas e avança para o formulário com proprietário', async () => {
         render(<AnunciePage />)
 
-        expect(await screen.findByText('Como você quer anunciar?')).toBeInTheDocument()
+        expect(await screen.findByText('Como voce quer anunciar?')).toBeInTheDocument()
         expect(await screen.findByText('Anunciar você mesmo')).toBeInTheDocument()
         expect(screen.getByText('Entrar em contato com a equipe')).toBeInTheDocument()
 
@@ -126,9 +130,10 @@ describe('Anuncie flow', () => {
         expect(await screen.findByText('Você é proprietário do imóvel?')).toBeInTheDocument()
 
         fireEvent.click(screen.getByText('Sim, sou proprietário'))
+        fireEvent.click(await screen.findByText('Sim, continuar'))
         expect(await screen.findByText('Cadastrar imóvel')).toBeInTheDocument()
         expect(screen.getByText('Fluxo de cliente-proprietário')).toBeInTheDocument()
-        expect(screen.queryByText('Como você quer anunciar?')).not.toBeInTheDocument()
+        expect(screen.queryByText('Como voce quer anunciar?')).not.toBeInTheDocument()
         expect(screen.queryByText('Você é proprietário do imóvel?')).not.toBeInTheDocument()
     })
 
@@ -140,6 +145,7 @@ describe('Anuncie flow', () => {
 
         fireEvent.click(await screen.findByText('Anunciar você mesmo'))
         fireEvent.click(await screen.findByText('Sim, sou proprietário'))
+        fireEvent.click(await screen.findByText('Sim, continuar'))
 
         expect(await screen.findByText('Cadastrar imóvel')).toBeInTheDocument()
         expect(screen.getByText('Fluxo de cliente-proprietário')).toBeInTheDocument()
@@ -155,6 +161,7 @@ describe('Anuncie flow', () => {
 
         fireEvent.click(await screen.findByText('Anunciar você mesmo'))
         fireEvent.click(await screen.findByText('Sim, sou proprietário'))
+        fireEvent.click(await screen.findByText('Sim, continuar'))
 
         expect(await screen.findByText('Cadastrar imóvel')).toBeInTheDocument()
         expect(screen.getByText('Fluxo de cliente-proprietário')).toBeInTheDocument()
@@ -171,7 +178,7 @@ describe('Anuncie flow', () => {
         fireEvent.click(await screen.findByText('Anunciar você mesmo'))
         fireEvent.click(await screen.findByText('Não, quero anunciar de outra pessoa'))
 
-        expect(await screen.findByText('Não é possível continuar este fluxo')).toBeInTheDocument()
+        expect(await screen.findByText('Não é possível anunciar imóvel de outra pessoa pelo site/app.')).toBeInTheDocument()
         expect(mockRouter.push).not.toHaveBeenCalledWith('/onboarding/broker')
         expect(mockRouter.push).not.toHaveBeenCalled()
     })
@@ -183,32 +190,35 @@ describe('Anuncie flow', () => {
         fireEvent.click(await screen.findByText('Não, quero anunciar de outra pessoa'))
 
         fireEvent.click(await screen.findByRole('button', { name: 'Voltar' }))
-        expect(screen.getByText('Como você quer anunciar?')).toBeInTheDocument()
+        expect(screen.getByText('Como voce quer anunciar?')).toBeInTheDocument()
         expect(screen.getByText('Anunciar você mesmo')).toBeInTheDocument()
     })
 
-    it('expõe o contato da equipe no primeiro passo', async () => {
+    it('abre confirmação e envia solicitação de contato', async () => {
         render(<AnunciePage />)
 
         const contact = await screen.findByText('Entrar em contato com a equipe')
         fireEvent.click(contact)
-        expect(await screen.findByText('Entre em contato com a equipe')).toBeInTheDocument()
-        expect(await screen.findByText(new RegExp(TEAM_CONTACT_PHONE))).toBeInTheDocument()
-        expect(await screen.findByText(/Abrir WhatsApp/)).toBeInTheDocument()
-        expect(await screen.findByText('Ligar para a equipe')).toBeInTheDocument()
-        expect(await screen.findByText('Copiar telefone')).toBeInTheDocument()
-        expect(TEAM_CONTACT_CHANNEL_URL).toBe(`https://wa.me/${TEAM_CONTACT_PHONE}`)
+        expect(await screen.findByText(/Deseja solicitar atendimento/)).toBeInTheDocument()
+
+        fireEvent.click(await screen.findByRole('button', { name: 'Confirmar' }))
+
+        expect(await screen.findByText('Solicitação enviada com sucesso. Nossa equipe vai entrar em contato.')).toBeInTheDocument()
+        expect(screen.getByText(`Telefone de suporte: ${TEAM_CONTACT_PHONE}`)).toBeInTheDocument()
+        expect(userApi.requestSupportContact).toHaveBeenCalledWith({ source: 'anuncie', channel: 'web' })
     })
 
-    it('aciona ações reais de contato ao clicar nos botões', async () => {
+    it('exibe erro amigavel se o envio de contato retornar 429', async () => {
+        ;(userApi.requestSupportContact as jest.Mock).mockRejectedValueOnce(new ApiError(429, 'Too many requests'))
+
         render(<AnunciePage />)
 
         fireEvent.click(await screen.findByText('Entrar em contato com a equipe'))
-        fireEvent.click(await screen.findByText(/Abrir WhatsApp/))
-        expect(window.open).toHaveBeenCalledWith(TEAM_CONTACT_CHANNEL_URL, '_blank', 'noopener,noreferrer')
+        fireEvent.click(await screen.findByRole('button', { name: 'Confirmar' }))
 
-        fireEvent.click(await screen.findByText('Ligar para a equipe'))
-        expect(window.open).toHaveBeenCalledWith(`tel:+${TEAM_CONTACT_PHONE}`, '_blank', 'noopener,noreferrer')
+        expect(
+            await screen.findByText('Estamos recebendo muitas solicitações no momento. Tente novamente em alguns minutos.'),
+        ).toBeInTheDocument()
     })
 
     it('garante que as perguntas de escolha não reaparecem após abrir formulário', async () => {
@@ -216,11 +226,12 @@ describe('Anuncie flow', () => {
 
         fireEvent.click(await screen.findByText('Anunciar você mesmo'))
         fireEvent.click(await screen.findByText('Sim, sou proprietário'))
+        fireEvent.click(await screen.findByText('Sim, continuar'))
 
         await waitFor(() => {
             expect(screen.getByText('Cadastrar imóvel')).toBeInTheDocument()
         })
-        expect(screen.queryByText('Como você quer anunciar?')).not.toBeInTheDocument()
+        expect(screen.queryByText('Como voce quer anunciar?')).not.toBeInTheDocument()
         expect(screen.queryByText('Você é proprietário do imóvel?')).not.toBeInTheDocument()
     })
 
@@ -238,6 +249,7 @@ describe('Anuncie flow', () => {
 
         fireEvent.click(await screen.findByText('Anunciar você mesmo'))
         fireEvent.click(await screen.findByText('Sim, sou proprietário'))
+        fireEvent.click(await screen.findByText('Sim, continuar'))
 
         fireEvent.change(getFieldByLabelText('Tipo do imóvel *'), { target: { value: 'Casa' } })
         fireEvent.change(getFieldByLabelText('Finalidade *'), { target: { value: 'Venda' } })

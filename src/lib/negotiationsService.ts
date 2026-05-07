@@ -6,12 +6,47 @@ import type { NegotiationSummary } from '@/types/negotiation'
 import type { Property } from '@/types/property'
 import { normalizeProperty } from '@/lib/propertiesApi'
 
-export async function fetchMyNegotiations(): Promise<NegotiationSummary[]> {
-    const response = await apiClient.get<{
-        data?: NegotiationSummary[]
-    } | NegotiationSummary[]>('/negotiations/me')
+const NEGOTIATIONS_LIST_ENDPOINTS = ['/negotiations/me', '/me/negotiations'] as const
 
-    return Array.isArray(response) ? response : (response?.data ?? [])
+function isNegotiationsListUnavailable(error: unknown): boolean {
+    const status =
+        error instanceof ApiError
+            ? error.status
+            : error && typeof error === 'object' && 'status' in error
+                ? Number((error as { status?: unknown }).status)
+                : NaN
+    return (
+        Number.isFinite(status) &&
+        (status === 404 || status === 405 || status === 501)
+    )
+}
+
+function parseNegotiationsResponse(response: unknown): NegotiationSummary[] {
+    if (Array.isArray(response)) return response
+    if (response && typeof response === 'object' && Array.isArray((response as { data?: unknown[] }).data)) {
+        return ((response as { data?: NegotiationSummary[] }).data ?? []) as NegotiationSummary[]
+    }
+    return []
+}
+
+export async function fetchMyNegotiations(): Promise<NegotiationSummary[]> {
+    for (let index = 0; index < NEGOTIATIONS_LIST_ENDPOINTS.length; index += 1) {
+        const endpoint = NEGOTIATIONS_LIST_ENDPOINTS[index]
+        try {
+            const response = await apiClient.get<{
+                data?: NegotiationSummary[]
+            } | NegotiationSummary[]>(endpoint)
+            return parseNegotiationsResponse(response)
+        } catch (error) {
+            const isLastEndpoint = index >= NEGOTIATIONS_LIST_ENDPOINTS.length - 1
+            if (!isLastEndpoint && isNegotiationsListUnavailable(error)) {
+                continue
+            }
+            throw error
+        }
+    }
+
+    return []
 }
 
 export async function fetchMyNegotiationById(negotiationId: string): Promise<NegotiationSummary | null> {
