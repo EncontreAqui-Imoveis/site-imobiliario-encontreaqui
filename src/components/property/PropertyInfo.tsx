@@ -12,6 +12,7 @@ import {
 import { shareOrCopy } from '@/lib/webShare'
 import { displayStatusLabel, formatUnit } from '@/lib/propertyLabels'
 import { areaUnitLabel, normalizeAreaUnidade, squareMetersToAreaInput } from '@/lib/areaUnits'
+import { PROPERTY_CANONICAL_AMENITIES, PropertyAmenity } from '@/lib/propertyCreate'
 
 interface PropertyInfoProps {
     property: Property
@@ -26,12 +27,41 @@ const statusColors: Record<string, { bg: string; text: string }> = {
     rented: { bg: 'bg-purple-100', text: 'text-purple-700' },
 }
 
+const AMENITY_LABELS: Record<PropertyAmenity, string> = {
+    'WI-FI': 'Wi-Fi',
+    'PISCINA': 'Piscina',
+    'ENERGIA SOLAR': 'Energia Solar',
+    'AUTOMAÇÃO': 'Automação',
+    'AR CONDICIONADO': 'Ar-condicionado',
+    'POÇO ARTESIANO': 'Poço artesiano',
+    'MOBILIADA': 'Mobiliada',
+    'ELEVADOR': 'Elevador',
+    'ACADEMIA': 'Academia',
+    'CHURRASQUEIRA': 'Churrasqueira',
+    'SALÃO DE FESTAS': 'Salão de festas',
+    'QUADRA': 'Quadra',
+    'CONDOMÍNIO FECHADO': 'Condomínio fechado',
+    'ACEITA PETS': 'Aceita pets',
+    'SISTEMA DE SEGURANÇA/CÂMERA': 'Sistema de segurança/câmera',
+    'SAUNA': 'Sauna',
+}
+
 function toSentenceCase(value: string): string {
     return value
         .toLowerCase()
         .split(' ')
         .map((word) => (word ? `${word[0].toUpperCase()}${word.slice(1)}` : word))
         .join(' ')
+}
+
+function normalizeAmenityLabel(value: string): string {
+    return value
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
 }
 
 function formatDate(date?: string): string {
@@ -41,6 +71,10 @@ function formatDate(date?: string): string {
         month: 'long',
         year: 'numeric'
     })
+}
+
+function getAmenityLabel(amenity: PropertyAmenity): string {
+    return AMENITY_LABELS[amenity] ?? toSentenceCase(amenity)
 }
 
 export default function PropertyInfo({ property }: PropertyInfoProps) {
@@ -58,21 +92,37 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
     const statusLabel = displayStatusLabel(property.status, property.purpose)
     const isPurposeBadgeDuplicate = statusLabel.trim().toLowerCase() === (property.purpose ?? '').trim().toLowerCase()
     const [shareMessage, setShareMessage] = useState<string | null>(null)
-    const genericAmenities = Array.from(new Set((property.amenities ?? []).map((amenity) => String(amenity).trim()).filter(Boolean)))
+    const selectedCanonicalAmenities = Array.from(
+        new Set(
+            [
+                ...(Array.isArray(property.amenities) ? property.amenities : []),
+                ...(property.ehMobiliada ? ['MOBILIADA'] : []),
+                ...(property.hasWifi ? ['WI-FI'] : []),
+                ...(property.temPiscina ? ['PISCINA'] : []),
+                ...(property.temEnergiaSolar ? ['ENERGIA SOLAR'] : []),
+                ...(property.temAutomacao ? ['AUTOMAÇÃO'] : []),
+                ...(property.temArCondicionado ? ['AR CONDICIONADO'] : []),
+            ]
+                .map((amenity) => String(amenity).trim())
+                .filter((value): value is PropertyAmenity =>
+                    PROPERTY_CANONICAL_AMENITIES.includes(value as PropertyAmenity) && value.length > 0,
+                ),
+        ),
+    )
 
     // Build comfort amenities
     const comfortAmenities = [
-        { icon: Wifi, label: 'Wi-Fi', active: property.hasWifi },
-        { icon: Waves, label: 'Piscina', active: property.temPiscina },
-        { icon: Sun, label: 'Energia Solar', active: property.temEnergiaSolar },
-        { icon: Cpu, label: 'Automação', active: property.temAutomacao },
-        { icon: Wind, label: 'Ar Condicionado', active: property.temArCondicionado },
-        { icon: Sofa, label: 'Mobiliada', active: property.ehMobiliada },
+        { icon: Wifi, label: 'WI-FI', active: selectedCanonicalAmenities.includes('WI-FI') },
+        { icon: Waves, label: 'PISCINA', active: selectedCanonicalAmenities.includes('PISCINA') },
+        { icon: Sun, label: 'ENERGIA SOLAR', active: selectedCanonicalAmenities.includes('ENERGIA SOLAR') },
+        { icon: Cpu, label: 'AUTOMAÇÃO', active: selectedCanonicalAmenities.includes('AUTOMAÇÃO') },
+        { icon: Wind, label: 'AR CONDICIONADO', active: selectedCanonicalAmenities.includes('AR CONDICIONADO') },
+        { icon: Sofa, label: 'MOBILIADA', active: selectedCanonicalAmenities.includes('MOBILIADA') },
     ]
-    const mappedComfortAmenities = new Set(comfortAmenities.map((item) => toSentenceCase(item.label)))
-    const groupedGenericAmenities = genericAmenities
-        .filter((amenity) => !mappedComfortAmenities.has(toSentenceCase(amenity)))
-        .map((amenity) => toSentenceCase(amenity))
+    const mappedComfortAmenities = new Set(comfortAmenities.map((item) => normalizeAmenityLabel(item.label)))
+    const groupedGenericAmenities = selectedCanonicalAmenities
+        .filter((amenity) => !mappedComfortAmenities.has(normalizeAmenityLabel(amenity)))
+        .map((amenity) => getAmenityLabel(amenity as PropertyAmenity))
 
     // Build additional characteristics
     const additionalInfo = [
@@ -305,7 +355,7 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                                 <item.icon className="w-5 h-5" />
                             </div>
                             <span className={`text-sm font-medium ${item.active ? 'text-gray-900' : 'text-gray-500'}`}>
-                                {item.label}
+                                {getAmenityLabel(item.label as PropertyAmenity)}
                             </span>
                             {item.active && <CheckCircle className="w-4 h-4 text-primary-500 ml-auto" />}
                         </div>

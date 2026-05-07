@@ -44,6 +44,62 @@ function toSentenceCase(value: string): string {
         .join(' ')
 }
 
+const AMENITY_LABELS: Record<PropertyAmenity, string> = {
+    'WI-FI': 'Wi-Fi',
+    'PISCINA': 'Piscina',
+    'ENERGIA SOLAR': 'Energia Solar',
+    'AUTOMAÇÃO': 'Automação',
+    'AR CONDICIONADO': 'Ar-condicionado',
+    'POÇO ARTESIANO': 'Poço artesiano',
+    'MOBILIADA': 'Mobiliada',
+    'ELEVADOR': 'Elevador',
+    'ACADEMIA': 'Academia',
+    'CHURRASQUEIRA': 'Churrasqueira',
+    'SALÃO DE FESTAS': 'Salão de festas',
+    'QUADRA': 'Quadra',
+    'CONDOMÍNIO FECHADO': 'Condomínio fechado',
+    'ACEITA PETS': 'Aceita pets',
+    'SISTEMA DE SEGURANÇA/CÂMERA': 'Sistema de segurança/câmera',
+    'SAUNA': 'Sauna',
+}
+
+function getAmenityLabel(amenity: PropertyAmenity): string {
+    return AMENITY_LABELS[amenity] ?? toSentenceCase(amenity)
+}
+
+function normalizeFormAmenities(payload: {
+    amenities: readonly PropertyAmenity[]
+    ehMobiliada: boolean
+    hasWifi: boolean
+    temPiscina: boolean
+    temEnergiaSolar: boolean
+    temAutomacao: boolean
+    temArCondicionado: boolean
+}): {
+    amenities: PropertyAmenity[]
+    ehMobiliada: boolean
+    hasWifi: boolean
+    temPiscina: boolean
+    temEnergiaSolar: boolean
+    temAutomacao: boolean
+    temArCondicionado: boolean
+} {
+    const normalizedAmenities = new Set<PropertyAmenity>(payload.amenities)
+    if (payload.ehMobiliada) {
+        normalizedAmenities.add('MOBILIADA')
+    }
+
+    return {
+        amenities: Array.from(normalizedAmenities),
+        ehMobiliada: normalizedAmenities.has('MOBILIADA'),
+        hasWifi: normalizedAmenities.has('WI-FI') || payload.hasWifi,
+        temPiscina: normalizedAmenities.has('PISCINA') || payload.temPiscina,
+        temEnergiaSolar: normalizedAmenities.has('ENERGIA SOLAR') || payload.temEnergiaSolar,
+        temAutomacao: normalizedAmenities.has('AUTOMAÇÃO') || payload.temAutomacao,
+        temArCondicionado: normalizedAmenities.has('AR CONDICIONADO') || payload.temArCondicionado,
+    }
+}
+
 export default function EditPropertyPage() {
     const router = useRouter()
     const params = useParams()
@@ -146,24 +202,26 @@ export default function EditPropertyPage() {
                 bedrooms: p.bedrooms ? String(p.bedrooms) : '',
                 bathrooms: p.bathrooms ? String(p.bathrooms) : '',
                 garageSpots: p.garageSpots ? String(p.garageSpots) : '',
-                amenities: Array.isArray(p.amenities)
-                    ? p.amenities
-                        .map((item) => String(item).trim())
-                        .filter((item) => PROPERTY_CANONICAL_AMENITIES.includes(item as PropertyAmenity))
-                        .filter((value, index, values) => values.indexOf(value) === index) as PropertyAmenity[]
-                    : [],
                 areaConstruida,
                 areaTerreno,
                 areaConstruidaUnidade: unit,
                 areaTerrenoUnidade: terrenoUnit,
                 semQuadra: p.semQuadra ?? false,
                 semLote: p.semLote ?? false,
-                hasWifi: p.hasWifi || false,
-                temPiscina: p.temPiscina || false,
-                temEnergiaSolar: p.temEnergiaSolar || false,
-                temAutomacao: p.temAutomacao || false,
-                temArCondicionado: p.temArCondicionado || false,
-                ehMobiliada: p.ehMobiliada || false,
+                ...normalizeFormAmenities({
+                    amenities: Array.isArray(p.amenities)
+                        ? p.amenities
+                            .map((item) => String(item).trim())
+                            .filter((item) => PROPERTY_CANONICAL_AMENITIES.includes(item as PropertyAmenity))
+                            .filter((value, index, values) => values.indexOf(value) === index) as PropertyAmenity[]
+                        : [],
+                    ehMobiliada: p.ehMobiliada || false,
+                    hasWifi: p.hasWifi || false,
+                    temPiscina: p.temPiscina || false,
+                    temEnergiaSolar: p.temEnergiaSolar || false,
+                    temAutomacao: p.temAutomacao || false,
+                    temArCondicionado: p.temArCondicionado || false,
+                }),
             })
         } catch {
             setLoadError('Não foi possível carregar o imóvel.')
@@ -254,13 +312,10 @@ export default function EditPropertyPage() {
                 area_terreno_unidade: terrainUnit,
                 semQuadra: form.semQuadra,
                 semLote: form.semLote,
-                amenities: form.amenities,
-                hasWifi: form.hasWifi,
-                temPiscina: form.temPiscina,
-                temEnergiaSolar: form.temEnergiaSolar,
-                temAutomacao: form.temAutomacao,
-                temArCondicionado: form.temArCondicionado,
-                ehMobiliada: form.ehMobiliada,
+                ...normalizeFormAmenities({
+                    ...form,
+                    amenities: form.amenities,
+                }),
             }
 
             await saveEditedProperty(property.id, payload, isClientOwner ? 'client' : 'broker')
@@ -583,27 +638,7 @@ export default function EditPropertyPage() {
                     <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-4">
                         <h2 className="text-lg font-bold text-gray-900">Comodidades</h2>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            {([
-                                ['hasWifi', 'Wi-Fi'],
-                                ['temPiscina', 'Piscina'],
-                                ['temEnergiaSolar', 'Energia Solar'],
-                                ['temAutomacao', 'Automação'],
-                                ['temArCondicionado', 'Ar Condicionado'],
-                                ['ehMobiliada', 'Mobiliada'],
-                            ] as const).map(([key, label]) => (
-                                <label key={key} className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                                    <input
-                                        type="checkbox"
-                                        checked={form[key]}
-                                        onChange={e => updateField(key, e.target.checked)}
-                                        className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                                    />
-                                    <span className="text-sm font-medium text-gray-700">{label}</span>
-                                </label>
-                            ))}
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            {PROPERTY_CANONICAL_AMENITIES.filter((amenity) => amenity !== 'MOBILIADA').map((amenity) => (
+                            {PROPERTY_CANONICAL_AMENITIES.map((amenity) => (
                                 <label key={amenity} className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                                     <input
                                         type="checkbox"
@@ -611,7 +646,7 @@ export default function EditPropertyPage() {
                                         onChange={(event) => updateAmenity(amenity, event.target.checked)}
                                         className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                                     />
-                                    <span className="text-sm font-medium text-gray-700">{toSentenceCase(amenity)}</span>
+                                    <span className="text-sm font-medium text-gray-700">{getAmenityLabel(amenity)}</span>
                                 </label>
                             ))}
                         </div>

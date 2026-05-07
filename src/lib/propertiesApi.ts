@@ -211,6 +211,9 @@ export function normalizeProperty(raw: unknown): Property | null {
                 ? imagesFromPropertyImages
                 : imagesFromImageUrls
     const negotiation = normalizeNegotiation(item)
+    const amenities = normalizeAmenities(item.amenities)
+    const hasLegacyMobiliadaField = toBoolean(item.ehMobiliada ?? item.eh_mobiliada) ?? false
+    const ehMobiliada = hasLegacyMobiliadaField || amenities.includes('MOBILIADA')
 
     return {
         id,
@@ -244,8 +247,8 @@ export function normalizeProperty(raw: unknown): Property | null {
         temEnergiaSolar: toBoolean(item.temEnergiaSolar ?? item.tem_energia_solar),
         temAutomacao: toBoolean(item.temAutomacao ?? item.tem_automacao),
         temArCondicionado: toBoolean(item.temArCondicionado ?? item.tem_ar_condicionado),
-        amenities: normalizeAmenities(item.amenities),
-        ehMobiliada: toBoolean(item.ehMobiliada ?? item.eh_mobiliada),
+        amenities,
+        ehMobiliada,
         valorCondominio: toNumber(item.valorCondominio ?? item.valor_condominio),
         valorIptu: toNumber(item.valorIptu ?? item.valor_iptu),
         images: images.length > 0 ? images : ['/logo_circular.png'],

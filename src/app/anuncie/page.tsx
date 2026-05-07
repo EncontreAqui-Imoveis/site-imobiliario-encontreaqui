@@ -80,7 +80,7 @@ const INITIAL: CreatePropertyDraftData = {
     priceSale: '', priceRent: '', cep: '', semCep: false, state: 'GO', city: '', bairro: '', address: '', numero: '', complemento: '',
     quadra: '', lote: '', semNumero: false, semQuadra: false, semLote: false,
     bedrooms: '', bathrooms: '', garageSpots: '', amenities: [],
-    areaConstruida: '', areaConstruidaUnidade: 'm2', areaTerreno: '', areaTerrenoUnidade: 'm2', hasWifi: false, temPiscina: false, temAutomacao: false,
+    areaConstruida: '', areaConstruidaUnidade: 'm2', areaTerreno: '', areaTerrenoUnidade: 'm2', hasWifi: false, temPiscina: false, temEnergiaSolar: false, temAutomacao: false,
     temArCondicionado: false, ehMobiliada: false,
 }
 
@@ -129,6 +129,48 @@ function toSentenceCase(value: string): string {
         .split(' ')
         .map((word) => (word ? `${word[0].toUpperCase()}${word.slice(1)}` : word))
         .join(' ')
+}
+
+const AMENITY_LABELS: Record<PropertyAmenity, string> = {
+    'WI-FI': 'Wi-Fi',
+    'PISCINA': 'Piscina',
+    'ENERGIA SOLAR': 'Energia Solar',
+    'AUTOMAÇÃO': 'Automação',
+    'AR CONDICIONADO': 'Ar-condicionado',
+    'POÇO ARTESIANO': 'Poço artesiano',
+    'MOBILIADA': 'Mobiliada',
+    'ELEVADOR': 'Elevador',
+    'ACADEMIA': 'Academia',
+    'CHURRASQUEIRA': 'Churrasqueira',
+    'SALÃO DE FESTAS': 'Salão de festas',
+    'QUADRA': 'Quadra',
+    'CONDOMÍNIO FECHADO': 'Condomínio fechado',
+    'ACEITA PETS': 'Aceita pets',
+    'SISTEMA DE SEGURANÇA/CÂMERA': 'Sistema de segurança/câmera',
+    'SAUNA': 'Sauna',
+}
+
+function getAmenityLabel(amenity: PropertyAmenity): string {
+    return AMENITY_LABELS[amenity] ?? toSentenceCase(amenity)
+}
+
+function normalizeAmenitySelection(form: CreatePropertyDraftData): {
+    hasWifi: boolean
+    temPiscina: boolean
+    temEnergiaSolar: boolean
+    temAutomacao: boolean
+    temArCondicionado: boolean
+    ehMobiliada: boolean
+} {
+    const amenities = new Set(form.amenities)
+    return {
+        hasWifi: amenities.has('WI-FI') || form.hasWifi,
+        temPiscina: amenities.has('PISCINA') || form.temPiscina,
+        temEnergiaSolar: amenities.has('ENERGIA SOLAR') || form.temEnergiaSolar,
+        temAutomacao: amenities.has('AUTOMAÇÃO') || form.temAutomacao,
+        temArCondicionado: amenities.has('AR CONDICIONADO') || form.temArCondicionado,
+        ehMobiliada: amenities.has('MOBILIADA') || form.ehMobiliada,
+    }
 }
 
 function isDraftRecoverable(raw: ReturnType<typeof loadDraft>): boolean {
@@ -585,8 +627,12 @@ export default function AnunciePage() {
 
             setUploadStatus('Salvando anúncio...')
             
+            const selectedAmenities = Array.from(new Set(form.amenities))
+            const derivedFlags = normalizeAmenitySelection({ ...form, amenities: selectedAmenities })
             const formData = buildCreatePropertyFormData({
                 ...form,
+                amenities: selectedAmenities,
+                ...derivedFlags,
                 actorMode,
                 images: finalImageUrls,
                 video: finalVideoUrl
@@ -1040,21 +1086,7 @@ export default function AnunciePage() {
                         <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
                             <p className={`${REVIEW_LABEL} text-xs uppercase tracking-[0.12em]`}>Comodidades</p>
                             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                            {([
-                                    ['hasWifi', 'Wi‑Fi'],
-                                    ['temPiscina', 'Piscina'],
-                                    ['temAutomacao', 'Automação residencial'],
-                                    ['temArCondicionado', 'Ar-condicionado'],
-                                    ['ehMobiliada', 'Imóvel mobiliado'],
-                                ] as const).map(([key, label]) => (
-                                    <label key={key} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 hover:bg-slate-50">
-                                        <input type="checkbox" checked={form[key]} onChange={(e) => updateField(key, e.target.checked)} className="rounded border-slate-300 text-primary-600 focus:ring-primary-500" />
-                                        <span>{label}</span>
-                                    </label>
-                                ))}
-                            </div>
-                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                {PROPERTY_CANONICAL_AMENITIES.filter((amenity) => amenity !== 'MOBILIADA').map((amenity) => (
+                                {PROPERTY_CANONICAL_AMENITIES.map((amenity) => (
                                     <label key={amenity} className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50">
                                         <input
                                             type="checkbox"
@@ -1062,7 +1094,7 @@ export default function AnunciePage() {
                                             onChange={(event) => toggleAmenity(amenity, event.target.checked)}
                                             className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
                                         />
-                                        <span>{toSentenceCase(amenity)}</span>
+                                        <span>{getAmenityLabel(amenity)}</span>
                                     </label>
                                 ))}
                             </div>
@@ -1217,13 +1249,16 @@ export default function AnunciePage() {
                                         <div className="min-w-0">
                                             <p className={REVIEW_LABEL}>Comodidades</p>
                                             <p className={REVIEW_VALUE}>{[
-                                                form.hasWifi && 'Wi‑Fi',
-                                                form.temPiscina && 'Piscina',
-                                                form.temAutomacao && 'Automação',
-                                                form.temArCondicionado && 'Ar-condicionado',
-                                                form.ehMobiliada && 'Mobiliada',
-                                            ...form.amenities.map((amenity) => toSentenceCase(amenity)),
-                                            ].filter(Boolean).join(', ') || 'Nenhuma selecionada'}</p>
+                                                ...new Set([
+                                                    ...form.amenities.map((amenity) => getAmenityLabel(amenity)),
+                                                    form.hasWifi && 'Wi‑Fi',
+                                                    form.temPiscina && 'Piscina',
+                                                    form.temEnergiaSolar && 'Energia Solar',
+                                                    form.temAutomacao && 'Automação',
+                                                    form.temArCondicionado && 'Ar-condicionado',
+                                                    form.ehMobiliada && 'Mobiliada',
+                                                ].filter(Boolean) as string[]),
+                                            ].join(', ') || 'Nenhuma selecionada'}</p>
                                         </div>
                                         <div className="grid gap-3 sm:grid-cols-2">
                                             <div className="min-w-0">

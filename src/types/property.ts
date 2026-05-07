@@ -38,6 +38,9 @@ export interface Property {
     temEnergiaSolar?: boolean
     temAutomacao?: boolean
     temArCondicionado?: boolean
+    /**
+     * Compatibilidade legado: também pode ser derivado pela presença de `MOBILIADA` em `amenities`.
+     */
     ehMobiliada?: boolean
     valorCondominio?: number
     valorIptu?: number

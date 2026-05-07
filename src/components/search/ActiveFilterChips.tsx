@@ -25,7 +25,17 @@ const FILTER_LABELS: Record<string, string> = {
     tem_energia_solar: 'Energia Solar',
     tem_automacao: 'Automação',
     tem_ar_condicionado: 'Ar-Condicionado',
-    eh_mobiliada: 'Mobiliada',
+    amenity_mobiliada: 'Mobiliada',
+    amenity_poco_artesiano: 'Poço artesiano',
+    amenity_elevador: 'Elevador',
+    amenity_academia: 'Academia',
+    amenity_churrasqueira: 'Churrasqueira',
+    amenity_salao_festas: 'Salão de festas',
+    amenity_quadra: 'Quadra',
+    amenity_condominio_fechado: 'Condomínio fechado',
+    amenity_aceita_pets: 'Aceita pets',
+    amenity_sistema_seguranca_camera: 'Segurança/câmera',
+    amenity_sauna: 'Sauna',
 }
 
 function formatValue(key: string, value: string, searchParams: URLSearchParams): string {

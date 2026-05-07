@@ -46,13 +46,31 @@ const bathroomOptions = [
     { value: '4', label: '4+' },
 ]
 
-const amenityOptions = [
-    { key: 'has_wifi', label: 'Wi-Fi' },
-    { key: 'tem_piscina', label: 'Piscina' },
-    { key: 'tem_energia_solar', label: 'Energia Solar' },
-    { key: 'tem_automacao', label: 'Automação' },
-    { key: 'tem_ar_condicionado', label: 'Ar-Condicionado' },
-    { key: 'eh_mobiliada', label: 'Mobiliada' },
+type AmenityQueryKind = 'flag' | 'amenity'
+type AmenityOption = {
+    key: string
+    label: string
+    kind: AmenityQueryKind
+    amenity?: string
+}
+
+const amenityOptions: AmenityOption[] = [
+    { key: 'has_wifi', label: 'Wi-Fi', kind: 'flag' },
+    { key: 'tem_piscina', label: 'Piscina', kind: 'flag' },
+    { key: 'tem_energia_solar', label: 'Energia Solar', kind: 'flag' },
+    { key: 'tem_automacao', label: 'Automação', kind: 'flag' },
+    { key: 'tem_ar_condicionado', label: 'Ar-condicionado', kind: 'flag' },
+    { key: 'amenity_poco_artesiano', label: 'Poço artesiano', kind: 'amenity', amenity: 'POÇO ARTESIANO' },
+    { key: 'amenity_elevador', label: 'Elevador', kind: 'amenity', amenity: 'ELEVADOR' },
+    { key: 'amenity_academia', label: 'Academia', kind: 'amenity', amenity: 'ACADEMIA' },
+    { key: 'amenity_churrasqueira', label: 'Churrasqueira', kind: 'amenity', amenity: 'CHURRASQUEIRA' },
+    { key: 'amenity_salao_festas', label: 'Salão de festas', kind: 'amenity', amenity: 'SALÃO DE FESTAS' },
+    { key: 'amenity_quadra', label: 'Quadra', kind: 'amenity', amenity: 'QUADRA' },
+    { key: 'amenity_condominio_fechado', label: 'Condomínio fechado', kind: 'amenity', amenity: 'CONDOMÍNIO FECHADO' },
+    { key: 'amenity_aceita_pets', label: 'Aceita pets', kind: 'amenity', amenity: 'ACEITA PETS' },
+    { key: 'amenity_mobiliada', label: 'Mobiliada', kind: 'amenity', amenity: 'MOBILIADA' },
+    { key: 'amenity_sistema_seguranca_camera', label: 'Sistema de segurança/câmera', kind: 'amenity', amenity: 'SISTEMA DE SEGURANÇA/CÂMERA' },
+    { key: 'amenity_sauna', label: 'Sauna', kind: 'amenity', amenity: 'SAUNA' },
 ]
 
 export default function SearchFilters() {
@@ -197,7 +215,14 @@ export default function SearchFilters() {
         })
 
         amenityOptions.forEach(a => {
-            if (amenities[a.key]) params.set(a.key, '1')
+            if (!amenities[a.key]) return
+            if (a.kind === 'flag') {
+                params.set(a.key, '1')
+                return
+            }
+            if (a.amenity) {
+                params.append('amenities', a.amenity)
+            }
         })
 
         router.push(`/imoveis?${params.toString()}`)

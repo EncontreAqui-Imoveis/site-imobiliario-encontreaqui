@@ -73,6 +73,7 @@ describe('propertiesApi', () => {
         expect(normalized?.images[0]).toContain('https://cdn/imovel.jpg')
         expect(normalized?.brokerName).toBe('Corretor')
         expect(normalized?.semCep).toBe(true)
+        expect(normalized?.temEnergiaSolar).toBe(true)
     })
 
     it('returns featured properties from API data payload', async () => {

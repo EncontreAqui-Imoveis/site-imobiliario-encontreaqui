@@ -20,7 +20,17 @@ const LISTING_FILTER_KEYS = [
     'tem_energia_solar',
     'tem_automacao',
     'tem_ar_condicionado',
-    'eh_mobiliada',
+    'amenity_mobiliada',
+    'amenity_poco_artesiano',
+    'amenity_elevador',
+    'amenity_academia',
+    'amenity_churrasqueira',
+    'amenity_salao_festas',
+    'amenity_quadra',
+    'amenity_condominio_fechado',
+    'amenity_aceita_pets',
+    'amenity_sistema_seguranca_camera',
+    'amenity_sauna',
 ] as const
 
 export function hasActiveListingFilters(

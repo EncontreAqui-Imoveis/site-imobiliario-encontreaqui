@@ -27,6 +27,11 @@ export const BRAZILIAN_STATES = [
 ] as const
 
 export const PROPERTY_CANONICAL_AMENITIES = [
+    'WI-FI',
+    'PISCINA',
+    'ENERGIA SOLAR',
+    'AUTOMAÇÃO',
+    'AR CONDICIONADO',
     'POÇO ARTESIANO',
     'MOBILIADA',
     'ELEVADOR',
@@ -49,6 +54,15 @@ const SECURITY_CAMERA_AMENITY_LEGACY_NORMALIZED = 'SISTEMA DE SEGURANÇA/CÂMARA
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toUpperCase()
+const WIFI_AMENITY_CANONICAL = 'WI-FI'
+const WIFI_AMENITY_NORMALIZED = WIFI_AMENITY_CANONICAL
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+const WIFI_AMENITY_LEGACY_NORMALIZED = 'WIFI'
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
 
 function normalizeAmenityAlias(amenity: string): PropertyAmenity | null {
     const trimmed = amenity.trim()
@@ -65,12 +79,22 @@ function normalizeAmenityAlias(amenity: string): PropertyAmenity | null {
     ) {
         return SECURITY_CAMERA_AMENITY_CANONICAL
     }
+    if (normalized === WIFI_AMENITY_NORMALIZED || normalized === WIFI_AMENITY_LEGACY_NORMALIZED) {
+        return WIFI_AMENITY_CANONICAL
+    }
 
     if (PROPERTY_CANONICAL_AMENITIES.includes(trimmed as PropertyAmenity)) {
         return trimmed as PropertyAmenity
     }
 
-    return null
+    const canonical = PROPERTY_CANONICAL_AMENITIES.find((candidate) => {
+        const candidateNormalized = candidate
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toUpperCase()
+        return candidateNormalized === normalized
+    })
+    return canonical ?? null
 }
 
 export type PropertyAmenity = (typeof PROPERTY_CANONICAL_AMENITIES)[number]
@@ -112,6 +136,7 @@ export type CreatePropertyDraftData = {
     amenities: PropertyAmenity[]
     hasWifi: boolean
     temPiscina: boolean
+    temEnergiaSolar: boolean
     temAutomacao: boolean
     temArCondicionado: boolean
     ehMobiliada: boolean
@@ -285,10 +310,19 @@ export function buildCreatePropertyFormData(payload: CreatePropertyPayload): For
 
     formData.append('has_wifi', payload.hasWifi ? '1' : '0')
     formData.append('tem_piscina', payload.temPiscina ? '1' : '0')
+    formData.append('tem_energia_solar', payload.temEnergiaSolar ? '1' : '0')
     formData.append('tem_automacao', payload.temAutomacao ? '1' : '0')
     formData.append('tem_ar_condicionado', payload.temArCondicionado ? '1' : '0')
-    formData.append('eh_mobiliada', payload.ehMobiliada ? '1' : '0')
-    for (const amenity of normalizeAmenitySelections(payload.amenities)) {
+    const normalizedAmenities = new Set<PropertyAmenity>(normalizeAmenitySelections(payload.amenities))
+    if (payload.hasWifi) normalizedAmenities.add('WI-FI')
+    if (payload.temPiscina) normalizedAmenities.add('PISCINA')
+    if (payload.temEnergiaSolar) normalizedAmenities.add('ENERGIA SOLAR')
+    if (payload.temAutomacao) normalizedAmenities.add('AUTOMAÇÃO')
+    if (payload.temArCondicionado) normalizedAmenities.add('AR CONDICIONADO')
+    if (payload.ehMobiliada) normalizedAmenities.add('MOBILIADA')
+
+    formData.append('eh_mobiliada', normalizedAmenities.has('MOBILIADA') ? '1' : '0')
+    for (const amenity of normalizedAmenities) {
         formData.append('amenities', amenity)
     }
 

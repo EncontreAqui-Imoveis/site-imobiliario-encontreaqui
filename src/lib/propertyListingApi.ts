@@ -11,6 +11,19 @@ export interface PropertyListingPageResult {
 }
 
 const DEFAULT_LIMIT = 10
+const AMENITY_QUERY_KEYS: Record<string, string> = {
+    amenity_poco_artesiano: 'POÇO ARTESIANO',
+    amenity_elevador: 'ELEVADOR',
+    amenity_academia: 'ACADEMIA',
+    amenity_churrasqueira: 'CHURRASQUEIRA',
+    amenity_salao_festas: 'SALÃO DE FESTAS',
+    amenity_quadra: 'QUADRA',
+    amenity_condominio_fechado: 'CONDOMÍNIO FECHADO',
+    amenity_aceita_pets: 'ACEITA PETS',
+    amenity_mobiliada: 'MOBILIADA',
+    amenity_sistema_seguranca_camera: 'SISTEMA DE SEGURANÇA/CÂMERA',
+    amenity_sauna: 'SAUNA',
+}
 
 function parsePositiveInt(value: unknown, fallback: number): number {
     const parsed = Number(value)
@@ -73,7 +86,14 @@ export function buildPublicPropertiesQuery(
     if (sourceParams.get('tem_energia_solar') === '1') queryParams.set('tem_energia_solar', 'true')
     if (sourceParams.get('tem_automacao') === '1') queryParams.set('tem_automacao', 'true')
     if (sourceParams.get('tem_ar_condicionado') === '1') queryParams.set('tem_ar_condicionado', 'true')
-    if (sourceParams.get('eh_mobiliada') === '1') queryParams.set('eh_mobiliada', 'true')
+    if (sourceParams.get('eh_mobiliada') === '1' || sourceParams.get('amenity_mobiliada') === '1') {
+        queryParams.append('amenities', 'MOBILIADA')
+    }
+    Object.entries(AMENITY_QUERY_KEYS).forEach(([key, amenity]) => {
+        if (sourceParams.get(key) === '1') {
+            queryParams.append('amenities', amenity)
+        }
+    })
 
     return queryParams
 }

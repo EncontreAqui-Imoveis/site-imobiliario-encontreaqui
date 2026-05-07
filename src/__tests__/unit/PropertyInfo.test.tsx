@@ -58,4 +58,34 @@ describe('PropertyInfo', () => {
 
         expect(screen.getAllByText('200 ha')).toHaveLength(2)
     })
+
+    it('exibe e deduplica as 16 amenidades entre flags e lista', () => {
+        const propertyWithAmenities: Property = {
+            ...propertyMock,
+            hasWifi: true,
+            temPiscina: true,
+            temEnergiaSolar: true,
+            temAutomacao: false,
+            temArCondicionado: true,
+            ehMobiliada: true,
+            amenities: [
+                'MOBILIADA',
+                'POÇO ARTESIANO',
+                'ACEITA PETS',
+                'SISTEMA DE SEGURANÇA/CÂMERA',
+            ],
+        }
+
+        render(<PropertyInfo property={propertyWithAmenities} />)
+
+        expect(screen.getByText('Wi-Fi')).toBeInTheDocument()
+        expect(screen.getByText('Piscina')).toBeInTheDocument()
+        expect(screen.getByText('Energia Solar')).toBeInTheDocument()
+        expect(screen.getByText('Ar-condicionado')).toBeInTheDocument()
+        expect(screen.getByText('Mobiliada')).toBeInTheDocument()
+        expect(screen.getByText(/Poço Artesiano/i)).toBeInTheDocument()
+        expect(screen.getByText(/Aceita pets/i)).toBeInTheDocument()
+        expect(screen.getByText('Sistema de segurança/câmera')).toBeInTheDocument()
+        expect(screen.getAllByText('Mobiliada')).toHaveLength(1)
+    })
 })

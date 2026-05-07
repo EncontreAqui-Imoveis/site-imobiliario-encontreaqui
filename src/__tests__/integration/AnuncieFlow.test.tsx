@@ -181,4 +181,45 @@ describe('Anuncie flow', () => {
         expect(screen.queryByText('Como você quer anunciar?')).not.toBeInTheDocument()
         expect(screen.queryByText('Você é proprietário do imóvel?')).not.toBeInTheDocument()
     })
+
+    it('valida o passo de comodidades com Energia Solar e sem "Planejados"', async () => {
+        render(<AnunciePage />)
+
+        const getFieldByLabelText = (label: string) => {
+            const labelElement = screen.getByText(label)
+            const control = labelElement.parentElement?.querySelector('input, textarea, select')
+            if (!control) {
+                throw new Error(`Campo não encontrado para o rótulo: ${label}`)
+            }
+            return control
+        }
+
+        fireEvent.click(await screen.findByText('Anunciar você mesmo'))
+        fireEvent.click(await screen.findByText('Sim, sou proprietário'))
+
+        fireEvent.change(getFieldByLabelText('Tipo do imóvel *'), { target: { value: 'Casa' } })
+        fireEvent.change(getFieldByLabelText('Finalidade *'), { target: { value: 'Venda' } })
+        fireEvent.change(getFieldByLabelText('Título *'), { target: { value: 'Casa com energia solar' } })
+        fireEvent.change(getFieldByLabelText('Descrição *'), { target: { value: 'Texto descritivo.' } })
+        fireEvent.change(screen.getByPlaceholderText('R$ 0,00'), { target: { value: '120000' } })
+        fireEvent.click(screen.getByRole('button', { name: 'Avançar' }))
+
+        fireEvent.change(getFieldByLabelText('CEP *'), { target: { value: '75900-000' } })
+        fireEvent.change(getFieldByLabelText('Estado *'), { target: { value: 'GO' } })
+        fireEvent.change(getFieldByLabelText('Cidade *'), { target: { value: 'Rio Verde' } })
+        fireEvent.change(getFieldByLabelText('Bairro *'), { target: { value: 'Centro' } })
+        fireEvent.change(getFieldByLabelText('Rua *'), { target: { value: 'Rua das Flores' } })
+        fireEvent.change(getFieldByLabelText('Número *'), { target: { value: '123' } })
+        fireEvent.click(screen.getByRole('button', { name: 'Avançar' }))
+
+        fireEvent.change(getFieldByLabelText('Área do terreno *'), { target: { value: '120' } })
+        fireEvent.click(screen.getByRole('button', { name: 'Avançar' }))
+
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Energia Solar' }))
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Poço artesiano' }))
+
+        expect(screen.getByText('Energia Solar')).toBeInTheDocument()
+        expect(screen.getByText(/Poço/i)).toBeInTheDocument()
+        expect(screen.queryByText('Planejados')).not.toBeInTheDocument()
+    })
 })

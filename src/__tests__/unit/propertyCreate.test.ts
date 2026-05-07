@@ -60,11 +60,12 @@ describe('propertyCreate helpers', () => {
             areaTerreno: '360',
             areaTerrenoUnidade: 'hectare',
             amenities: [
-            'MOBILIADA',
+            'SAUNA',
             'ACEITA PETS',
             ],
             hasWifi: false,
             temPiscina: false,
+            temEnergiaSolar: false,
             temAutomacao: true,
             temArCondicionado: false,
             ehMobiliada: false,
@@ -91,11 +92,67 @@ describe('propertyCreate helpers', () => {
         expect(formData.get('bathrooms')).toBe('0')
         expect(formData.get('garage_spots')).toBe('0')
         expect(formData.get('tem_automacao')).toBe('1')
+        expect(formData.get('tem_energia_solar')).toBe('0')
         expect(formData.getAll('amenities')).toEqual(
-            expect.arrayContaining(['MOBILIADA', 'ACEITA PETS']),
+            expect.arrayContaining(['SAUNA', 'ACEITA PETS']),
         )
         expect(formData.get('video')).toBe(video)
         expect(formData.getAll('images')).toHaveLength(1)
+    })
+
+    it('aceita as 16 comodidades principais no FormData', () => {
+        const formData = buildCreatePropertyFormData({
+            actorMode: 'broker',
+            propertyType: 'Casa',
+            purpose: 'Venda',
+            title: 'Casa para teste completo',
+            description: 'Descricao',
+            ownerName: 'Fulano',
+            ownerPhone: '(11) 98888-0000',
+            priceSale: '350000',
+            priceRent: '',
+            cep: '74000-000',
+            semCep: false,
+            state: 'GO',
+            city: 'Goiânia',
+            bairro: 'Centro',
+            address: 'Rua C',
+            numero: '20',
+            complemento: '',
+            quadra: '',
+            lote: '',
+            semNumero: false,
+            semQuadra: false,
+            semLote: false,
+            bedrooms: '2',
+            bathrooms: '1',
+            garageSpots: '1',
+            areaConstruida: '110',
+            areaConstruidaUnidade: 'm2',
+            areaTerreno: '120',
+            areaTerrenoUnidade: 'm2',
+            amenities: PROPERTY_CANONICAL_AMENITIES,
+            hasWifi: true,
+            temPiscina: true,
+            temEnergiaSolar: true,
+            temAutomacao: true,
+            temArCondicionado: true,
+            ehMobiliada: true,
+            images: [new File(['img'], 'front.jpg', { type: 'image/jpeg' })],
+            video: null,
+        })
+
+        const amenitiesPayload = formData.getAll('amenities')
+        for (const amenity of PROPERTY_CANONICAL_AMENITIES) {
+            expect(amenitiesPayload).toContain(amenity)
+        }
+
+        expect(formData.get('has_wifi')).toBe('1')
+        expect(formData.get('tem_piscina')).toBe('1')
+        expect(formData.get('tem_energia_solar')).toBe('1')
+        expect(formData.get('tem_automacao')).toBe('1')
+        expect(formData.get('tem_ar_condicionado')).toBe('1')
+        expect(formData.get('eh_mobiliada')).toBe('1')
     })
 
     it('preserves a 500-character description without expanding HTML entities', () => {
@@ -135,6 +192,7 @@ describe('propertyCreate helpers', () => {
             amenities: [],
             hasWifi: false,
             temPiscina: false,
+            temEnergiaSolar: false,
             temAutomacao: false,
             temArCondicionado: false,
             ehMobiliada: false,
@@ -146,10 +204,12 @@ describe('propertyCreate helpers', () => {
         expect(String(formData.get('description'))).toHaveLength(500)
     })
 
-    it('garante lista canônica de amenities sem Planejados', () => {
+    it('garante lista canônica de amenities alinhada ao novo padrão', () => {
         expect(PROPERTY_CANONICAL_AMENITIES).not.toContain('PLANEJADOS')
         expect(PROPERTY_CANONICAL_AMENITIES).toContain('MOBILIADA')
         expect(PROPERTY_CANONICAL_AMENITIES).toContain('ACEITA PETS')
+        expect(PROPERTY_CANONICAL_AMENITIES).toContain('SISTEMA DE SEGURANÇA/CÂMERA')
+        expect(PROPERTY_CANONICAL_AMENITIES).toHaveLength(16)
     })
 
     it('aceita todas amenities canônicas no FormData e descarta inválidas', () => {
@@ -186,6 +246,7 @@ describe('propertyCreate helpers', () => {
             amenities: [...PROPERTY_CANONICAL_AMENITIES, 'PLANEJADOS', 'SISTEMA DE SEGURANÇA/CÂMARA'],
             hasWifi: false,
             temPiscina: false,
+            temEnergiaSolar: false,
             temAutomacao: false,
             temArCondicionado: false,
             ehMobiliada: false,
