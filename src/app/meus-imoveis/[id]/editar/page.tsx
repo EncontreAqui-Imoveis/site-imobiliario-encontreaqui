@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
-import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
+import { isApprovedBroker, isRestrictedBroker, resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { fetchEditableProperty, saveEditedProperty } from '@/lib/propertiesEditorService'
 import { fetchCitiesByState } from '@/lib/locationOptionsApi'
 import {
@@ -104,8 +104,8 @@ export default function EditPropertyPage() {
     const router = useRouter()
     const params = useParams()
     const propertyId = params.id as string
-    const { session, loading: authLoading, isBroker } = useUser()
-    const isClientOwner = session?.user?.role !== 'broker'
+    const { session, loading: authLoading } = useUser()
+    const isClientOwner = !isApprovedBroker(session)
 
     const [property, setProperty] = useState<Property | null>(null)
     const [loadError, setLoadError] = useState<string | null>(null)
@@ -158,12 +158,11 @@ export default function EditPropertyPage() {
             return
         }
         const gateRoute = resolveOperationalGateRoute(session)
-        if (!authLoading && gateRoute) {
+        const skipBrokerOnboardingGate = isRestrictedBroker(session) && gateRoute === '/onboarding/broker'
+        if (!authLoading && gateRoute && !skipBrokerOnboardingGate) {
             router.replace(gateRoute)
-        } else if (!authLoading && session?.user?.role === 'broker' && !isBroker) {
-            router.replace('/onboarding/broker')
         }
-    }, [authLoading, session, isBroker, router, propertyId])
+    }, [authLoading, session, router, propertyId])
 
     // Load property
     const loadProperty = useCallback(async () => {
@@ -334,18 +333,6 @@ export default function EditPropertyPage() {
     /* ── Render guards ── */
     if (authLoading || !session) {
         return <div className="min-h-screen flex items-center justify-center pt-20"><Loader2 className="w-6 h-6 animate-spin text-primary-500" /></div>
-    }
-
-    if (session?.user?.role === 'broker' && !isBroker) {
-        return (
-            <div className="min-h-screen flex items-center justify-center pt-20">
-                <div className="text-center space-y-4 max-w-md">
-                    <AlertTriangle className="w-16 h-16 mx-auto text-amber-400" />
-                    <h1 className="text-xl font-bold text-gray-900">Acesso restrito a corretores</h1>
-                    <Link href="/" className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors">Voltar ao início</Link>
-                </div>
-            </div>
-        )
     }
 
     if (loadError || !propertyId) {

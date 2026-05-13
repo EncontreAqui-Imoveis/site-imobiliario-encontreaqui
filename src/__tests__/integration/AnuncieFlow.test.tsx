@@ -78,6 +78,17 @@ const mockBrokerPendingDocumentsSession = {
     },
 }
 
+const mockBrokerApprovedSession = {
+    user: {
+        id: 22,
+        name: 'Broker Aprovado',
+        role: 'broker',
+        email: 'brokeraprovado@teste.com',
+        broker_status: 'approved' as const,
+        email_verified: true,
+    },
+}
+
 let mockUserContextValue = {
     session: mockClientSession,
 }
@@ -167,6 +178,21 @@ describe('Anuncie flow', () => {
         expect(screen.getByText('Fluxo de cliente-proprietário')).toBeInTheDocument()
         expect(mockRouter.push).not.toHaveBeenCalledWith('/onboarding/broker')
         expect(mockRouter.replace).not.toHaveBeenCalledWith('/onboarding/broker')
+    })
+
+    it('inicia o fluxo de corretor aprovado como fluxo profissional', async () => {
+        mockUserContextValue = {
+            session: mockBrokerApprovedSession,
+        }
+        render(<AnunciePage />)
+
+        fireEvent.click(await screen.findByText('Anunciar você mesmo'))
+        fireEvent.click(await screen.findByText('Sim, sou proprietário'))
+        fireEvent.click(await screen.findByText('Sim, continuar'))
+
+        expect(await screen.findByText('Cadastrar imóvel')).toBeInTheDocument()
+        expect(screen.getByText('Fluxo de corretor aprovado')).toBeInTheDocument()
+        expect(screen.queryByText('Fluxo de cliente-proprietário')).not.toBeInTheDocument()
     })
 
     it('mostra aviso quando seleciona "Não, quero anunciar de outra pessoa"', async () => {

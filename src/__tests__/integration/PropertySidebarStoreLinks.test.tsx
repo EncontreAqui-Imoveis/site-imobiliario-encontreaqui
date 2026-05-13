@@ -58,7 +58,7 @@ const property: Property = {
 }
 
 describe('PropertySidebar store links', () => {
-    it('renders the "Ver no Aplicativo" deep link containing the property ID', () => {
+    it('renderiza o link "Ver no Aplicativo" sem referência pública', () => {
         render(<PropertySidebar property={property} />)
 
         expect(
@@ -72,11 +72,12 @@ describe('PropertySidebar store links', () => {
         ).toBeInTheDocument()
 
         const appLink = screen.getByText(/ver no aplicativo/i).closest('a')
-        expect(appLink).toHaveAttribute('href', expect.stringContaining('77'))
+        expect(appLink).toHaveAttribute('href', expect.not.stringContaining('77'))
         expect(appLink).toHaveAttribute(
             'aria-label',
             expect.stringContaining('Casa Modelo')
         )
+        expect(screen.getByText(/Indisponível/i)).toBeInTheDocument()
     })
 
     it('renders the app download CTA with a store URL', () => {

@@ -1,6 +1,9 @@
 import {
+    isApprovedBroker,
+    isRestrictedBroker,
     resolveOperationalGateRoute,
     resolvePostAuthRoute,
+    getBrokerStatus,
 } from '@/lib/auth/routeResolution'
 import type { UserSession } from '@/lib/api/auth'
 
@@ -45,6 +48,40 @@ describe('routeResolution', () => {
         const session = buildSession()
 
         expect(resolvePostAuthRoute(session, '/contratos')).toBe('/contratos')
+        expect(resolveOperationalGateRoute(session)).toBeNull()
+    })
+
+    it('determina broker pendente por broker_status mesmo sem role', () => {
+        const session = buildSession({
+            user: {
+                ...buildSession().user,
+                role: undefined,
+                broker_status: 'pending_documents' as unknown as 'pending_verification',
+            },
+            isBroker: true,
+            broker: undefined,
+        })
+
+        expect(getBrokerStatus(session)).toBe('pending_documents')
+        expect(isRestrictedBroker(session)).toBe(true)
+        expect(resolveOperationalGateRoute(session)).toBe('/onboarding/broker')
+    })
+
+    it('mantém fluxo de corretor aprovado por broker_status sem role', () => {
+        const session = buildSession({
+            user: {
+                ...buildSession().user,
+                role: undefined,
+                broker_status: 'approved',
+            },
+            isBroker: true,
+            broker: undefined,
+            profileStatus: 'complete',
+        })
+
+        expect(getBrokerStatus(session)).toBe('approved')
+        expect(isRestrictedBroker(session)).toBe(false)
+        expect(isApprovedBroker(session)).toBe(true)
         expect(resolveOperationalGateRoute(session)).toBeNull()
     })
 

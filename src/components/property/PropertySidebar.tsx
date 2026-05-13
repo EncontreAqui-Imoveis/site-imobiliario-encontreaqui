@@ -16,8 +16,8 @@ interface PropertySidebarProps {
 
 export default function PropertySidebar({ property, visitorProposalHref }: PropertySidebarProps) {
     const [storeUrl, setStoreUrl] = useState('https://play.google.com/store')
-    const publicReference = property.public_code || property.slug
-    const deepLink = buildAppDeepLink(publicReference || property.id)
+    const publicReference = property.public_code?.trim() || property.slug?.trim()
+    const deepLink = buildAppDeepLink(publicReference)
 
     useEffect(() => {
         setStoreUrl(getStoreUrlClient())
@@ -126,14 +126,12 @@ export default function PropertySidebar({ property, visitorProposalHref }: Prope
                             Converse com o corretor, faça propostas e acompanhe todo o processo diretamente no Encontre Aqui.
                         </p>
                     </div>
-                    {publicReference && (
-                        <div className="mt-4 pt-4 border-t border-primary-100 flex items-center justify-between text-sm">
-                            <span className="text-primary-700 font-medium">Referência</span>
-                            <span className="rounded-md border border-primary-100 bg-white px-2 py-1 font-bold text-primary-900 shadow-sm">
-                                {publicReference}
-                            </span>
-                        </div>
-                    )}
+                    <div className="mt-4 pt-4 border-t border-primary-100 flex items-center justify-between text-sm">
+                        <span className="text-primary-700 font-medium">Referência</span>
+                        <span className="rounded-md border border-primary-100 bg-white px-2 py-1 font-bold text-primary-900 shadow-sm">
+                            {publicReference || 'Indisponível'}
+                        </span>
+                    </div>
                 </div>
 
                 {/* App Download — Subtle */}

@@ -6,21 +6,25 @@ export interface PendingAction {
     description: string
 }
 
-function getBrokerStatus(session: UserSession | null | undefined): string | null {
+export function getBrokerStatus(session: UserSession | null | undefined): string | null {
     if (!session) return null
     const status = session.broker?.status ?? session.user?.broker_status
     if (typeof status !== 'string') return null
     return status
 }
 
-function isBrokerUser(session: UserSession | null | undefined): boolean {
+export function isBrokerUser(session: UserSession | null | undefined): boolean {
     if (!session) return false
     return Boolean(session.isBroker || session.user?.role === 'broker' || getBrokerStatus(session) != null)
 }
 
-function isRestrictedBroker(session: UserSession | null | undefined): boolean {
+export function isRestrictedBroker(session: UserSession | null | undefined): boolean {
     if (!isBrokerUser(session)) return false
     return getBrokerStatus(session) !== 'approved'
+}
+
+export function isApprovedBroker(session: UserSession | null | undefined): boolean {
+    return getBrokerStatus(session) === 'approved' && isBrokerUser(session)
 }
 
 function hasVerifiedContact(session: UserSession): boolean {

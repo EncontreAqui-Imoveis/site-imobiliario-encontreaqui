@@ -18,10 +18,11 @@ export function getPublicPropertySlug(property: PublicCodeSource): string {
     const publicCode = toText(property.public_code)
     if (publicCode) return publicCode
 
-    return toText(property.id)
+    return ''
 }
 
 export function buildPublicPropertyUrl(property: PublicCodeSource): string {
-    return `/imoveis/${encodeURIComponent(getPublicPropertySlug(property))}`
+    const slug = getPublicPropertySlug(property)
+    return slug ? `/imoveis/${encodeURIComponent(slug)}` : '/imoveis'
 }
 

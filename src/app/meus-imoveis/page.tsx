@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useUser } from '@/contexts/UserContext'
-import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
+import { isApprovedBroker, isRestrictedBroker, resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { getMyProperties, type PropertySummary } from '@/lib/api/user'
 import { buildPublicPropertyUrl } from '@/lib/propertyLinks'
 import { Building2, Plus, Edit, Loader2, Eye, MapPin } from 'lucide-react'
@@ -52,7 +52,7 @@ function getNegotiationAction(property: PropertySummary) {
 export default function MeusImoveisPage() {
     const router = useRouter()
     const searchParams = useSearchParams()
-    const { session, loading: authLoading, isBroker } = useUser()
+    const { session, loading: authLoading } = useUser()
     const canCreateProperty = Boolean(session)
     const createdId = Number(searchParams.get('created') ?? 0)
     const focusId = Number(searchParams.get('focus') ?? 0)
@@ -90,9 +90,7 @@ export default function MeusImoveisPage() {
             return
         }
         const gateRoute = resolveOperationalGateRoute(session)
-        const brokerStatus = session?.user?.broker_status ?? session?.broker?.status
-        const isBrokerRestrictedForProfessional = session?.user?.role === 'broker' && brokerStatus !== 'approved'
-        const skipBrokerOnboardingGate = isBrokerRestrictedForProfessional && gateRoute === '/onboarding/broker'
+        const skipBrokerOnboardingGate = isRestrictedBroker(session) && gateRoute === '/onboarding/broker'
         if (!authLoading && gateRoute && !skipBrokerOnboardingGate) {
             router.replace(gateRoute)
         }
@@ -200,7 +198,7 @@ export default function MeusImoveisPage() {
                     <Building2 className="w-16 h-16 mx-auto text-slate-200" />
                     <h2 className="text-lg font-semibold text-slate-700">Nenhum imóvel cadastrado</h2>
                     <p className="text-sm text-slate-500">
-                        {isBroker
+                        {isApprovedBroker(session)
                             ? 'Cadastre seu primeiro imóvel para começar a receber propostas.'
                             : 'Cadastre seu primeiro imóvel para enviá-lo para análise.'}
                     </p>

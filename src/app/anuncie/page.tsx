@@ -53,7 +53,7 @@ import { formatCurrencyInput, parseCurrencyInput } from '@/lib/currencyInput'
 import { formatPhoneInput } from '@/lib/phoneInput'
 import { validateImageFile, validateVideoFile } from '@/lib/sanitize'
 import { useUser } from '@/contexts/UserContext'
-import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
+import { isApprovedBroker, isRestrictedBroker, resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
 import { areaInputToSquareMeters, areaUnitLabel } from '@/lib/areaUnits'
 import { getUploadSignature, uploadToCloudinaryBrowser } from '@/lib/api/cloudinaryUpload'
@@ -240,9 +240,8 @@ export default function AnunciePage() {
     const [error, setError] = useState<string | null>(null)
     const [uploadStatus, setUploadStatus] = useState<string | null>(null)
 
-    const brokerStatus = session?.user?.broker_status ?? session?.broker?.status ?? null
-    const isBrokerUser = Boolean(session?.isBroker || session?.user?.role === 'broker' || brokerStatus != null)
-    const isBrokerPendingOrRestricted = Boolean(isBrokerUser && brokerStatus !== 'approved')
+    const isBrokerPendingOrRestricted = isRestrictedBroker(session)
+    const isBrokerApproved = isApprovedBroker(session) && !isBrokerPendingOrRestricted
     const saleEnabled = useMemo(() => supportsSale(form.purpose), [form.purpose])
     const rentEnabled = useMemo(() => supportsRent(form.purpose), [form.purpose])
     const needsLotFields = useMemo(() => requiresLotFields(form.propertyType), [form.propertyType])
@@ -398,7 +397,7 @@ export default function AnunciePage() {
     }
 
     function openClientOwnerFlow() {
-        setActorMode('client-owner')
+        setActorMode(isBrokerApproved ? 'broker' : 'client-owner')
         setShowOwnershipQuestion(false)
         setShowContactFlow(false)
         setShowOwnerConfirmation(false)

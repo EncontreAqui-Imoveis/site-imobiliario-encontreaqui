@@ -61,7 +61,7 @@ function resolveNotificationHref(notification: Notification): string | null {
             toStringOrNull(metadata.slug)
         return propertyPublicRef
             ? buildPublicPropertyUrl({ id: notification.relatedEntityId, slug: propertyPublicRef })
-            : `/imoveis/${notification.relatedEntityId}`
+            : '/imoveis'
     }
 
     if (notification.relatedEntityType === 'broker' || notification.relatedEntityType === 'user') {
