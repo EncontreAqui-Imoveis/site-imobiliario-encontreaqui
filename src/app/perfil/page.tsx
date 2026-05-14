@@ -76,6 +76,8 @@ export default function PerfilPage() {
             ? 'Corretor aprovado'
             : brokerStatus === 'pending_verification'
                 ? 'Corretor em análise'
+                : brokerStatus === 'pending_documents'
+                    ? 'Documentação do corretor pendente'
                 : brokerStatus === 'rejected'
                     ? 'Solicitação rejeitada'
                     : null
@@ -105,7 +107,7 @@ export default function PerfilPage() {
                                     className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                                         brokerStatus === 'approved'
                                             ? 'bg-green-50 text-green-700'
-                                            : brokerStatus === 'pending_verification'
+                                            : brokerStatus === 'pending_verification' || brokerStatus === 'pending_documents'
                                                 ? 'bg-amber-50 text-amber-700'
                                                 : 'bg-red-50 text-red-700'
                                     }`}

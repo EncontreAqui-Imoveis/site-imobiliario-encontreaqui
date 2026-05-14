@@ -3,7 +3,7 @@ export interface User {
     name: string
     email: string
     role?: 'client' | 'broker' | 'auxiliary_administrative'
-    broker_status?: 'pending_verification' | 'approved' | 'rejected' | null
+    broker_status?: 'pending_verification' | 'pending_documents' | 'approved' | 'rejected' | null
     email_verified?: boolean
     email_verified_at?: string | null
     phone?: string
@@ -20,7 +20,7 @@ export interface User {
 
 export interface Broker extends User {
     creci: string
-    status: 'pending_verification' | 'approved' | 'rejected'
+    status: 'pending_verification' | 'pending_documents' | 'approved' | 'rejected'
     agencyId?: number
 }
 

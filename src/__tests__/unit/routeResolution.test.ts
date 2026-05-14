@@ -56,7 +56,7 @@ describe('routeResolution', () => {
             user: {
                 ...buildSession().user,
                 role: undefined,
-                broker_status: 'pending_documents' as unknown as 'pending_verification',
+                broker_status: 'pending_documents',
             },
             isBroker: true,
             broker: undefined,

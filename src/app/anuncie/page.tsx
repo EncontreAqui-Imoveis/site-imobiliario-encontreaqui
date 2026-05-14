@@ -220,7 +220,6 @@ export default function AnunciePage() {
     const [actorMode, setActorMode] = useState<CreatePropertyActor | null>(null)
     const [showOwnershipQuestion, setShowOwnershipQuestion] = useState(false)
     const [showContactFlow, setShowContactFlow] = useState(false)
-    const [showOwnerConfirmation, setShowOwnerConfirmation] = useState(false)
     const [showContactConfirmation, setShowContactConfirmation] = useState(false)
     const [showOtherOwnerWarning, setShowOtherOwnerWarning] = useState(false)
     const [contactRequested, setContactRequested] = useState(false)
@@ -379,7 +378,6 @@ export default function AnunciePage() {
         setDraftDecisionResolved(true)
         setShowOwnershipQuestion(false)
         setShowContactFlow(false)
-        setShowOwnerConfirmation(false)
         setShowContactConfirmation(false)
         setShowOtherOwnerWarning(false)
         if (draftErrorMessage) setError(draftErrorMessage)
@@ -391,7 +389,6 @@ export default function AnunciePage() {
         setDraftDecisionResolved(true)
         setShowOwnershipQuestion(false)
         setShowContactFlow(false)
-        setShowOwnerConfirmation(false)
         setShowContactConfirmation(false)
         setShowOtherOwnerWarning(false)
     }
@@ -400,26 +397,24 @@ export default function AnunciePage() {
         setActorMode(isBrokerApproved ? 'broker' : 'client-owner')
         setShowOwnershipQuestion(false)
         setShowContactFlow(false)
-        setShowOwnerConfirmation(false)
         setShowContactConfirmation(false)
         setShowOtherOwnerWarning(false)
         setContactRequested(false)
         setContactError('')
     }
 
-    function openBrokerFlow() {
+    function openOtherOwnerFlow() {
         setShowOwnershipQuestion(false)
         setShowContactFlow(false)
-        setShowOwnerConfirmation(false)
-        setShowContactConfirmation(false)
-        setShowOtherOwnerWarning(false)
         setShowOtherOwnerWarning(true)
+        setShowContactConfirmation(false)
+        setContactRequested(false)
+        setContactError('')
     }
 
     function openContactFlow() {
         setShowOwnershipQuestion(false)
         setShowContactFlow(true)
-        setShowOwnerConfirmation(false)
         setShowContactConfirmation(true)
         setShowOtherOwnerWarning(false)
         setContactRequested(false)
@@ -432,20 +427,6 @@ export default function AnunciePage() {
         setContactRequested(false)
         setContactError('')
         setIsSupportRequesting(false)
-    }
-
-    function hideOwnerConfirmation() {
-        setShowOwnerConfirmation(false)
-    }
-
-    function openOwnerConfirmation() {
-        setShowOwnershipQuestion(false)
-        setShowContactFlow(false)
-        setShowOtherOwnerWarning(false)
-        setShowOwnerConfirmation(true)
-        setShowContactConfirmation(false)
-        setContactRequested(false)
-        setContactError('')
     }
 
     function hideOtherOwnerWarning() {
@@ -707,30 +688,6 @@ export default function AnunciePage() {
                     )}
                 </div>
 
-                {showOwnerConfirmation ? (
-                    <div className="rounded-2xl border border-accent-200 bg-accent-50 p-6">
-                        <p className="text-sm text-slate-700">
-                            Seu imóvel passará por análise antes de ser publicado no site. Deseja continuar?
-                        </p>
-                        <div className="mt-4 flex flex-wrap gap-3">
-                            <button
-                                type="button"
-                                onClick={openClientOwnerFlow}
-                                className="inline-flex items-center justify-center rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700"
-                            >
-                                Sim, continuar
-                            </button>
-                            <button
-                                type="button"
-                                onClick={hideOwnerConfirmation}
-                                className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                            >
-                                Não
-                            </button>
-                        </div>
-                    </div>
-                ) : null}
-
                 {showContactConfirmation ? (
                     <div className="rounded-2xl border border-accent-200 bg-accent-50 p-6">
                         <p className="text-sm text-slate-700">
@@ -830,7 +787,7 @@ export default function AnunciePage() {
                             <>
                                 <button
                                     type="button"
-                                    onClick={openOwnerConfirmation}
+                                    onClick={openClientOwnerFlow}
                                     className="rounded-2xl border border-primary-200 bg-white p-6 text-left shadow-sm hover:border-primary-400 hover:shadow-md"
                                 >
                                     <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
@@ -841,7 +798,7 @@ export default function AnunciePage() {
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={openBrokerFlow}
+                                    onClick={openOtherOwnerFlow}
                                     className="rounded-2xl border border-accent-200 bg-accent-50 p-6 text-left shadow-sm hover:border-accent-400 hover:shadow-md"
                                 >
                                     <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-100 text-accent-700">

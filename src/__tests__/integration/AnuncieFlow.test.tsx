@@ -73,7 +73,7 @@ const mockBrokerPendingDocumentsSession = {
         name: 'Broker Pendente Documentos',
         role: 'broker',
         email: 'brokerdoc@teste.com',
-        broker_status: 'pending_documents' as unknown as 'pending_verification',
+        broker_status: 'pending_documents',
         email_verified: true,
     },
 }
@@ -141,11 +141,11 @@ describe('Anuncie flow', () => {
         expect(await screen.findByText('Você é proprietário do imóvel?')).toBeInTheDocument()
 
         fireEvent.click(screen.getByText('Sim, sou proprietário'))
-        fireEvent.click(await screen.findByText('Sim, continuar'))
         expect(await screen.findByText('Cadastrar imóvel')).toBeInTheDocument()
         expect(screen.getByText('Fluxo de cliente-proprietário')).toBeInTheDocument()
         expect(screen.queryByText('Como voce quer anunciar?')).not.toBeInTheDocument()
         expect(screen.queryByText('Você é proprietário do imóvel?')).not.toBeInTheDocument()
+        expect(screen.queryByText('Sim, continuar')).not.toBeInTheDocument()
     })
 
     it('permite broker pendente seguir como proprietário sem entrar no fluxo profissional', async () => {
@@ -156,7 +156,6 @@ describe('Anuncie flow', () => {
 
         fireEvent.click(await screen.findByText('Anunciar você mesmo'))
         fireEvent.click(await screen.findByText('Sim, sou proprietário'))
-        fireEvent.click(await screen.findByText('Sim, continuar'))
 
         expect(await screen.findByText('Cadastrar imóvel')).toBeInTheDocument()
         expect(screen.getByText('Fluxo de cliente-proprietário')).toBeInTheDocument()
@@ -172,7 +171,6 @@ describe('Anuncie flow', () => {
 
         fireEvent.click(await screen.findByText('Anunciar você mesmo'))
         fireEvent.click(await screen.findByText('Sim, sou proprietário'))
-        fireEvent.click(await screen.findByText('Sim, continuar'))
 
         expect(await screen.findByText('Cadastrar imóvel')).toBeInTheDocument()
         expect(screen.getByText('Fluxo de cliente-proprietário')).toBeInTheDocument()
@@ -188,11 +186,21 @@ describe('Anuncie flow', () => {
 
         fireEvent.click(await screen.findByText('Anunciar você mesmo'))
         fireEvent.click(await screen.findByText('Sim, sou proprietário'))
-        fireEvent.click(await screen.findByText('Sim, continuar'))
 
         expect(await screen.findByText('Cadastrar imóvel')).toBeInTheDocument()
         expect(screen.getByText('Fluxo de corretor aprovado')).toBeInTheDocument()
         expect(screen.queryByText('Fluxo de cliente-proprietário')).not.toBeInTheDocument()
+    })
+
+    it('bloqueia visitante e redireciona para login', () => {
+        mockUserContextValue = {
+            session: null,
+        }
+
+        render(<AnunciePage />)
+
+        expect(mockRouter.replace).toHaveBeenCalledWith('/auth/login?next=/anuncie')
+        expect(screen.queryByText('Como voce quer anunciar?')).not.toBeInTheDocument()
     })
 
     it('mostra aviso quando seleciona "Não, quero anunciar de outra pessoa"', async () => {
@@ -252,7 +260,6 @@ describe('Anuncie flow', () => {
 
         fireEvent.click(await screen.findByText('Anunciar você mesmo'))
         fireEvent.click(await screen.findByText('Sim, sou proprietário'))
-        fireEvent.click(await screen.findByText('Sim, continuar'))
 
         await waitFor(() => {
             expect(screen.getByText('Cadastrar imóvel')).toBeInTheDocument()
@@ -275,7 +282,6 @@ describe('Anuncie flow', () => {
 
         fireEvent.click(await screen.findByText('Anunciar você mesmo'))
         fireEvent.click(await screen.findByText('Sim, sou proprietário'))
-        fireEvent.click(await screen.findByText('Sim, continuar'))
 
         fireEvent.change(getFieldByLabelText('Tipo do imóvel *'), { target: { value: 'Casa' } })
         fireEvent.change(getFieldByLabelText('Finalidade *'), { target: { value: 'Venda' } })
