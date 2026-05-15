@@ -109,11 +109,6 @@ function validOwnerPhone(value: string) {
 }
 
 type CountFieldKey = 'bedrooms' | 'bathrooms' | 'garageSpots'
-type CountFieldMode = 'none' | 'count'
-
-function resolveCountFieldMode(value: string): CountFieldMode {
-    return value.trim().length === 0 ? 'none' : 'count'
-}
 
 function isValidCountFieldValue(value: string): boolean {
     if (!value.trim()) return true
@@ -306,11 +301,10 @@ export default function AnunciePage() {
         setError(null)
     }
 
-    function setCountFieldMode(key: CountFieldKey, mode: CountFieldMode) {
+    function toggleCountFieldEmpty(key: CountFieldKey) {
         setForm((current) => {
-            if (mode === 'none') return { ...current, [key]: '' }
-            if (!current[key]) return { ...current, [key]: '0' }
-            return current
+            if (current[key].trim()) return { ...current, [key]: '' }
+            return { ...current, [key]: '0' }
         })
         setError(null)
     }
@@ -431,6 +425,7 @@ export default function AnunciePage() {
 
     function hideOtherOwnerWarning() {
         setShowOtherOwnerWarning(false)
+        setShowOwnershipQuestion(true)
         setContactError('')
     }
 
@@ -442,6 +437,16 @@ export default function AnunciePage() {
             return error.message || 'Não foi possível enviar sua solicitação de contato.'
         }
         return 'Não foi possível enviar sua solicitação de contato. Tente novamente.'
+    }
+
+    function resolveSubmitErrorMessage(submissionError: unknown): string {
+        if (submissionError instanceof ApiError) {
+            return submissionError.message || 'Erro ao cadastrar imóvel ou falha no upload.'
+        }
+        if (submissionError instanceof Error && submissionError.message.trim().length > 0) {
+            return submissionError.message
+        }
+        return 'Erro ao cadastrar imóvel ou falha no upload.'
     }
 
     async function sendSupportRequest() {
@@ -651,7 +656,7 @@ export default function AnunciePage() {
                 fallbackToFreshFlow(draftErrorMessage)
                 return
             }
-            setError(apiError?.message || 'Erro ao cadastrar imóvel ou falha no upload.')
+            setError(resolveSubmitErrorMessage(submissionError))
         } finally {
             setSubmitting(false)
             setUploadStatus(null)
@@ -672,13 +677,15 @@ export default function AnunciePage() {
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900">
                         {showOwnershipQuestion
-                            ? 'Anunciar voce mesmo'
-                            : showContactFlow || showContactConfirmation || contactRequested || contactError || showOtherOwnerWarning
+                            ? 'Você é proprietário do imóvel?'
+                            : showOtherOwnerWarning
+                                ? 'Não, quero anunciar de outra pessoa'
+                                : showContactFlow || showContactConfirmation || contactRequested || contactError
                                 ? 'Entrar em contato com a equipe'
-                                : 'Anunciar aqui'}
+                                : 'Como voce quer anunciar?'}
                     </h1>
                     {showOwnershipQuestion ? (
-                        <p className="mt-2 max-w-2xl text-sm text-slate-600">Você é proprietário do imóvel?</p>
+                        <p className="mt-2 max-w-2xl text-sm text-slate-600">Escolha como deseja continuar o anúncio.</p>
                     ) : (
                         <p className="mt-2 max-w-2xl text-sm text-slate-600">
                             {showContactFlow || showContactConfirmation || contactRequested || contactError || showOtherOwnerWarning
@@ -693,6 +700,7 @@ export default function AnunciePage() {
                         <p className="text-sm text-slate-700">
                             Deseja solicitar atendimento da equipe de suporte antes de continuar?
                         </p>
+                        <p className="mt-2 text-sm text-slate-700">Telefone de suporte: {TEAM_CONTACT_PHONE}</p>
                         {contactError ? <p className="mt-2 text-sm text-red-700">{contactError}</p> : null}
                         <div className="mt-4 flex flex-wrap gap-3">
                             <button
@@ -741,14 +749,7 @@ export default function AnunciePage() {
                                 <p className="text-sm text-slate-700">
                                     Não é possível anunciar imóvel de outra pessoa pelo site/app.
                                 </p>
-                                <p className="mt-2 text-sm text-slate-700">Entre em contato com a equipe para avaliar seu caso.</p>
-                                <button
-                                    type="button"
-                                    onClick={openContactFlow}
-                                    className="mt-4 inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100"
-                                >
-                                    Entrar em contato com a equipe
-                                </button>
+                                <p className="mt-2 text-sm text-slate-700">Esse fluxo só permite retornar para a pergunta anterior.</p>
                                 <button
                                     type="button"
                                     onClick={hideOtherOwnerWarning}
@@ -1032,71 +1033,71 @@ export default function AnunciePage() {
                         <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
                             <h3 className="text-sm font-semibold text-slate-900">Quartos, banheiros e vagas</h3>
                             <p className="mt-1 text-xs text-slate-600">
-                                Escolha “Sem ...” quando não se aplica ou informe a quantidade (inclui valor 0).
+                                Marque “Sem ...” quando não se aplica ou informe a quantidade.
                             </p>
                             <div className="mt-4 grid gap-4 md:grid-cols-3">
                                 <div className="rounded-xl border border-slate-200 bg-white p-3">
                                     <label className={LABEL}>Quartos</label>
-                                    <select
-                                        value={resolveCountFieldMode(form.bedrooms)}
-                                        onChange={(e) => setCountFieldMode('bedrooms', e.target.value as CountFieldMode)}
-                                        className={INPUT}
-                                    >
-                                        <option value="none">Sem quartos</option>
-                                        <option value="count">Informar quantidade</option>
-                                    </select>
-                                    {resolveCountFieldMode(form.bedrooms) === 'count' && (
+                                    <label className="inline-flex items-center gap-2 text-sm text-slate-600">
                                         <input
-                                            type="number"
-                                            min="0"
-                                            max={MAX_PROPERTY_COUNT}
-                                            value={form.bedrooms}
-                                            onChange={(e) => updateField('bedrooms', clampCountInput(e.target.value))}
-                                            className={`${INPUT} mt-2`}
+                                            type="checkbox"
+                                            checked={!form.bedrooms.trim()}
+                                            onChange={() => toggleCountFieldEmpty('bedrooms')}
+                                            className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
                                         />
-                                    )}
+                                        Sem quartos
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max={MAX_PROPERTY_COUNT}
+                                        disabled={!form.bedrooms.trim()}
+                                        value={form.bedrooms}
+                                        onChange={(e) => updateField('bedrooms', clampCountInput(e.target.value))}
+                                        className={`${INPUT} mt-2 disabled:bg-slate-50 disabled:text-slate-400`}
+                                    />
                                 </div>
                                 <div className="rounded-xl border border-slate-200 bg-white p-3">
                                     <label className={LABEL}>Banheiros</label>
-                                    <select
-                                        value={resolveCountFieldMode(form.bathrooms)}
-                                        onChange={(e) => setCountFieldMode('bathrooms', e.target.value as CountFieldMode)}
-                                        className={INPUT}
-                                    >
-                                        <option value="none">Sem banheiros</option>
-                                        <option value="count">Informar quantidade</option>
-                                    </select>
-                                    {resolveCountFieldMode(form.bathrooms) === 'count' && (
+                                    <label className="inline-flex items-center gap-2 text-sm text-slate-600">
                                         <input
-                                            type="number"
-                                            min="0"
-                                            max={MAX_PROPERTY_COUNT}
-                                            value={form.bathrooms}
-                                            onChange={(e) => updateField('bathrooms', clampCountInput(e.target.value))}
-                                            className={`${INPUT} mt-2`}
+                                            type="checkbox"
+                                            checked={!form.bathrooms.trim()}
+                                            onChange={() => toggleCountFieldEmpty('bathrooms')}
+                                            className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
                                         />
-                                    )}
+                                        Sem banheiros
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max={MAX_PROPERTY_COUNT}
+                                        disabled={!form.bathrooms.trim()}
+                                        value={form.bathrooms}
+                                        onChange={(e) => updateField('bathrooms', clampCountInput(e.target.value))}
+                                        className={`${INPUT} mt-2 disabled:bg-slate-50 disabled:text-slate-400`}
+                                    />
                                 </div>
                                 <div className="rounded-xl border border-slate-200 bg-white p-3">
                                     <label className={LABEL}>Vagas</label>
-                                    <select
-                                        value={resolveCountFieldMode(form.garageSpots)}
-                                        onChange={(e) => setCountFieldMode('garageSpots', e.target.value as CountFieldMode)}
-                                        className={INPUT}
-                                    >
-                                        <option value="none">Sem garagem</option>
-                                        <option value="count">Informar quantidade</option>
-                                    </select>
-                                    {resolveCountFieldMode(form.garageSpots) === 'count' && (
+                                    <label className="inline-flex items-center gap-2 text-sm text-slate-600">
                                         <input
-                                            type="number"
-                                            min="0"
-                                            max={MAX_PROPERTY_COUNT}
-                                            value={form.garageSpots}
-                                            onChange={(e) => updateField('garageSpots', clampCountInput(e.target.value))}
-                                            className={`${INPUT} mt-2`}
+                                            type="checkbox"
+                                            checked={!form.garageSpots.trim()}
+                                            onChange={() => toggleCountFieldEmpty('garageSpots')}
+                                            className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
                                         />
-                                    )}
+                                        Sem vagas
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max={MAX_PROPERTY_COUNT}
+                                        disabled={!form.garageSpots.trim()}
+                                        value={form.garageSpots}
+                                        onChange={(e) => updateField('garageSpots', clampCountInput(e.target.value))}
+                                        className={`${INPUT} mt-2 disabled:bg-slate-50 disabled:text-slate-400`}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -1248,7 +1249,7 @@ export default function AnunciePage() {
                                         </div>
                                         <div className="min-w-0">
                                             <p className={REVIEW_LABEL}>Garagens</p>
-                                            <p className={REVIEW_VALUE}>{form.garageSpots || 'Sem garagem'}</p>
+                                            <p className={REVIEW_VALUE}>{form.garageSpots || 'Sem vagas'}</p>
                                         </div>
                                     </div>
                                 </div>

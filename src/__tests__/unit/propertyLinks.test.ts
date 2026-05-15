@@ -33,9 +33,9 @@ describe('propertyLinks', () => {
         expect(buildPublicPropertyUrl(property)).toBe('/imoveis/AB12CD')
     })
 
-    it('não expõe id interno quando não há referência pública', () => {
+    it('usa id como fallback quando não há referência pública', () => {
         const property = asProperty({ slug: undefined, public_code: undefined, id: 77 })
         expect(getPublicPropertySlug(property)).toBe('')
-        expect(buildPublicPropertyUrl(property)).toBe('/imoveis')
+        expect(buildPublicPropertyUrl(property)).toBe('/imoveis/77')
     })
 })

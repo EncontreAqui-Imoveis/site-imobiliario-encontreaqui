@@ -133,7 +133,7 @@ describe('Anuncie flow', () => {
     it('exibe o fluxo em duas perguntas e avança para o formulário com proprietário', async () => {
         render(<AnunciePage />)
 
-        expect(await screen.findByText('Como voce quer anunciar?')).toBeInTheDocument()
+        expect(await screen.findByRole('heading', { name: 'Como voce quer anunciar?' })).toBeInTheDocument()
         expect(await screen.findByText('Anunciar você mesmo')).toBeInTheDocument()
         expect(screen.getByText('Entrar em contato com a equipe')).toBeInTheDocument()
 
@@ -143,7 +143,7 @@ describe('Anuncie flow', () => {
         fireEvent.click(screen.getByText('Sim, sou proprietário'))
         expect(await screen.findByText('Cadastrar imóvel')).toBeInTheDocument()
         expect(screen.getByText('Fluxo de cliente-proprietário')).toBeInTheDocument()
-        expect(screen.queryByText('Como voce quer anunciar?')).not.toBeInTheDocument()
+        expect(screen.queryByRole('heading', { name: 'Como voce quer anunciar?' })).not.toBeInTheDocument()
         expect(screen.queryByText('Você é proprietário do imóvel?')).not.toBeInTheDocument()
         expect(screen.queryByText('Sim, continuar')).not.toBeInTheDocument()
     })
@@ -200,7 +200,7 @@ describe('Anuncie flow', () => {
         render(<AnunciePage />)
 
         expect(mockRouter.replace).toHaveBeenCalledWith('/auth/login?next=/anuncie')
-        expect(screen.queryByText('Como voce quer anunciar?')).not.toBeInTheDocument()
+        expect(screen.queryByRole('heading', { name: 'Como voce quer anunciar?' })).not.toBeInTheDocument()
     })
 
     it('mostra aviso quando seleciona "Não, quero anunciar de outra pessoa"', async () => {
@@ -224,8 +224,9 @@ describe('Anuncie flow', () => {
         fireEvent.click(await screen.findByText('Não, quero anunciar de outra pessoa'))
 
         fireEvent.click(await screen.findByRole('button', { name: 'Voltar' }))
-        expect(screen.getByText('Como voce quer anunciar?')).toBeInTheDocument()
-        expect(screen.getByText('Anunciar você mesmo')).toBeInTheDocument()
+        expect(screen.getByText('Você é proprietário do imóvel?')).toBeInTheDocument()
+        expect(screen.getByText('Sim, sou proprietário')).toBeInTheDocument()
+        expect(screen.queryByRole('button', { name: 'Entrar em contato com a equipe' })).not.toBeInTheDocument()
     })
 
     it('abre confirmação e envia solicitação de contato', async () => {
@@ -264,7 +265,7 @@ describe('Anuncie flow', () => {
         await waitFor(() => {
             expect(screen.getByText('Cadastrar imóvel')).toBeInTheDocument()
         })
-        expect(screen.queryByText('Como voce quer anunciar?')).not.toBeInTheDocument()
+        expect(screen.queryByRole('heading', { name: 'Como voce quer anunciar?' })).not.toBeInTheDocument()
         expect(screen.queryByText('Você é proprietário do imóvel?')).not.toBeInTheDocument()
     })
 

@@ -88,6 +88,8 @@ describe('propertyCreate helpers', () => {
         expect(formData.get('area_construida_unidade')).toBe('m2')
         expect(formData.get('area_terreno_valor')).toBe('360')
         expect(formData.get('area_terreno_unidade')).toBe('hectare')
+        expect(formData.has('area_construida_m2')).toBe(false)
+        expect(formData.has('area_terreno_m2')).toBe(false)
         expect(formData.get('bedrooms')).toBe('0')
         expect(formData.get('bathrooms')).toBe('0')
         expect(formData.get('garage_spots')).toBe('0')

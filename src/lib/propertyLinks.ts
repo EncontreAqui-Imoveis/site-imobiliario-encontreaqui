@@ -23,6 +23,8 @@ export function getPublicPropertySlug(property: PublicCodeSource): string {
 
 export function buildPublicPropertyUrl(property: PublicCodeSource): string {
     const slug = getPublicPropertySlug(property)
-    return slug ? `/imoveis/${encodeURIComponent(slug)}` : '/imoveis'
+    if (slug) return `/imoveis/${encodeURIComponent(slug)}`
+    const fallbackId = toText(property.id)
+    return fallbackId ? `/imoveis/${encodeURIComponent(fallbackId)}` : '/imoveis'
 }
 
