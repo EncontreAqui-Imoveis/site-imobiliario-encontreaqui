@@ -2,7 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { formatPrice, Property } from '@/types/property'
+import {
+    formatPrice,
+    formatPromotionPeriodLabel,
+    getPromoRentPrice,
+    getPromoSalePrice,
+    Property,
+} from '@/types/property'
 import { Info, Smartphone, Phone, FileText } from 'lucide-react'
 import WhatsAppIcon from '@/components/icons/WhatsAppIcon'
 import { buildAppDeepLink, getStoreUrlClient } from '@/lib/appLinks'
@@ -18,6 +24,12 @@ export default function PropertySidebar({ property, visitorProposalHref }: Prope
     const [storeUrl, setStoreUrl] = useState('https://play.google.com/store')
     const publicReference = property.public_code?.trim() || property.slug?.trim()
     const deepLink = buildAppDeepLink(publicReference)
+    const promoSale = getPromoSalePrice(property)
+    const promoRent = getPromoRentPrice(property)
+    const promoPeriodLabel =
+        promoSale != null || promoRent != null
+            ? formatPromotionPeriodLabel(property.promotionStart, property.promotionEnd)
+            : null
 
     useEffect(() => {
         setStoreUrl(getStoreUrlClient())
@@ -39,16 +51,27 @@ export default function PropertySidebar({ property, visitorProposalHref }: Prope
                             <p className="text-sm font-medium uppercase tracking-wide text-gray-500">Valor do Imóvel</p>
                             {property.priceSale && property.priceSale > 0 && (
                                 <div className="flex flex-col">
+                                    <span className="text-sm font-semibold uppercase tracking-wide text-gray-500">Venda</span>
+                                    {promoSale != null && (
+                                        <span className="text-sm font-medium text-gray-400 line-through">
+                                            {formatPrice(property.priceSale)}
+                                        </span>
+                                    )}
                                     <span className="text-3xl font-bold text-primary-600">
-                                        {formatPrice(property.priceSale)}
+                                        {formatPrice(promoSale ?? property.priceSale)}
                                     </span>
                                 </div>
                             )}
                             {property.priceRent && property.priceRent > 0 && (
-                                <div className="flex flex-col mt-2">
-                                    <span className="text-sm text-gray-500">Aluguel</span>
+                                <div className="mt-2 flex flex-col">
+                                    <span className="text-sm font-semibold uppercase tracking-wide text-gray-500">Aluguel</span>
+                                    {promoRent != null && (
+                                        <span className="text-sm font-medium text-gray-400 line-through">
+                                            {formatPrice(property.priceRent)}
+                                        </span>
+                                    )}
                                     <span className="text-3xl font-bold text-amber-600">
-                                        {formatPrice(property.priceRent)}
+                                        {formatPrice(promoRent ?? property.priceRent)}
                                         <span className="text-lg font-normal text-gray-500">/mês</span>
                                     </span>
                                 </div>
@@ -57,6 +80,9 @@ export default function PropertySidebar({ property, visitorProposalHref }: Prope
                                 <span className="text-3xl font-bold text-primary-600">
                                     {formatPrice(property.price)}
                                 </span>
+                            )}
+                            {promoPeriodLabel && (
+                                <p className="text-[11px] font-medium text-amber-800">{promoPeriodLabel}</p>
                             )}
                         </div>
 
