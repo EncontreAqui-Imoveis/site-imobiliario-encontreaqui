@@ -27,6 +27,22 @@ export default function PropostasPage() {
     const [filter, setFilter] = useState<'sent' | 'signed' | 'refused'>('sent')
     const [busyActionId, setBusyActionId] = useState<string | null>(null)
 
+    const getFriendlyProposalStatusLabel = (status: string) => {
+        const normalized = String(status ?? '').trim().toUpperCase()
+        if (isProposalRefusedStatus(normalized)) return 'Recusada'
+        if (isProposalPreSignatureStatus(normalized)) return 'Pendente de assinatura'
+        return getStatusLabel(normalized as never)
+    }
+
+    const getFriendlyProposalStatusSummary = (status: string) => {
+        const normalized = String(status ?? '').trim().toUpperCase()
+        if (isProposalRefusedStatus(normalized)) return 'Novo ciclo liberado.'
+        if (isProposalPreSignatureStatus(normalized)) return 'Aguardando assinatura.'
+        if (normalized === 'PROPOSAL_SIGNED') return 'Assinada e aguardando verificação.'
+        if (resolveProposalBucket(normalized) === 'signed') return 'Seguindo para contratos.'
+        return 'Acompanhe o andamento por aqui.'
+    }
+
     useEffect(() => {
         if (!authLoading && !session) {
             router.replace('/auth/login?next=/propostas')
@@ -96,7 +112,7 @@ export default function PropostasPage() {
             return propertyId > 0 ? 'Iniciar novo ciclo de proposta' : 'Proposta recusada'
         }
         if (status === 'DOCUMENTATION_PHASE') {
-            return 'Aguardar análise documental'
+            return 'Acompanhar documentação'
         }
         if (status === 'CONTRACT_DRAFTING') {
             return 'Acompanhar minuta'
@@ -117,9 +133,6 @@ export default function PropostasPage() {
         return isProposalPreSignatureStatus(negotiation.status)
     }
     const canDeleteByStatus = (negotiation: NegotiationSummary) => canEditByStatus(negotiation)
-    const canRestartCycle = (negotiation: NegotiationSummary) =>
-        isProposalRefusedStatus(negotiation.status) && negotiation.propertyId > 0
-
     const handleEdit = (negotiation: NegotiationSummary) => {
         if (!canEditByStatus(negotiation) || negotiation.propertyId <= 0) {
             return
@@ -198,17 +211,17 @@ export default function PropostasPage() {
                 <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Enviadas</p>
                     <p className="mt-2 text-2xl font-bold text-slate-900">{statusSummary.sent}</p>
-                    <p className="mt-1 text-sm text-slate-600">Propostas em fase de envio, ainda antes da assinatura final.</p>
+                    <p className="mt-1 text-sm text-slate-600">Propostas aguardando assinatura ou revisão do fluxo.</p>
                 </div>
                 <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Assinadas</p>
                     <p className="mt-2 text-2xl font-bold text-slate-900">{statusSummary.signed}</p>
-                    <p className="mt-1 text-sm text-slate-600">Propostas assinadas ou já avançadas para documentação/contrato.</p>
+                    <p className="mt-1 text-sm text-slate-600">Propostas assinadas e em caminho para contratos.</p>
                 </div>
                 <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Recusadas</p>
                     <p className="mt-2 text-2xl font-bold text-slate-900">{statusSummary.refused}</p>
-                    <p className="mt-1 text-sm text-slate-600">Negociações recusadas/canceladas, liberadas para novo ciclo.</p>
+                    <p className="mt-1 text-sm text-slate-600">Negociações recusadas, prontas para novo ciclo.</p>
                 </div>
             </div>
 
@@ -266,42 +279,41 @@ export default function PropostasPage() {
                         <Link
                             key={neg.id}
                             href={resolveNegotiationHref(neg)}
-                            className="block bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-4"
+                            className="block rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-all hover:border-slate-200 hover:shadow-md"
                         >
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <Building2 className="w-6 h-6 text-slate-400" />
+                            <div className="flex items-start gap-4">
+                                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary-50">
+                                    <Building2 className="h-6 w-6 text-primary-600" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between gap-2">
-                                        <h3 className="text-sm font-semibold text-slate-900 truncate">
+                                        <h3 className="truncate text-sm font-semibold text-slate-900">
                                             {neg.propertyTitle || `Imóvel #${neg.propertyId}`}
                                         </h3>
-                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(neg.status)}`}>
-                                            {getStatusLabel(neg.status)}
+                                        <span className={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusColor(neg.status)}`}>
+                                            {getFriendlyProposalStatusLabel(neg.status)}
                                         </span>
                                     </div>
-                                    <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+                                    <p className="mt-1 text-xs text-slate-600">
+                                        {getFriendlyProposalStatusSummary(neg.status)}
+                                    </p>
+                                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                                         {neg.clientName && <span>Cliente: {neg.clientName}</span>}
-                                        <span>•</span>
                                         <span>{new Date(neg.createdAt).toLocaleDateString('pt-BR')}</span>
                                         {neg.proposalValidUntil && (
-                                            <>
-                                                <span>•</span>
-                                                <span className="text-amber-600">
-                                                    Válida até {new Date(neg.proposalValidUntil).toLocaleDateString('pt-BR')}
-                                                </span>
-                                            </>
+                                            <span className="rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-700">
+                                                Válida até {new Date(neg.proposalValidUntil).toLocaleDateString('pt-BR')}
+                                            </span>
                                         )}
                                     </div>
                                     {neg.contractStatus && (
                                         <div className="mt-2 text-xs font-medium text-violet-700">
-                                            Contrato: {neg.contractStatus}
+                                            Etapa do contrato: {getStatusLabel(neg.contractStatus as never)}
                                             {approvalLabel(neg.buyerApprovalStatus) ? ` · docs comprador ${approvalLabel(neg.buyerApprovalStatus)}` : ''}
                                             {approvalLabel(neg.sellerApprovalStatus) ? ` · docs proprietário ${approvalLabel(neg.sellerApprovalStatus)}` : ''}
                                         </div>
                                     )}
-                                    <p className="mt-2 text-xs font-medium text-primary-700">
+                                    <p className="mt-2 text-xs font-semibold text-primary-700">
                                         {resolveActionLabel(neg)}
                                     </p>
                                 </div>
@@ -312,38 +324,44 @@ export default function PropostasPage() {
                                         event.stopPropagation()
                                     }}
                                 >
-                                    <button
-                                        type="button"
-                                        disabled={!canEditByStatus(neg) || busyActionId === neg.id}
-                                        title={
-                                            canEditByStatus(neg)
-                                                ? 'Editar proposta'
-                                                : 'Edição bloqueada após assinatura'
-                                        }
-                                        onClick={() => handleEdit(neg)}
-                                        aria-label="Editar proposta"
-                                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-500 disabled:cursor-not-allowed disabled:opacity-60"
-                                    >
-                                        <Pencil className="h-3.5 w-3.5" />
-                                        Editar
-                                    </button>
-                                    <button
-                                        type="button"
-                                        disabled={!canDeleteByStatus(neg) || busyActionId === neg.id}
-                                        title={
-                                            canDeleteByStatus(neg)
-                                                ? 'Excluir proposta'
-                                                : canRestartCycle(neg)
-                                                    ? 'Recusada: pode iniciar um novo ciclo'
-                                                    : 'Exclusão bloqueada após assinatura'
-                                        }
-                                        onClick={() => void handleDelete(neg)}
-                                        aria-label="Excluir proposta"
-                                        className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
-                                    >
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                        Excluir
-                                    </button>
+                                    {isProposalPreSignatureStatus(neg.status) ? (
+                                        <>
+                                            <button
+                                                type="button"
+                                                disabled={!canEditByStatus(neg) || busyActionId === neg.id}
+                                                title={
+                                                    canEditByStatus(neg)
+                                                        ? 'Editar proposta'
+                                                        : 'Edição bloqueada após assinatura'
+                                                }
+                                                onClick={() => handleEdit(neg)}
+                                                aria-label="Editar proposta"
+                                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-500 disabled:cursor-not-allowed disabled:opacity-60"
+                                            >
+                                                <Pencil className="h-3.5 w-3.5" />
+                                                Editar
+                                            </button>
+                                            <button
+                                                type="button"
+                                                disabled={!canDeleteByStatus(neg) || busyActionId === neg.id}
+                                                title={
+                                                    canDeleteByStatus(neg)
+                                                        ? 'Excluir proposta'
+                                                        : 'Exclusão bloqueada após assinatura'
+                                                }
+                                                onClick={() => void handleDelete(neg)}
+                                                aria-label="Excluir proposta"
+                                                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+                                            >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                                Excluir
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <span className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-500">
+                                            Sem ações de edição
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         </Link>

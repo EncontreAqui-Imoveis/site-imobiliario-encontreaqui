@@ -39,6 +39,7 @@ export interface CreateProposalPayload {
     payment: PaymentDetails
     clientName?: string
     clientCpf?: string
+    validadeDias: number
     idempotencyKey?: string
 }
 
@@ -53,6 +54,7 @@ export async function createProposal(payload: CreateProposalPayload): Promise<Cr
         payment: payload.payment,
         clientName: payload.clientName,
         clientCpf: payload.clientCpf,
+        validadeDias: payload.validadeDias,
         idempotency_key: idempotencyKey,
     })
 }
@@ -69,4 +71,5 @@ export async function uploadSignedProposal(negotiationId: string, file: File): P
         },
     )
 }
+
 

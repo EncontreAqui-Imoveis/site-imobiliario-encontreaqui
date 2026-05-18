@@ -9,6 +9,7 @@ import { useUser } from '@/contexts/UserContext'
 import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { fetchMyNegotiations } from '@/lib/negotiationsService'
 import { getMyContracts } from '@/lib/api/contracts'
+import { getStatusLabel, resolveProposalBucket, isProposalPreSignatureStatus, isProposalRefusedStatus } from '@/types/negotiation'
 import type { NegotiationSummary } from '@/types/negotiation'
 import type { ContractSummary } from '@/types/contract'
 
@@ -99,6 +100,33 @@ export default function DocumentosPage() {
     const proposalsCount = proposals.length
     const contractsCount = contracts.length
 
+    const friendlyProposalStatus = (status: string) => {
+        const normalized = String(status ?? '').trim().toUpperCase()
+        if (isProposalRefusedStatus(normalized)) return 'Recusada'
+        if (isProposalPreSignatureStatus(normalized)) return 'Pendente de assinatura'
+        return getStatusLabel(normalized as never)
+    }
+
+    const proposalActionLabel = (proposal: NegotiationSummary) => {
+        const normalized = String(proposal.status ?? '').trim().toUpperCase()
+        if (isProposalPreSignatureStatus(normalized)) return 'Enviar proposta assinada'
+        if (isProposalRefusedStatus(normalized)) {
+            return proposal.propertyId > 0 ? 'Iniciar novo ciclo' : 'Ver documentos'
+        }
+        return 'Ver contratos'
+    }
+
+    const proposalActionHref = (proposal: NegotiationSummary) => {
+        const normalized = String(proposal.status ?? '').trim().toUpperCase()
+        if (isProposalPreSignatureStatus(normalized)) {
+            return `/propostas/${encodeURIComponent(proposal.id)}/upload-assinada`
+        }
+        if (isProposalRefusedStatus(normalized) && proposal.propertyId > 0) {
+            return `/propostas/nova?propertyId=${proposal.propertyId}`
+        }
+        return '/documentos?tab=contratos'
+    }
+
     if (authLoading || !session) {
         return (
             <div className="min-h-[60vh] flex items-center justify-center">
@@ -159,23 +187,45 @@ export default function DocumentosPage() {
                             </Link>
                         </div>
                     ) : (
-                        <ul className="space-y-3">
-                            {proposals.map((negotiation) => (
-                                <li key={negotiation.id} className="rounded-xl border border-slate-100 p-4 hover:border-slate-200">
-                                    <p className="text-sm font-semibold text-slate-900">{negotiation.propertyTitle}</p>
-                                    <p className="mt-1 text-xs text-slate-600">
-                                        {negotiation.propertyCity ? `${negotiation.propertyCity}${negotiation.propertyState ? ` - ${negotiation.propertyState}` : ''}` : 'Local não informado'}
+                            <ul className="space-y-3">
+                                {proposals.map((negotiation) => (
+                                <li key={negotiation.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4 hover:border-slate-200">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-semibold text-slate-900">{negotiation.propertyTitle}</p>
+                                            <p className="mt-1 text-xs text-slate-600">
+                                                {negotiation.propertyCity ? `${negotiation.propertyCity}${negotiation.propertyState ? ` - ${negotiation.propertyState}` : ''}` : 'Local não informado'}
+                                            </p>
+                                        </div>
+                                        <span className="shrink-0 rounded-full bg-primary-50 px-2.5 py-1 text-xs font-semibold text-primary-700">
+                                            {friendlyProposalStatus(negotiation.status)}
+                                        </span>
+                                    </div>
+                                    <p className="mt-2 text-xs text-slate-600">
+                                        {isProposalPreSignatureStatus(negotiation.status)
+                                            ? 'Aguardando assinatura do PDF.'
+                                            : isProposalRefusedStatus(negotiation.status)
+                                                ? 'Negociação recusada. Pode iniciar novo ciclo quando houver imóvel.'
+                                                : 'Proposta assinada. Siga para contratos.'}
                                     </p>
-                                    <p className="mt-2 text-xs text-slate-500">Status: {negotiation.status}</p>
+                                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                                        {negotiation.clientName && <span>Cliente: {negotiation.clientName}</span>}
+                                        <span>{new Date(negotiation.createdAt).toLocaleDateString('pt-BR')}</span>
+                                        {negotiation.proposalValidUntil && (
+                                            <span className="rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-700">
+                                                Válida até {new Date(negotiation.proposalValidUntil).toLocaleDateString('pt-BR')}
+                                            </span>
+                                        )}
+                                    </div>
                                     <Link
-                                        href={`/propostas/${encodeURIComponent(negotiation.id)}/upload-assinada`}
+                                        href={proposalActionHref(negotiation)}
                                         className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-primary-600 hover:underline"
                                     >
-                                        Acessar proposta <ArrowRight className="h-4 w-4" />
+                                        {proposalActionLabel(negotiation)} <ArrowRight className="h-4 w-4" />
                                     </Link>
                                 </li>
-                            ))}
-                        </ul>
+                                ))}
+                            </ul>
                     )
                 ) : contracts.length === 0 ? (
                     <div className="py-12 text-center">
@@ -191,7 +241,7 @@ export default function DocumentosPage() {
                         {contracts.map((contract) => (
                             <li key={contract.id} className="rounded-xl border border-slate-100 p-4 hover:border-slate-200">
                                 <p className="text-sm font-semibold text-slate-900">{contract.propertyTitle || `Contrato #${contract.id}`}</p>
-                                <p className="mt-1 text-xs text-slate-600">Status: {contract.status}</p>
+                                <p className="mt-1 text-xs text-slate-600">Status: {getStatusLabel(contract.status as never)}</p>
                                 <p className="mt-1 text-xs text-slate-500">Negociação: {contract.negotiationId}</p>
                                 <Link
                                     href={`/contratos/${encodeURIComponent(contract.id)}`}

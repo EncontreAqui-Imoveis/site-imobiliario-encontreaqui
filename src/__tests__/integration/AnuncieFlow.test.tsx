@@ -65,6 +65,8 @@ const mockBrokerPendingSession = {
         broker_status: 'pending_verification' as const,
         email_verified: true,
     },
+    isBroker: true,
+    profileStatus: 'incomplete' as const,
 }
 
 const mockBrokerPendingDocumentsSession = {
@@ -76,6 +78,8 @@ const mockBrokerPendingDocumentsSession = {
         broker_status: 'pending_documents',
         email_verified: true,
     },
+    isBroker: true,
+    profileStatus: 'incomplete' as const,
 }
 
 const mockBrokerApprovedSession = {
@@ -87,6 +91,8 @@ const mockBrokerApprovedSession = {
         broker_status: 'approved' as const,
         email_verified: true,
     },
+    isBroker: true,
+    profileStatus: 'complete' as const,
 }
 
 let mockUserContextValue = {
@@ -133,7 +139,7 @@ describe('Anuncie flow', () => {
     it('exibe o fluxo em duas perguntas e avança para o formulário com proprietário', async () => {
         render(<AnunciePage />)
 
-        expect(await screen.findByRole('heading', { name: 'Como voce quer anunciar?' })).toBeInTheDocument()
+        expect(await screen.findByRole('heading', { name: 'Como você quer anunciar?' })).toBeInTheDocument()
         expect(await screen.findByText('Anunciar você mesmo')).toBeInTheDocument()
         expect(screen.getByText('Entrar em contato com a equipe')).toBeInTheDocument()
 
@@ -143,7 +149,7 @@ describe('Anuncie flow', () => {
         fireEvent.click(screen.getByText('Sim, sou proprietário'))
         expect(await screen.findByText('Cadastrar imóvel')).toBeInTheDocument()
         expect(screen.getByText('Fluxo de cliente-proprietário')).toBeInTheDocument()
-        expect(screen.queryByRole('heading', { name: 'Como voce quer anunciar?' })).not.toBeInTheDocument()
+        expect(screen.queryByRole('heading', { name: 'Como você quer anunciar?' })).not.toBeInTheDocument()
         expect(screen.queryByText('Você é proprietário do imóvel?')).not.toBeInTheDocument()
         expect(screen.queryByText('Sim, continuar')).not.toBeInTheDocument()
     })
@@ -160,6 +166,20 @@ describe('Anuncie flow', () => {
         expect(await screen.findByText('Cadastrar imóvel')).toBeInTheDocument()
         expect(screen.getByText('Fluxo de cliente-proprietário')).toBeInTheDocument()
         expect(mockRouter.push).not.toHaveBeenCalledWith('/onboarding/broker')
+        expect(mockRouter.replace).not.toHaveBeenCalledWith('/onboarding/broker')
+    })
+
+    it('não redireciona broker pendente/incompleto fora do fluxo de anúncio', async () => {
+        mockUserContextValue = {
+            session: mockBrokerPendingSession,
+        }
+
+        render(<AnunciePage />)
+
+        expect(
+            await screen.findByRole('heading', { name: 'Como você quer anunciar?' }),
+        ).toBeInTheDocument()
+        expect(mockRouter.replace).not.toHaveBeenCalledWith('/onboarding')
         expect(mockRouter.replace).not.toHaveBeenCalledWith('/onboarding/broker')
     })
 
@@ -200,7 +220,7 @@ describe('Anuncie flow', () => {
         render(<AnunciePage />)
 
         expect(mockRouter.replace).toHaveBeenCalledWith('/auth/login?next=/anuncie')
-        expect(screen.queryByRole('heading', { name: 'Como voce quer anunciar?' })).not.toBeInTheDocument()
+        expect(screen.queryByRole('heading', { name: 'Como você quer anunciar?' })).not.toBeInTheDocument()
     })
 
     it('mostra aviso quando seleciona "Não, quero anunciar de outra pessoa"', async () => {
@@ -241,6 +261,8 @@ describe('Anuncie flow', () => {
         expect(await screen.findByText('Solicitação enviada com sucesso. Nossa equipe vai entrar em contato.')).toBeInTheDocument()
         expect(screen.getByText(`Telefone de suporte: ${TEAM_CONTACT_PHONE}`)).toBeInTheDocument()
         expect(userApi.requestSupportContact).toHaveBeenCalledWith({ source: 'anuncie', channel: 'web' })
+        expect(userApi.requestSupportContact).toHaveBeenCalledTimes(1)
+        expect(mockRouter.push).not.toHaveBeenCalled()
     })
 
     it('exibe erro amigavel se o envio de contato retornar 429', async () => {
@@ -254,6 +276,7 @@ describe('Anuncie flow', () => {
         expect(
             await screen.findByText('Estamos recebendo muitas solicitações no momento. Tente novamente em alguns minutos.'),
         ).toBeInTheDocument()
+        expect(mockRouter.push).not.toHaveBeenCalled()
     })
 
     it('garante que as perguntas de escolha não reaparecem após abrir formulário', async () => {
@@ -265,7 +288,7 @@ describe('Anuncie flow', () => {
         await waitFor(() => {
             expect(screen.getByText('Cadastrar imóvel')).toBeInTheDocument()
         })
-        expect(screen.queryByRole('heading', { name: 'Como voce quer anunciar?' })).not.toBeInTheDocument()
+        expect(screen.queryByRole('heading', { name: 'Como você quer anunciar?' })).not.toBeInTheDocument()
         expect(screen.queryByText('Você é proprietário do imóvel?')).not.toBeInTheDocument()
     })
 

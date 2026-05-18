@@ -2,10 +2,10 @@ import React, { type ComponentPropsWithoutRef, type ReactNode } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import PropertyDetailClient from '@/components/property/PropertyDetailClient'
 import { Property } from '@/types/property'
-import * as propertiesEditorService from '@/lib/propertiesEditorService'
+import * as propertiesApi from '@/lib/propertiesApi'
 
-jest.mock('@/lib/propertiesEditorService', () => ({
-    fetchEditableProperty: jest.fn(),
+jest.mock('@/lib/propertiesApi', () => ({
+    fetchPropertyById: jest.fn(),
 }))
 
 // Mocks
@@ -116,6 +116,16 @@ const mockProperty: Property = {
     address: 'Rua das Flores, 123'
 }
 
+function createDeferred<T>() {
+    let resolve!: (value: T) => void
+    let reject!: (reason?: unknown) => void
+    const promise = new Promise<T>((res, rej) => {
+        resolve = res
+        reject = rej
+    })
+    return { promise, resolve, reject }
+}
+
 describe('PropertyDetailClient', () => {
     beforeEach(() => {
         Object.assign(navigator, {
@@ -169,16 +179,63 @@ describe('PropertyDetailClient', () => {
             title: 'Imóvel reservado',
             status: 'pending_approval',
         }
-        const fetchEditableMock = propertiesEditorService.fetchEditableProperty as jest.Mock
-        fetchEditableMock.mockResolvedValue(ownedProperty)
+        const fetchPropertyByIdMock = propertiesApi.fetchPropertyById as jest.Mock
+        fetchPropertyByIdMock.mockResolvedValue(ownedProperty)
 
-        render(<PropertyDetailClient propertyId="88" initialProperty={null} />)
+        render(<PropertyDetailClient propertyId="ACTME2" initialProperty={null} />)
 
         await waitFor(() => {
             expect(screen.getByTestId('property-gallery')).toHaveTextContent('Imóvel reservado')
         })
         expect(screen.queryByText('Imóvel não encontrado.')).not.toBeInTheDocument()
-        expect(fetchEditableMock).toHaveBeenCalledWith('88')
+        expect(fetchPropertyByIdMock.mock.calls.flat()).toContain('ACTME2')
+    })
+
+    it('não mostra gerar proposta antes de carregar a versão privada do proprietário', async () => {
+        mockUserContextValue = {
+            session: {
+                user: {
+                    id: 101,
+                    role: 'client',
+                    email: 'proprietario@teste.com',
+                },
+            },
+        }
+
+        const deferred = createDeferred<Property>()
+        const fetchPropertyByIdMock = propertiesApi.fetchPropertyById as jest.Mock
+        fetchPropertyByIdMock.mockReturnValue(deferred.promise)
+
+        render(
+            <PropertyDetailClient
+                propertyId="ACTME2"
+                initialProperty={{
+                    ...mockProperty,
+                    ownerId: 101,
+                    title: 'Imóvel reservado',
+                    status: 'approved',
+                }}
+            />,
+        )
+
+        expect(screen.getByText('Carregando proposta')).toBeInTheDocument()
+        expect(screen.queryByText('Gerar proposta')).not.toBeInTheDocument()
+
+        deferred.resolve({
+            ...mockProperty,
+            ownerId: 101,
+            title: 'Imóvel reservado',
+            status: 'approved',
+            negotiation: {
+                id: 'neg-2',
+                status: 'PROPOSAL_SIGNED',
+            },
+        } as Property)
+
+        await waitFor(() => {
+            expect(screen.getByText('Status da proposta')).toBeInTheDocument()
+        })
+        expect(screen.queryByText('Gerar proposta')).not.toBeInTheDocument()
     })
 
     it('exibe não encontrado para usuário sem sessão quando não há imóvel inicial', () => {
@@ -186,6 +243,7 @@ describe('PropertyDetailClient', () => {
         render(<PropertyDetailClient propertyId="999" initialProperty={null} />)
 
         expect(screen.getByText('Imóvel não encontrado.')).toBeInTheDocument()
+        expect(propertiesApi.fetchPropertyById).not.toHaveBeenCalled()
     })
 
     it('fetches and renders similar properties', async () => {
@@ -204,7 +262,8 @@ describe('PropertyDetailClient', () => {
         render(<PropertyDetailClient propertyId="1" initialProperty={mockProperty} />)
 
         await waitFor(() => {
-            expect(global.fetch).toHaveBeenCalledWith(expect.any(String))
+            expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('bairro=Jardins'))
+            expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('status=approved'))
         })
 
         // Check if similar properties were rendered

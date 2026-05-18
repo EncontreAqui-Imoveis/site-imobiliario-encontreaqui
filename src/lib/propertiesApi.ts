@@ -200,6 +200,23 @@ export function normalizeProperty(raw: unknown): Property | null {
     const areaTerrenoM2 = toNumber(item.area_terreno_m2 ?? item.areaTerreno ?? item.area_terreno)
     const areaConstruidaValor = toNumber(item.area_construida_valor ?? item.areaConstruidaValor)
     const areaTerrenoValor = toNumber(item.area_terreno_valor ?? item.areaTerrenoValor)
+    const promotionPrice = toNumber(
+        item.promotionPrice ??
+            item.promotion_price ??
+            item.promo_price ??
+            item.promo_price_sale
+    )
+    const promotionalRentPrice = toNumber(
+        item.promotionalRentPrice ??
+            item.promotional_rent_price ??
+            item.promo_rent_price
+    )
+    const promotionStart =
+        toStringOrUndefined(item.promotionStart) ??
+        toStringOrUndefined(item.promotion_start)
+    const promotionEnd =
+        toStringOrUndefined(item.promotionEnd) ??
+        toStringOrUndefined(item.promotion_end)
 
     const imagesFromImages = toImageUrlList(item.images)
     const imagesFromPropertyImages = toImageUrlList(item.property_images)
@@ -258,6 +275,10 @@ export function normalizeProperty(raw: unknown): Property | null {
         brokerName: toStringOrUndefined(item.brokerName ?? item.broker_name),
         brokerPhone: toStringOrUndefined(item.brokerPhone ?? item.broker_phone),
         brokerEmail: toStringOrUndefined(item.brokerEmail ?? item.broker_email),
+        promotionPrice,
+        promotionalRentPrice,
+        promotionStart,
+        promotionEnd,
         hasPendingEditRequest:
             toBoolean(item.hasPendingEditRequest ?? item.has_pending_edit_request) ?? false,
         pendingEditRequestId: toNumber(

@@ -99,7 +99,8 @@ describe('Documentos page', () => {
         expect(screen.getByText('Documentos')).toBeInTheDocument()
         expect(await screen.findByText('Casa de Teste')).toBeInTheDocument()
 
-        expect(screen.getByText('Status: PROPOSAL_SENT')).toBeInTheDocument()
+        expect(screen.getByText('Pendente de assinatura')).toBeInTheDocument()
+        expect(screen.getByText('Enviar proposta assinada')).toBeInTheDocument()
     })
 
     it('carrega e exibe contratos quando tab=contratos', async () => {

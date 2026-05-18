@@ -247,7 +247,9 @@ export default function AnunciePage() {
         if (!authLoading && !session) router.replace('/auth/login?next=/anuncie')
         const gateRoute = resolveOperationalGateRoute(session)
         const skipBrokerOnboardingGate = isBrokerPendingOrRestricted && gateRoute === '/onboarding/broker'
-        if (!authLoading && gateRoute && !skipBrokerOnboardingGate) {
+        const skipAllBrokerGatesOnAnnounce =
+            isBrokerPendingOrRestricted && session?.user.role === 'broker'
+        if (!authLoading && gateRoute && !skipBrokerOnboardingGate && !skipAllBrokerGatesOnAnnounce) {
             router.replace(gateRoute)
             return
         }
@@ -682,7 +684,7 @@ export default function AnunciePage() {
                                 ? 'Não, quero anunciar de outra pessoa'
                                 : showContactFlow || showContactConfirmation || contactRequested || contactError
                                 ? 'Entrar em contato com a equipe'
-                                : 'Como voce quer anunciar?'}
+                                : 'Como você quer anunciar?'}
                     </h1>
                     {showOwnershipQuestion ? (
                         <p className="mt-2 max-w-2xl text-sm text-slate-600">Escolha como deseja continuar o anúncio.</p>
@@ -690,7 +692,7 @@ export default function AnunciePage() {
                         <p className="mt-2 max-w-2xl text-sm text-slate-600">
                             {showContactFlow || showContactConfirmation || contactRequested || contactError || showOtherOwnerWarning
                                 ? 'Use o fluxo abaixo para falar com nosso time.'
-                                : 'Como voce quer anunciar?'}
+                                : 'Como você quer anunciar?'}
                         </p>
                     )}
                 </div>

@@ -1,5 +1,5 @@
 import React from 'react'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 
 import PropostasPage from '@/app/propostas/page'
 
@@ -70,13 +70,16 @@ describe('PropostasPage', () => {
             screen.getByText('Acompanhe aqui o ciclo da proposta: envio, análise documental, minuta, assinaturas e contrato.')
         ).toBeInTheDocument()
 
-        await waitFor(() => {
-            expect(screen.getByText('Enviar proposta assinada')).toBeInTheDocument()
-        })
+        await expect(screen.findByText(/Enviar proposta assinada/i)).resolves.toBeInTheDocument()
+        expect(screen.getByText('Pendente de assinatura')).toBeInTheDocument()
+        expect(screen.getByText('Aguardando assinatura.')).toBeInTheDocument()
+        expect(screen.getByLabelText('Editar proposta')).toBeInTheDocument()
+        expect(screen.getByLabelText('Excluir proposta')).toBeInTheDocument()
 
         fireEvent.click(screen.getByRole('button', { name: 'Assinadas' }))
-        await waitFor(() => {
-            expect(screen.getByText('Aguardar análise documental')).toBeInTheDocument()
-        })
+        await expect(screen.findByText('Em análise documental')).resolves.toBeInTheDocument()
+        await expect(screen.findByText('Acompanhar documentação')).resolves.toBeInTheDocument()
+        expect(screen.queryByLabelText('Editar proposta')).not.toBeInTheDocument()
+        expect(screen.queryByLabelText('Excluir proposta')).not.toBeInTheDocument()
     })
 })

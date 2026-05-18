@@ -76,6 +76,13 @@ describe('isPromotionActive', () => {
         expect(isPromotionActive(farPast, past)).toBe(false)
     })
 
+    it('returns false one millisecond after the end boundary', () => {
+        const now = Date.now()
+        const start = new Date(now - 86400000).toISOString()
+        const end = new Date(now - 1).toISOString()
+        expect(isPromotionActive(start, end)).toBe(false)
+    })
+
     it('handles empty strings as undefined', () => {
         expect(isPromotionActive('', '')).toBe(true)
     })
@@ -99,6 +106,16 @@ describe('getPromoSalePrice', () => {
             promotionEnd: new Date(Date.now() + 86400000).toISOString(),
         })
         expect(getPromoSalePrice(p)).toBe(400000)
+    })
+
+    it('returns null when promo is active but priceSale is missing and promo is zero', () => {
+        const p = makeProperty({
+            price: 500000,
+            promotionPrice: 0,
+            promotionStart: new Date(Date.now() - 86400000).toISOString(),
+            promotionEnd: new Date(Date.now() + 86400000).toISOString(),
+        })
+        expect(getPromoSalePrice(p)).toBeNull()
     })
 
     it('returns null when promo price equals base', () => {
@@ -149,6 +166,17 @@ describe('getPromoRentPrice', () => {
             promotionalRentPrice: 2500,
         })
         expect(getPromoRentPrice(p)).toBe(2500)
+    })
+
+    it('returns null when promo rent is active but zero', () => {
+        const p = makeProperty({
+            purpose: 'Aluguel',
+            priceRent: 3000,
+            promotionalRentPrice: 0,
+            promotionStart: new Date(Date.now() - 86400000).toISOString(),
+            promotionEnd: new Date(Date.now() + 86400000).toISOString(),
+        })
+        expect(getPromoRentPrice(p)).toBeNull()
     })
 
     it('returns null when promo rent price exceeds base', () => {

@@ -18,6 +18,7 @@ interface ProposalWizardProps {
 }
 
 type Step = 1 | 2 | 3
+type ProposalBaseMode = 'sale' | 'rent'
 
 export function ProposalWizard({ property }: ProposalWizardProps) {
     const router = useRouter()
@@ -25,6 +26,7 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
     const [step, setStep] = useState<Step>(1)
     const [clientName, setClientName] = useState('')
     const [clientCpf, setClientCpf] = useState('')
+    const [proposalBaseMode, setProposalBaseMode] = useState<ProposalBaseMode>('sale')
 
     const formatCpf = (val: string) => {
         const digits = val.replace(/\D/g, '').slice(0, 11)
@@ -34,8 +36,9 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
         return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`
     }
 
+    const proposalValidityDays = 10
     const validUntil = new Date()
-    validUntil.setDate(validUntil.getDate() + 10)
+    validUntil.setDate(validUntil.getDate() + proposalValidityDays)
     const [paymentDisplay, setPaymentDisplay] = useState<Record<keyof PaymentDetails, string>>({
         dinheiro: '',
         financiamento: '',
@@ -45,9 +48,23 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
+    const profileName = session?.user?.name?.trim() ?? ''
+    const hasSalePrice = Number(property.priceSale) > 0
+    const hasRentPrice = Number(property.priceRent) > 0
+    const hasBothPriceModes = hasSalePrice && hasRentPrice
+
     const propertyValue = useMemo(() => {
-        return property.priceSale ?? property.price
-    }, [property.priceSale, property.price])
+        if (proposalBaseMode === 'rent' && hasRentPrice) {
+            return Number(property.priceRent)
+        }
+        if (hasSalePrice) {
+            return Number(property.priceSale)
+        }
+        if (hasRentPrice) {
+            return Number(property.priceRent)
+        }
+        return property.price
+    }, [hasRentPrice, hasSalePrice, property.price, property.priceRent, property.priceSale, proposalBaseMode])
     const userRole = String(session?.user?.role ?? '').trim().toLowerCase()
     const isClientUser = userRole === 'client'
     const isBrokerUser = userRole === 'broker'
@@ -70,6 +87,23 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
         if (authLoading || canGenerateProposal) return
         router.replace(`${buildPublicPropertyUrl(property)}?proposalBlocked=1`)
     }, [authLoading, canGenerateProposal, property.id, router])
+
+    useEffect(() => {
+        if (!profileName) return
+        setClientName((current) => (current.trim().length > 0 ? current : profileName))
+    }, [profileName])
+
+    useEffect(() => {
+        if (hasSalePrice && hasRentPrice) {
+            setProposalBaseMode('sale')
+            return
+        }
+        if (hasRentPrice) {
+            setProposalBaseMode('rent')
+            return
+        }
+        setProposalBaseMode('sale')
+    }, [hasRentPrice, hasSalePrice])
 
     const payment = useMemo<PaymentDetails>(
         () => ({
@@ -114,6 +148,7 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
                 propertyId: property.id,
                 clientName: clientName.trim() || undefined,
                 clientCpf: clientCpf.replace(/\D/g, '').trim() || undefined,
+                validadeDias: proposalValidityDays,
                 payment,
             })
 
@@ -160,6 +195,39 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
                 </p>
             </div>
 
+            {hasBothPriceModes && (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Tipo da proposta
+                    </p>
+                    <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1">
+                        <button
+                            type="button"
+                            onClick={() => setProposalBaseMode('sale')}
+                            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${proposalBaseMode === 'sale'
+                                ? 'bg-primary-600 text-white'
+                                : 'text-slate-600 hover:bg-slate-50'
+                                }`}
+                        >
+                            Venda
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setProposalBaseMode('rent')}
+                            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${proposalBaseMode === 'rent'
+                                ? 'bg-primary-600 text-white'
+                                : 'text-slate-600 hover:bg-slate-50'
+                                }`}
+                        >
+                            Aluguel
+                        </button>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                        Valor base selecionado: <span className="font-semibold text-slate-700">{formatPrice(propertyValue)}</span>
+                    </p>
+                </div>
+            )}
+
             <div className="flex items-center gap-2 text-xs font-medium text-slate-600" aria-label="Etapas da proposta">
                 <span className={`px-2.5 py-1 rounded-full ${step === 1 ? 'bg-primary-600 text-white' : 'bg-slate-100'}`}>
                     1. Dados do cliente
@@ -178,18 +246,22 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
                         Informações do cliente
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                            <label className="block text-xs font-medium text-slate-700">
+                            <div className="space-y-1.5">
+                            <label htmlFor="proposal-client-name" className="block text-xs font-medium text-slate-700">
                                 Nome completo
-                            </label>
+                                </label>
                             <input
+                                id="proposal-client-name"
                                 type="text"
                                 value={clientName}
                                 onChange={(e) => setClientName(e.target.value)}
-                                maxLength={120}
                                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                placeholder="Nome do comprador"
+                                placeholder="Nome não carregado do perfil"
+                                autoComplete="name"
                             />
+                            <p className="text-xs text-slate-500">
+                                Nome preenchido automaticamente pelo perfil, mas você pode editar.
+                            </p>
                         </div>
                         <div className="space-y-1.5">
                             <label className="block text-xs font-medium text-slate-700">
@@ -280,7 +352,10 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
                         </p>
                         <p>
                             <span className="font-medium text-slate-700">Validade:</span>{' '}
-                            10 dias (até {validUntil.toLocaleDateString('pt-BR')})
+                            {proposalValidityDays} dias (até {validUntil.toLocaleDateString('pt-BR')})
+                        </p>
+                        <p className="text-xs text-slate-500">
+                            A proposta continua editável até a assinatura.
                         </p>
                     </div>
                 </section>
@@ -328,4 +403,9 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
         )
     )
 }
+
+
+
+
+
 

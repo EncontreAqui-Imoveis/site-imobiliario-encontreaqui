@@ -14,7 +14,7 @@ import {
 import { Property, formatPrice, getPromoSalePrice, getPromoRentPrice } from '@/types/property'
 import { useUser } from '@/contexts/UserContext'
 import { buildWhatsappLink } from '@/lib/contactLinks'
-import { fetchEditableProperty } from '@/lib/propertiesEditorService'
+import { fetchPropertyById } from '@/lib/propertiesApi'
 import { displayStatusLabel } from '@/lib/propertyLabels'
 import { API_BASE_URL } from '@/lib/api/client'
 import {
@@ -42,6 +42,14 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
         userId != null &&
         ((property.brokerId != null && userId === property.brokerId) ||
             (property.ownerId != null && userId === property.ownerId))
+    const [ownerProposalStateLoading, setOwnerProposalStateLoading] = useState(
+        Boolean(
+            initialProperty != null &&
+            session?.user?.id != null &&
+            ((initialProperty.brokerId != null && session.user.id === initialProperty.brokerId) ||
+                (initialProperty.ownerId != null && session.user.id === initialProperty.ownerId)),
+        ),
+    )
     const statusLower = property?.status?.toLowerCase() || ''
     const statusUpper = property?.status?.toUpperCase() || ''
     const hasPendingEditRequest = property?.hasPendingEditRequest === true
@@ -68,9 +76,12 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
         let cancelled = false
         const loadOwnedProperty = async () => {
             try {
-                const loadedProperty = await fetchEditableProperty(propertyId)
+                const loadedProperty = await fetchPropertyById(propertyId)
                 if (!cancelled) {
                     setProperty(loadedProperty)
+                    if (!loadedProperty) {
+                        setLoadError('Imóvel não encontrado.')
+                    }
                 }
             } catch {
                 if (!cancelled) {
@@ -85,17 +96,25 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
     }, [authLoading, property, propertyId, session])
 
     useEffect(() => {
-        if (authLoading || !session || !isOwner) return
+        if (authLoading || !session || !isOwner) {
+            setOwnerProposalStateLoading(false)
+            return
+        }
         let cancelled = false
+        setOwnerProposalStateLoading(true)
 
         const loadOwnerVersion = async () => {
             try {
-                const loadedProperty = await fetchEditableProperty(propertyId)
+                const loadedProperty = await fetchPropertyById(propertyId)
                 if (!cancelled) {
                     setProperty(loadedProperty)
                 }
             } catch {
                 // Mantém a versão já carregada quando a versão privada falhar.
+            } finally {
+                if (!cancelled) {
+                    setOwnerProposalStateLoading(false)
+                }
             }
         }
 
@@ -175,13 +194,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
         }
 
         if (negotiationId && resolveProposalBucket(negotiationStatus) === 'signed') {
-            return {
-                title: 'Proposta em revisão',
-                description: 'Acompanhe a análise. O imóvel segue recebendo propostas até que uma assinatura seja aprovada.',
-                href: '/documentos?tab=propostas',
-                tone: 'neutral' as const,
-                label: 'Acompanhar propostas',
-            }
+            return null
         }
 
         if (negotiationId && hasRefusedNegotiation) {
@@ -203,6 +216,14 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                 label: 'Ver propostas',
             }
             : null
+    })()
+
+    const signedProposalStatus = (() => {
+        if (resolveProposalBucket(negotiationStatus) !== 'signed') return null
+        return {
+            title: 'Status da proposta',
+            description: 'Proposta assinada e aguardando verificação.',
+        }
     })()
 
     if (!property) {
@@ -359,7 +380,12 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                             )}
 
                             {/* Proposal Flow */}
-                            {proposalAction && (
+                            {ownerProposalStateLoading ? (
+                                <div className="flex flex-col items-center gap-2 px-4 py-5 text-center">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center animate-pulse" />
+                                    <span className="text-xs font-semibold text-slate-400">Carregando proposta</span>
+                                </div>
+                            ) : proposalAction && (
                                 <Link
                                     href={proposalAction.href}
                                     className="flex flex-col items-center gap-2 px-4 py-5 hover:bg-gray-50 transition-colors text-center group"
@@ -446,7 +472,13 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                                             Já existe uma solicitação de edição pendente para este imóvel. O admin precisa aprová-la antes de um novo pedido.
                                         </div>
                                     )}
-                                    {proposalAction && (
+                                    {ownerProposalStateLoading ? (
+                                        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 animate-pulse">
+                                            <div className="h-4 w-32 rounded bg-slate-200" />
+                                            <div className="mt-3 h-3 w-full rounded bg-slate-200/80" />
+                                            <div className="mt-2 h-10 w-full rounded-xl bg-slate-200/80" />
+                                        </div>
+                                    ) : proposalAction && (
                                         <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                                             <p className="text-sm font-bold text-slate-900">{proposalAction.title}</p>
                                             <p className="mt-1 text-sm text-slate-600">{proposalAction.description}</p>
@@ -457,6 +489,12 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                                                 <FileText className="w-4 h-4" />
                                                 {proposalAction.label}
                                             </Link>
+                                        </div>
+                                    )}
+                                    {!ownerProposalStateLoading && signedProposalStatus && (
+                                        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                            <p className="text-sm font-bold text-slate-900">{signedProposalStatus.title}</p>
+                                            <p className="mt-1 text-sm text-slate-600">{signedProposalStatus.description}</p>
                                         </div>
                                     )}
                                     <div className="mt-4 space-y-3">
@@ -571,7 +609,7 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                     </div>
 
                     <div className="flex flex-wrap items-stretch justify-end gap-2">
-                        {isOwner && proposalAction && (
+                        {isOwner && !ownerProposalStateLoading && proposalAction && (
                             <Link
                                 href={proposalAction.href}
                                 className="inline-flex min-h-[44px] min-w-[44px] flex-1 items-center justify-center gap-1 rounded-xl bg-primary-600 px-3 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-700 sm:flex-initial"

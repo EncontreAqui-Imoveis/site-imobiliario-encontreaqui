@@ -29,6 +29,7 @@ describe('negotiations API', () => {
             propertyId: 1,
             payment: { dinheiro: 500000, financiamento: 0, permuta: 0, outros: 0 },
             clientName: 'Test',
+            validadeDias: 10,
             clientCpf: '12345678900',
         })
 
@@ -37,6 +38,7 @@ describe('negotiations API', () => {
         expect(url).toContain('/negotiations/proposal')
         expect(init.method).toBe('POST')
         const requestBody = JSON.parse(init.body as string) as Record<string, unknown>
+        expect(requestBody.validadeDias).toBe(10)
         expect(requestBody.idempotency_key).toEqual(expect.any(String))
     })
 
@@ -109,3 +111,4 @@ describe('contracts API', () => {
         expect(result.propertyTitle).toBe('Casa modelo')
     })
 })
+

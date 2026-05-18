@@ -174,6 +174,12 @@ export default function ProposalWizardPage() {
         )
 
     useEffect(() => {
+        const profileName = String(session?.user?.name ?? '').trim()
+        if (!profileName || isEditMode) return
+        setClientName((current) => (current.trim().length > 0 ? current : profileName))
+    }, [isEditMode, session?.user?.name])
+
+    useEffect(() => {
         if (!property) return
         if (canGenerateForProperty) return
         router.replace(`${buildPublicPropertyUrl(property)}?proposalBlocked=1`)
@@ -203,7 +209,7 @@ export default function ProposalWizardPage() {
                 }
                 if (cancelled) return
 
-                setClientName(existing.clientName ?? '')
+                setClientName(existing.clientName?.trim() || String(session?.user?.name ?? '').trim())
                 setClientCpf(existing.clientCpf ?? '')
                 if (Number.isInteger(existing.validadeDias) && Number(existing.validadeDias) > 0) {
                     setValidadeDias(Number(existing.validadeDias))
@@ -311,8 +317,8 @@ export default function ProposalWizardPage() {
 
         const confirmed = window.confirm(
             isEditMode
-                ? 'Salvar alterações da proposta? Após assinatura ela ficará bloqueada para edição.'
-                : 'Após assinatura, a proposta fica bloqueada para edição. Revise os dados antes de gerar. Deseja continuar?'
+                ? 'Salvar alterações da proposta? Ela continua editável até a assinatura.'
+                : 'A proposta continua editável até a assinatura. Confirmar geração do PDF agora?'
         )
         if (!confirmed) return
 
@@ -506,15 +512,19 @@ export default function ProposalWizardPage() {
 
                             <div className="space-y-4">
                                 <div>
-                                    <label className="mb-1 block text-sm font-medium text-gray-700">Nome do Cliente *</label>
+                                    <label htmlFor="proposal-client-name" className="mb-1 block text-sm font-medium text-gray-700">Nome completo</label>
                                     <input
+                                        id="proposal-client-name"
                                         type="text"
                                         value={clientName}
-                                        onChange={e => setClientName(e.target.value)}
-                                        maxLength={120}
+                                        onChange={(e) => setClientName(e.target.value)}
                                         className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary-500"
-                                        placeholder="Nome completo do comprador"
+                                        placeholder="Nome não carregado do perfil"
+                                        autoComplete="name"
                                     />
+                                    <p className="mt-1 text-xs text-gray-500">
+                                        Nome preenchido automaticamente pelo perfil, mas você pode editar.
+                                    </p>
                                 </div>
 
                                 <div>
@@ -541,6 +551,9 @@ export default function ProposalWizardPage() {
                                     </p>
                                 </div>
                             )}
+                            <p className="text-xs text-gray-500">
+                                A proposta continua editável até a assinatura.
+                            </p>
                         </div>
                     ) : (
                         /* ═══ STEP 2: Valor Total da Proposta ═══ */

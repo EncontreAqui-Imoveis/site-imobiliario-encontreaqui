@@ -50,6 +50,9 @@ describe('propertiesApi', () => {
             slug: 'casa-com-quintal-rio-verde-AB12CD',
             valor_condominio: 0,
             valor_iptu: 900,
+            promotion_price: 350000,
+            promotion_start: '2026-01-01T00:00:00.000Z',
+            promotion_end: '2026-01-31T23:59:59.000Z',
             images: [{ image_url: 'https://cdn/imovel.jpg' }],
             broker_id: 99,
             broker_name: 'Corretor',
@@ -70,6 +73,9 @@ describe('propertiesApi', () => {
         expect(normalized?.areaTerrenoUnidade).toBe('hectare')
         expect(normalized?.public_code).toBe('AB12CD')
         expect(normalized?.slug).toBe('casa-com-quintal-rio-verde-AB12CD')
+        expect(normalized?.promotionPrice).toBe(350000)
+        expect(normalized?.promotionStart).toBe('2026-01-01T00:00:00.000Z')
+        expect(normalized?.promotionEnd).toBe('2026-01-31T23:59:59.000Z')
         expect(normalized?.images[0]).toContain('https://cdn/imovel.jpg')
         expect(normalized?.brokerName).toBe('Corretor')
         expect(normalized?.semCep).toBe(true)

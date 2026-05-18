@@ -1,4 +1,10 @@
 jest.mock('@/lib/api/client', () => ({
+    ApiError: class MockApiError extends Error {
+        constructor(message = '') {
+            super(message)
+            this.status = undefined
+        }
+    },
     apiClient: {
         get: jest.fn(),
         post: jest.fn(),
@@ -70,3 +76,4 @@ describe('negotiations service', () => {
         expect(result).toEqual([{ id: 1, name: 'Corretor Válido' }])
     })
 })
+
