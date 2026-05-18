@@ -79,6 +79,8 @@ describe('PropertySidebar', () => {
         expect(screen.getByText('R$ 3.500,00')).toBeInTheDocument()
         expect(screen.getByText('R$ 2.800,00')).toBeInTheDocument()
         expect(screen.getByText(/Promoção:/i)).toBeInTheDocument()
+        expect(screen.getByText('Converse conosco, faça propostas e acompanhe todo o processo diretamente no Encontre Aqui.')).toBeInTheDocument()
+        expect(screen.getByText('Código de Referência')).toBeInTheDocument()
         expect(screen.getByText('Gerar proposta')).toBeInTheDocument()
         expect(screen.getByText('Falar pelo WhatsApp')).toBeInTheDocument()
     })

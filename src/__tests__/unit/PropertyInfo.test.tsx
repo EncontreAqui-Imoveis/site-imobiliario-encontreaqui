@@ -2,6 +2,7 @@ import React from 'react'
 import { render, screen } from '@testing-library/react'
 import PropertyInfo from '@/components/property/PropertyInfo'
 import { Property } from '@/types/property'
+import { PROPERTY_CANONICAL_AMENITIES } from '@/lib/propertyCreate'
 
 jest.mock('lucide-react', () => {
     const MockIcon = () => <span data-testid="icon" />
@@ -51,6 +52,7 @@ describe('PropertyInfo', () => {
         expect(screen.queryByText('Complemento')).not.toBeInTheDocument()
         expect(screen.queryByText('CEP')).not.toBeInTheDocument()
         expect(screen.queryByText(/Goiânia • GO/)).not.toBeInTheDocument()
+        expect(screen.queryByText('Suítes')).not.toBeInTheDocument()
     })
 
     it('exibe área com unidade original', () => {
@@ -87,5 +89,38 @@ describe('PropertyInfo', () => {
         expect(screen.getByText(/Aceita pets/i)).toBeInTheDocument()
         expect(screen.getByText('Sistema de segurança/câmera')).toBeInTheDocument()
         expect(screen.getAllByText('Mobiliada')).toHaveLength(1)
+        expect(screen.queryByText('Automação')).not.toBeInTheDocument()
+    })
+
+    it('exibe todas as comodidades quando o imóvel possuir todas as opções canônicas', () => {
+        const propertyWithAllAmenities: Property = {
+            ...propertyMock,
+            amenities: [...PROPERTY_CANONICAL_AMENITIES],
+        }
+
+        render(<PropertyInfo property={propertyWithAllAmenities} />)
+
+        const expectedLabels = [
+            /Wi-Fi/i,
+            /Piscina/i,
+            /Energia Solar/i,
+            /Automação/i,
+            /Ar-condicionado/i,
+            /Poço Artesiano/i,
+            /Mobiliada/i,
+            /Elevador/i,
+            /Academia/i,
+            /Churrasqueira/i,
+            /Salão de festas/i,
+            /Quadra/i,
+            /Condomínio fechado/i,
+            /Aceita pets/i,
+            /Sistema de segurança\/c[âa]mera/i,
+            /Sauna/i,
+        ]
+
+        for (const label of expectedLabels) {
+            expect(screen.getByText(label)).toBeInTheDocument()
+        }
     })
 })

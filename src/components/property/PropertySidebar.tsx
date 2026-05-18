@@ -149,11 +149,11 @@ export default function PropertySidebar({ property, visitorProposalHref }: Prope
                         <Info className="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" />
                         <p className="text-sm text-primary-900 leading-relaxed">
                             <span className="font-bold block mb-1">Negocie com segurança</span>
-                            Converse com o corretor, faça propostas e acompanhe todo o processo diretamente no Encontre Aqui.
+                            Converse conosco, faça propostas e acompanhe todo o processo diretamente no Encontre Aqui.
                         </p>
                     </div>
                     <div className="mt-4 pt-4 border-t border-primary-100 flex items-center justify-between text-sm">
-                        <span className="text-primary-700 font-medium">Referência</span>
+                        <span className="text-primary-700 font-medium">Código de Referência</span>
                         <span className="rounded-md border border-primary-100 bg-white px-2 py-1 font-bold text-primary-900 shadow-sm">
                             {publicReference || 'Indisponível'}
                         </span>

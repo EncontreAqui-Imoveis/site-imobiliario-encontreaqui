@@ -123,6 +123,7 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
     const groupedGenericAmenities = selectedCanonicalAmenities
         .filter((amenity) => !mappedComfortAmenities.has(normalizeAmenityLabel(amenity)))
         .map((amenity) => getAmenityLabel(amenity as PropertyAmenity))
+    const activeComfortAmenities = comfortAmenities.filter((item) => item.active)
 
     // Build additional characteristics
     const additionalInfo = [
@@ -230,11 +231,6 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                         <span className="text-xs font-medium uppercase tracking-wide text-gray-600">
                             {formatUnit(property.garageSpots || 0, 'Garagem', 'Garagens')}
                         </span>
-                    </div>
-                    <div className="flex flex-col items-center justify-center gap-2 text-center">
-                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">Suítes</span>
-                        <span className="text-xl font-bold text-gray-900">{property.suites || 0}</span>
-                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">{formatUnit(property.suites || 0, 'Suíte', 'Suítes')}</span>
                     </div>
                     <div className="flex flex-col items-center justify-center gap-2 text-center">
                         <Maximize className="h-6 w-6 shrink-0 text-primary-600" />
@@ -349,15 +345,15 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                     Comodidades
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {comfortAmenities.map((item, index) => (
-                        <div key={index} className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${item.active ? 'bg-primary-50/50 border border-primary-100' : 'bg-gray-50 border border-gray-100 opacity-60'}`}>
+                    {activeComfortAmenities.map((item, index) => (
+                        <div key={index} className="flex items-center gap-3 p-3 rounded-xl transition-colors bg-primary-50/50 border border-primary-100">
                             <div className={`p-2 rounded-lg ${item.active ? 'bg-primary-100 text-primary-700' : 'bg-gray-200 text-gray-500'}`}>
                                 <item.icon className="w-5 h-5" />
                             </div>
-                            <span className={`text-sm font-medium ${item.active ? 'text-gray-900' : 'text-gray-500'}`}>
+                            <span className="text-sm font-medium text-gray-900">
                                 {getAmenityLabel(item.label as PropertyAmenity)}
                             </span>
-                            {item.active && <CheckCircle className="w-4 h-4 text-primary-500 ml-auto" />}
+                            <CheckCircle className="w-4 h-4 text-primary-500 ml-auto" />
                         </div>
                     ))}
                     {groupedGenericAmenities.map((amenity) => (
@@ -366,7 +362,7 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                         </div>
                     ))}
                 </div>
-                {groupedGenericAmenities.length === 0 && (
+                {activeComfortAmenities.length === 0 && groupedGenericAmenities.length === 0 && (
                     <p className="mt-4 text-sm text-gray-500">Nenhuma outra comodidade informada.</p>
                 )}
             </div>
