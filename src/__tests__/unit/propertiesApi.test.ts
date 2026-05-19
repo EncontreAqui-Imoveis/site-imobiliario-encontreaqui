@@ -93,11 +93,15 @@ describe('propertiesApi', () => {
             address: 'Rua A',
             city: 'Brasil',
             state: 'GO',
-            images: ['https://res.cloudinary.co/demo/image/upload/v1/sample.jpg'],
+            images: [
+                'https://res.cloudinary.co/demo/image/upload/v1/sample.jpg',
+                'https://res.cloudinary.co',
+            ],
             created_at: '2026-01-01T00:00:00.000Z',
         })
 
         expect(normalized?.images[0]).toBe('https://res.cloudinary.com/demo/image/upload/v1/sample.jpg')
+        expect(normalized?.images[1]).toBe('https://res.cloudinary.com')
     })
 
     it('returns featured properties from API data payload', async () => {

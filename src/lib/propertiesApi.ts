@@ -24,7 +24,11 @@ function toStringOrUndefined(value: unknown): string | undefined {
 }
 
 function normalizeCloudinaryUrl(value: string): string {
-    return value.replace('https://res.cloudinary.co/', 'https://res.cloudinary.com/')
+    const normalized = value.trim()
+    if (normalized.startsWith('https://res.cloudinary.co')) {
+        return `https://res.cloudinary.com${normalized.slice('https://res.cloudinary.co'.length)}`
+    }
+    return normalized
 }
 
 function normalizeAreaField(raw: unknown): Property['areaConstruidaUnidade'] {
