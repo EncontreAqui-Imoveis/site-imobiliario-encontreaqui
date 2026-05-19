@@ -65,7 +65,7 @@ export default function PropertyGalleryModal({ images, initialIndex = 0, isOpen,
                         className="object-contain"
                         sizes="100vw"
                     />
-                    <PhotoWatermark layerClassName="z-[35]" />
+                    <PhotoWatermark fullscreen layerClassName="z-[35]" testId="fullscreen-watermark" />
                 </div>
 
                 {/* Navigation */}

@@ -82,6 +82,24 @@ describe('propertiesApi', () => {
         expect(normalized?.temEnergiaSolar).toBe(true)
     })
 
+    it('normalizes legacy cloudinary.co image urls to cloudinary.com', () => {
+        const normalized = normalizeProperty({
+            id: 11,
+            title: 'Casa Legacy',
+            type: 'Casa',
+            status: 'approved',
+            purpose: 'Venda',
+            price: 100000,
+            address: 'Rua A',
+            city: 'Brasil',
+            state: 'GO',
+            images: ['https://res.cloudinary.co/demo/image/upload/v1/sample.jpg'],
+            created_at: '2026-01-01T00:00:00.000Z',
+        })
+
+        expect(normalized?.images[0]).toBe('https://res.cloudinary.com/demo/image/upload/v1/sample.jpg')
+    })
+
     it('returns featured properties from API data payload', async () => {
         ;(global.fetch as jest.Mock).mockResolvedValue({
             ok: true,

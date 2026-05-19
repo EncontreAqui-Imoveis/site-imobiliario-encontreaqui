@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
-import FsLightbox from 'fslightbox-react'
 import { ChevronLeft, ChevronRight, Grid, X } from 'lucide-react'
 import FavoriteButton from '@/components/property/FavoriteButton'
 import PhotoWatermark from '@/components/property/PhotoWatermark'
+import PropertyGalleryModal from '@/components/property/PropertyGalleryModal'
 
 interface PropertyGalleryProps {
     images: string[]
@@ -18,7 +18,6 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
     const [isOpen, setIsOpen] = useState(false)
     const [photoIndex, setPhotoIndex] = useState(0)
     const [showVideo, setShowVideo] = useState(false)
-    const [lightboxToggler, setLightboxToggler] = useState(false)
 
     // Ensure we have valid images
     const validImages = images?.filter(Boolean) || []
@@ -37,7 +36,6 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
     const openLightbox = (index: number) => {
         setPhotoIndex(index)
         setIsOpen(true)
-        setLightboxToggler((prev) => !prev)
     }
 
     const nextPhoto = () => {
@@ -179,11 +177,11 @@ export default function PropertyGallery({ images, title, videoUrl, propertyId }:
                 Ver todas as fotos ({validImages.length})
             </button>
 
-            {/* Lightbox Modal */}
-            <FsLightbox
-                toggler={lightboxToggler}
-                sources={validImages}
-                slide={photoIndex + 1}
+            {/* Fullscreen Modal */}
+            <PropertyGalleryModal
+                images={validImages}
+                initialIndex={photoIndex}
+                isOpen={isOpen}
                 onClose={() => setIsOpen(false)}
             />
 

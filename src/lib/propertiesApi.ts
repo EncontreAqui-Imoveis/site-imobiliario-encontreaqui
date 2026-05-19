@@ -23,6 +23,10 @@ function toStringOrUndefined(value: unknown): string | undefined {
     return normalized.length > 0 ? normalized : undefined
 }
 
+function normalizeCloudinaryUrl(value: string): string {
+    return value.replace('https://res.cloudinary.co/', 'https://res.cloudinary.com/')
+}
+
 function normalizeAreaField(raw: unknown): Property['areaConstruidaUnidade'] {
     if (raw == null) return 'm2'
     return normalizeAreaUnidade(String(raw))
@@ -44,10 +48,10 @@ function toImageUrlList(raw: unknown): string[] {
     if (Array.isArray(raw)) {
         return raw
             .map((item) => {
-                if (typeof item === 'string') return item.trim()
+                if (typeof item === 'string') return normalizeCloudinaryUrl(item.trim())
                 if (item && typeof item === 'object') {
                     const candidate = (item as Record<string, unknown>).image_url ?? (item as Record<string, unknown>).url
-                    return candidate ? String(candidate).trim() : ''
+                    return candidate ? normalizeCloudinaryUrl(String(candidate).trim()) : ''
                 }
                 return ''
             })
@@ -57,7 +61,7 @@ function toImageUrlList(raw: unknown): string[] {
     if (typeof raw === 'string') {
         return raw
             .split(',')
-            .map((entry) => entry.trim())
+            .map((entry) => normalizeCloudinaryUrl(entry.trim()))
             .filter(Boolean)
     }
 
