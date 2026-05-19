@@ -114,6 +114,7 @@ export interface ContractSummary {
     propertyCode?: string | null
     propertyPurpose?: string | null
     viewerSide?: ContractSide | 'both' | 'none' | null
+    responsibleUserIds?: number[] | null
     documentProgress?: ContractDocumentProgressSummary | null
     documentRequirements?: DocumentRequirementsPayload | null
 }

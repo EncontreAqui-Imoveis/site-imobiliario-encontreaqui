@@ -87,19 +87,20 @@ describe('contracts API', () => {
     })
 
     it('getContractById() encodes contractId in URL', async () => {
-        const mockContract = {
-            contract: {
-                id: 'abc',
-                negotiationId: 'def',
-                propertyId: 30102,
-                status: 'IN_DRAFT',
-                sellerApprovalStatus: 'APPROVED_WITH_RES',
-                buyerApprovalStatus: 'PENDING',
-                propertyTitle: 'Casa modelo',
+            const mockContract = {
+                contract: {
+                    id: 'abc',
+                    negotiationId: 'def',
+                    propertyId: 30102,
+                    status: 'IN_DRAFT',
+                    sellerApprovalStatus: 'APPROVED_WITH_RES',
+                    buyerApprovalStatus: 'PENDING',
+                    propertyTitle: 'Casa modelo',
+                    responsibleUserIds: [11, 22],
+                    documents: [],
+                },
                 documents: [],
-            },
-            documents: [],
-        }
+            }
         mockFetch.mockResolvedValueOnce(okResponse(mockContract))
 
         const result = await contracts.getContractById('id/with/slashes')
@@ -109,6 +110,7 @@ describe('contracts API', () => {
         expect(result.id).toBe('abc')
         expect(result.negotiationId).toBe('def')
         expect(result.propertyTitle).toBe('Casa modelo')
+        expect(result.responsibleUserIds).toEqual([11, 22])
     })
 })
 

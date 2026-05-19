@@ -65,6 +65,27 @@ export function normalizeDocumentRequirements(
     return out
 }
 
+function normalizeNumericIdList(raw: unknown): number[] | null {
+    if (Array.isArray(raw)) {
+        const ids = raw
+            .map((value) => Number(value))
+            .filter((value) => Number.isInteger(value) && value > 0)
+        return ids.length > 0 ? Array.from(new Set(ids)) : null
+    }
+
+    const normalized = String(raw ?? '').trim()
+    if (!normalized) {
+        return null
+    }
+
+    const ids = normalized
+        .split(',')
+        .map((value) => Number(value.trim()))
+        .filter((value) => Number.isInteger(value) && value > 0)
+
+    return ids.length > 0 ? Array.from(new Set(ids)) : null
+}
+
 function normalizeDocumentProgress(raw: unknown): ContractDocumentProgressSummary | null {
     if (!raw || typeof raw !== 'object') return null
     const root = raw as Record<string, unknown>
@@ -131,6 +152,9 @@ function normalizeContractSummary(raw: unknown): ContractSummary | null {
             : rawViewerSide === 'both' || rawViewerSide === 'none'
                 ? rawViewerSide
                 : null
+    const responsibleUserIds = normalizeNumericIdList(
+        item.responsibleUserIds ?? item.responsible_user_ids,
+    )
 
     if (!id || !negotiationId || !Number.isFinite(propertyId) || propertyId <= 0) {
         return null
@@ -161,6 +185,7 @@ function normalizeContractSummary(raw: unknown): ContractSummary | null {
                 ? item.property_purpose
                 : null,
         viewerSide,
+        responsibleUserIds,
         documentProgress: normalizeDocumentProgress(item.documentProgress ?? item.document_progress),
         documentRequirements: normalizeDocumentRequirements(
             item.documentRequirements ?? item.document_requirements,

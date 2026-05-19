@@ -749,26 +749,35 @@ export function ContractDetailClient({ contract }: Props) {
         Number.isFinite(currentUserId) &&
         currentUserId > 0 &&
         currentContract.buyerClientId === currentUserId
+    const isResponsibleViewer =
+        Number.isFinite(currentUserId) &&
+        currentUserId > 0 &&
+        Array.isArray(currentContract.responsibleUserIds) &&
+        currentContract.responsibleUserIds.includes(currentUserId)
     const canEditSellerSide =
         isAwaitingDocs &&
         !sellerLocked &&
-        (isCaptadorViewer || isOwnerViewer)
+        (isCaptadorViewer || isOwnerViewer || isResponsibleViewer)
     const canEditBuyerSide =
         isAwaitingDocs &&
         !buyerLocked &&
-        (isCaptadorViewer || isBuyerViewer)
+        (isCaptadorViewer || isBuyerViewer || isResponsibleViewer)
 
     const isDualRoleViewer =
         isCaptadorViewer && isBuyerViewer
     const isSellerViewer =
-        isCaptadorViewer || isOwnerViewer
+        isCaptadorViewer || isOwnerViewer || isResponsibleViewer
+    const isBuyerSideViewer =
+        isBuyerViewer || isResponsibleViewer
     const viewerSide = (() => {
         if (currentContract.viewerSide === 'seller' || currentContract.viewerSide === 'buyer' || currentContract.viewerSide === 'both' || currentContract.viewerSide === 'none') {
             return currentContract.viewerSide
         }
+        if (isResponsibleViewer) return 'both'
         if (isSellerViewer && isBuyerViewer) return 'both'
+        if (isSellerViewer && isBuyerSideViewer) return 'both'
         if (isSellerViewer) return 'seller'
-        if (isBuyerViewer) return 'buyer'
+        if (isBuyerSideViewer) return 'buyer'
         return 'none'
     })()
     const canViewSellerDocuments = viewerSide === 'seller' || viewerSide === 'both'

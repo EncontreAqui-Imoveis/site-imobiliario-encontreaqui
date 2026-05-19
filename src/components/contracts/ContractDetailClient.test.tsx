@@ -3,14 +3,16 @@ import { fireEvent, render, screen, within } from '@testing-library/react'
 import { ContractDetailClient } from './ContractDetailClient'
 import type { ContractDetail } from '@/types/contract'
 
+let mockSessionUser = {
+    id: 1,
+    email: 'broker@test.com',
+    phone: '62999998888',
+}
+
 jest.mock('@/contexts/UserContext', () => ({
     useUser: () => ({
         session: {
-            user: {
-                id: 1,
-                email: 'broker@test.com',
-                phone: '62999998888',
-            },
+            user: mockSessionUser,
         },
     }),
 }))
@@ -73,6 +75,7 @@ function buildContract(): ContractDetail {
                 { category: 'comprovante_renda', applicability: 'required', required: true, reasonCode: 'COMPROVANTE_RENDA_REQUIRED' },
             ],
         },
+        responsibleUserIds: [1, 77],
         documentProgress: {
             seller: {
                 side: 'seller',
@@ -104,6 +107,14 @@ function buildContract(): ContractDetail {
 }
 
 describe('ContractDetailClient', () => {
+    beforeEach(() => {
+        mockSessionUser = {
+            id: 1,
+            email: 'broker@test.com',
+            phone: '62999998888',
+        }
+    })
+
     it('mostra labels contextuais e exibe documentos do cônjuge assim que o estado civil muda', () => {
         render(<ContractDetailClient contract={buildContract()} />)
 
@@ -119,5 +130,29 @@ describe('ContractDetailClient', () => {
 
         expect(screen.getAllByText('Documentos do cônjuge').length).toBeGreaterThan(0)
         expect(screen.getAllByText('Dados bancários').length).toBeGreaterThan(0)
+    })
+
+    it('permite ao responsável editar ambos os lados na fase de documentos', () => {
+        mockSessionUser = {
+            id: 77,
+            email: 'responsavel@test.com',
+            phone: '62900001111',
+        }
+
+        render(
+            <ContractDetailClient
+                contract={{
+                    ...buildContract(),
+                    capturingBrokerId: 30003,
+                    buyerClientId: 90001,
+                    ownerId: 80001,
+                    responsibleUserIds: [77],
+                }}
+            />,
+        )
+
+        expect(screen.getAllByText('Salvar dados deste lado').length).toBeGreaterThanOrEqual(2)
+        expect(screen.getByText('Documentos do proprietário')).toBeInTheDocument()
+        expect(screen.getByText('Documentos do comprador')).toBeInTheDocument()
     })
 })
