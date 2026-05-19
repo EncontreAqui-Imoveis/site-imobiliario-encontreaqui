@@ -25,10 +25,25 @@ function toStringOrUndefined(value: unknown): string | undefined {
 
 function normalizeCloudinaryUrl(value: string): string {
     const normalized = value.trim()
-    if (normalized.startsWith('https://res.cloudinary.co')) {
-        return `https://res.cloudinary.com${normalized.slice('https://res.cloudinary.co'.length)}`
+    if (!normalized) return ''
+
+    try {
+        const url = new URL(normalized)
+        if (url.hostname === 'res.cloudinary.co') {
+            url.hostname = 'res.cloudinary.com'
+        }
+        if (url.hostname === 'res.cloudinary.com') {
+            if (url.pathname === '/' && !url.search && !url.hash) {
+                return ''
+            }
+            return url.toString()
+        }
+        return normalized
+    } catch {
+        return normalized.startsWith('https://res.cloudinary.co/')
+            ? normalized.replace('https://res.cloudinary.co/', 'https://res.cloudinary.com/')
+            : normalized
     }
-    return normalized
 }
 
 function normalizeAreaField(raw: unknown): Property['areaConstruidaUnidade'] {

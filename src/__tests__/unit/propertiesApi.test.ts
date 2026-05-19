@@ -101,7 +101,7 @@ describe('propertiesApi', () => {
         })
 
         expect(normalized?.images[0]).toBe('https://res.cloudinary.com/demo/image/upload/v1/sample.jpg')
-        expect(normalized?.images[1]).toBe('https://res.cloudinary.com')
+        expect(normalized?.images).toHaveLength(1)
     })
 
     it('returns featured properties from API data payload', async () => {
