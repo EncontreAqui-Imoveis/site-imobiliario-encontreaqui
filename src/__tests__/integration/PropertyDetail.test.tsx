@@ -5,6 +5,7 @@ import { Property } from '@/types/property'
 import * as propertiesApi from '@/lib/propertiesApi'
 
 jest.mock('@/lib/propertiesApi', () => ({
+    ...jest.requireActual('@/lib/propertiesApi'),
     fetchPropertyById: jest.fn(),
 }))
 
@@ -48,7 +49,14 @@ jest.mock('lucide-react', () => {
 
 jest.mock('@/components/property/PropertyCard', () => {
     return function MockPropertyCard({ property }: { property: Property }) {
-        return <div data-testid="property-card">{property.title}</div>
+        return (
+            <div
+                data-testid="property-card"
+                data-image={property.images?.[0] ?? ''}
+            >
+                {property.title}
+            </div>
+        )
     }
 })
 
@@ -271,5 +279,32 @@ describe('PropertyDetailClient', () => {
             expect(screen.getByText('Similar House 1')).toBeInTheDocument()
         })
 
+    })
+
+    it('normaliza urls legadas nas propriedades similares antes de renderizar', async () => {
+        const mockSimilar = {
+            data: [
+                {
+                    ...mockProperty,
+                    id: 2,
+                    title: 'Similar House Legacy',
+                    images: ['https://res.cloudinary.co/demo/image/upload/legacy.jpg'],
+                },
+            ],
+        }
+
+        ;(global.fetch as jest.Mock).mockResolvedValue({
+            ok: true,
+            json: async () => mockSimilar,
+        })
+
+        render(<PropertyDetailClient propertyId="1" initialProperty={mockProperty} />)
+
+        await waitFor(() => {
+            expect(screen.getByTestId('property-card')).toHaveAttribute(
+                'data-image',
+                'https://res.cloudinary.com/demo/image/upload/legacy.jpg',
+            )
+        })
     })
 })

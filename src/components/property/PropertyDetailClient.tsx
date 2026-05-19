@@ -14,7 +14,7 @@ import {
 import { Property, formatPrice, getPromoSalePrice, getPromoRentPrice } from '@/types/property'
 import { useUser } from '@/contexts/UserContext'
 import { buildWhatsappLink } from '@/lib/contactLinks'
-import { fetchPropertyById } from '@/lib/propertiesApi'
+import { fetchPropertyById, normalizeProperty } from '@/lib/propertiesApi'
 import { displayStatusLabel } from '@/lib/propertyLabels'
 import { API_BASE_URL } from '@/lib/api/client'
 import {
@@ -141,6 +141,8 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                 const allSimilar = Array.isArray(rawSimilar) ? rawSimilar : []
 
                 const filtered = allSimilar
+                    .map((item) => normalizeProperty(item))
+                    .filter((item): item is Property => item !== null)
                     .filter((p: Property) => p.id !== currentProperty.id)
                     .slice(0, 3)
 
