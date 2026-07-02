@@ -55,14 +55,14 @@ export async function uploadToCloudinaryBrowser(
             url: response.secure_url,
             public_id: response.public_id,
           });
-        } catch (err) {
+        } catch {
           reject(new Error('Invalid response from Cloudinary'));
         }
       } else {
         try {
           const errorResponse = JSON.parse(xhr.responseText);
           reject(new Error(errorResponse.error?.message || 'Upload failed'));
-        } catch (err) {
+        } catch {
           reject(new Error('Upload failed'));
         }
       }

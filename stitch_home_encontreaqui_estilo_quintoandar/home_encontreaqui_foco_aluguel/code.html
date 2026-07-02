@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EncontreAqui Imóveis - Início</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=Hanken+Grotesk:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@100..900&amp;family=Hanken+Grotesk:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+        /* Custom Utilities */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#111c2d",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed-dim": "#f0c037",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "primary-container": "#ffce44",
+                        "on-primary-fixed": "#241a00",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-tertiary-fixed-variant": "#38485d",
+                        "surface-bright": "#f7f9fb",
+                        "primary": "#765b00",
+                        "inverse-surface": "#2d3133",
+                        "tertiary": "#505f76",
+                        "primary-fixed": "#ffdf93",
+                        "on-error-container": "#93000a",
+                        "surface-dim": "#d8dadc",
+                        "secondary-container": "#d5e0f8",
+                        "tertiary-container": "#c5d5ef",
+                        "on-surface": "#191c1e",
+                        "on-secondary-container": "#586377",
+                        "on-primary-container": "#725800",
+                        "surface-tint": "#765b00",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#f0c037",
+                        "surface-container": "#eceef0",
+                        "on-background": "#191c1e",
+                        "outline": "#807662",
+                        "surface": "#f7f9fb",
+                        "surface-container-low": "#f2f4f6",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "on-primary": "#ffffff",
+                        "surface-container-high": "#e6e8ea",
+                        "surface-variant": "#e0e3e5",
+                        "on-error": "#ffffff",
+                        "on-surface-variant": "#4e4634",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed-variant": "#594400",
+                        "tertiary-fixed-dim": "#b7c8e1",
+                        "secondary": "#545f73",
+                        "surface-container-highest": "#e0e3e5",
+                        "background": "#f7f9fb",
+                        "outline-variant": "#d1c5ae",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "on-tertiary-container": "#4c5c72",
+                        "secondary-fixed": "#d8e3fb",
+                        "tertiary-fixed": "#d3e4fe"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px",
+                        "2xl": "1rem"
+                    },
+                    "spacing": {
+                        "stack-md": "16px",
+                        "stack-lg": "32px",
+                        "container-max": "1280px",
+                        "margin-mobile": "20px",
+                        "margin-desktop": "64px",
+                        "unit": "4px",
+                        "gutter": "24px",
+                        "stack-sm": "8px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["DM Sans"],
+                        "headline-xl": ["DM Sans"],
+                        "headline-md": ["DM Sans"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "label-md": ["Hanken Grotesk"],
+                        "price-display": ["DM Sans"],
+                        "body-md": ["Hanken Grotesk"],
+                        "headline-lg": ["DM Sans"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["24px", { "lineHeight": "1.3", "fontWeight": "700" }],
+                        "headline-xl": ["48px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["20px", { "lineHeight": "1.4", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "price-display": ["24px", { "lineHeight": "1", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col">
+<!-- TopNavBar Component -->
+<nav class="bg-surface-container-lowest full-width top-0 sticky z-50 shadow-sm">
+<div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-4 max-w-container-max mx-auto border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<img alt="EncontreAqui Imóveis" class="h-8 md:h-10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOympeupHEWpIB2f2Qr0ybPT1ghTLh99beS3JneZSf9eeH902TTV-_s3ZlI6auIitO44T8s31wPSN4lGjCwSeGLhaLb1_mL_k4J7N2ucyxh5hkH6IpT2avTmgpTRdyqQQkU8EjK3yxi9ITLaDmOwbzTalrRIH723nkD_1IDqPQnrWIv59ylJr5vio48Go2k08TqT6Xw6ZFPmamilP-71-hLlXYI1LOdha06aVUIWNvAESvMfuVAtpeYk_1UfEcgY_PILXMlSl6xffq"/>
+</div>
+<div class="hidden md:flex items-center gap-8"><a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Anunciar</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Comprar</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Alugar</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Sobre Nós</a><a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Imóveis</a></div>
+<div class="flex items-center gap-4">
+<button class="font-label-md text-label-md bg-transparent border-2 border-on-surface text-on-surface px-6 py-2 rounded-lg hover:bg-surface-container transition-colors scale-95 active:opacity-80">
+                    Entrar
+                </button>
+<button class="px-6 py-2 rounded-full font-label-md text-label-md bg-surface-container-lowest shadow-sm text-on-surface transition-all font-bold">Cadastrar</button></div>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-grow">
+<!-- Hero Section -->
+<section class="relative bg-surface w-full max-w-container-max mx-auto md:px-margin-desktop md:py-stack-lg md:mt-8">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-gutter bg-surface-container-lowest lg:rounded-2xl overflow-hidden shadow-sm relative">
+<!-- Left: Search Card -->
+<div class="p-margin-mobile md:p-10 lg:p-12 z-10 bg-surface-container-lowest lg:rounded-2xl lg:shadow-[0_4px_20px_rgba(30,41,59,0.05)] w-full max-w-xl mx-auto lg:mx-0 relative lg:-mr-12 lg:my-8 flex flex-col justify-center">
+<div class="flex gap-2 mb-8 bg-surface-container p-1 rounded-full w-max">
+<button class="px-6 py-2 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all">Comprar</button>
+<button class="px-6 py-2 rounded-full font-label-md text-label-md bg-surface-container-lowest shadow-sm text-on-surface transition-all font-bold">Alugar</button>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface mb-8">Encontre o lugar onde sua nova história começa!</h1>
+<div class="space-y-4">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-secondary">location_on</span>
+<input class="w-full bg-surface pl-12 pr-4 py-4 rounded-xl border border-outline-variant focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all font-body-md text-on-surface outline-none placeholder:text-on-surface-variant" placeholder="Busque por cidade" type="text"/>
+</div>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-secondary">home_work</span>
+<input class="w-full bg-surface pl-12 pr-4 py-4 rounded-xl border border-outline-variant focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all font-body-md text-on-surface outline-none placeholder:text-on-surface-variant" placeholder="Busque por bairro" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-secondary">payments</span>
+<select class="w-full bg-surface pl-12 pr-10 py-4 rounded-xl border border-outline-variant focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all font-body-md text-on-surface appearance-none outline-none">
+<option value="">Valor até</option>
+<option value="2000">R$ 2.000</option>
+<option value="4000">R$ 4.000</option>
+</select>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-secondary pointer-events-none">expand_more</span>
+</div>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-secondary">bed</span>
+<select class="w-full bg-surface pl-12 pr-10 py-4 rounded-xl border border-outline-variant focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all font-body-md text-on-surface appearance-none outline-none">
+<option value="">Quartos</option>
+<option value="1">1+</option>
+<option value="2">2+</option>
+</select>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-secondary pointer-events-none">expand_more</span>
+</div>
+</div><div class="relative group"><span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-secondary">tag</span><input class="w-full bg-surface pl-12 pr-4 py-4 rounded-xl border border-outline-variant focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all font-body-md text-on-surface outline-none placeholder:text-on-surface-variant" placeholder="Código do imóvel" type="text"/></div>
+<button class="w-full bg-primary-container text-on-primary-fixed font-label-md text-label-md py-4 rounded-xl hover:bg-primary-fixed transition-colors mt-2 font-bold">
+                            Buscar imóveis
+                        </button>
+</div>
+</div>
+<!-- Right: Hero Image -->
+<div class="relative h-[400px] lg:h-auto order-first lg:order-last">
+<img alt="https://lh3.googleusercontent.com/aida-public/AB6AXuCrh7ibqO5lx8GdGIj1XW5JklzRCliITcqhjGaotknGgrFnNt90uCGeMM1eHDsG_gE3-HXAoZQuGHHOlQDVSVdm_idvbMr2pquI0WYTZBWBfi542MlIAK59tlW5Mq3D9yOaMFYdiAAuRH8iKkJqfmfZIUm3jA2mZaRAGiXw9zXncsixYVht3CtXhE8Nm7meH44ZlaXjDfOpeV3qyW8oOQqEUse-FOjiUonL70BJgZmT8wN5vGGKVFuoaBuHQj9gLt-7Pka0v5cUWLgM" class="absolute inset-0 w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrh7ibqO5lx8GdGIj1XW5JklzRCliITcqhjGaotknGgrFnNt90uCGeMM1eHDsG_gE3-HXAoZQuGHHOlQDVSVdm_idvbMr2pquI0WYTZBWBfi542MlIAK59tlW5Mq3D9yOaMFYdiAAuRH8iKkJqfmfZIUm3jA2mZaRAGiXw9zXncsixYVht3CtXhE8Nm7meH44ZlaXjDfOpeV3qyW8oOQqEUse-FOjiUonL70BJgZmT8wN5vGGKVFuoaBuHQj9gLt-7Pka0v5cUWLgM"/>
+</div>
+</div>
+</section>
+<!-- Why Choose Us -->
+<section class="py-stack-lg md:py-24 bg-surface px-margin-mobile md:px-margin-desktop">
+<div class="max-w-container-max mx-auto">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-gutter">
+<div class="flex flex-col items-start gap-4 p-6 bg-surface-container-lowest rounded-2xl shadow-[0_4px_20px_rgba(30,41,59,0.05)]">
+<div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">shield_lock</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Segurança Total</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Processo 100% digital e seguro. Análise de crédito rápida e garantias para proprietários e inquilinos.</p>
+</div>
+<div class="flex flex-col items-start gap-4 p-6 bg-surface-container-lowest rounded-2xl shadow-[0_4px_20px_rgba(30,41,59,0.05)]">
+<div class="w-12 h-12 rounded-full bg-tertiary-container flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">speed</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Agilidade no Processo</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Alugue ou compre sem burocracia. Assinatura de contrato digital e aprovação em tempo recorde.</p>
+</div>
+<div class="flex flex-col items-start gap-4 p-6 bg-surface-container-lowest rounded-2xl shadow-[0_4px_20px_rgba(30,41,59,0.05)]">
+<div class="w-12 h-12 rounded-full bg-primary-container/30 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">support_agent</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Especialistas Locais</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Conte com corretores credenciados e experientes que conhecem cada detalhe da sua região.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Featured Listings (Horizontal Scroll) -->
+<section class="py-stack-lg md:py-16 bg-surface-container-lowest overflow-hidden"><div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop mb-12"><div><h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-2">Imóveis em Destaque para Venda</h2><p class="font-body-lg text-body-lg text-on-surface-variant">As melhores oportunidades para comprar seu novo lar.</p></div><div class="flex gap-6 overflow-x-auto py-8 hide-scrollbar snap-x snap-mandatory"><div class="min-w-[280px] md:min-w-[320px] bg-surface-container-lowest rounded-2xl border border-surface-variant overflow-hidden shadow-sm snap-start shrink-0"><div class="relative h-48"><img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpDgbvTshlQAvxrgVFjvE0fvmB34XQ9SjpX26WnLSw2oWIilfxk2YXody4_lXwLnYR9NDf4CSvPVJ_3lkDFYRQ84J6IfSXdAdElB1bOb3ynMY3rmzzmkFujWlp9yA_o5VdAc_JEbU1NFtr6W8VrKfIM72FgBxUI8DclStC954DfJUaw8UuTzn5s9nCWkjpOgZbhS7ojNOUX2OMG0dPew1D89C0vPkpE-tz0SaZ1T6-DWRMfC2TI-u53-RqZr_XeZewZDQ9VPd26Vt0"/><div class="absolute top-3 left-3 bg-surface-container-lowest px-3 py-1 rounded-full text-[12px]">Venda</div></div><div class="p-4"><p class="text-[12px] text-on-surface-variant uppercase">Casa • Jardim Europa</p><h3 class="font-headline-md text-[18px] truncate">Residência Contemporânea</h3><p class="font-price-display text-price-display mt-4">R$ 2.450.000</p></div></div><div class="min-w-[280px] md:min-w-[320px] bg-surface-container-lowest rounded-2xl border border-surface-variant overflow-hidden shadow-sm snap-start shrink-0"><div class="relative h-48"><img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2WFsfJFJuUBm7e0LOkZiyXprxKi6zZeWVYZAUC8hFQCh6ZVI6lpkLCpVvVQMEB0yUyv-SaLq9yvZcRjmSXXJakTXLBg4EilDhf22uYbm-RrsYKU-u0zeQaeQZvzJnbeL2UDjfUeslczyGJB7t3qSyaA0egeBfvYkFh2MIB9iLhxFCVsw__pMVpj-hp0peg5RYSTbGNbAzIA7iTgamTH-fNr1kEVSaFN9YQVj8k7_HT8-jhWlFNRLdDibob2pr6sGC263UoZzw6wSL"/><div class="absolute top-3 left-3 bg-surface-container-lowest px-3 py-1 rounded-full text-[12px]">Venda</div></div><div class="p-4"><p class="text-[12px] text-on-surface-variant uppercase">Casa • Morumbi</p><h3 class="font-headline-md text-[18px] truncate">Projeto Arquitetônico Único</h3><p class="font-price-display text-price-display mt-4">R$ 3.800.000</p></div></div></div><div class="flex justify-center mt-8"><button class="bg-primary-container text-on-primary-fixed font-label-md text-label-md px-8 py-3 rounded-xl hover:bg-primary-fixed transition-colors font-bold">Ver todos os imóveis para venda</button></div></div><div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop"><div><h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-2">Imóveis em Destaque para Aluguel</h2><p class="font-body-lg text-body-lg text-on-surface-variant">Opções flexíveis para quem busca praticidade.</p></div><div class="flex gap-6 overflow-x-auto py-8 hide-scrollbar snap-x snap-mandatory"><div class="min-w-[280px] md:min-w-[320px] bg-surface-container-lowest rounded-2xl border border-surface-variant overflow-hidden shadow-sm snap-start shrink-0"><div class="relative h-48"><img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAD2TgjH_uhays5ECqYIZDJ-oHkxwkCi9VLIBW62eySnawsjgMeFYZdeHUbibvb9C1sJsc9lIOVXiggqdj48EfD4ITtZL2M1sjlLS9_t0pqblWwJCxdsfxvqN2YBSLHNuk0jSHehIY-zTOH8GJxRQ4BV_5ABMCKbJlvYlPp5S3c4nzPbyGJKaMOUfZ57L0zg6TzmMRxNg9Vy4R4akwXvnFiQEYaklVjipj111KVXmKkJ56IUS1Vs8wwr2pMzwlQXNNVapf7M0c1zm75"/><div class="absolute top-3 left-3 bg-surface-container-lowest px-3 py-1 rounded-full text-[12px]">Aluguel</div></div><div class="p-4"><p class="text-[12px] text-on-surface-variant uppercase">Apartamento • Vila Nova Conceição</p><h3 class="font-headline-md text-[18px] truncate">Apto com Vista Parque</h3><p class="font-price-display text-price-display mt-4">R$ 8.500/mês</p></div></div></div><div class="flex justify-center mt-8"><button class="bg-primary-container text-on-primary-fixed font-label-md text-label-md px-8 py-3 rounded-xl hover:bg-primary-fixed transition-colors font-bold">Ver todos os imóveis para aluguel</button></div></div></section>
+<!-- Trust Banner -->
+<section class="py-stack-lg md:py-16 px-margin-mobile md:px-margin-desktop bg-surface">
+<div class="max-w-container-max mx-auto relative rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(30,41,59,0.05)] bg-[#111C2D]">
+<div class="grid grid-cols-1 md:grid-cols-2 relative z-10">
+<div class="p-8 md:p-16 flex flex-col justify-center order-last md:order-first">
+<div class="bg-primary-container text-on-primary-fixed font-label-md text-label-md px-3 py-1 rounded-full w-max mb-6">Pagamento Garantido</div>
+<h2 class="font-headline-xl text-headline-lg-mobile md:text-headline-xl text-surface-container-lowest mb-6">Aluguel em dia, todo dia.</h2>
+<p class="font-body-lg text-body-lg text-surface-variant mb-8 max-w-md">Os proprietários estão de prova: anunciando com o EncontreAqui, você recebe o aluguel sempre no dia combinado, mesmo se o inquilino atrasar.</p>
+<button class="bg-primary-container text-on-primary-fixed font-label-md text-label-md px-8 py-3 rounded-xl hover:bg-primary-fixed transition-colors w-max font-bold">
+                            Saiba como funciona
+                        </button>
+</div>
+<div class="h-[300px] md:h-auto relative">
+<img alt="Retrato de uma mulher profissional e confiante sorrindo em um ambiente de escritório moderno, transmitindo segurança e credibilidade associada a serviços imobiliários de alta qualidade e garantias financeiras." class="w-full h-full object-cover object-top opacity-90 mix-blend-luminosity" data-alt="Retrato de uma mulher profissional e confiante sorrindo em um ambiente de escritório moderno, transmitindo segurança e credibilidade associada a serviços imobiliários de alta qualidade e garantias financeiras." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDNBl488myJkhd-AxNlAy4_OAYn2WV7wPzJXkE2W8W3jtWga4g1o-sXiauZdl-lWTcblszNNuOB3eI8qvX755WBc_T7uf1Yi79RnIix6G8gRDjK_Wq3dSHnF86wD19jHDEqdQ8IUHZYcmMj3sxNnpw0boc5IQhg2gaU5BHM_4ZlyY6Ba3ZtQ2t-y2pCfAnqix6ZUWXzNWoLd9u7c_mjPn6J7NJc2NPzqvyiNMaXF3MBLWvHm_zsLJ9KBymbzGCA9eSmB_24d9S0uPEW"/>
+<div class="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-[#111C2D] via-[#111C2D]/80 to-transparent"></div>
+</div>
+</div>
+<div class="flex justify-center mt-8"><button class="bg-primary-container text-on-primary-fixed font-label-md text-label-md px-8 py-3 rounded-xl hover:bg-primary-fixed transition-colors font-bold">Ver todos os imóveis para venda</button></div></div>
+</section>
+</main>
+<!-- Footer Component -->
+<footer class="bg-surface-container full-width bottom-0">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter px-margin-mobile md:px-margin-desktop py-stack-lg max-w-container-max mx-auto border-t border-surface-container-high">
+<div class="col-span-1 md:col-span-4 mb-6">
+<img alt="EncontreAqui Imóveis" class="h-8 filter grayscale opacity-70" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOympeupHEWpIB2f2Qr0ybPT1ghTLh99beS3JneZSf9eeH902TTV-_s3ZlI6auIitO44T8s31wPSN4lGjCwSeGLhaLb1_mL_k4J7N2ucyxh5hkH6IpT2avTmgpTRdyqQQkU8EjK3yxi9ITLaDmOwbzTalrRIH723nkD_1IDqPQnrWIv59ylJr5vio48Go2k08TqT6Xw6ZFPmamilP-71-hLlXYI1LOdha06aVUIWNvAESvMfuVAtpeYk_1UfEcgY_PILXMlSl6xffq"/>
+</div>
+<div class="flex flex-col gap-4">
+<h4 class="font-label-md text-label-md text-on-surface font-bold uppercase tracking-wider">Institucional</h4>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" href="#">Sobre nós</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" href="#">Regiões atendidas</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" href="#">Trabalhe conosco</a>
+</div>
+<div class="flex flex-col gap-4">
+<h4 class="font-label-md text-label-md text-on-surface font-bold uppercase tracking-wider">Ajuda</h4>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" href="#">Central de Ajuda</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" href="#">Termos de uso</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" href="#">Política de Privacidade</a>
+</div>
+<div class="flex flex-col gap-4">
+<h4 class="font-label-md text-label-md text-on-surface font-bold uppercase tracking-wider">Serviços</h4>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" href="#">Anuncie seu imóvel</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" href="#">Simulador de financiamento</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" href="#">Avaliação de imóveis</a>
+</div>
+<div class="flex flex-col gap-4">
+<h4 class="font-label-md text-label-md text-on-surface font-bold uppercase tracking-wider">Baixe o app</h4>
+<div class="flex gap-2">
+<div class="w-32 h-10 bg-on-surface rounded flex items-center justify-center text-surface-container-lowest font-body-sm text-[12px]">App Store</div>
+<div class="w-32 h-10 bg-on-surface rounded flex items-center justify-center text-surface-container-lowest font-body-sm text-[12px]">Google Play</div>
+</div>
+</div>
+<div class="col-span-1 md:col-span-4 mt-8 pt-6 border-t border-surface-container-high flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="font-body-md text-body-md text-on-surface-variant text-sm">
+                    © 2024 EncontreAqui Imóveis Ltda. Todos os direitos reservados.
+                </p>
+<div class="flex gap-4 text-on-surface-variant">
+<span class="material-symbols-outlined cursor-pointer hover:text-on-surface transition-colors">language</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-on-surface transition-colors">share</span>
+</div>
+</div>
+</div>
+</footer>
+</body></html>

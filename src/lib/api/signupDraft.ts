@@ -10,19 +10,16 @@ function isDraftDebugEnabled() {
 
 function logDraftRequest(method: 'POST' | 'PATCH', path: string, payload: unknown) {
     if (!isDraftDebugEnabled()) return
-    // eslint-disable-next-line no-console
     console.log(`[${method}] ${path}`, payload)
 }
 
 function logDraftResponse(path: string, response: unknown) {
     if (!isDraftDebugEnabled()) return
-    // eslint-disable-next-line no-console
     console.log('[DRAFT RESPONSE]', { path, response })
 }
 
 function logDraftError(path: string, status: number, payload: ApiError['payload']) {
     if (!isDraftDebugEnabled()) return
-    // eslint-disable-next-line no-console
     console.error('[DRAFT ERROR]', {
         path,
         status,

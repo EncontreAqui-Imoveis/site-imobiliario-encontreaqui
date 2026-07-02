@@ -61,6 +61,31 @@ export function formatCpf(cpf: string): string {
     return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`
 }
 
+function calculateCpfCheckDigit(baseDigits: string, weightStart: number): number {
+    let sum = 0
+    for (let i = 0; i < baseDigits.length; i += 1) {
+        sum += Number(baseDigits[i]) * (weightStart - i)
+    }
+    const remainder = (sum * 10) % 11
+    return remainder === 10 ? 0 : remainder
+}
+
+/**
+ * Validate a CPF using the official check-digit formula.
+ * Accepts formatted or unformatted input.
+ */
+export function isValidCpf(cpf: string): boolean {
+    const digits = cpf.replace(/\D/g, '')
+    if (digits.length !== 11) return false
+    if (/^(\d)\1{10}$/.test(digits)) return false
+
+    const firstCheckDigit = calculateCpfCheckDigit(digits.slice(0, 9), 10)
+    if (firstCheckDigit !== Number(digits[9])) return false
+
+    const secondCheckDigit = calculateCpfCheckDigit(digits.slice(0, 10), 11)
+    return secondCheckDigit === Number(digits[10])
+}
+
 /**
  * Format a phone number for display.
  * Input: "11987654321"

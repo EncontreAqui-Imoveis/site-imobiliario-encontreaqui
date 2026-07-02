@@ -1,16 +1,14 @@
 'use client'
 
+import React, { useEffect, useMemo } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
-import { Search, Home, ChevronDown, Loader2 } from 'lucide-react'
+import { ChevronDown, Loader2 } from 'lucide-react'
 import SignupDraftNotice from '@/components/auth/SignupDraftNotice'
-import LocationSelectFields from '@/components/search/LocationSelectFields'
 import { usePropertySearch } from '@/hooks/usePropertySearch'
+import { useLocationOptions } from '@/components/search/useLocationOptions'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
 
-/** Arte local (pasta `public/marketing/`) — alinhada ao app móvel. */
-const HERO_IMAGE = '/marketing/home-hero.png'
+const HERO_IMAGE = '/marketing/home-hero.webp'
 
 const propertyTypes = [
     { value: '', label: 'Todos os tipos' },
@@ -28,225 +26,262 @@ const propertyTypes = [
     { value: 'Sala Comercial', label: 'Sala Comercial' },
 ]
 
-const purposes = [
-    { value: '', label: 'Comprar ou Alugar' },
-    { value: 'Venda', label: 'Comprar' },
-    { value: 'Aluguel', label: 'Alugar' },
-]
-
 type HomeDeal = 'sale' | 'rent'
 
-function resolveDeal(searchParams: ReturnType<typeof useSearchParams>, initial: HomeDeal): HomeDeal {
-    const d = searchParams.get('deal')
-    if (d === 'rent') return 'rent'
-    if (d === 'sale') return 'sale'
-    return initial
-}
-
 export default function HeroSection({ initialDeal = 'sale' }: { initialDeal?: HomeDeal }) {
-    const searchParams = useSearchParams()
-    const vitrineDeal = resolveDeal(searchParams, initialDeal)
     const { form, setField, handleSearch, isSearching, validationError } = usePropertySearch()
+
+    // Sync purpose to 'Venda' / 'Aluguel' on mount if it's empty
+    useEffect(() => {
+        if (!form.purpose) {
+            setField('purpose', initialDeal === 'rent' ? 'Aluguel' : 'Venda')
+        }
+    }, [form.purpose, setField, initialDeal])
+
+    // Load locations using useLocationOptions hook
+    const {
+        cities,
+        bairros,
+        isLoadingCities,
+        isLoadingBairros,
+        selectedCity,
+        hasSelectedCity,
+    } = useLocationOptions(form.city)
+
+    // Helper for normalizing labels for filtering
+    const normalizeLabel = (value: string) =>
+        value
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim()
+
+    // Filter cities based on user input
+    const filteredCityOptions = useMemo(() => {
+        const query = normalizeLabel(form.city)
+        if (!query) return cities
+        return cities.filter((item) => normalizeLabel(item.city).includes(query))
+    }, [cities, form.city])
+
+    // Filter bairros based on user input and selected city
+    const bairroOptions = useMemo(
+        () =>
+            hasSelectedCity
+                ? bairros.filter((item) => normalizeLabel(item.bairro).includes(normalizeLabel(form.bairro)))
+                : [],
+        [bairros, form.bairro, hasSelectedCity],
+    )
 
     return (
         <section
-            className="relative flex min-h-[min(100svh,900px)] items-center overflow-hidden lg:min-h-[700px]"
+            className="relative flex min-h-[min(100svh,900px)] items-center overflow-hidden bg-[#f8fafc] pt-28 pb-16 lg:min-h-[750px]"
             aria-label="Destaque da página inicial"
         >
-            {/* Cobre desde o topo da viewport (header fixo transparente) — sem faixa do fundo da página */}
-            <div className="absolute inset-0 min-h-full">
-                <Image
-                    src={HERO_IMAGE}
-                    alt=""
-                    fill
-                    priority
-                    className="object-cover object-top"
-                    sizes="100vw"
-                />
-                <div
-                    className="absolute inset-0 bg-black/20"
-                    aria-hidden
-                />
-                <div
-                    className="absolute inset-0 bg-gradient-to-b from-primary-950/72 via-primary-900/62 to-primary-950/78"
-                    aria-hidden
-                />
-            </div>
-
-            <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-20 pt-24 sm:px-6 sm:pt-28 lg:px-8 lg:pb-32 lg:pt-32">
-                <div className="mx-auto max-w-3xl">
+            <div className="relative z-10 mx-auto w-full max-w-6xl px-2 sm:px-4 lg:px-5">
+                {/* Rascunho Notice */}
+                <div className="mx-auto max-w-3xl mb-6">
                     <SignupDraftNotice />
                 </div>
-                <div className="mx-auto max-w-4xl text-center">
-                    {/* Badge */}
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-accent-500/20 backdrop-blur-sm rounded-full text-accent-300 text-sm font-medium mb-6 animate-fadeIn border border-accent-500/30">
-                        <Home className="w-4 h-4" />
-                        <span>A melhor escolha para encontrar seu imóvel</span>
-                    </div>
 
-                    {/* Title */}
-                    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6 animate-fadeIn">
-                        Encontre os imóveis mais desejados do{' '}
-                        <span className="text-accent-400">Brasil</span>
-                    </h1>
-
-                    {/* Subtitle */}
-                    <p className="text-lg sm:text-xl text-white/80 max-w-2xl mx-auto mb-6 animate-fadeIn">
-                        Compre ou alugue com agilidade, segurança e sem burocracia.
-                        Seu novo lar está a poucos cliques de distância.
-                    </p>
-
-                    <p className="text-sm text-white/70 max-w-2xl mx-auto mb-4">
-                        A vitrine de destaques e os recentes abaixo acompanham sua escolha.
-                    </p>
-                    <div
-                        className="flex flex-wrap items-center justify-center gap-2 mb-10"
-                        role="group"
-                        aria-label="Vitrine: comprar ou alugar"
-                    >
-                        <Link
-                            href="/?deal=sale"
-                            scroll={false}
-                            className={`min-h-11 min-w-[7rem] inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary-900 focus:ring-white ${
-                                vitrineDeal === 'sale'
-                                    ? 'bg-white text-primary-900 shadow-lg'
-                                    : 'bg-white/10 text-white border border-white/30 hover:bg-white/20'
-                            }`}
-                        >
-                            Comprar
-                        </Link>
-                        <Link
-                            href="/?deal=rent"
-                            scroll={false}
-                            className={`min-h-11 min-w-[7rem] inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary-900 focus:ring-white ${
-                                vitrineDeal === 'rent'
-                                    ? 'bg-white text-primary-900 shadow-lg'
-                                    : 'bg-white/10 text-white border border-white/30 hover:bg-white/20'
-                            }`}
-                        >
-                            Alugar
-                        </Link>
-                    </div>
-
-                    {/* Search Box */}
-                    <div className="rounded-2xl shadow-2xl p-3 sm:p-6 max-w-4xl mx-auto animate-fadeIn">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                            {/* Purpose */}
-                            <div className="relative">
-                                <label htmlFor="hero-purpose" className="block text-[10px] sm:text-xs font-medium text-white mb-1 text-left">
-                                    Finalidade
-                                </label>
-                                <div className="relative">
-                                    <select
-                                        id="hero-purpose"
-                                        name="purpose"
-                                        value={form.purpose}
-                                        onChange={(e) => setField('purpose', e.target.value)}
-                                        aria-label="Finalidade do imóvel"
-                                        className="w-full min-h-[44px] appearance-none bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 pr-8 sm:pr-10 text-gray-700 text-sm sm:text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                                    >
-                                        {purposes.map((p) => (
-                                            <option key={p.value} value={p.value}>{p.label}</option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400 pointer-events-none" />
-                                </div>
-                            </div>
-
-                            {/* Type */}
-                            <div className="relative">
-                                <label htmlFor="hero-type" className="block text-[10px] sm:text-xs font-medium text-white mb-1 text-left">
-                                    Tipo
-                                </label>
-                                <div className="relative">
-                                    <select
-                                        id="hero-type"
-                                        name="type"
-                                        value={form.type}
-                                        onChange={(e) => setField('type', e.target.value)}
-                                        aria-label="Tipo de imóvel"
-                                        className="w-full min-h-[44px] appearance-none bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 pr-8 sm:pr-10 text-gray-700 text-sm sm:text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                                    >
-                                        {propertyTypes.map((t) => (
-                                            <option key={t.value} value={t.value}>{t.label}</option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400 pointer-events-none" />
-                                </div>
-                            </div>
-
-                            <LocationSelectFields
-                                city={form.city}
-                                bairro={form.bairro}
-                                onCityChange={(value) => setField('city', value)}
-                                onBairroChange={(value) => setField('bairro', value)}
+                {/* Card Fundido de Duas Colunas (Pesquisa + Imagem) */}
+                <div className="mt-[-1rem] lg:mt-[-3.5rem] flex flex-col lg:flex-row w-full bg-white shadow-sm border border-gray-200/80 rounded-2xl overflow-hidden items-stretch">
+                    {/* ══════════════════════════════════════════════════
+                        PAINEL ESQUERDO — Formulário de Pesquisa (Equilibrado 50%)
+                    ══════════════════════════════════════════════════ */}
+                    <div className="w-full lg:w-1/2 px-8 pb-8 pt-6 sm:px-10 sm:pb-10 sm:pt-8 lg:px-12 lg:pb-12 lg:pt-10 flex flex-col justify-center">
+                        {/* Pill Switcher Comprar / Alugar */}
+                        <div className="relative inline-grid grid-cols-2 p-1 bg-gray-100/70 rounded-full w-48 mb-5 mt-3 border border-gray-200/40 select-none">
+                            <div
+                                className="absolute top-1 bottom-1 left-1 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition-all duration-300 ease-out"
+                                style={{
+                                    width: 'calc(50% - 4px)',
+                                    transform: form.purpose === 'Aluguel' ? 'translateX(100%)' : 'translateX(0%)'
+                                }}
                             />
+                            <button
+                                type="button"
+                                onClick={() => setField('purpose', 'Venda')}
+                                className={`relative z-10 py-1.5 text-xs sm:text-sm font-bold text-center rounded-full transition-colors duration-300 ${
+                                    form.purpose === 'Venda' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'
+                                }`}
+                            >
+                                Comprar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setField('purpose', 'Aluguel')}
+                                className={`relative z-10 py-1.5 text-xs sm:text-sm font-bold text-center rounded-full transition-colors duration-300 ${
+                                    form.purpose === 'Aluguel' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'
+                                }`}
+                            >
+                                Alugar
+                            </button>
+                        </div>
 
-                            {/* Faixa de preço */}
-                            <div className="relative sm:col-span-2 lg:col-span-1">
-                                <label className="block text-[10px] sm:text-xs font-medium text-white mb-1 text-left">
-                                    Valor (R$)
-                                </label>
-                                <div className="flex gap-1.5 sm:gap-2">
-                                    <CurrencyInput
-                                        id="hero-min-price"
-                                        name="minPrice"
-                                        value={form.minPrice}
-                                        onChange={(value) => setField('minPrice', value)}
-                                        placeholder="Mín."
-                                        className="min-w-0 min-h-[44px] flex-1 bg-gray-50 border border-black-200 rounded-lg sm:rounded-xl px-2 sm:px-3 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                                    />
-                                    <CurrencyInput
-                                        id="hero-max-price"
-                                        name="maxPrice"
-                                        value={form.maxPrice}
-                                        onChange={(value) => setField('maxPrice', value)}
-                                        placeholder="Máx."
-                                        className="min-w-0 min-h-[44px] flex-1 bg-gray-50 border border-black-200 rounded-lg sm:rounded-xl px-2 sm:px-3 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                                    />
+                        {/* Título Principal */}
+                        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-[1.25] tracking-tight mb-6 font-sans">
+                            Encontre os imóveis mais desejados do Brasil
+                        </h1>
+
+                        {/* Inputs de Pesquisa */}
+                        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleSearch(); }}>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Tipo */}
+                                <div className="space-y-1">
+                                    <label htmlFor="hero-type" className="block text-xs font-semibold text-gray-700">Tipo</label>
+                                    <div className="relative flex items-center bg-gray-50/50 hover:bg-gray-50 border border-gray-200/60 focus-within:border-amber-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-amber-400/10 rounded-none transition-all duration-200 h-[48px]">
+                                        <select
+                                            id="hero-type"
+                                            name="type"
+                                            value={form.type}
+                                            onChange={(e) => setField('type', e.target.value)}
+                                            className="w-full h-full px-4 bg-transparent text-gray-800 outline-none text-sm font-semibold appearance-none cursor-pointer"
+                                        >
+                                            {propertyTypes.map((t) => (
+                                                <option key={t.value} value={t.value}>{t.label}</option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown className="absolute right-4 text-gray-400 w-4 h-4 pointer-events-none" />
+                                    </div>
+                                </div>
+
+                                {/* Cidade */}
+                                <div className="space-y-1">
+                                    <label htmlFor="hero-city" className="block text-xs font-semibold text-gray-700">Cidade</label>
+                                    <div className="relative flex items-center bg-gray-50/50 hover:bg-gray-50 border border-gray-200/60 focus-within:border-amber-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-amber-400/10 rounded-none transition-all duration-200 h-[48px]">
+                                        <input
+                                            id="hero-city"
+                                            name="city"
+                                            value={form.city}
+                                            onChange={(e) => setField('city', e.target.value)}
+                                            list="hero-city-options"
+                                            autoComplete="off"
+                                            placeholder={isLoadingCities ? 'Carregando...' : 'Digite a cidade'}
+                                            className="w-full h-full px-4 bg-transparent text-gray-800 placeholder-gray-400 outline-none text-sm font-semibold"
+                                        />
+                                        <ChevronDown className="absolute right-4 text-gray-400 w-4 h-4 pointer-events-none" />
+                                        <datalist id="hero-city-options">
+                                            {filteredCityOptions.map((item) => (
+                                                <option key={item.city} value={item.city}>
+                                                    {`${item.city} (${item.total})`}
+                                                </option>
+                                            ))}
+                                        </datalist>
+                                    </div>
+                                </div>
+
+                                {/* Bairro */}
+                                <div className="space-y-1">
+                                    <label htmlFor="hero-bairro" className="block text-xs font-semibold text-gray-700">Bairro</label>
+                                    <div className="relative flex items-center bg-gray-50/50 hover:bg-gray-50 border border-gray-200/60 focus-within:border-amber-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-amber-400/10 rounded-none transition-all duration-200 h-[48px]">
+                                        <input
+                                            id="hero-bairro"
+                                            name="bairro"
+                                            value={form.bairro}
+                                            onChange={(e) => setField('bairro', e.target.value)}
+                                            list="hero-bairro-options"
+                                            autoComplete="off"
+                                            disabled={!hasSelectedCity}
+                                            placeholder={
+                                                !hasSelectedCity
+                                                    ? 'Selecione uma cidade'
+                                                    : isLoadingBairros
+                                                        ? 'Carregando...'
+                                                        : 'Digite o bairro'
+                                            }
+                                            className="w-full h-full px-4 bg-transparent text-gray-800 placeholder-gray-400 outline-none text-sm font-semibold disabled:opacity-50"
+                                        />
+                                        <ChevronDown className="absolute right-4 text-gray-400 w-4 h-4 pointer-events-none" />
+                                        <datalist id="hero-bairro-options">
+                                            {bairroOptions.map((item) => (
+                                                <option key={`${item.city}-${item.bairro}`} value={item.bairro}>
+                                                    {`${item.bairro} (${item.total})`}
+                                                </option>
+                                            ))}
+                                        </datalist>
+                                    </div>
+                                </div>
+
+                                {/* Código ou ID */}
+                                <div className="space-y-1">
+                                    <label htmlFor="hero-code" className="block text-xs font-semibold text-gray-700">Código ou ID</label>
+                                    <div className="relative flex items-center bg-gray-50/50 hover:bg-gray-50 border border-gray-200/60 focus-within:border-amber-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-amber-400/10 rounded-none transition-all duration-200 h-[48px]">
+                                        <input
+                                            id="hero-code"
+                                            name="code"
+                                            type="text"
+                                            value={form.code}
+                                            onChange={(e) => setField('code', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))}
+                                            maxLength={6}
+                                            placeholder="Opcional"
+                                            className="w-full h-full px-4 bg-transparent text-gray-800 placeholder-gray-400 outline-none text-sm font-semibold"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Código / ID */}
-                            <div className="relative sm:col-span-2 lg:col-span-1">
-                                <label htmlFor="hero-code" className="block text-[10px] sm:text-xs font-medium text-white mb-1 text-left">
-                                    Código ou ID
-                                </label>
-                                <input
-                                    id="hero-code"
-                                    name="code"
-                                    type="text"
-                                    inputMode="numeric"
-                                    value={form.code}
-                                    onChange={(e) => setField('code', e.target.value)}
-                                    maxLength={80}
-                                    placeholder="Opcional"
-                                    className="w-full min-h-[44px] bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                                />
+                            {/* Valor (R$) - Mín e Máx */}
+                            <div className="space-y-1">
+                                <label className="block text-xs font-semibold text-gray-700">Valor (R$)</label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="relative flex items-center bg-gray-50/50 hover:bg-gray-50 border border-gray-200/60 focus-within:border-amber-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-amber-400/10 rounded-none transition-all duration-200 h-[48px]">
+                                        <CurrencyInput
+                                            id="hero-min-price"
+                                            name="minPrice"
+                                            value={form.minPrice}
+                                            onChange={(value) => setField('minPrice', value)}
+                                            placeholder="Mín."
+                                            className="w-full h-full px-4 bg-transparent text-gray-800 placeholder-gray-400 outline-none text-sm font-semibold"
+                                        />
+                                    </div>
+                                    <div className="relative flex items-center bg-gray-50/50 hover:bg-gray-50 border border-gray-200/60 focus-within:border-amber-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-amber-400/10 rounded-none transition-all duration-200 h-[48px]">
+                                        <CurrencyInput
+                                            id="hero-max-price"
+                                            name="maxPrice"
+                                            value={form.maxPrice}
+                                            onChange={(value) => setField('maxPrice', value)}
+                                            placeholder="Máx."
+                                            className="w-full h-full px-4 bg-transparent text-gray-800 placeholder-gray-400 outline-none text-sm font-semibold"
+                                        />
+                                    </div>
+                                </div>
                             </div>
 
-                            {/* Search Button */}
-                            <div className="flex items-end sm:col-span-2 lg:col-span-1">
-                                <button
-                                    type="button"
-                                    onClick={handleSearch}
-                                    disabled={isSearching}
-                                    className="w-full min-h-[44px] bg-accent-500 hover:bg-accent-600 disabled:opacity-70 text-primary-900 font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl shadow-lg shadow-accent-500/25 hover:shadow-accent-500/40 transition-all duration-200 flex items-center justify-center gap-2 text-sm sm:text-base"
-                                >
-                                    {isSearching ? (
-                                        <Loader2 className="w-5 h-5 animate-spin" />
-                                    ) : (
-                                        <Search className="w-5 h-5" />
-                                    )}
-                                    <span>{isSearching ? 'Buscando...' : 'Buscar'}</span>
-                                </button>
-                            </div>
-                        </div>
-                        {validationError && (
-                            <p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-left text-xs text-red-700">
-                                {validationError}
-                            </p>
-                        )}
+                            {/* Erro de validação */}
+                            {validationError && (
+                                <p className="rounded-none border border-red-200 bg-red-50 px-3 py-2 text-left text-xs text-red-700">
+                                    {validationError}
+                                </p>
+                            )}
+
+                            {/* Botão de Busca */}
+                            <button
+                                type="button"
+                                onClick={handleSearch}
+                                disabled={isSearching}
+                                className="w-full h-[48px] bg-amber-400 hover:bg-amber-500 disabled:opacity-70 text-gray-900 font-bold rounded-none shadow-sm active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 text-base cursor-pointer"
+                            >
+                                {isSearching ? (
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                ) : (
+                                    'Buscar Imóvel'
+                                )}
+                            </button>
+                        </form>
+                    </div>
+
+                    {/* ══════════════════════════════════════════════════
+                        PAINEL DIREITO — Imagem Fusa (Equilibrado 50%)
+                    ══════════════════════════════════════════════════ */}
+                    <div className="w-full lg:w-1/2 relative min-h-[300px] lg:min-h-auto">
+                        <Image
+                            src={HERO_IMAGE}
+                            alt="Encontre seu imóvel dos sonhos"
+                            fill
+                            priority
+                            className="object-cover object-center"
+                            sizes="(max-w-1024px) 100vw, 50vw"
+                        />
                     </div>
                 </div>
             </div>

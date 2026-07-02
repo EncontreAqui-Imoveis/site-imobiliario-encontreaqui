@@ -3,13 +3,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, FileText, Briefcase, File, RefreshCw, ArrowRight } from 'lucide-react'
+import { Loader2, FileText, File, RefreshCw, ArrowRight } from 'lucide-react'
 
 import { useUser } from '@/contexts/UserContext'
 import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { fetchMyNegotiations } from '@/lib/negotiationsService'
 import { getMyContracts } from '@/lib/api/contracts'
-import { getStatusLabel, resolveProposalBucket, isProposalPreSignatureStatus, isProposalRefusedStatus } from '@/types/negotiation'
+import { getStatusLabel, isProposalPreSignatureStatus, isProposalRefusedStatus } from '@/types/negotiation'
 import type { NegotiationSummary } from '@/types/negotiation'
 import type { ContractSummary } from '@/types/contract'
 

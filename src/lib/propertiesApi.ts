@@ -36,6 +36,28 @@ function normalizeCloudinaryUrl(value: string): string {
             if (url.pathname === '/' && !url.search && !url.hash) {
                 return ''
             }
+
+            const segments = url.pathname.split('/').filter(Boolean)
+            const uploadIndex = segments.findIndex((segment, index) => {
+                const isResourceType = ['image', 'video', 'raw'].includes(segment)
+                return isResourceType && segments[index + 1] === 'upload'
+            })
+
+            if (uploadIndex >= 0) {
+                const afterUpload = segments.slice(uploadIndex + 2)
+                const versionIndex = afterUpload.findIndex((segment) => /^v\d+$/i.test(segment))
+                const publicIdSegments = versionIndex >= 0 ? afterUpload.slice(versionIndex) : afterUpload
+                const optimizedSegments = [
+                    ...segments.slice(0, uploadIndex + 2),
+                    'c_limit',
+                    'w_1600',
+                    'q_auto',
+                    'f_auto',
+                    ...publicIdSegments,
+                ]
+                url.pathname = `/${optimizedSegments.join('/')}`
+            }
+
             return url.toString()
         }
         return normalized

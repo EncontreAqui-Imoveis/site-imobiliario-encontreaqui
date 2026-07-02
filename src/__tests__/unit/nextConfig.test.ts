@@ -1,4 +1,4 @@
-const nextConfig = require('../../../next.config.js')
+import nextConfig from '../../../next.config.js'
 
 describe('next config cloudinary policy', () => {
     it('keeps Cloudinary host consistent in image patterns and CSP', async () => {

@@ -99,7 +99,7 @@ describe('ProposalWizardPage', () => {
         await screen.findByRole('heading', { name: 'Gerar Proposta' })
         const nameInput = await screen.findByDisplayValue('Cliente Teste')
         fireEvent.change(nameInput, { target: { value: 'Cliente Alterado' } })
-        fireEvent.change(screen.getByPlaceholderText('000.000.000-00'), { target: { value: '12345678900' } })
+        fireEvent.change(screen.getByPlaceholderText('000.000.000-00'), { target: { value: '52998224725' } })
         fireEvent.click(screen.getByRole('button', { name: 'Aluguel' }))
         const baseLabel = screen.getByText(/Valor base selecionado:/)
         expect(baseLabel.parentElement?.textContent).toContain('R$')
@@ -114,7 +114,7 @@ describe('ProposalWizardPage', () => {
         expect(createProposal).toHaveBeenCalledWith(expect.objectContaining({
             propertyId: 10,
             clientName: 'Cliente Alterado',
-            clientCpf: '12345678900',
+            clientCpf: '52998224725',
             validadeDias: 10,
         }))
         expect(window.confirm).toHaveBeenCalledWith('A proposta continua editável até a assinatura. Confirmar geração do PDF agora?')

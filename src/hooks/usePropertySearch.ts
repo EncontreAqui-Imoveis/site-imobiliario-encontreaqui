@@ -13,6 +13,7 @@ type SearchState = {
     maxPrice: string
     code: string
     limit: number
+    bedrooms: string
 }
 
 const INITIAL_STATE: SearchState = {
@@ -24,6 +25,7 @@ const INITIAL_STATE: SearchState = {
     maxPrice: '',
     code: '',
     limit: 10,
+    bedrooms: '',
 }
 
 function trimOrEmpty(value: string): string {
@@ -63,6 +65,10 @@ export function usePropertySearch() {
 
         const code = trimOrEmpty(state.code)
         if (code) params.set('code', code)
+
+        const bedrooms = trimOrEmpty(state.bedrooms)
+        if (bedrooms) params.set('bedrooms', bedrooms)
+
         if (state.limit > 0) params.set('limit', String(state.limit))
 
         return params.toString()

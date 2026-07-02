@@ -1,7 +1,6 @@
 'use client'
 
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
     ArrowLeft,
@@ -616,7 +615,7 @@ export default function AnunciePage() {
                 if (images.length > 0) {
                     setUploadStatus('Enviando imagens (0%)...')
                     const uploadedImages = await Promise.all(
-                        images.map(async (file, index) => {
+                        images.map(async (file) => {
                             const res = await uploadToCloudinaryBrowser(file, signatureData, (progress) => {
                                 setUploadStatus(`Enviando imagens... ${progress}%`)
                             })

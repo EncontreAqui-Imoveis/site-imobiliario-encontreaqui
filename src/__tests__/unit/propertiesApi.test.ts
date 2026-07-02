@@ -100,7 +100,7 @@ describe('propertiesApi', () => {
             created_at: '2026-01-01T00:00:00.000Z',
         })
 
-        expect(normalized?.images[0]).toBe('https://res.cloudinary.com/demo/image/upload/v1/sample.jpg')
+        expect(normalized?.images[0]).toBe('https://res.cloudinary.com/demo/image/upload/c_limit/w_1600/q_auto/f_auto/v1/sample.jpg')
         expect(normalized?.images).toHaveLength(1)
     })
 

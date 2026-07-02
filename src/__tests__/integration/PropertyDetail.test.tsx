@@ -303,7 +303,7 @@ describe('PropertyDetailClient', () => {
         await waitFor(() => {
             expect(screen.getByTestId('property-card')).toHaveAttribute(
                 'data-image',
-                'https://res.cloudinary.com/demo/image/upload/legacy.jpg',
+                'https://res.cloudinary.com/demo/image/upload/c_limit/w_1600/q_auto/f_auto/legacy.jpg',
             )
         })
     })

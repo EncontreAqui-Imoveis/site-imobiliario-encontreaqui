@@ -10,12 +10,14 @@ import { Property } from '@/types/property'
 interface RecentPropertiesProps {
     properties: Property[]
     title?: string
+    subtitle?: string
     showViewAll?: boolean
 }
 
 export default function RecentProperties({
     properties,
     title = 'Imóveis recentes',
+    subtitle = 'Confira os imóveis adicionados recentemente',
     showViewAll = true
 }: RecentPropertiesProps) {
     const [emblaRef, emblaApi] = useEmblaCarousel({ align: 'start', loop: false, slidesToScroll: 1 })
@@ -60,7 +62,7 @@ export default function RecentProperties({
                             {title}
                         </h2>
                         <p className="text-gray-500 mt-1">
-                            Confira os imóveis adicionados recentemente
+                            {subtitle}
                         </p>
                     </div>
 

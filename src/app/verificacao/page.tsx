@@ -12,7 +12,6 @@ import { ShieldCheck, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 const VERIFY_ERROR_COOLDOWN_MS = 2000
-const EMAIL_OTP_CACHE_MS = 60_000
 const MIN_CLIENT_RESEND_GAP_MS = 30_000
 const EMAIL_VERIFICATION_AUTO_SEND_GUARD_MS = 120_000
 

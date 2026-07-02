@@ -1,5 +1,6 @@
 import React, { type ReactNode } from 'react'
 import { render, screen } from '@testing-library/react'
+import '@testing-library/jest-dom'
 
 import HomePage from '@/app/page'
 import PropertiesPage from '@/app/imoveis/page'
@@ -102,8 +103,9 @@ describe('catalog shell accessibility baseline', () => {
         jest.clearAllMocks()
     })
 
-    it('renders the home page base sections', () => {
-        render(<HomePage />)
+    it('renders the home page base sections', async () => {
+        const ResolvedHomePage = await HomePage({})
+        render(ResolvedHomePage)
 
         expect(screen.getByTestId('hero-section')).toBeInTheDocument()
         expect(screen.getByTestId('featured-section')).toBeInTheDocument()

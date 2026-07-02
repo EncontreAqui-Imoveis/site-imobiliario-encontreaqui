@@ -39,11 +39,17 @@ type HomeDeal = 'sale' | 'rent'
 
 export async function FeaturedSection({ deal = 'sale' }: { deal?: HomeDeal } = {}) {
     const properties = await fetchFeaturedProperties(6, deal)
-    const title = deal === 'rent' ? 'Imóveis em destaque (aluguel)' : 'Imóveis em destaque (venda)'
+    const title = deal === 'rent' ? 'Imóveis em Destaque para Aluguel' : 'Imóveis em Destaque para Venda'
     return <FeaturedCarousel properties={properties} title={title} />
 }
 
-export async function RecentSection({ deal = 'sale' }: { deal?: HomeDeal } = {}) {
-    const properties = await fetchRecentProperties(8, deal)
-    return <RecentProperties properties={properties} />
+export async function RecentSection({ deal = 'rent' }: { deal?: HomeDeal } = {}) {
+    const properties = await fetchRecentProperties(8, 'rent')
+    return (
+        <RecentProperties
+            properties={properties}
+            title="Imóveis em Destaque para Aluguel"
+            subtitle="Confira os imóveis em destaque para aluguel"
+        />
+    )
 }

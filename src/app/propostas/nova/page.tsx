@@ -21,6 +21,7 @@ import {
 import { CurrencyInput } from '@/components/form/CurrencyInput'
 import { formatCurrencyInput } from '@/lib/currencyInput'
 import { buildPublicPropertyUrl } from '@/lib/propertyLinks'
+import { formatCpf, isValidCpf } from '@/lib/privacy'
 
 /* ─── Types ─── */
 
@@ -57,14 +58,6 @@ function toPercent(field: PaymentField, propertyValue: number): number {
     const raw = parseLocalized(field.value)
     if (field.unit === 'reais' && propertyValue > 0) return (raw / propertyValue) * 100
     return raw
-}
-
-function formatCPF(value: string): string {
-    const digits = value.replace(/\D/g, '').slice(0, 11)
-    if (digits.length <= 3) return digits
-    if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`
-    if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`
-    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`
 }
 
 /* ─── Component ─── */
@@ -308,7 +301,7 @@ export default function ProposalWizardPage() {
 
     /* ── Validation ── */
     const cpfDigits = clientCpf.replace(/\D/g, '')
-    const isStep1Valid = clientName.trim().length > 0 && cpfDigits.length === 11
+    const isStep1Valid = clientName.trim().length > 0 && isValidCpf(clientCpf)
     const canSubmit = !isSubmitting && isStep1Valid && isBalanced
 
     /* ── Submit ── */
@@ -532,13 +525,13 @@ export default function ProposalWizardPage() {
                                     <input
                                         type="text"
                                         value={clientCpf}
-                                        onChange={e => setClientCpf(formatCPF(e.target.value))}
+                                        onChange={e => setClientCpf(formatCpf(e.target.value))}
                                         className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary-500"
                                         placeholder="000.000.000-00"
                                         maxLength={14}
                                     />
-                                    {clientCpf && cpfDigits.length !== 11 && (
-                                        <p className="text-xs text-red-500 mt-1">Informe um CPF válido (11 dígitos).</p>
+                                    {clientCpf && !isValidCpf(clientCpf) && (
+                                        <p className="text-xs text-red-500 mt-1">Informe um CPF válido.</p>
                                     )}
                                 </div>
                             </div>

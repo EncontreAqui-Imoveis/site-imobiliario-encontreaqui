@@ -105,7 +105,7 @@ describe('HomePage integration', () => {
 
         render(await RecentSection())
 
-        expect(fetchRecentProperties).toHaveBeenCalledWith(8, 'sale')
+        expect(fetchRecentProperties).toHaveBeenCalledWith(8, 'rent')
         expect(screen.getByTestId('recent-properties')).toHaveTextContent('Recent: 1')
     })
 

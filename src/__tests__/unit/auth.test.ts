@@ -53,7 +53,7 @@ describe('auth API', () => {
             user: { id: 1, role: 'client' },
             isBroker: false,
             broker: undefined,
-            profileStatus: 'incomplete',
+            profileStatus: 'complete',
             requiresBrokerDocuments: false,
         })
         expect(window.localStorage.getItem('ea_auth_token')).toBeNull()

@@ -83,7 +83,7 @@ describe('PropertyCard', () => {
 
         expect(screen.getByText('Test Property')).toBeInTheDocument()
         expect(screen.getByText(/Test Neighborhood/)).toBeInTheDocument()
-        expect(screen.getByText('3 Quartos')).toBeInTheDocument()
+        expect(screen.getByText('3')).toBeInTheDocument()
         expect(screen.getByText(/R\$\s1\.000\.000/)).toBeInTheDocument()
         expect(screen.getAllByText('Venda')[0]).toBeInTheDocument()
     })

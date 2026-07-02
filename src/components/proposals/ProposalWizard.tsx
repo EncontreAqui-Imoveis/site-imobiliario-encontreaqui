@@ -7,7 +7,7 @@ import type { PaymentDetails } from '@/lib/api/negotiations'
 import { createProposal } from '@/lib/api/negotiations'
 import type { ApiError } from '@/lib/api/client'
 import { useRouter } from 'next/navigation'
-import { maskCpf } from '@/lib/privacy'
+import { formatCpf, isValidCpf, maskCpf } from '@/lib/privacy'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/currencyInput'
 import { useUser } from '@/contexts/UserContext'
@@ -27,14 +27,6 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
     const [clientName, setClientName] = useState('')
     const [clientCpf, setClientCpf] = useState('')
     const [proposalBaseMode, setProposalBaseMode] = useState<ProposalBaseMode>('sale')
-
-    const formatCpf = (val: string) => {
-        const digits = val.replace(/\D/g, '').slice(0, 11)
-        if (digits.length <= 3) return digits
-        if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`
-        if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`
-        return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`
-    }
 
     const proposalValidityDays = 10
     const validUntil = new Date()
@@ -122,7 +114,7 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
 
     const hasMathMismatch = Math.round(paymentTotal * 100) !== Math.round(propertyValue * 100)
 
-    const canAdvanceFromStep1 = clientName.trim().length > 0 && clientCpf.trim().length >= 11
+    const canAdvanceFromStep1 = clientName.trim().length > 0 && isValidCpf(clientCpf)
     const canAdvanceFromStep2 = !hasMathMismatch && propertyValue > 0
 
     const goNext = () => {
@@ -275,6 +267,9 @@ export function ProposalWizard({ property }: ProposalWizardProps) {
                                 placeholder="000.000.000-00"
                                 maxLength={14}
                             />
+                            {clientCpf && !isValidCpf(clientCpf) && (
+                                <p className="text-xs text-red-500 mt-1">Informe um CPF válido.</p>
+                            )}
                         </div>
                     </div>
                 </section>

@@ -74,7 +74,7 @@ export default function PropertyCard({ property, variant = 'default' }: Property
     return (
         <Link
             href={buildPublicPropertyUrl(property)}
-            className={`group block bg-white rounded-[28px] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${isFeatured ? 'ring-2 ring-slate-200 border border-slate-200' : 'border border-gray-100'
+            className={`group block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${isFeatured ? 'ring-2 ring-slate-200 border border-slate-200' : 'border border-gray-100'
                 }`}
         >
             {/* Image Container */}
@@ -126,100 +126,86 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                 )}
 
                 <div className="absolute left-3 top-3 z-10 flex max-w-[calc(100%-1.5rem)] flex-wrap gap-2 sm:left-4 sm:top-4">
-                    <div className={`${purposeBadge.className} shadow-lg backdrop-blur-sm bg-opacity-95`}>
-                        {purposeBadge.label}
-                    </div>
-                    <div className={`rounded-full px-3 py-1.5 text-[11px] font-bold shadow-lg backdrop-blur-sm ${statusMeta.className}`}>
-                        {statusMeta.label}
-                    </div>
+                    {effectivePromo != null && (
+                        <div className="rounded-full bg-amber-500 px-3 py-1.5 text-[11px] font-bold text-white shadow-lg backdrop-blur-sm bg-opacity-95">
+                            Promoção
+                        </div>
+                    )}
                 </div>
 
             </div>
 
             {/* Content */}
-            <div className="p-6">
-                {/* Title */}
-                <div className="mb-3 flex items-start justify-between gap-3">
-                    <h3 className="font-display text-xl font-bold leading-tight text-gray-900 line-clamp-2 transition-colors group-hover:text-primary-600">
-                        {capitalizePropertyTitle(property.title)}
-                    </h3>
-                    <div className="shrink-0 rounded-full bg-white shadow-sm">
-                        <FavoriteButton propertyId={property.id} size="sm" />
+            <div className="p-4 sm:p-5 flex flex-col justify-between">
+                <div>
+                    {/* Title */}
+                    <div className="mb-2 flex items-start justify-between gap-3 h-[2.5rem]">
+                        <h3 className="font-display text-base font-bold leading-snug text-gray-900 line-clamp-2 transition-colors group-hover:text-primary-600 flex-1">
+                            {capitalizePropertyTitle(property.title)}
+                        </h3>
+                        <div className="shrink-0 rounded-full bg-white shadow-sm">
+                            <FavoriteButton propertyId={property.id} size="sm" />
+                        </div>
+                    </div>
+
+                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 h-4 leading-none">
+                        {property.type}
+                    </p>
+
+                    {/* Location */}
+                    <div className="mb-3 flex items-center gap-1.5 text-xs text-gray-600 h-4">
+                        <MapPin className="h-3.5 w-3.5 shrink-0 text-primary-500" />
+                        <span className="line-clamp-1 font-medium">
+                            {property.bairro ? `${property.bairro}, ` : ''}{property.city}
+                        </span>
+                    </div>
+
+                    {/* Price — lado a lado e tamanho compacto */}
+                    <div className="mb-3 h-10 flex flex-col justify-end">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 leading-none mb-1">
+                            {property.priceSale ? 'Venda' : (property.priceRent ? 'Aluguel' : 'Valor')}
+                        </p>
+                        <div className="flex items-baseline flex-wrap gap-1.5 leading-none">
+                            <span className="font-display text-base font-bold tracking-tight text-primary-700 sm:text-lg">
+                                {effectivePromo != null ? formatPrice(effectivePromo) : formatPrice(basePrice)}
+                                {property.priceRent && <span className="text-xs font-normal text-gray-500">/mês</span>}
+                            </span>
+                            {effectivePromo != null && (
+                                <span className="text-xs font-medium text-gray-400 line-through">
+                                    {formatPrice(basePrice)}
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                    {property.type}
-                </p>
-
-                {/* Location */}
-                <div className="mb-4 flex items-center gap-1.5 text-sm text-gray-600">
-                    <MapPin className="h-4 w-4 shrink-0 text-primary-500" />
-                    <span className="line-clamp-1 font-medium">
-                        {property.bairro ? `${property.bairro}, ` : ''}{property.city}
-                    </span>
-                </div>
-
-                {/* Price — hierarquia principal */}
-                <div className="mb-5 border-b border-gray-100 pb-5">
-                    <p className="mb-1 text-xs font-medium uppercase tracking-wider text-gray-400">
-                        {property.priceSale ? 'Venda' : (property.priceRent ? 'Aluguel' : 'Valor')}
-                    </p>
-                    {effectivePromo != null ? (
-                        <>
-                            <p className="text-base font-medium text-gray-400 line-through">
-                                {formatPrice(basePrice)}
-                            </p>
-                            <p className="font-display text-xl font-bold tracking-tight text-primary-700 sm:text-2xl">
-                                {formatPrice(effectivePromo)}
-                                {property.priceRent && <span className="text-sm font-normal text-gray-500">/mês</span>}
-                            </p>
-                            {promoPeriodLabel && (
-                                <p className="mt-1 text-[11px] font-medium text-amber-800">{promoPeriodLabel}</p>
-                            )}
-                        </>
-                    ) : (
-                        <p className="font-display text-xl font-bold tracking-tight text-primary-700 sm:text-2xl">
-                            {formatPrice(basePrice)}
-                            {property.priceRent && <span className="text-sm font-normal text-gray-500">/mês</span>}
-                        </p>
-                    )}
-                </div>
-
-                {/* Stats Grid */}
-                <div className="mb-4 grid grid-cols-2 gap-3">
+                {/* Stats Row */}
+                <div className="flex items-center flex-wrap gap-3.5 text-xs font-semibold text-gray-500 mt-2 h-4">
                     {property.bedrooms != null && property.bedrooms > 0 && (
-                        <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-3 py-3 text-center text-sm text-gray-700">
-                            <Bed className="h-4 w-4 shrink-0 text-gray-400" />
-                            <span className="font-medium leading-tight">{formatUnit(property.bedrooms, 'Quarto', 'Quartos')}</span>
+                        <div className="flex items-center gap-1" title="Quartos">
+                            <Bed className="h-3.5 w-3.5 text-gray-400" />
+                            <span>{property.bedrooms}</span>
                         </div>
                     )}
                     {property.bathrooms != null && property.bathrooms > 0 && (
-                        <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-3 py-3 text-center text-sm text-gray-700">
-                            <Bath className="h-4 w-4 shrink-0 text-gray-400" />
-                            <span className="font-medium leading-tight">{formatUnit(property.bathrooms, 'Banheiro', 'Banheiros')}</span>
+                        <div className="flex items-center gap-1" title="Banheiros">
+                            <Bath className="h-3.5 w-3.5 text-gray-400" />
+                            <span>{property.bathrooms}</span>
                         </div>
                     )}
                     {property.garageSpots != null && property.garageSpots > 0 && (
-                        <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-3 py-3 text-center text-sm text-gray-700">
-                            <Car className="h-4 w-4 shrink-0 text-gray-400" />
-                            <span className="font-medium leading-tight">{formatUnit(property.garageSpots, 'Garagem', 'Garagens')}</span>
+                        <div className="flex items-center gap-1" title="Vagas de garagem">
+                            <Car className="h-3.5 w-3.5 text-gray-400" />
+                            <span>{property.garageSpots}</span>
                         </div>
                     )}
                     {property.areaTerreno != null && property.areaTerreno > 0 && (
-                        <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-3 py-3 text-center text-sm text-gray-700">
-                            <Maximize className="h-4 w-4 shrink-0 text-gray-400" />
-                            <span className="font-medium leading-tight">
-                                {formatAreaDisplay(property.areaTerreno, property.areaTerrenoUnidade)}
-                            </span>
-                            <span className="text-[11px] uppercase tracking-wide text-gray-500">Terreno</span>
+                        <div className="flex items-center gap-1" title="Área do terreno">
+                            <Maximize className="h-3.5 w-3.5 text-gray-400" />
+                            <span>{formatAreaDisplay(property.areaTerreno, property.areaTerrenoUnidade)}</span>
                         </div>
                     )}
                 </div>
-
-                <p className="text-xs text-slate-500">
-                    Abra para ver fotos, localização detalhada e informações completas.
-                </p>
             </div>
         </Link>
     )

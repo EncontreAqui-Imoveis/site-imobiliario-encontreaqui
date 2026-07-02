@@ -91,7 +91,7 @@ describe('ProposalWizard', () => {
 
         const nameInput = await screen.findByDisplayValue('Cliente Teste')
         fireEvent.change(nameInput, { target: { value: 'Cliente Alterado' } })
-        fireEvent.change(screen.getByPlaceholderText('000.000.000-00'), { target: { value: '12345678900' } })
+        fireEvent.change(screen.getByPlaceholderText('000.000.000-00'), { target: { value: '52998224725' } })
         fireEvent.click(screen.getByRole('button', { name: 'Aluguel' }))
         const baseLabel = screen.getByText(/Valor base selecionado:/)
         expect(baseLabel.parentElement?.textContent).toContain('R$')
@@ -109,7 +109,7 @@ describe('ProposalWizard', () => {
         expect(body).toEqual(expect.objectContaining({
             propertyId: 10,
             clientName: 'Cliente Alterado',
-            clientCpf: '12345678900',
+            clientCpf: '52998224725',
             validadeDias: 10,
         }))
         expect(push).toHaveBeenCalledWith('/propostas/neg-1/upload-assinada')

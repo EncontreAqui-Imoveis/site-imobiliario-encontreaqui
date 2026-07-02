@@ -1,5 +1,6 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
+import '@testing-library/jest-dom'
 import PropertySidebar from '@/components/property/PropertySidebar'
 import { Property } from '@/types/property'
 
@@ -64,8 +65,8 @@ const promoProperty: Property = {
     brokerPhone: '64999999999',
     promotionPrice: 200000,
     promotionalRentPrice: 2800,
-    promotionStart: '2026-05-01T00:00:00.000Z',
-    promotionEnd: '2026-05-31T23:59:59.000Z',
+    promotionStart: new Date(Date.now() - 86400000).toISOString(),
+    promotionEnd: new Date(Date.now() + 86400000).toISOString(),
 }
 
 describe('PropertySidebar', () => {

@@ -1,4 +1,4 @@
-import { maskCpf, maskPhone, maskEmail, maskCreci, formatCpf, formatPhone } from '@/lib/privacy'
+import { maskCpf, maskPhone, maskEmail, maskCreci, formatCpf, formatPhone, isValidCpf } from '@/lib/privacy'
 
 describe('maskCpf', () => {
     it('masks a full CPF showing only partial last digits', () => {
@@ -77,6 +77,21 @@ describe('formatCpf', () => {
 
     it('strips non-digit characters', () => {
         expect(formatCpf('123.456.789-00')).toBe('123.456.789-00')
+    })
+})
+
+describe('isValidCpf', () => {
+    it('accepts a valid CPF with check digits', () => {
+        expect(isValidCpf('529.982.247-25')).toBe(true)
+        expect(isValidCpf('52998224725')).toBe(true)
+    })
+
+    it('rejects repeated digits', () => {
+        expect(isValidCpf('111.111.111-11')).toBe(false)
+    })
+
+    it('rejects CPF with invalid check digits', () => {
+        expect(isValidCpf('12345678900')).toBe(false)
     })
 })
 

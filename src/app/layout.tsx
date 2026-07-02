@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
+import ConditionalShell from '@/components/layout/ConditionalShell'
 import { UserProvider } from '@/contexts/UserContext'
 import { FavoritesProvider } from '@/contexts/FavoritesContext'
 
@@ -33,11 +32,9 @@ export default function RootLayout({
             <body className="min-h-screen flex flex-col">
                 <UserProvider>
                     <FavoritesProvider>
-                        <Header />
-                        <main className="flex-1">
+                        <ConditionalShell>
                             {children}
-                        </main>
-                        <Footer />
+                        </ConditionalShell>
                     </FavoritesProvider>
                 </UserProvider>
             </body>
