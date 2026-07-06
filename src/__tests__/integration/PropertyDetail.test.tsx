@@ -255,56 +255,46 @@ describe('PropertyDetailClient', () => {
     })
 
     it('fetches and renders similar properties', async () => {
-        const mockSimilar = {
-            data: [
-                { ...mockProperty, id: 2, title: 'Similar House 1' },
-                { ...mockProperty, id: 3, title: 'Similar House 2' }
-            ]
-        }
+        const mockSimilar: Property[] = [
+            { ...mockProperty, id: 2, title: 'Similar House 1' },
+            { ...mockProperty, id: 3, title: 'Similar House 2' }
+        ]
 
-            ; (global.fetch as jest.Mock).mockResolvedValue({
-                ok: true,
-                json: async () => mockSimilar,
-            })
-
-        render(<PropertyDetailClient propertyId="1" initialProperty={mockProperty} />)
-
-        await waitFor(() => {
-            expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('bairro=Jardins'))
-            expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('status=approved'))
-        })
+        render(
+            <PropertyDetailClient
+                propertyId="1"
+                initialProperty={mockProperty}
+                initialSimilarProperties={mockSimilar}
+            />
+        )
 
         // Check if similar properties were rendered
-        await waitFor(() => {
-            expect(screen.getByText('Similar House 1')).toBeInTheDocument()
-        })
-
+        expect(screen.getByText('Similar House 1')).toBeInTheDocument()
+        expect(screen.getByText('Similar House 2')).toBeInTheDocument()
     })
 
     it('normaliza urls legadas nas propriedades similares antes de renderizar', async () => {
-        const mockSimilar = {
-            data: [
-                {
-                    ...mockProperty,
-                    id: 2,
-                    title: 'Similar House Legacy',
-                    images: ['https://res.cloudinary.co/demo/image/upload/legacy.jpg'],
-                },
-            ],
-        }
+        const mockSimilarProperty = propertiesApi.normalizeProperty(
+            {
+                ...mockProperty,
+                id: 2,
+                title: 'Similar House Legacy',
+                images: ['https://res.cloudinary.co/demo/image/upload/legacy.jpg'],
+            },
+            { imagePreset: 'thumb' }
+        ) as Property
 
-        ;(global.fetch as jest.Mock).mockResolvedValue({
-            ok: true,
-            json: async () => mockSimilar,
-        })
+        render(
+            <PropertyDetailClient
+                propertyId="1"
+                initialProperty={mockProperty}
+                initialSimilarProperties={[mockSimilarProperty]}
+            />
+        )
 
-        render(<PropertyDetailClient propertyId="1" initialProperty={mockProperty} />)
-
-        await waitFor(() => {
-            expect(screen.getByTestId('property-card')).toHaveAttribute(
-                'data-image',
-                'https://res.cloudinary.com/demo/image/upload/c_limit/w_1600/q_auto/f_auto/legacy.jpg',
-            )
-        })
+        expect(screen.getByTestId('property-card')).toHaveAttribute(
+            'data-image',
+            'https://res.cloudinary.com/demo/image/upload/c_limit/w_480/q_auto/f_auto/legacy.jpg',
+        )
     })
 })

@@ -42,7 +42,7 @@ export async function getMyProperties(): Promise<PropertySummary[]> {
     const response = await apiClient.get<unknown[]>('/properties/me')
 
     return (Array.isArray(response) ? response : [])
-        .map((item) => normalizeProperty(item))
+        .map((item) => normalizeProperty(item, { imagePreset: 'thumb' }))
         .filter((item): item is NonNullable<ReturnType<typeof normalizeProperty>> => item !== null)
         .map((item) => ({
             id: item.id,

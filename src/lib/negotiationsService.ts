@@ -151,7 +151,7 @@ export async function fetchProposalTargetProperty(propertyId: string): Promise<P
     if (publicResponse.ok) {
         try {
             const payload = await publicResponse.json()
-            const normalized = normalizeProperty(payload?.data ?? payload)
+            const normalized = normalizeProperty(payload?.data ?? payload, { imagePreset: 'detail' })
             if (normalized) return normalized
             throw new Error('Imóvel indisponível para proposta.')
         } catch (error) {
@@ -168,7 +168,7 @@ export async function fetchProposalTargetProperty(propertyId: string): Promise<P
     if (hasAuthTokenInBrowser()) {
         try {
             const privatePayload = await apiClient.get<unknown>(`/properties/${normalizedId}`)
-            const normalized = normalizeProperty(privatePayload)
+            const normalized = normalizeProperty(privatePayload, { imagePreset: 'detail' })
             if (normalized) return normalized
         } catch (error) {
             const apiError = error as Partial<ApiError>

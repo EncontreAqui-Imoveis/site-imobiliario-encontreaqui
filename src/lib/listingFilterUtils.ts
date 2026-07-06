@@ -31,6 +31,10 @@ const LISTING_FILTER_KEYS = [
     'amenity_aceita_pets',
     'amenity_sistema_seguranca_camera',
     'amenity_sauna',
+    'garage_spots',
+    'minAreaTerreno',
+    'maxAreaTerreno',
+    'areaTerrenoUnit',
 ] as const
 
 export function hasActiveListingFilters(
@@ -43,6 +47,7 @@ export function hasActiveListingFilters(
         const s = String(v).trim()
         if (!s) continue
         if (key === 'areaUnit' && s === 'm2') continue
+        if (key === 'areaTerrenoUnit' && s === 'm2') continue
         return true
     }
     return false

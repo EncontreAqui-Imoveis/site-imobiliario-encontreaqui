@@ -74,7 +74,7 @@ function normalizePhone(value: string) {
 }
 
 function normalizeCreci(value: string) {
-    return value.replace(/\s+/g, '').toUpperCase().trim()
+    return value.replace(/\s+/g, '').toUpperCase().trim().slice(0, 8)
 }
 
 function formatFieldError(fieldLabel: string, values?: string[]) {
@@ -194,6 +194,7 @@ export default function CadastroPage() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const [cityOptions, setCityOptions] = useState<string[]>([])
     const [citiesLoading, setCitiesLoading] = useState(false)
+    const [acceptedTerms, setAcceptedTerms] = useState(false)
     const cepLookupTimeoutRef = useRef<number | null>(null)
     const lastCompletedCep = useRef('')
 
@@ -205,13 +206,6 @@ export default function CadastroPage() {
 
         const existing = loadSignupDraft()
         if (existing) {
-            // Se já tem rascunho com perfil, mantemos na tela unificada com o tipo de perfil restaurado
-            const restored = createSignupDraft({
-                ...existing,
-                step: 'profile', // Sempre inicia na tela principal
-                userType: existing.userType || 'client',
-            })
-
             if (
                 existing.step === 'verify_method' ||
                 existing.step === 'email' ||
@@ -222,11 +216,18 @@ export default function CadastroPage() {
                 return
             }
 
-            setDraft((current) => (isEquivalentDraftForRender(current, restored) ? current : restored))
-            if (restored.data.password) {
-                setConfirmPassword(restored.data.password)
+            // Apenas restaura automaticamente se o rascunho já estiver no passo de endereço e possuir id
+            if (existing.step === 'address' && existing.draftId) {
+                const restored = createSignupDraft({
+                    ...existing,
+                    userType: existing.userType || 'client',
+                })
+                setDraft((current) => (isEquivalentDraftForRender(current, restored) ? current : restored))
+                if (restored.data.password) {
+                    setConfirmPassword(restored.data.password)
+                }
+                setRestoredDraft(true)
             }
-            setRestoredDraft(true)
         }
         setReady(true)
     }, [router.replace, router.push, session])
@@ -468,6 +469,10 @@ export default function CadastroPage() {
     }
 
     const handleGoogleRegister = async () => {
+        if (!acceptedTerms) {
+            setError('Você precisa aceitar os Termos de Uso e Privacidade.')
+            return
+        }
         setGoogleLoading(true)
         setError(null)
 
@@ -542,6 +547,10 @@ export default function CadastroPage() {
 
     const handleContinueBasic = async (event: React.FormEvent) => {
         event.preventDefault()
+        if (!acceptedTerms) {
+            setError('Você precisa aceitar os Termos de Uso e Privacidade.')
+            return
+        }
         setSubmitting(true)
         setError(null)
         setDraftConflictCode(null)
@@ -810,7 +819,7 @@ export default function CadastroPage() {
             >
                 {/* Camada Cliente: Casal Feliz + Sombreado Escuro + Toque Sutil de Amarelo */}
                 <div
-                    className={`absolute inset-0 bg-[url('/casal-feliz.webp')] bg-cover bg-[position:center_30%] transition-opacity duration-500 ease-in-out z-0 ${draft.userType === 'client' ? 'opacity-100' : 'opacity-0'
+                    className={`absolute inset-0 bg-[url('/casal-feliz.webp')] bg-cover bg-[position:center_30%] transition-opacity duration-500 ease-in-out z-0 ${draft.userType === 'client' || !draft.userType ? 'opacity-100' : 'opacity-0'
                         }`}
                 >
                     {/* Overlay gradiente escuro idêntico ao do login para máximo contraste do texto branco */}
@@ -874,17 +883,19 @@ export default function CadastroPage() {
                         <p className="mt-0.5 text-xs sm:text-sm text-gray-500">{stepSubtitle}</p>
                     </div>
 
-                    {/* Aviso de rascunho restaurado */}
-                    {restoredDraft && (
-                        <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-900">
-                            <p className="font-semibold">Rascunho restaurado</p>
-                            <p className="mt-0.5">Retomamos o seu cadastro de onde ele parou.</p>
+                    {/* Aviso de rascunho restaurado — apenas na tela de endereço */}
+                    {restoredDraft && draft.step === 'address' && (
+                        <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50/60 px-3.5 py-1.5 text-xs text-amber-900 flex items-center justify-between gap-3">
+                            <div className="flex-1">
+                                <span className="font-bold">Cadastro em andamento:</span>{' '}
+                                <span>Retomado de onde você parou.</span>
+                            </div>
                             <button
                                 type="button"
                                 onClick={handleDiscardDraft}
-                                className="mt-1 inline-flex rounded-lg border border-amber-300 bg-white px-3 py-1 text-xs font-semibold text-amber-900 hover:bg-amber-100 transition"
+                                className="shrink-0 rounded bg-white border border-amber-300 px-2 py-0.5 text-[10px] font-bold text-amber-900 hover:bg-amber-100 transition"
                             >
-                                Descartar cadastro
+                                Descartar
                             </button>
                         </div>
                     )}
@@ -1114,7 +1125,7 @@ export default function CadastroPage() {
                                                 required
                                                 value={draft.data.creci}
                                                 onChange={(e) => updateDraft({ creci: normalizeCreci(e.target.value) })}
-                                                maxLength={25}
+                                                maxLength={8}
                                                 placeholder="Ex: 12345-F"
                                                 className="w-full rounded-lg border border-gray-200 bg-gray-50 py-1.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-yellow-400 focus:bg-white focus:ring-2 focus:ring-yellow-400/30"
                                             />
@@ -1128,7 +1139,8 @@ export default function CadastroPage() {
                                 <label className="flex items-start gap-2 text-sm text-gray-600 cursor-pointer select-none">
                                     <input
                                         type="checkbox"
-                                        required
+                                        checked={acceptedTerms}
+                                        onChange={(e) => setAcceptedTerms(e.target.checked)}
                                         className="mt-1 h-4 w-4 rounded border-gray-300"
                                         style={{ accentColor: '#ffce44' }}
                                     />
@@ -1176,7 +1188,7 @@ export default function CadastroPage() {
                                         className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-200 bg-white py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50 active:scale-[.99]"
                                     >
                                         <GoogleLogo />
-                                        Google
+                                        Continuar com Google
                                     </button>
                                 </>
                             )}

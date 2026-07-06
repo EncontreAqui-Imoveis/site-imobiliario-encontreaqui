@@ -3,7 +3,6 @@
 import React, { useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import { ChevronDown, Loader2 } from 'lucide-react'
-import SignupDraftNotice from '@/components/auth/SignupDraftNotice'
 import { usePropertySearch } from '@/hooks/usePropertySearch'
 import { useLocationOptions } from '@/components/search/useLocationOptions'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
@@ -74,21 +73,16 @@ export default function HeroSection({ initialDeal = 'sale' }: { initialDeal?: Ho
 
     return (
         <section
-            className="relative flex min-h-[min(100svh,900px)] items-center overflow-hidden bg-[#f8fafc] pt-28 pb-16 lg:min-h-[750px]"
+            className="relative flex min-h-[min(100svh,900px)] items-center overflow-hidden bg-[#f8fafc] pt-20 pb-12 lg:min-h-[750px]"
             aria-label="Destaque da página inicial"
         >
-            <div className="relative z-10 mx-auto w-full max-w-6xl px-2 sm:px-4 lg:px-5">
-                {/* Rascunho Notice */}
-                <div className="mx-auto max-w-3xl mb-6">
-                    <SignupDraftNotice />
-                </div>
-
+            <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
                 {/* Card Fundido de Duas Colunas (Pesquisa + Imagem) */}
-                <div className="mt-[-1rem] lg:mt-[-3.5rem] flex flex-col lg:flex-row w-full bg-white shadow-sm border border-gray-200/80 rounded-2xl overflow-hidden items-stretch">
+                <div className="mt-0 lg:mt-2 flex flex-col lg:flex-row w-full bg-white shadow-sm border border-gray-200/80 rounded-2xl overflow-hidden items-stretch">
                     {/* ══════════════════════════════════════════════════
                         PAINEL ESQUERDO — Formulário de Pesquisa (Equilibrado 50%)
                     ══════════════════════════════════════════════════ */}
-                    <div className="w-full lg:w-1/2 px-8 pb-8 pt-6 sm:px-10 sm:pb-10 sm:pt-8 lg:px-12 lg:pb-12 lg:pt-10 flex flex-col justify-center">
+                    <div className="w-full lg:w-1/2 px-8 py-8 sm:px-10 sm:py-10 lg:px-16 lg:py-20 flex flex-col justify-center">
                         {/* Pill Switcher Comprar / Alugar */}
                         <div className="relative inline-grid grid-cols-2 p-1 bg-gray-100/70 rounded-full w-48 mb-5 mt-3 border border-gray-200/40 select-none">
                             <div

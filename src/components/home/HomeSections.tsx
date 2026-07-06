@@ -44,12 +44,14 @@ export async function FeaturedSection({ deal = 'sale' }: { deal?: HomeDeal } = {
 }
 
 export async function RecentSection({ deal = 'rent' }: { deal?: HomeDeal } = {}) {
-    const properties = await fetchRecentProperties(8, 'rent')
+    const properties = await fetchRecentProperties(8, deal)
+    const title = deal === 'rent' ? 'Imóveis em Destaque para Aluguel' : 'Imóveis em Destaque para Venda'
+    const subtitle = deal === 'rent' ? 'Confira os imóveis em destaque para aluguel' : 'Confira os imóveis em destaque para venda'
     return (
         <RecentProperties
             properties={properties}
-            title="Imóveis em Destaque para Aluguel"
-            subtitle="Confira os imóveis em destaque para aluguel"
+            title={title}
+            subtitle={subtitle}
         />
     )
 }

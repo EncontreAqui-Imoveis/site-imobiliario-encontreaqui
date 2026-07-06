@@ -210,7 +210,7 @@ export default function EditPropertyPage() {
                 ...normalizeFormAmenities({
                     amenities: Array.isArray(p.amenities)
                         ? p.amenities
-                            .map((item) => String(item).trim())
+                            .map((item) => String(item).trim().toUpperCase())
                             .filter((item) => PROPERTY_CANONICAL_AMENITIES.includes(item as PropertyAmenity))
                             .filter((value, index, values) => values.indexOf(value) === index) as PropertyAmenity[]
                         : [],

@@ -4,10 +4,11 @@ import { useState } from 'react'
 import { formatPrice, Property } from '@/types/property'
 import { capitalizePropertyTitle } from '@/lib/propertyTitleDisplay'
 import {
-    MapPin, Bed, Bath, Car, Maximize,
+    MapPin, Bed, Bath, Car, Maximize, Hammer,
     Wifi, Waves, Sun, Cpu, Wind, Sofa, Building2, type LucideIcon,
     Hash, Share2, CheckCircle,
-    Map, Phone, Globe, Mail
+    Map, Phone, Globe, Mail,
+    Droplet, ArrowUpDown, Dumbbell, Flame, PartyPopper, Trophy, ShieldCheck, PawPrint, Camera, Thermometer
 } from 'lucide-react'
 import { shareOrCopy } from '@/lib/webShare'
 import { displayStatusLabel, formatUnit } from '@/lib/propertyLabels'
@@ -44,6 +45,25 @@ const AMENITY_LABELS: Record<PropertyAmenity, string> = {
     'ACEITA PETS': 'Aceita pets',
     'SISTEMA DE SEGURANÇA/CÂMERA': 'Sistema de segurança/câmera',
     'SAUNA': 'Sauna',
+}
+
+const AMENITY_CONFIGS: Record<PropertyAmenity, { icon: LucideIcon; label: string }> = {
+    'WI-FI': { icon: Wifi, label: 'Wi-Fi' },
+    'PISCINA': { icon: Waves, label: 'Piscina' },
+    'ENERGIA SOLAR': { icon: Sun, label: 'Energia Solar' },
+    'AUTOMAÇÃO': { icon: Cpu, label: 'Automação' },
+    'AR CONDICIONADO': { icon: Wind, label: 'Ar-condicionado' },
+    'MOBILIADA': { icon: Sofa, label: 'Mobiliada' },
+    'POÇO ARTESIANO': { icon: Droplet, label: 'Poço artesiano' },
+    'ELEVADOR': { icon: ArrowUpDown, label: 'Elevador' },
+    'ACADEMIA': { icon: Dumbbell, label: 'Academia' },
+    'CHURRASQUEIRA': { icon: Flame, label: 'Churrasqueira' },
+    'SALÃO DE FESTAS': { icon: PartyPopper, label: 'Salão de festas' },
+    'QUADRA': { icon: Trophy, label: 'Quadra' },
+    'CONDOMÍNIO FECHADO': { icon: ShieldCheck, label: 'Condomínio fechado' },
+    'ACEITA PETS': { icon: PawPrint, label: 'Aceita pets' },
+    'SISTEMA DE SEGURANÇA/CÂMERA': { icon: Camera, label: 'Sistema de segurança/câmera' },
+    'SAUNA': { icon: Thermometer, label: 'Sauna' },
 }
 
 function toSentenceCase(value: string): string {
@@ -103,27 +123,22 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                 ...(property.temAutomacao ? ['AUTOMAÇÃO'] : []),
                 ...(property.temArCondicionado ? ['AR CONDICIONADO'] : []),
             ]
-                .map((amenity) => String(amenity).trim())
+                .map((amenity) => String(amenity).trim().toUpperCase())
                 .filter((value): value is PropertyAmenity =>
                     PROPERTY_CANONICAL_AMENITIES.includes(value as PropertyAmenity) && value.length > 0,
                 ),
         ),
     )
 
-    // Build comfort amenities
-    const comfortAmenities = [
-        { icon: Wifi, label: 'WI-FI', active: selectedCanonicalAmenities.includes('WI-FI') },
-        { icon: Waves, label: 'PISCINA', active: selectedCanonicalAmenities.includes('PISCINA') },
-        { icon: Sun, label: 'ENERGIA SOLAR', active: selectedCanonicalAmenities.includes('ENERGIA SOLAR') },
-        { icon: Cpu, label: 'AUTOMAÇÃO', active: selectedCanonicalAmenities.includes('AUTOMAÇÃO') },
-        { icon: Wind, label: 'AR CONDICIONADO', active: selectedCanonicalAmenities.includes('AR CONDICIONADO') },
-        { icon: Sofa, label: 'MOBILIADA', active: selectedCanonicalAmenities.includes('MOBILIADA') },
-    ]
-    const mappedComfortAmenities = new Set(comfortAmenities.map((item) => normalizeAmenityLabel(item.label)))
-    const groupedGenericAmenities = selectedCanonicalAmenities
-        .filter((amenity) => !mappedComfortAmenities.has(normalizeAmenityLabel(amenity)))
-        .map((amenity) => getAmenityLabel(amenity as PropertyAmenity))
-    const activeComfortAmenities = comfortAmenities.filter((item) => item.active)
+    // Build all active canonical and generic amenities
+    const activeComfortAmenities = selectedCanonicalAmenities.map((amenity) => {
+        const config = AMENITY_CONFIGS[amenity as PropertyAmenity]
+        if (config) {
+            return { icon: config.icon, label: amenity, active: true }
+        }
+        return { icon: CheckCircle, label: amenity, active: true }
+    })
+    const groupedGenericAmenities: string[] = []
 
     // Build additional characteristics
     const additionalInfo = [
@@ -201,98 +216,31 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                 </h1>
 
                 {/* Location */}
-                <div className="mb-8 flex items-center gap-2 text-gray-800">
+                <div className="flex items-center gap-2 text-gray-800">
                     <MapPin className="h-5 w-5 shrink-0 text-primary-600" />
                     <span className="text-lg font-semibold sm:text-xl">
                         {property.bairro}
                         {property.city && ` • ${property.city}`}
                     </span>
                 </div>
-
-                {/* Key Stats Grid */}
-                <div className="grid grid-cols-2 gap-4 rounded-2xl border border-gray-100 bg-gray-50 p-6 md:grid-cols-5">
-                    <div className="flex flex-col items-center justify-center gap-2 text-center">
-                        <Bed className="h-6 w-6 shrink-0 text-primary-600" />
-                        <span className="text-xl font-bold text-gray-900">{property.bedrooms || 0}</span>
-                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">
-                            {formatUnit(property.bedrooms || 0, 'Quarto', 'Quartos')}
-                        </span>
-                    </div>
-                    <div className="flex flex-col items-center justify-center gap-2 text-center">
-                        <Bath className="h-6 w-6 shrink-0 text-primary-600" />
-                        <span className="text-xl font-bold text-gray-900">{property.bathrooms || 0}</span>
-                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">
-                            {formatUnit(property.bathrooms || 0, 'Banheiro', 'Banheiros')}
-                        </span>
-                    </div>
-                    <div className="flex flex-col items-center justify-center gap-2 text-center">
-                        <Car className="h-6 w-6 shrink-0 text-primary-600" />
-                        <span className="text-xl font-bold text-gray-900">{property.garageSpots || 0}</span>
-                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">
-                            {formatUnit(property.garageSpots || 0, 'Garagem', 'Garagens')}
-                        </span>
-                    </div>
-                    <div className="flex flex-col items-center justify-center gap-2 text-center">
-                        <Maximize className="h-6 w-6 shrink-0 text-primary-600" />
-                        <span className="text-xl font-bold text-gray-900">
-                            {formatArea(property.areaTerreno, property.areaTerrenoUnidade)}
-                        </span>
-                        <span className="text-xs font-medium uppercase tracking-wide text-gray-600">Área do Terreno</span>
-                    </div>
-                </div>
-
-                {/* Additional costs */}
-                {((property.valorCondominio || 0) > 0) && (
-                    <div className="mt-6 flex flex-wrap gap-4 pt-6 border-t border-gray-100">
-                        {property.valorCondominio && property.valorCondominio > 0 && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                                <Building2 className="w-4 h-4 text-gray-400" />
-                                <span>Condomínio: <span className="font-semibold text-gray-900">{formatPrice(property.valorCondominio)}</span></span>
-                            </div>
-                        )}
-                    </div>
-                )}
             </div>
 
             {/* Description Section */}
             {property.description && (
-                <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100">
-                    <h2 className="font-display text-xl font-bold text-gray-900 mb-4">Sobre o imóvel</h2>
-                    <div className="prose prose-gray max-w-none">
-                        <p className="text-gray-600 whitespace-pre-line break-words [overflow-wrap:anywhere] leading-relaxed text-base">
-                            {property.description}
-                        </p>
+                <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[160px] space-y-4">
+                    <div>
+                        <h2 className="font-display text-xl font-bold text-gray-900 mb-4">Sobre o imóvel</h2>
+                        <div className="prose prose-gray max-w-none">
+                            <p className="text-gray-600 whitespace-pre-line break-words [overflow-wrap:anywhere] leading-relaxed text-base">
+                                {property.description}
+                            </p>
+                        </div>
                     </div>
-                </div>
-            )}
-
-            {/* Detailed Location Section */}
-            {(property.bairro || property.city) && (
-                <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100">
-                    <h2 className="font-display text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                        <Map className="w-5 h-5 text-primary-500" />
-                        Localização
-                    </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {property.bairro && (
-                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                <Building2 className="w-4 h-4 text-primary-500 flex-shrink-0" />
-                                <div>
-                                    <p className="text-xs text-gray-500">Bairro</p>
-                                    <p className="text-sm font-semibold text-gray-900">{property.bairro}</p>
-                                </div>
-                            </div>
-                        )}
-                        {property.city && (
-                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                <MapPin className="w-4 h-4 text-primary-500 flex-shrink-0" />
-                                <div>
-                                    <p className="text-xs text-gray-500">Cidade</p>
-                                    <p className="text-sm font-semibold text-gray-900">{property.city}</p>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                    {property.createdAt && (
+                        <div className="pt-4 text-xs text-gray-400 font-semibold">
+                            Publicado em {formatDate(property.createdAt)}
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -367,39 +315,7 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                 )}
             </div>
 
-            {/* Extra Details (Lot Type, Total Area, etc) */}
-            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100">
-                <h2 className="font-display text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                    <Hash className="w-5 h-5 text-primary-500" />
-                    Detalhes Técnicos
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                        <span className="text-gray-600">Área do Terreno</span>
-                        <span className="font-bold text-gray-900">
-                            {formatArea(property.areaTerreno, property.areaTerrenoUnidade)}
-                        </span>
-                    </div>
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                        <span className="text-gray-600">Área Construída</span>
-                        <span className="font-bold text-gray-900">
-                            {formatArea(property.areaConstruida, property.areaConstruidaUnidade)}
-                        </span>
-                    </div>
-                    {(additionalInfo.length > 0) && additionalInfo.map((info, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                            <span className="text-gray-600">{info.label}</span>
-                            <span className="font-bold text-gray-900">{info.value}</span>
-                        </div>
-                    ))}
-                    {property.createdAt && (
-                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                            <span className="text-gray-600">Publicado em</span>
-                            <span className="font-bold text-gray-900">{formatDate(property.createdAt)}</span>
-                        </div>
-                    )}
-                </div>
-            </div>
+
 
             {/* Video Section */}
             {property.videoUrl && (

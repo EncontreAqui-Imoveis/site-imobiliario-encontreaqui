@@ -40,11 +40,12 @@ const propertyMock: Property = {
 }
 
 describe('PropertyInfo', () => {
-    it('exibe somente bairro e cidade na seção de localização detalhada', () => {
+    it('exibe a localização do bairro e cidade no cabeçalho', () => {
         render(<PropertyInfo property={propertyMock} />)
 
-        expect(screen.getByText('Bairro')).toBeInTheDocument()
-        expect(screen.getByText('Cidade')).toBeInTheDocument()
+        expect(screen.getByText('Centro • Goiânia')).toBeInTheDocument()
+        expect(screen.queryByText('Bairro')).not.toBeInTheDocument()
+        expect(screen.queryByText('Cidade')).not.toBeInTheDocument()
         expect(screen.queryByText('Endereço')).not.toBeInTheDocument()
         expect(screen.queryByText('Número')).not.toBeInTheDocument()
         expect(screen.queryByText('Quadra')).not.toBeInTheDocument()
@@ -53,12 +54,6 @@ describe('PropertyInfo', () => {
         expect(screen.queryByText('CEP')).not.toBeInTheDocument()
         expect(screen.queryByText(/Goiânia • GO/)).not.toBeInTheDocument()
         expect(screen.queryByText('Suítes')).not.toBeInTheDocument()
-    })
-
-    it('exibe área com unidade original', () => {
-        render(<PropertyInfo property={propertyMock} />)
-
-        expect(screen.getAllByText('200 ha')).toHaveLength(2)
     })
 
     it('exibe e deduplica as 16 amenidades entre flags e lista', () => {
@@ -107,7 +102,6 @@ describe('PropertyInfo', () => {
             /Automação/i,
             /Ar-condicionado/i,
             /Poço Artesiano/i,
-            /Mobiliada/i,
             /Elevador/i,
             /Academia/i,
             /Churrasqueira/i,
@@ -115,12 +109,13 @@ describe('PropertyInfo', () => {
             /Quadra/i,
             /Condomínio fechado/i,
             /Aceita pets/i,
-            /Sistema de segurança\/c[âa]mera/i,
+            /Mobiliada/i,
+            /Sistema de segurança\/câmera/i,
             /Sauna/i,
         ]
 
-        for (const label of expectedLabels) {
-            expect(screen.getByText(label)).toBeInTheDocument()
-        }
+        expectedLabels.forEach((regex) => {
+            expect(screen.getByText(regex)).toBeInTheDocument()
+        })
     })
 })

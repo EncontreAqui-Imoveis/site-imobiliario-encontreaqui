@@ -279,7 +279,6 @@ describe('signup flow', () => {
         render(<CadastroPage />)
 
         fireEvent.click(screen.getByRole('button', { name: /quero cadastrar como cliente/i }))
-        fireEvent.click(screen.getByRole('button', { name: /^continuar$/i }))
 
         fireEvent.change(screen.getByLabelText('Nome completo *'), {
             target: { value: 'Cliente Conflito' },
@@ -290,11 +289,15 @@ describe('signup flow', () => {
         fireEvent.change(screen.getByLabelText('Senha *'), {
             target: { value: '123456' },
         })
+        fireEvent.change(screen.getByLabelText('Confirmar Senha *'), {
+            target: { value: '123456' },
+        })
         fireEvent.change(screen.getByLabelText(/Telefone/), {
             target: { value: '(62) 98888-8888' },
         })
 
-        fireEvent.click(screen.getByRole('button', { name: /^continuar$/i }))
+        fireEvent.click(screen.getByRole('checkbox'))
+        fireEvent.click(screen.getByRole('button', { name: /criar conta/i }))
 
         await waitFor(() => {
             expect(screen.getByText('Este e-mail já está cadastrado. Faça login para continuar.')).toBeInTheDocument()
@@ -308,7 +311,6 @@ describe('signup flow', () => {
         render(<CadastroPage />)
 
         fireEvent.click(screen.getByRole('button', { name: /quero cadastrar como cliente/i }))
-        fireEvent.click(screen.getByRole('button', { name: /^continuar$/i }))
 
         fireEvent.change(screen.getByLabelText('Nome completo *'), {
             target: { value: 'Cliente Conflito' },
@@ -319,11 +321,15 @@ describe('signup flow', () => {
         fireEvent.change(screen.getByLabelText('Senha *'), {
             target: { value: '123456' },
         })
+        fireEvent.change(screen.getByLabelText('Confirmar Senha *'), {
+            target: { value: '123456' },
+        })
         fireEvent.change(screen.getByLabelText(/Telefone/), {
             target: { value: '(62) 97777-7777' },
         })
 
-        fireEvent.click(screen.getByRole('button', { name: /^continuar$/i }))
+        fireEvent.click(screen.getByRole('checkbox'))
+        fireEvent.click(screen.getByRole('button', { name: /criar conta/i }))
 
         await waitFor(() => {
             expect(screen.getByText('Já existe um cadastro em andamento para este e-mail.')).toBeInTheDocument()
@@ -392,7 +398,6 @@ describe('signup flow', () => {
             expect(screen.getByRole('button', { name: /quero cadastrar como cliente/i })).toBeInTheDocument()
         })
         fireEvent.click(screen.getByRole('button', { name: /quero cadastrar como corretor/i }))
-        fireEvent.click(screen.getByRole('button', { name: /^continuar$/i }))
 
         fireEvent.change(screen.getByLabelText(/Telefone/), {
             target: { value: '(62) 98888-7777' },
@@ -400,7 +405,8 @@ describe('signup flow', () => {
         fireEvent.change(screen.getByLabelText(/CRECI/i), {
             target: { value: 'ABC123' },
         })
-        fireEvent.click(screen.getByRole('button', { name: /^continuar$/i }))
+        fireEvent.click(screen.getByRole('checkbox'))
+        fireEvent.click(screen.getByRole('button', { name: /criar conta/i }))
 
         await waitFor(() => {
             expect(mockCreateSignupDraftRemote).toHaveBeenCalledTimes(1)
@@ -412,7 +418,6 @@ describe('signup flow', () => {
         render(<CadastroPage />)
 
         fireEvent.click(screen.getByRole('button', { name: /quero cadastrar como cliente/i }))
-        fireEvent.click(screen.getByRole('button', { name: /^continuar$/i }))
 
         fireEvent.change(screen.getByLabelText('Nome completo *'), {
             target: { value: 'Cliente Sem Endereço' },
@@ -423,11 +428,15 @@ describe('signup flow', () => {
         fireEvent.change(screen.getByLabelText('Senha *'), {
             target: { value: '123456' },
         })
+        fireEvent.change(screen.getByLabelText('Confirmar Senha *'), {
+            target: { value: '123456' },
+        })
         fireEvent.change(screen.getByLabelText(/Telefone/), {
             target: { value: '(62) 98888-8888' },
         })
 
-        fireEvent.click(screen.getByRole('button', { name: /^continuar$/i }))
+        fireEvent.click(screen.getByRole('checkbox'))
+        fireEvent.click(screen.getByRole('button', { name: /criar conta/i }))
 
         await waitFor(() => {
             expect(mockCreateSignupDraftRemote).toHaveBeenCalledTimes(1)
@@ -459,7 +468,6 @@ describe('signup flow', () => {
         render(<CadastroPage />)
 
         fireEvent.click(screen.getByRole('button', { name: /quero cadastrar como cliente/i }))
-        fireEvent.click(screen.getByRole('button', { name: /^continuar$/i }))
 
         fireEvent.change(screen.getByLabelText('Nome completo *'), {
             target: { value: 'Cliente Sem Conexão' },
@@ -470,11 +478,15 @@ describe('signup flow', () => {
         fireEvent.change(screen.getByLabelText('Senha *'), {
             target: { value: '123456' },
         })
+        fireEvent.change(screen.getByLabelText('Confirmar Senha *'), {
+            target: { value: '123456' },
+        })
         fireEvent.change(screen.getByLabelText(/Telefone/), {
             target: { value: '(62) 98888-9999' },
         })
 
-        fireEvent.click(screen.getByRole('button', { name: /^continuar$/i }))
+        fireEvent.click(screen.getByRole('checkbox'))
+        fireEvent.click(screen.getByRole('button', { name: /criar conta/i }))
 
         await waitFor(() => {
             expect(screen.queryByText('CRECI inválido.')).not.toBeInTheDocument()
@@ -490,7 +502,6 @@ describe('signup flow', () => {
         expect(screen.queryByRole('button', { name: 'Trocar de conta' })).not.toBeInTheDocument()
 
         fireEvent.click(screen.getByRole('button', { name: /quero cadastrar como cliente/i }))
-        fireEvent.click(screen.getByRole('button', { name: /^continuar$/i }))
 
         expect(screen.queryByRole('button', { name: 'Trocar de conta' })).not.toBeInTheDocument()
     })
@@ -557,7 +568,6 @@ describe('signup flow', () => {
         render(<CadastroPage />)
 
         fireEvent.click(screen.getByRole('button', { name: /quero cadastrar como cliente/i }))
-        fireEvent.click(screen.getByRole('button', { name: /^continuar$/i }))
 
         fireEvent.change(screen.getByLabelText('Nome completo *'), {
             target: { value: 'Cliente Conflito' },
@@ -568,11 +578,15 @@ describe('signup flow', () => {
         fireEvent.change(screen.getByLabelText('Senha *'), {
             target: { value: '123456' },
         })
+        fireEvent.change(screen.getByLabelText('Confirmar Senha *'), {
+            target: { value: '123456' },
+        })
         fireEvent.change(screen.getByLabelText(/Telefone/), {
             target: { value: '(62) 97777-7777' },
         })
 
-        fireEvent.click(screen.getByRole('button', { name: /^continuar$/i }))
+        fireEvent.click(screen.getByRole('checkbox'))
+        fireEvent.click(screen.getByRole('button', { name: /criar conta/i }))
 
         await waitFor(() => {
             expect(screen.getByRole('button', { name: 'Trocar de conta' })).toBeInTheDocument()
@@ -591,7 +605,7 @@ describe('signup flow', () => {
         expect(mockCreateSignupDraftRemote).toHaveBeenCalledTimes(createCallsBeforeSwitch)
     })
 
-    it('pula tela de perfil quando há userType no draft com step profile', async () => {
+    it('não restaura nem pula tela de perfil quando há draft com step profile no mount', async () => {
         mockLoadSignupDraft.mockReturnValue({
             source: 'email',
             userType: 'broker',
@@ -601,8 +615,8 @@ describe('signup flow', () => {
             draftId: null,
             draftToken: null,
             data: {
-                name: '',
-                email: '',
+                name: 'Nome Restaurado',
+                email: 'restaurado@example.com',
                 password: '',
                 phone: '',
                 street: '',
@@ -621,12 +635,12 @@ describe('signup flow', () => {
         })
         render(<CadastroPage />)
 
-        await waitFor(() => {
-            expect(screen.getByLabelText('Nome completo *')).toBeInTheDocument()
-        })
+        // Deve mostrar os botões de seleção de perfil
+        expect(screen.getByRole('button', { name: /quero cadastrar como cliente/i })).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /quero cadastrar como corretor/i })).toBeInTheDocument()
 
-        expect(screen.queryByRole('button', { name: /quero cadastrar como cliente/i })).not.toBeInTheDocument()
-        expect(screen.queryByRole('button', { name: /quero cadastrar como corretor/i })).not.toBeInTheDocument()
+        // Os campos devem começar vazios
+        expect(screen.getByLabelText('Nome completo *')).toHaveValue('')
     })
 
     it('não renderiza stepper/lista de etapas no topo', () => {
@@ -653,6 +667,7 @@ describe('signup flow', () => {
         render(<CadastroPage />)
 
         fireEvent.click(screen.getByRole('button', { name: /quero cadastrar como cliente/i }))
+        fireEvent.click(screen.getByRole('checkbox'))
         fireEvent.click(screen.getByRole('button', { name: 'Continuar com Google' }))
 
         await waitFor(() => {
@@ -671,7 +686,7 @@ describe('signup flow', () => {
         })
 
         expect(screen.getByText(/Selecione seu tipo de perfil para avançarmos para o próximo passo/i)).toBeInTheDocument()
-        expect(screen.queryByRole('button', { name: /^continuar$/i })).toBeInTheDocument()
+        expect(screen.queryByRole('button', { name: /criar conta/i })).toBeInTheDocument()
     })
 
     it('bloqueia e-mail já existente na etapa de dados antes de avançar', async () => {
@@ -679,7 +694,6 @@ describe('signup flow', () => {
         render(<CadastroPage />)
 
         fireEvent.click(screen.getByRole('button', { name: /quero cadastrar como cliente/i }))
-        fireEvent.click(screen.getByRole('button', { name: /^continuar$/i }))
 
         fireEvent.change(screen.getByLabelText('Nome completo *'), {
             target: { value: 'Cliente Bloqueado' },
@@ -690,11 +704,15 @@ describe('signup flow', () => {
         fireEvent.change(screen.getByLabelText('Senha *'), {
             target: { value: '123456' },
         })
+        fireEvent.change(screen.getByLabelText('Confirmar Senha *'), {
+            target: { value: '123456' },
+        })
         fireEvent.change(screen.getByLabelText('Telefone'), {
             target: { value: '(62) 99999-9999' },
         })
 
-        fireEvent.click(screen.getByRole('button', { name: /^continuar$/i }))
+        fireEvent.click(screen.getByRole('checkbox'))
+        fireEvent.click(screen.getByRole('button', { name: /criar conta/i }))
 
         await waitFor(() => {
             expect(mockCheckEmail).toHaveBeenCalledWith('bloqueado@example.com')
@@ -713,7 +731,6 @@ describe('signup flow', () => {
         render(<CadastroPage />)
 
         fireEvent.click(screen.getByRole('button', { name: /quero cadastrar como cliente/i }))
-        fireEvent.click(screen.getByRole('button', { name: /^continuar$/i }))
 
         fireEvent.change(screen.getByLabelText('Nome completo *'), {
             target: { value: 'Cliente Address' },
@@ -724,11 +741,15 @@ describe('signup flow', () => {
         fireEvent.change(screen.getByLabelText('Senha *'), {
             target: { value: '123456' },
         })
+        fireEvent.change(screen.getByLabelText('Confirmar Senha *'), {
+            target: { value: '123456' },
+        })
         fireEvent.change(screen.getByLabelText('Telefone'), {
             target: { value: '(62) 98888-7777' },
         })
 
-        fireEvent.click(screen.getByRole('button', { name: /^continuar$/i }))
+        fireEvent.click(screen.getByRole('checkbox'))
+        fireEvent.click(screen.getByRole('button', { name: /criar conta/i }))
 
         await waitFor(() => {
             expect(screen.getByLabelText(/CEP/i)).toBeInTheDocument()
@@ -753,7 +774,7 @@ describe('signup flow', () => {
             target: { value: '100' },
         })
 
-        fireEvent.click(screen.getByRole('button', { name: /ir para a página de verificação/i }))
+        fireEvent.click(screen.getByRole('button', { name: /ir para a verificação/i }))
 
         await waitFor(() => {
             expect(mockPatchSignupDraftRemote).toHaveBeenCalledTimes(1)

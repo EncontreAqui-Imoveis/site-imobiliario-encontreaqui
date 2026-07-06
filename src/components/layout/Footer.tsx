@@ -3,20 +3,14 @@ import Image from 'next/image'
 import { Download, Instagram, MessageCircle } from 'lucide-react'
 import { APP_LINKS } from '@/lib/appLinks'
 import { TEAM_CONTACT_CHANNEL_URL } from '@/lib/contactLinks'
+import { FooterConditionalNav, FooterAccountSection } from '@/components/layout/FooterAuthLinks'
 
 const INSTAGRAM_URL =
     'https://www.instagram.com/encontre.aquiimoveis?igsh=MXI2N3ZmZzY4a281eQ=='
+
 const footerLinks = [
     { href: '/', label: 'Início' },
     { href: '/imoveis', label: 'Imóveis' },
-    { href: '/anuncie', label: 'Anunciar imóvel' },
-]
-
-const accountLinks = [
-    { href: '/favoritos', label: 'Favoritos' },
-    { href: '/documentos', label: 'Documentos' },
-    { href: '/meus-imoveis', label: 'Meus Imóveis' },
-    { href: '/perfil', label: 'Meu perfil' },
 ]
 
 export default function Footer() {
@@ -25,7 +19,8 @@ export default function Footer() {
     return (
         <footer className="border-t border-slate-800 bg-slate-950 text-slate-300">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 lg:gap-12">
+                    {/* Brand */}
                     <div>
                         <Link href="/" className="relative mb-4 inline-block h-48 w-[201px]">
                             <Image
@@ -62,41 +57,30 @@ export default function Footer() {
                         </div>
                     </div>
 
-                    <div className="sm:col-span-2 md:col-span-2">
-                        <div className="flex flex-row justify-between gap-x-4 md:grid md:grid-cols-2 md:gap-8">
-                            <div>
-                                <h3 className="text-slate-100 font-semibold mb-4">Navegação</h3>
-                                <ul className="space-y-2">
-                                    {footerLinks.map((link) => (
-                                        <li key={link.href}>
-                                            <Link
-                                                href={link.href}
-                                                className="text-slate-400 transition-colors text-sm hover:text-slate-200"
-                                            >
-                                                {link.label}
-                                            </Link>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                            <div>
-                                <h3 className="text-slate-100 font-semibold mb-4">Minha Conta</h3>
-                                <ul className="space-y-2">
-                                    {accountLinks.map((link) => (
-                                        <li key={link.href}>
-                                            <Link
-                                                href={link.href}
-                                                className="text-slate-400 transition-colors text-sm hover:text-slate-200"
-                                            >
-                                                {link.label}
-                                            </Link>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
+                    {/* Navigation + Account (client-side auth, no performance penalty) */}
+                    <div className="flex flex-row justify-between gap-x-8">
+                        <div>
+                            <h3 className="text-slate-100 font-semibold mb-4">Navegação</h3>
+                            <ul className="space-y-2">
+                                {footerLinks.map((link) => (
+                                    <li key={link.href}>
+                                        <Link
+                                            href={link.href}
+                                            className="text-slate-400 transition-colors text-sm hover:text-slate-200"
+                                        >
+                                            {link.label}
+                                        </Link>
+                                    </li>
+                                ))}
+                                <li>
+                                    <FooterConditionalNav />
+                                </li>
+                            </ul>
                         </div>
+                        <FooterAccountSection />
                     </div>
 
+                    {/* App */}
                     <div>
                         <h3 className="text-slate-100 font-semibold mb-4">Aplicativo</h3>
                         <div className="space-y-2">

@@ -14,9 +14,10 @@ describe('propertyListingApi', () => {
         expect(query.get('page')).toBe('2')
         expect(query.get('limit')).toBe('15')
         expect(query.get('search')).toBe('fazenda')
-        expect(query.get('min_area_construida')).toBe('20000')
-        expect(query.get('max_area_construida')).toBe('30000')
-        expect(query.get('areaUnit')).toBeNull()
+        expect(query.get('min_area_construida')).toBe('2')
+        expect(query.get('max_area_construida')).toBe('3')
+        expect(query.get('min_area_construida_unidade')).toBe('hectare')
+        expect(query.get('max_area_construida_unidade')).toBe('hectare')
     })
 
     it('aceita alqueire como unidade informada e converte para m²', () => {
@@ -27,8 +28,9 @@ describe('propertyListingApi', () => {
 
         const query = buildPublicPropertiesQuery(source, 1)
 
-        expect(query.get('min_area_construida')).toBe('48400')
-        expect(query.get('max_area_construida')).toBe('96800')
-        expect(query.get('areaUnit')).toBeNull()
+        expect(query.get('min_area_construida')).toBe('1')
+        expect(query.get('max_area_construida')).toBe('2')
+        expect(query.get('min_area_construida_unidade')).toBe('alqueire')
+        expect(query.get('max_area_construida_unidade')).toBe('alqueire')
     })
 })

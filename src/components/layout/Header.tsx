@@ -94,6 +94,7 @@ export default function Header() {
     }, [])
 
     const isHomepage = pathname === '/'
+    const isPropertiesPage = pathname === '/imoveis'
 
     useEffect(() => {
         const handleScroll = () => {
@@ -176,22 +177,24 @@ export default function Header() {
                     </Link>
 
                     {/* Desktop Search */}
-                    <form onSubmit={handleSearch} className="hidden lg:flex flex-1 max-w-md mx-8">
-                        <div className="relative w-full">
-                            <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isHomepage && !isScrolled ? 'text-slate-500' : 'text-gray-400'}`} />
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                maxLength={120}
-                                placeholder="Buscar imóveis..."
-                                className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-accent-500 ${isHomepage && !isScrolled
-                                    ? 'bg-white/80 border-slate-200 text-slate-900 placeholder-slate-500 focus:bg-white'
-                                    : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'
-                                    }`}
-                            />
-                        </div>
-                    </form>
+                    {!isPropertiesPage && (
+                        <form onSubmit={handleSearch} className="hidden lg:flex flex-1 max-w-md mx-8">
+                            <div className="relative w-full">
+                                <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isHomepage && !isScrolled ? 'text-slate-500' : 'text-gray-400'}`} />
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    maxLength={120}
+                                    placeholder="Buscar imóveis..."
+                                    className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-accent-500 ${isHomepage && !isScrolled
+                                        ? 'bg-white/80 border-slate-200 text-slate-900 placeholder-slate-500 focus:bg-white'
+                                        : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'
+                                        }`}
+                                />
+                            </div>
+                        </form>
+                    )}
 
                     {/* Desktop Nav */}
                     <nav className={`hidden lg:flex items-center gap-1 ${blockMandatoryBrokerNav ? 'pointer-events-none opacity-70' : ''}`}>
@@ -392,19 +395,21 @@ export default function Header() {
                     <div className={`lg:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-y-contain border-t border-gray-100 animate-fadeIn bg-white rounded-b-2xl shadow-lg [touch-action:pan-y] scrollbar-none ${blockMandatoryBrokerNav ? 'pointer-events-none opacity-70' : ''}`}>
                         <div className="py-4">
                         {/* Mobile Search */}
-                        <form onSubmit={handleSearch} className="px-4 mb-4">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <input
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    maxLength={120}
-                                    placeholder="Buscar imóveis..."
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                />
-                            </div>
-                        </form>
+                        {!isPropertiesPage && (
+                            <form onSubmit={handleSearch} className="px-4 mb-4">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        maxLength={120}
+                                        placeholder="Buscar imóveis..."
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                    />
+                                </div>
+                            </form>
+                        )}
 
                         {/* Main Nav */}
                         <nav className="flex flex-col gap-1">

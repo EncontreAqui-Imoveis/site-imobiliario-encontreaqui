@@ -12,13 +12,17 @@ const FILTER_LABELS: Record<string, string> = {
     bairro: 'Bairro',
     bedrooms: 'Quartos',
     bathrooms: 'Banheiros',
+    garage_spots: 'Garagens',
     minPrice: 'Preço mín.',
     maxPrice: 'Preço máx.',
-    minArea: 'Área mín.',
-    maxArea: 'Área máx.',
-    areaUnit: 'Unid. área',
+    minArea: 'Área construída mín.',
+    maxArea: 'Área construída máx.',
+    areaUnit: 'Unid. área construída',
+    minAreaTerreno: 'Área do terreno mín.',
+    maxAreaTerreno: 'Área do terreno máx.',
+    areaTerrenoUnit: 'Unid. área do terreno',
     sort: 'Ordenar',
-    code: 'Código ou ID',
+    code: 'Código de Referência',
     id: 'ID',
     has_wifi: 'Wi-Fi',
     tem_piscina: 'Piscina',
@@ -26,16 +30,32 @@ const FILTER_LABELS: Record<string, string> = {
     tem_automacao: 'Automação',
     tem_ar_condicionado: 'Ar-Condicionado',
     amenity_mobiliada: 'Mobiliada',
-    amenity_poco_artesiano: 'Poço artesiano',
-    amenity_elevador: 'Elevador',
-    amenity_academia: 'Academia',
-    amenity_churrasqueira: 'Churrasqueira',
-    amenity_salao_festas: 'Salão de festas',
-    amenity_quadra: 'Quadra',
-    amenity_condominio_fechado: 'Condomínio fechado',
-    amenity_aceita_pets: 'Aceita pets',
-    amenity_sistema_seguranca_camera: 'Segurança/câmera',
-    amenity_sauna: 'Sauna',
+    amenities: 'Comodidade',
+}
+
+const AMENITY_TRANSLATIONS: Record<string, string> = {
+    'POÇO ARTESIANO': 'Poço artesiano',
+    'ELEVADOR': 'Elevador',
+    'ACADEMIA': 'Academia',
+    'CHURRASQUEIRA': 'Churrasqueira',
+    'SALÃO DE FESTAS': 'Salão de festas',
+    'QUADRA': 'Quadra',
+    'CONDOMÍNIO FECHADO': 'Condomínio fechado',
+    'ACEITA PETS': 'Aceita pets',
+    'MOBILIADA': 'Mobiliada',
+    'SISTEMA DE SEGURANÇA/CÂMERA': 'Segurança/câmera',
+    'SAUNA': 'Sauna',
+    'WI-FI': 'Wi-Fi',
+    'PISCINA': 'Piscina',
+    'ENERGIA SOLAR': 'Energia Solar',
+    'AUTOMAÇÃO': 'Automação',
+    'AR-CONDICIONADO': 'Ar-condicionado',
+}
+
+const SORT_TRANSLATIONS: Record<string, string> = {
+    'price:asc': 'Menor preço',
+    'price:desc': 'Maior preço',
+    'area_construida:desc': 'Maior área',
 }
 
 function formatValue(key: string, value: string, searchParams: URLSearchParams): string {
@@ -48,8 +68,18 @@ function formatValue(key: string, value: string, searchParams: URLSearchParams):
         return `${value} ${areaUnitLabel(unit)}`.trim()
     }
     if (key === 'areaUnit') return areaUnitLabel(normalizeAreaUnidade(value))
-    if (key === 'bedrooms' || key === 'bathrooms') return `${value}+`
-    if (value === '1') return '' // amenity toggles
+    if (key === 'minAreaTerreno' || key === 'maxAreaTerreno') {
+        const unit = normalizeAreaUnidade(searchParams.get('areaTerrenoUnit'))
+        return `${value} ${areaUnitLabel(unit)}`.trim()
+    }
+    if (key === 'areaTerrenoUnit') return areaUnitLabel(normalizeAreaUnidade(value))
+    if (key === 'sort') return SORT_TRANSLATIONS[value] || value
+    if (key === 'bedrooms' || key === 'bathrooms' || key === 'garage_spots') return `${value}+`
+    if (key === 'amenities') {
+        const upper = value.toUpperCase()
+        return AMENITY_TRANSLATIONS[upper] || value
+    }
+    if (value === '1') return '' // legacy amenity toggles
     return value
 }
 
@@ -58,21 +88,27 @@ export default function ActiveFilterChips() {
     const router = useRouter()
 
     // Collect active filters
-    const activeFilters: { key: string; label: string; value: string }[] = []
+    const activeFilters: { key: string; label: string; value: string; rawValue: string }[] = []
     const ignoredKeys = new Set(['status']) // always 'approved', not user-facing
 
     searchParams.forEach((value, key) => {
         if (!value || ignoredKeys.has(key)) return
         const label = FILTER_LABELS[key] || key
         const displayValue = formatValue(key, value, searchParams)
-        activeFilters.push({ key, label, value: displayValue })
+        activeFilters.push({ key, label, value: displayValue, rawValue: value })
     })
 
     if (activeFilters.length === 0) return null
 
-    const removeFilter = (key: string) => {
-        const params = new URLSearchParams(searchParams.toString())
-        params.delete(key)
+    const removeFilter = (key: string, rawValue: string) => {
+        const params = new URLSearchParams()
+        searchParams.forEach((val, k) => {
+            if (k === key && val === rawValue) {
+                // Skip only the clicked key-value pair
+                return
+            }
+            params.append(k, val)
+        })
         router.push(`/imoveis?${params.toString()}`)
     }
 
@@ -82,10 +118,10 @@ export default function ActiveFilterChips() {
 
     return (
         <div className="flex flex-wrap items-center gap-2 mb-4">
-            {activeFilters.map(({ key, label, value }) => (
+            {activeFilters.map(({ key, label, value, rawValue }) => (
                 <button
-                    key={key}
-                    onClick={() => removeFilter(key)}
+                    key={`${key}-${rawValue}`}
+                    onClick={() => removeFilter(key, rawValue)}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 text-primary-700 text-sm font-medium rounded-full border border-primary-200 hover:bg-primary-100 hover:border-primary-300 transition-colors group"
                 >
                     <span>{label}{value ? `: ${value}` : ''}</span>

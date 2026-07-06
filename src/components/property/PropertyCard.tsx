@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Bed, Bath, Car, Maximize, MapPin, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Bed, Bath, Car, Maximize, MapPin, ChevronLeft, ChevronRight, Hammer } from 'lucide-react'
 import {
     Property,
     formatPrice,
@@ -54,6 +54,8 @@ export default function PropertyCard({ property, variant = 'default' }: Property
 
     const promoSale = getPromoSalePrice(property)
     const promoRent = getPromoRentPrice(property)
+    const hasSale = property.priceSale != null && property.priceSale > 0
+    const hasRent = property.priceRent != null && property.priceRent > 0
     const effectivePromo = promoSale ?? promoRent
     const basePrice = property.priceSale ?? property.priceRent ?? property.price
     const promoPeriodLabel =
@@ -160,22 +162,55 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                         </span>
                     </div>
 
-                    {/* Price — lado a lado e tamanho compacto */}
                     <div className="mb-3 h-10 flex flex-col justify-end">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 leading-none mb-1">
-                            {property.priceSale ? 'Venda' : (property.priceRent ? 'Aluguel' : 'Valor')}
-                        </p>
-                        <div className="flex items-baseline flex-wrap gap-1.5 leading-none">
-                            <span className="font-display text-base font-bold tracking-tight text-primary-700 sm:text-lg">
-                                {effectivePromo != null ? formatPrice(effectivePromo) : formatPrice(basePrice)}
-                                {property.priceRent && <span className="text-xs font-normal text-gray-500">/mês</span>}
-                            </span>
-                            {effectivePromo != null && (
-                                <span className="text-xs font-medium text-gray-400 line-through">
-                                    {formatPrice(basePrice)}
-                                </span>
-                            )}
-                        </div>
+                        {hasSale && hasRent ? (
+                            <div className="flex flex-col gap-1 justify-center h-full">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Venda</span>
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="font-display text-sm font-bold text-primary-700">
+                                            {promoSale != null ? formatPrice(promoSale) : formatPrice(property.priceSale ?? 0)}
+                                        </span>
+                                        {promoSale != null && (
+                                            <span className="text-[10px] font-medium text-gray-400 line-through">
+                                                {formatPrice(property.priceSale ?? 0)}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Aluguel</span>
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="font-display text-sm font-bold text-primary-700">
+                                            {promoRent != null ? formatPrice(promoRent) : formatPrice(property.priceRent ?? 0)}
+                                            <span className="text-[10px] font-normal text-gray-500">/mês</span>
+                                        </span>
+                                        {promoRent != null && (
+                                            <span className="text-[10px] font-medium text-gray-400 line-through">
+                                                {formatPrice(property.priceRent ?? 0)}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 leading-none mb-1">
+                                    {hasRent ? 'Aluguel' : 'Venda'}
+                                </p>
+                                <div className="flex items-baseline flex-wrap gap-1.5 leading-none">
+                                    <span className="font-display text-base font-bold tracking-tight text-primary-700 sm:text-lg">
+                                        {effectivePromo != null ? formatPrice(effectivePromo) : formatPrice(basePrice)}
+                                        {hasRent && <span className="text-xs font-normal text-gray-500">/mês</span>}
+                                    </span>
+                                    {effectivePromo != null && (
+                                        <span className="text-xs font-medium text-gray-400 line-through">
+                                            {formatPrice(basePrice)}
+                                        </span>
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -203,6 +238,12 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                         <div className="flex items-center gap-1" title="Área do terreno">
                             <Maximize className="h-3.5 w-3.5 text-gray-400" />
                             <span>{formatAreaDisplay(property.areaTerreno, property.areaTerrenoUnidade)}</span>
+                        </div>
+                    )}
+                    {property.areaConstruida != null && property.areaConstruida > 0 && (
+                        <div className="flex items-center gap-1" title="Área construída">
+                            <Hammer className="h-3.5 w-3.5 text-gray-400" />
+                            <span>{formatAreaDisplay(property.areaConstruida, property.areaConstruidaUnidade)}</span>
                         </div>
                     )}
                 </div>

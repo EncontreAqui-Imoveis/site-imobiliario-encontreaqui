@@ -11,6 +11,14 @@ type ErrorPayload = {
     request_id?: string
 }
 
+type CloudinaryImagePreset = 'thumb' | 'detail' | 'hero'
+
+const CLOUDINARY_IMAGE_PRESETS: Record<CloudinaryImagePreset, string> = {
+    thumb: 'c_limit,w_480,q_auto,f_auto',
+    detail: 'c_limit,w_1200,q_auto,f_auto',
+    hero: 'c_limit,w_1600,q_auto,f_auto',
+}
+
 function toNumber(value: unknown): number | undefined {
     if (value === null || value === undefined || value === '') return undefined
     const parsed = Number(value)
@@ -23,7 +31,7 @@ function toStringOrUndefined(value: unknown): string | undefined {
     return normalized.length > 0 ? normalized : undefined
 }
 
-function normalizeCloudinaryUrl(value: string): string {
+function normalizeCloudinaryUrl(value: string, preset: CloudinaryImagePreset = 'hero'): string {
     const normalized = value.trim()
     if (!normalized) return ''
 
@@ -47,12 +55,10 @@ function normalizeCloudinaryUrl(value: string): string {
                 const afterUpload = segments.slice(uploadIndex + 2)
                 const versionIndex = afterUpload.findIndex((segment) => /^v\d+$/i.test(segment))
                 const publicIdSegments = versionIndex >= 0 ? afterUpload.slice(versionIndex) : afterUpload
+                const presetTransformations = CLOUDINARY_IMAGE_PRESETS[preset].split(',')
                 const optimizedSegments = [
                     ...segments.slice(0, uploadIndex + 2),
-                    'c_limit',
-                    'w_1600',
-                    'q_auto',
-                    'f_auto',
+                    ...presetTransformations,
                     ...publicIdSegments,
                 ]
                 url.pathname = `/${optimizedSegments.join('/')}`
@@ -66,6 +72,10 @@ function normalizeCloudinaryUrl(value: string): string {
             ? normalized.replace('https://res.cloudinary.co/', 'https://res.cloudinary.com/')
             : normalized
     }
+}
+
+function resolveImagePreset(preset?: CloudinaryImagePreset): CloudinaryImagePreset {
+    return preset ?? 'hero'
 }
 
 function normalizeAreaField(raw: unknown): Property['areaConstruidaUnidade'] {
@@ -83,16 +93,16 @@ function toBoolean(value: unknown): boolean | undefined {
     return undefined
 }
 
-function toImageUrlList(raw: unknown): string[] {
+function toImageUrlList(raw: unknown, preset: CloudinaryImagePreset): string[] {
     if (!raw) return []
 
     if (Array.isArray(raw)) {
         return raw
             .map((item) => {
-                if (typeof item === 'string') return normalizeCloudinaryUrl(item.trim())
+                if (typeof item === 'string') return normalizeCloudinaryUrl(item.trim(), preset)
                 if (item && typeof item === 'object') {
                     const candidate = (item as Record<string, unknown>).image_url ?? (item as Record<string, unknown>).url
-                    return candidate ? normalizeCloudinaryUrl(String(candidate).trim()) : ''
+                    return candidate ? normalizeCloudinaryUrl(String(candidate).trim(), preset) : ''
                 }
                 return ''
             })
@@ -102,7 +112,7 @@ function toImageUrlList(raw: unknown): string[] {
     if (typeof raw === 'string') {
         return raw
             .split(',')
-            .map((entry) => normalizeCloudinaryUrl(entry.trim()))
+            .map((entry) => normalizeCloudinaryUrl(entry.trim(), preset))
             .filter(Boolean)
     }
 
@@ -217,10 +227,14 @@ function normalizeNegotiation(raw: Record<string, unknown>): Property['negotiati
     }
 }
 
-export function normalizeProperty(raw: unknown): Property | null {
+export function normalizeProperty(
+    raw: unknown,
+    options?: { imagePreset?: CloudinaryImagePreset },
+): Property | null {
     if (!raw || typeof raw !== 'object') return null
 
     const item = raw as Record<string, unknown>
+    const imagePreset = resolveImagePreset(options?.imagePreset)
     const id = toNumber(item.id)
     if (!id) return null
 
@@ -263,9 +277,9 @@ export function normalizeProperty(raw: unknown): Property | null {
         toStringOrUndefined(item.promotionEnd) ??
         toStringOrUndefined(item.promotion_end)
 
-    const imagesFromImages = toImageUrlList(item.images)
-    const imagesFromPropertyImages = toImageUrlList(item.property_images)
-    const imagesFromImageUrls = toImageUrlList(item.image_urls)
+    const imagesFromImages = toImageUrlList(item.images, imagePreset)
+    const imagesFromPropertyImages = toImageUrlList(item.property_images, imagePreset)
+    const imagesFromImageUrls = toImageUrlList(item.image_urls, imagePreset)
     const images =
         imagesFromImages.length > 0
             ? imagesFromImages
@@ -380,6 +394,15 @@ async function logFailedResponse(context: string, response: Response): Promise<v
         } catch {
             message = undefined
         }
+    } else {
+        try {
+          const text = (await response.text()).trim()
+          if (text.length > 0) {
+            message = text
+          }
+        } catch {
+          message = undefined
+        }
     }
 
     console.error(context, {
@@ -409,7 +432,7 @@ async function fetchProperties(params: URLSearchParams): Promise<Property[]> {
 
         const payload = await response.json()
         return unwrapPropertyArray(payload)
-            .map((item) => normalizeProperty(item))
+            .map((item) => normalizeProperty(item, { imagePreset: 'thumb' }))
             .filter((item): item is Property => item !== null)
     } catch (error) {
         console.error('Error fetching properties list:', error)
@@ -439,7 +462,7 @@ export async function fetchFeaturedProperties(limit = 6, deal: HomeDeal = 'sale'
         }
         const payload = (await response.json()) as unknown
         return unwrapPropertyArray(payload)
-            .map((item) => normalizeProperty(item))
+            .map((item) => normalizeProperty(item, { imagePreset: 'thumb' }))
             .filter((item): item is Property => item !== null)
             .slice(0, limit)
     } catch (error) {
@@ -466,7 +489,7 @@ async function fetchPrivatePropertyByIdentifier(normalizedId: string): Promise<P
         const path = candidatePaths[index]
         try {
             const privatePayload = await apiClient.get<unknown>(path)
-            return normalizeProperty(privatePayload)
+            return normalizeProperty(privatePayload, { imagePreset: 'detail' })
         } catch (error) {
             if (
                 error instanceof ApiError &&
@@ -504,7 +527,7 @@ export async function fetchPropertyById(id: string | number): Promise<Property |
 
         const payload = await response.json()
         const raw = payload?.data ?? payload
-        const publicProperty = normalizeProperty(raw)
+        const publicProperty = normalizeProperty(raw, { imagePreset: 'detail' })
         if (publicProperty) {
             return publicProperty
         }
@@ -522,3 +545,87 @@ export async function fetchPropertyById(id: string | number): Promise<Property |
         return null
     }
 }
+
+export async function fetchSimilarProperties(property: Property): Promise<Property[]> {
+    const collected: Property[] = []
+    const seenIds = new Set<number>([property.id])
+
+    async function tryFetch(url: string): Promise<boolean> {
+        try {
+            const response = await fetch(url, { cache: 'no-store' })
+            if (!response.ok) {
+                console.warn('[fetchSimilarProperties] Response not ok:', url, response.status)
+                return false
+            }
+            const payload = await response.json()
+            // Handle all backend response shapes: { properties: [] }, { data: [] }, or raw []
+            const rows: unknown[] = Array.isArray(payload?.properties)
+                ? payload.properties
+                : Array.isArray(payload?.data)
+                    ? payload.data
+                    : Array.isArray(payload)
+                        ? payload
+                        : []
+
+            if (rows.length === 0) {
+                console.warn('[fetchSimilarProperties] Empty list from:', url)
+                return false
+            }
+
+            const normalized = rows
+                .map((item) => normalizeProperty(item, { imagePreset: 'thumb' }))
+                .filter((item): item is Property => item !== null)
+
+            for (const p of normalized) {
+                if (!seenIds.has(p.id)) {
+                    seenIds.add(p.id)
+                    collected.push(p)
+                }
+            }
+            return true
+        } catch (e) {
+            console.warn('[fetchSimilarProperties] Fetch error for:', url, e)
+            return false
+        }
+    }
+
+    console.log('[fetchSimilarProperties] Starting for property:', property.id, {
+        bairro: property.bairro,
+        city: property.city,
+        type: property.type,
+        API_BASE_URL,
+    })
+
+    // 1. Try Bairro
+    if (property.bairro?.trim()) {
+        await tryFetch(
+            `${API_BASE_URL}/properties?bairro=${encodeURIComponent(property.bairro)}&limit=10&status=approved`
+        )
+    }
+
+    // 2. Fallback: City
+    if (collected.length < 3 && property.city?.trim()) {
+        await tryFetch(
+            `${API_BASE_URL}/properties?city=${encodeURIComponent(property.city)}&limit=10&status=approved`
+        )
+    }
+
+    // 3. Fallback: Type
+    if (collected.length < 3 && property.type?.trim()) {
+        await tryFetch(
+            `${API_BASE_URL}/properties?type=${encodeURIComponent(property.type)}&limit=10&status=approved`
+        )
+    }
+
+    // 4. Fallback: Most recent
+    if (collected.length < 3) {
+        await tryFetch(
+            `${API_BASE_URL}/properties?limit=10&status=approved`
+        )
+    }
+
+    const result = collected.slice(0, 3)
+    console.log('[fetchSimilarProperties] Result:', result.length, 'properties')
+    return result
+}
+

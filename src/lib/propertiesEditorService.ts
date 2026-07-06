@@ -4,7 +4,7 @@ import type { Property } from '@/types/property'
 
 export async function fetchEditableProperty(propertyId: string): Promise<Property> {
     const response = await apiClient.get<unknown>(`/properties/${encodeURIComponent(propertyId)}`)
-    const normalized = normalizeProperty(response)
+    const normalized = normalizeProperty(response, { imagePreset: 'detail' })
     if (!normalized) {
         throw new Error('Imóvel não encontrado')
     }

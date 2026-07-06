@@ -33,6 +33,7 @@ jest.mock('lucide-react', () => ({
     MapPin: () => <div data-testid="map-pin-icon" />,
     ChevronLeft: () => <div data-testid="chevron-left" />,
     ChevronRight: () => <div data-testid="chevron-right" />,
+    Hammer: () => <div data-testid="hammer-icon" />,
 }))
 
 jest.mock('next/image', () => ({

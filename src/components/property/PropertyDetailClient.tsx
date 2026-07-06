@@ -16,7 +16,7 @@ import { useUser } from '@/contexts/UserContext'
 import { buildWhatsappLink } from '@/lib/contactLinks'
 import { fetchPropertyById, normalizeProperty } from '@/lib/propertiesApi'
 import { displayStatusLabel } from '@/lib/propertyLabels'
-import { API_BASE_URL } from '@/lib/api/client'
+import { apiClient, API_BASE_URL } from '@/lib/api/client'
 import {
     isProposalPreSignatureStatus,
     isProposalRefusedStatus,
@@ -26,11 +26,16 @@ import {
 interface PropertyDetailClientProps {
     propertyId: string
     initialProperty: Property | null
+    initialSimilarProperties?: Property[]
 }
 
-export default function PropertyDetailClient({ propertyId, initialProperty }: PropertyDetailClientProps) {
+export default function PropertyDetailClient({
+    propertyId,
+    initialProperty,
+    initialSimilarProperties = [],
+}: PropertyDetailClientProps) {
     const [property, setProperty] = useState(initialProperty)
-    const [similarProperties, setSimilarProperties] = useState<Property[]>([])
+    const [similarProperties, setSimilarProperties] = useState<Property[]>(initialSimilarProperties)
     const [loadError, setLoadError] = useState<string | null>(null)
     const { session, loading: authLoading } = useUser()
     const userRole = (session?.user?.role ?? '').toLowerCase()
@@ -124,42 +129,13 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
         }
     }, [authLoading, isOwner, propertyId, session])
 
-    useEffect(() => {
-        if (!property?.bairro) return
-        const currentProperty = property
 
-        async function fetchSimilar() {
-            try {
-                const similarRes = await fetch(
-                    `${API_BASE_URL}/properties?bairro=${encodeURIComponent(currentProperty.bairro || '')}&limit=4&status=approved`
-                )
-
-                if (!similarRes.ok) return
-
-                const similarData = await similarRes.json()
-                const rawSimilar = similarData.data || similarData
-                const allSimilar = Array.isArray(rawSimilar) ? rawSimilar : []
-
-                const filtered = allSimilar
-                    .map((item) => normalizeProperty(item))
-                    .filter((item): item is Property => item !== null)
-                    .filter((p: Property) => p.id !== currentProperty.id)
-                    .slice(0, 3)
-
-                setSimilarProperties(filtered)
-            } catch (err) {
-                console.error('Error fetching similar properties:', err)
-            }
-        }
-
-        fetchSimilar()
-    }, [property])
 
     const whatsappMessage =
         property
             ? `Olá! Vi o imóvel "${property.title}"${property.public_code || property.slug ? ` (Referência: ${property.public_code || property.slug})` : ''} no Encontre Aqui e gostaria de mais informações.`
             : ''
-    const whatsappLink = buildWhatsappLink(property?.brokerPhone, whatsappMessage)
+    const whatsappLink = property ? buildWhatsappLink('6430500118', whatsappMessage) : null
 
     const proposalAction = (() => {
         if (!isOwner || !property) return null
@@ -532,41 +508,17 @@ export default function PropertyDetailClient({ propertyId, initialProperty }: Pr
                     </div>
                 </div>
 
-                {/* Similar Properties */}
-                {similarProperties.length > 0 && property.bairro && (
-                    <div className="mt-16 pt-12 border-t border-gray-200">
-                        <div className="flex items-center justify-between mb-8">
-                            <div>
-                                <h2 className="text-2xl font-display font-bold text-gray-900 mb-2">
-                                    Similares na região
-                                </h2>
-                                <p className="text-gray-500">
-                                    Outras oportunidades em {property.bairro}
-                                </p>
-                            </div>
-                            <Link
-                                href={`/imoveis?bairro=${encodeURIComponent(property.bairro)}`}
-                                className="hidden sm:flex items-center gap-2 text-primary-600 hover:text-primary-700 font-bold transition-colors"
-                            >
-                                Ver todos
-                                <ArrowRight className="w-5 h-5" />
-                            </Link>
-                        </div>
+                {/* Mais imóveis como esse */}
+                {similarProperties.length > 0 && (
+                    <div className="mt-16 pt-12">
+                        <h2 className="text-2xl font-display font-bold text-gray-900 mb-8">
+                            Mais imóveis como esse
+                        </h2>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                             {similarProperties.map((prop) => (
                                 <PropertyCard key={prop.id} property={prop} />
                             ))}
-                        </div>
-
-                        <div className="mt-8 sm:hidden text-center">
-                            <Link
-                                href={`/imoveis?bairro=${encodeURIComponent(property.bairro)}`}
-                                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-6 py-3 font-semibold text-gray-900 transition-colors hover:bg-gray-50"
-                            >
-                                Ver todos
-                                <ArrowRight className="w-5 h-5" />
-                            </Link>
                         </div>
                     </div>
                 )}

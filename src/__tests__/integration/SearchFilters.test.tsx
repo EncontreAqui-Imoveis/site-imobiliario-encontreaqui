@@ -135,11 +135,11 @@ describe('SearchFilters', () => {
     it('mantém unidade de área ao aplicar faixa em hectares e alqueires', () => {
         render(<SearchFilters />)
 
-        const areaUnitSelect = screen.getByText('Unidade').nextElementSibling as HTMLSelectElement
+        const areaUnitSelect = screen.getByLabelText('Unidade', { selector: '#modal-area-unit' }) as HTMLSelectElement
         fireEvent.change(areaUnitSelect, { target: { value: 'hectare' } })
 
-        const minAreaInput = screen.getByPlaceholderText('0')
-        const maxAreaInput = screen.getByPlaceholderText('—')
+        const minAreaInput = screen.getByLabelText('Mínimo', { selector: '#modal-min-area' })
+        const maxAreaInput = screen.getByLabelText('Máximo', { selector: '#modal-max-area' })
         fireEvent.change(minAreaInput, { target: { value: '2' } })
         fireEvent.change(maxAreaInput, { target: { value: '5' } })
 

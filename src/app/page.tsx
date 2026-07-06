@@ -30,11 +30,11 @@ export default async function HomePage({
             <Suspense fallback={<div className="min-h-[min(100svh,900px)] bg-primary-950" aria-hidden />}>
                 <HeroSection initialDeal={deal} />
             </Suspense>
-            <Suspense key={`${deal}-featured`} fallback={<FeaturedSkeleton />}>
-                <FeaturedSection deal={deal} />
+            <Suspense fallback={<FeaturedSkeleton />}>
+                <FeaturedSection deal="sale" />
             </Suspense>
-            <Suspense key={`${deal}-recent`} fallback={<RecentSkeleton />}>
-                <RecentSection deal={deal} />
+            <Suspense fallback={<RecentSkeleton />}>
+                <RecentSection deal="rent" />
             </Suspense>
             <AboutSection />
         </>

@@ -17,6 +17,7 @@ const AMENITY_QUERY_KEYS: Record<string, string> = {
     amenity_academia: 'ACADEMIA',
     amenity_churrasqueira: 'CHURRASQUEIRA',
     amenity_salao_festas: 'SALÃO DE FESTAS',
+    quadra: 'QUADRA',
     amenity_quadra: 'QUADRA',
     amenity_condominio_fechado: 'CONDOMÍNIO FECHADO',
     amenity_aceita_pets: 'ACEITA PETS',
@@ -55,6 +56,7 @@ export function buildPublicPropertiesQuery(
     setIfPresent(queryParams, 'bairro', sourceParams.get('bairro'))
     setIfPresent(queryParams, 'bedrooms', sourceParams.get('bedrooms'))
     setIfPresent(queryParams, 'bathrooms', sourceParams.get('bathrooms'))
+    setIfPresent(queryParams, 'garage_spots', sourceParams.get('garage_spots'))
     setIfPresent(queryParams, 'minPrice', sourceParams.get('minPrice'))
     setIfPresent(queryParams, 'maxPrice', sourceParams.get('maxPrice'))
     setIfPresent(queryParams, 'code', sourceParams.get('code'))
@@ -62,13 +64,19 @@ export function buildPublicPropertiesQuery(
     const sort = sourceParams.get('sort')
     if (sort?.trim()) queryParams.set('sortBy', sort.trim())
 
-    const areaUnit = normalizeAreaUnidade(sourceParams.get('areaUnit'))
+    const rawAreaUnit = sourceParams.get('areaUnit')
+    const areaUnit = rawAreaUnit?.trim() ? normalizeAreaUnidade(rawAreaUnit) : null
+    if (areaUnit) {
+        queryParams.set('min_area_construida_unidade', areaUnit)
+        queryParams.set('max_area_construida_unidade', areaUnit)
+    }
+
+    // Envia valor bruto — o backend já faz a conversão para m² com base na unidade
     const minArea = sourceParams.get('minArea')
     if (minArea?.trim()) {
         const value = Number(minArea)
         if (!Number.isNaN(value) && value >= 0) {
-            const canonical = areaInputToSquareMeters(value, areaUnit)
-            if (!Number.isNaN(canonical)) queryParams.set('min_area_construida', String(canonical))
+            queryParams.set('min_area_construida', String(value))
         }
     }
 
@@ -76,8 +84,31 @@ export function buildPublicPropertiesQuery(
     if (maxArea?.trim()) {
         const value = Number(maxArea)
         if (!Number.isNaN(value) && value >= 0) {
-            const canonical = areaInputToSquareMeters(value, areaUnit)
-            if (!Number.isNaN(canonical)) queryParams.set('max_area_construida', String(canonical))
+            queryParams.set('max_area_construida', String(value))
+        }
+    }
+
+    const rawAreaTerrenoUnit = sourceParams.get('areaTerrenoUnit')
+    const areaTerrenoUnit = rawAreaTerrenoUnit?.trim() ? normalizeAreaUnidade(rawAreaTerrenoUnit) : null
+    if (areaTerrenoUnit) {
+        queryParams.set('min_area_terreno_unidade', areaTerrenoUnit)
+        queryParams.set('max_area_terreno_unidade', areaTerrenoUnit)
+    }
+
+    // Envia valor bruto — o backend já faz a conversão para m² com base na unidade
+    const minAreaTerreno = sourceParams.get('minAreaTerreno')
+    if (minAreaTerreno?.trim()) {
+        const value = Number(minAreaTerreno)
+        if (!Number.isNaN(value) && value >= 0) {
+            queryParams.set('min_area_terreno', String(value))
+        }
+    }
+
+    const maxAreaTerreno = sourceParams.get('maxAreaTerreno')
+    if (maxAreaTerreno?.trim()) {
+        const value = Number(maxAreaTerreno)
+        if (!Number.isNaN(value) && value >= 0) {
+            queryParams.set('max_area_terreno', String(value))
         }
     }
 
@@ -86,13 +117,26 @@ export function buildPublicPropertiesQuery(
     if (sourceParams.get('tem_energia_solar') === '1') queryParams.set('tem_energia_solar', 'true')
     if (sourceParams.get('tem_automacao') === '1') queryParams.set('tem_automacao', 'true')
     if (sourceParams.get('tem_ar_condicionado') === '1') queryParams.set('tem_ar_condicionado', 'true')
-    if (sourceParams.get('eh_mobiliada') === '1' || sourceParams.get('amenity_mobiliada') === '1') {
-        queryParams.append('amenities', 'MOBILIADA')
+    
+    const hasMobiliada =
+        sourceParams.get('eh_mobiliada') === '1' ||
+        sourceParams.get('amenity_mobiliada') === '1' ||
+        sourceParams.getAll('amenities').includes('MOBILIADA')
+    
+    if (hasMobiliada) {
+        queryParams.set('eh_mobiliada', 'true')
     }
+
+    const amenitiesSet = new Set<string>()
+    sourceParams.getAll('amenities').forEach(a => amenitiesSet.add(a.toUpperCase()))
     Object.entries(AMENITY_QUERY_KEYS).forEach(([key, amenity]) => {
         if (sourceParams.get(key) === '1') {
-            queryParams.append('amenities', amenity)
+            amenitiesSet.add(amenity.toUpperCase())
         }
+    })
+
+    amenitiesSet.forEach(a => {
+        queryParams.append('amenities', a)
     })
 
     return queryParams
@@ -128,7 +172,7 @@ export async function fetchPublicPropertiesPage(
                     ? payload
                     : []
         const properties = rows
-            .map((item: unknown) => normalizeProperty(item))
+            .map((item: unknown) => normalizeProperty(item, { imagePreset: 'thumb' }))
             .filter((item: Property | null): item is Property => item !== null)
         const total = parsePositiveInt(payload?.total, properties.length)
         const resolvedPage = parsePositiveInt(payload?.page, safePage)
