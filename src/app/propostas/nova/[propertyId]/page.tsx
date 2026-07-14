@@ -1,6 +1,4 @@
-﻿import { notFound } from 'next/navigation'
-import { fetchPropertyById } from '@/lib/propertiesApi'
-import { ProposalWizard } from '@/components/proposals/ProposalWizard'
+import { redirect } from 'next/navigation'
 
 export default async function NovaPropostaPage({
     params,
@@ -8,16 +6,5 @@ export default async function NovaPropostaPage({
     params: Promise<{ propertyId: string }>
 }) {
     const { propertyId } = await params
-    const property = await fetchPropertyById(propertyId)
-
-    if (!property) {
-        notFound()
-    }
-
-    return (
-        <div className="max-w-6xl mx-auto px-4 py-24">
-            <ProposalWizard property={property} />
-        </div>
-    )
+    redirect(`/propostas/nova?propertyId=${encodeURIComponent(propertyId)}`)
 }
-

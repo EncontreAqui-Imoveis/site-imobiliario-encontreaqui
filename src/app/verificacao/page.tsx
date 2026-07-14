@@ -5,9 +5,15 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useUser } from '@/contexts/UserContext'
 import { sendEmailVerificationCode, verifyEmailCode } from '@/lib/api/auth'
 import { resolvePostAuthRoute } from '@/lib/auth/routeResolution'
-import { loadSignupDraft, markSignupDraftEmailVerified, rewindSignupDraftToAddress } from '@/lib/authSignupDraft'
+import {
+    createSignupDraft,
+    loadSignupDraft,
+    markSignupDraftEmailVerified,
+    rewindSignupDraftToAddress,
+    saveSignupDraft,
+} from '@/lib/authSignupDraft'
 import type { ApiError } from '@/lib/api/client'
-import { confirmSignupDraftEmailCode, sendSignupDraftEmailCode } from '@/lib/api/signupDraft'
+import { confirmSignupDraftEmailCode, createSignupDraftRemote, sendSignupDraftEmailCode } from '@/lib/api/signupDraft'
 import { ShieldCheck, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
@@ -56,6 +62,54 @@ export default function VerificacaoPage() {
     isSignupFlowRef.current = isSignupFlow
 
     const email = isSignupFlow ? signupDraftEmail ?? '' : session?.user.email || ''
+    const getLocalSignupDraft = useCallback(() => loadSignupDraft(), [])
+
+    const rebuildSignupDraftToken = useCallback(async () => {
+        const draft = getLocalSignupDraft()
+        if (!draft) return null
+        const normalizedEmail = String(draft.data.email ?? '').trim().toLowerCase()
+        const normalizedName = String(draft.data.name ?? '').trim()
+
+        if (!normalizedEmail || !normalizedName) {
+            return null
+        }
+
+        const created = await createSignupDraftRemote({
+            source: draft.source,
+            userType: draft.userType ?? 'client',
+            email: normalizedEmail,
+            name: normalizedName,
+            phone: String(draft.data.phone ?? '').replace(/\D/g, '') || undefined,
+            street: String(draft.data.street ?? '').trim() || undefined,
+            number: String(draft.data.number ?? '').trim() || undefined,
+            complement: String(draft.data.complement ?? '').trim() || undefined,
+            bairro: String(draft.data.bairro ?? '').trim() || undefined,
+            city: String(draft.data.city ?? '').trim() || undefined,
+            state: String(draft.data.state ?? '').trim().toUpperCase() || undefined,
+            cep: String(draft.data.cep ?? '').replace(/\D/g, '') || undefined,
+            withoutNumber: Boolean(draft.data.semNumero),
+            creci: String(draft.data.creci ?? '').trim() || undefined,
+            googleUid: String(draft.data.googleUid ?? '').trim() || undefined,
+            authProvider: draft.source === 'google' ? 'google' : 'email',
+            currentStep: 'VERIFICATION',
+        })
+
+        const next = createSignupDraft({
+            ...draft,
+            draftId: created.draftId,
+            draftToken: created.draftToken,
+            step: 'email',
+            data: {
+                ...draft.data,
+                phone: created.draft?.phone ?? draft.data.phone,
+                state: created.draft?.state ?? draft.data.state,
+                cep: created.draft?.cep ?? draft.data.cep,
+            },
+        })
+        saveSignupDraft(next)
+        setSignupDraftEmail(next.data.email)
+        return next
+    }, [getLocalSignupDraft])
 
     useEffect(() => {
         const full = code.join('')
@@ -153,7 +207,7 @@ export default function VerificacaoPage() {
             setError(null)
             try {
                 const isSignupDraftFlow = isSignupFlowRef.current
-                const draft = isSignupDraftFlow ? loadSignupDraft() : null
+                const draft = isSignupDraftFlow ? getLocalSignupDraft() : null
                 const response = isSignupDraftFlow && draft?.draftId && draft?.draftToken
                     ? await sendSignupDraftEmailCode(draft.draftId, draft.draftToken)
                     : await sendEmailVerificationCode(email)
@@ -184,6 +238,30 @@ export default function VerificacaoPage() {
                 }
             } catch (err) {
                 const apiErr = err as ApiError
+                if (isSignupFlowRef.current && (apiErr.status === 401 || apiErr.status === 403)) {
+                    try {
+                        const recoveredDraft = await rebuildSignupDraftToken()
+                        if (recoveredDraft?.draftId && recoveredDraft?.draftToken) {
+                            const response = await sendSignupDraftEmailCode(recoveredDraft.draftId, recoveredDraft.draftToken)
+                            const now = new Date()
+                            setCodeSent(true)
+                            setVerificationExpired(false)
+                            setVerificationExpiresAt(response.expires_at ? new Date(response.expires_at) : null)
+                            setCooldownRemainingSeconds(Number(response.cooldown_sec ?? 0))
+                            setDailyWindowStartedAt((current) => current ?? now)
+                            setDailySendCount(DAILY_LIMIT - Number(response.daily_remaining ?? DAILY_LIMIT))
+                            if (typeof window !== 'undefined') {
+                                window.sessionStorage.setItem(emailOtpCacheKey(email), String(Date.now()))
+                            }
+                            return
+                        }
+                    } catch {
+                        // cai para o erro abaixo
+                    }
+                    setError('Seu cadastro expirou ou ficou incompleto. Volte para revisar e gere um novo código.')
+                    setCodeSent(false)
+                    return
+                }
                 if ('status' in apiErr && apiErr.status === 429) {
                     setError('Muitas tentativas. Aguarde e tente novamente.')
                     if (typeof window !== 'undefined') {
@@ -391,8 +469,25 @@ export default function VerificacaoPage() {
                         </div>
 
                         {!codeSent ? (
-                            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                                {resending ? 'Enviando o código automaticamente...' : 'Preparando o envio do código...'}
+                            <div className="space-y-3">
+                                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                                    {resending ? 'Enviando o código automaticamente...' : 'Preparando o envio do código...'}
+                                </div>
+
+                                {error && (
+                                    <p role="alert" className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+                                        {error}
+                                    </p>
+                                )}
+
+                                <button
+                                    type="button"
+                                    onClick={() => void handleSendCode(false)}
+                                    disabled={resending || dailyLimitReached}
+                                    className="w-full inline-flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 disabled:bg-primary-300 text-white text-sm font-semibold px-4 py-2.5 shadow-md shadow-primary-500/20 transition-colors"
+                                >
+                                    {resending ? 'Enviando...' : dailyLimitReached ? 'Limite diário atingido' : 'Enviar código'}
+                                </button>
                             </div>
                         ) : (
                             <div className="space-y-5">

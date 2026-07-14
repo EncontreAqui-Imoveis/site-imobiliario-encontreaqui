@@ -24,6 +24,7 @@ jest.mock('@/lib/negotiationsService', () => ({
     createProposal: jest.fn(),
     fetchMyNegotiationById: jest.fn(),
     fetchProposalTargetProperty: jest.fn(),
+    searchUsers: jest.fn(),
     updateProposalDraft: jest.fn(),
 }))
 
@@ -107,7 +108,7 @@ describe('ProposalWizardPage', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Próximo' }))
 
         await screen.findByRole('button', { name: 'Gerar Proposta' })
-        fireEvent.change(screen.getAllByPlaceholderText('R$ 0,00')[0], { target: { value: '2000' } })
+        fireEvent.change(screen.getAllByPlaceholderText('0')[0], { target: { value: '2000' } })
         fireEvent.click(screen.getByRole('button', { name: 'Gerar Proposta' }))
 
         await waitFor(() => expect(createProposal).toHaveBeenCalled())
@@ -116,6 +117,8 @@ describe('ProposalWizardPage', () => {
             clientName: 'Cliente Alterado',
             clientCpf: '52998224725',
             validadeDias: 10,
+            dealType: 'rent',
+            proposalValue: 2000,
         }))
         expect(window.confirm).toHaveBeenCalledWith('A proposta continua editável até a assinatura. Confirmar geração do PDF agora?')
         expect(push).toHaveBeenCalledWith('/propostas?created=1')

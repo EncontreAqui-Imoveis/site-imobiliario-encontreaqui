@@ -9,7 +9,9 @@ import {
     createProposal,
     fetchMyNegotiationById,
     fetchProposalTargetProperty,
+    searchUsers,
     updateProposalDraft,
+    type ProposalUserLookup,
 } from '@/lib/negotiationsService'
 import { isProposalPreSignatureStatus } from '@/types/negotiation'
 import { Property, formatPrice } from '@/types/property'
@@ -18,8 +20,6 @@ import {
     DollarSign, Percent, Wand2, CheckCircle, AlertTriangle, Home, ChevronRight,
     ShieldCheck
 } from 'lucide-react'
-import { CurrencyInput } from '@/components/form/CurrencyInput'
-import { formatCurrencyInput } from '@/lib/currencyInput'
 import { buildPublicPropertyUrl } from '@/lib/propertyLinks'
 import { formatCpf, isValidCpf } from '@/lib/privacy'
 
@@ -48,15 +48,60 @@ function parseLocalized(raw: string): number {
     return parseFloat(n) || 0
 }
 
-function toReais(field: PaymentField, propertyValue: number): number {
-    const raw = parseLocalized(field.value)
-    if (field.unit === 'percent') return (raw / 100) * propertyValue
-    return raw
+function formatPercentInput(raw: string): string {
+    const normalized = raw.replace(/[^\d,.\-]/g, '').trim()
+    if (!normalized) return ''
+
+    let parsed = normalized
+    const lastComma = parsed.lastIndexOf(',')
+    const lastDot = parsed.lastIndexOf('.')
+    if (lastComma > lastDot) {
+        parsed = parsed.replaceAll('.', '').replace(',', '.')
+    } else if (lastDot > lastComma) {
+        parsed = parsed.replaceAll(',', '')
+    }
+
+    const value = Number.parseFloat(parsed)
+    if (!Number.isFinite(value)) return ''
+    const clamped = Math.min(100, Math.max(0, value))
+    const rounded = Math.round(clamped * 100) / 100
+    return rounded.toLocaleString('pt-BR', {
+        minimumFractionDigits: rounded % 1 === 0 ? 0 : 2,
+        maximumFractionDigits: 2,
+    })
+}
+
+function formatMoneyInput(raw: string): string {
+    const normalized = raw.replace(/[^\d,.\-]/g, '').trim()
+    if (!normalized) return ''
+
+    let parsed = normalized
+    const lastComma = parsed.lastIndexOf(',')
+    const lastDot = parsed.lastIndexOf('.')
+    if (lastComma > lastDot) {
+        parsed = parsed.replaceAll('.', '').replace(',', '.')
+    } else if (lastDot > lastComma) {
+        parsed = parsed.replaceAll(',', '')
+    }
+
+    const numeric = Number.parseFloat(parsed)
+    if (!Number.isFinite(numeric)) return ''
+
+    const clamped = Math.max(0, numeric)
+    const [integerPart, decimalPart = ''] = clamped.toString().split('.')
+    if (!decimalPart) return integerPart
+    return `${integerPart},${decimalPart.slice(0, 2)}`
 }
 
 function toPercent(field: PaymentField, propertyValue: number): number {
     const raw = parseLocalized(field.value)
     if (field.unit === 'reais' && propertyValue > 0) return (raw / propertyValue) * 100
+    return raw
+}
+
+function toReais(field: PaymentField, propertyValue: number): number {
+    const raw = parseLocalized(field.value)
+    if (field.unit === 'percent') return (raw / 100) * propertyValue
     return raw
 }
 
@@ -79,16 +124,21 @@ export default function ProposalWizardPage() {
     const [isPrefillLoading, setIsPrefillLoading] = useState(false)
     const [validadeDias, setValidadeDias] = useState(10)
     const prefillAppliedRef = useRef(false)
+    const [buyerQuery, setBuyerQuery] = useState('')
+    const [buyerResults, setBuyerResults] = useState<ProposalUserLookup[]>([])
+    const [buyerLoading, setBuyerLoading] = useState(false)
+    const [selectedBuyer, setSelectedBuyer] = useState<ProposalUserLookup | null>(null)
+    const [buyerPickerOpen, setBuyerPickerOpen] = useState(false)
 
     // Step 1: Client data
     const [clientName, setClientName] = useState('')
     const [clientCpf, setClientCpf] = useState('')
 
     // Step 2: Total proposal value composition
-    const [payments, setPayments] = useState<Record<string, PaymentField>>({
+    const [payments, setPayments] = useState<Record<'dinheiro' | 'permuta' | 'financiamento' | 'outros', PaymentField>>({
         dinheiro: { value: '', unit: 'reais' },
         permuta: { value: '', unit: 'reais' },
-        financiamento: { value: '', unit: 'percent' },
+        financiamento: { value: '', unit: 'reais' },
         outros: { value: '', unit: 'reais' },
     })
 
@@ -147,16 +197,23 @@ export default function ProposalWizardPage() {
     const isBrokerUser = userRole === 'broker'
     const isAuxiliaryUser = userRole === 'auxiliary_administrative' || isAuxiliaryAdministrative
     const isEditMode = Boolean(negotiationId && String(negotiationId).trim().length > 0)
+    const currentUserId = session?.user?.id ?? null
     const isClientOwnListing =
         Boolean(
             isClientUser &&
             property &&
-            session?.user?.id != null &&
+            currentUserId != null &&
             (
-                property.ownerId === session.user.id ||
-                property.brokerId === session.user.id
+                property.ownerId === currentUserId ||
+                property.brokerId === currentUserId
             )
         )
+    const requiresBuyerSelection = Boolean(
+        property &&
+        currentUserId != null &&
+        (isBrokerUser || isAuxiliaryUser) &&
+        (property.ownerId === currentUserId || property.brokerId === currentUserId)
+    )
     const canGenerateForProperty =
         Boolean(
             property &&
@@ -208,23 +265,33 @@ export default function ProposalWizardPage() {
                     setValidadeDias(Number(existing.validadeDias))
                 }
 
+                if (existing.buyerUserId && existing.buyerUserId > 0) {
+                    setSelectedBuyer({
+                        id: existing.buyerUserId,
+                        name: existing.buyerName?.trim() || existing.clientName?.trim() || 'Comprador selecionado',
+                        cpf: existing.clientCpf?.trim() || undefined,
+                    })
+                    setBuyerQuery(existing.buyerName?.trim() || existing.clientName?.trim() || '')
+                    setBuyerPickerOpen(false)
+                }
+
                 const breakdown = existing.paymentBreakdown
                 if (breakdown) {
                     setPayments({
                         dinheiro: {
-                            value: formatCurrencyInput(Number(breakdown.dinheiro ?? 0).toFixed(2).replace('.', ',')),
+                            value: formatMoneyInput(Number(breakdown.dinheiro ?? 0).toFixed(2).replace('.', ',')),
                             unit: 'reais',
                         },
                         permuta: {
-                            value: formatCurrencyInput(Number(breakdown.permuta ?? 0).toFixed(2).replace('.', ',')),
+                            value: formatMoneyInput(Number(breakdown.permuta ?? 0).toFixed(2).replace('.', ',')),
                             unit: 'reais',
                         },
                         financiamento: {
-                            value: formatCurrencyInput(Number(breakdown.financiamento ?? 0).toFixed(2).replace('.', ',')),
+                            value: formatMoneyInput(Number(breakdown.financiamento ?? 0).toFixed(2).replace('.', ',')),
                             unit: 'reais',
                         },
                         outros: {
-                            value: formatCurrencyInput(Number(breakdown.outros ?? 0).toFixed(2).replace('.', ',')),
+                            value: formatMoneyInput(Number(breakdown.outros ?? 0).toFixed(2).replace('.', ',')),
                             unit: 'reais',
                         },
                     })
@@ -243,6 +310,51 @@ export default function ProposalWizardPage() {
             cancelled = true
         }
     }, [isEditMode, property, session, negotiationId])
+
+    useEffect(() => {
+        if (!requiresBuyerSelection) {
+            setBuyerResults([])
+            setBuyerPickerOpen(false)
+            return
+        }
+
+        if (selectedBuyer && !buyerPickerOpen) {
+            setBuyerResults([])
+            setBuyerLoading(false)
+            return
+        }
+
+        const query = buyerQuery.trim()
+        if (query.length < 2) {
+            setBuyerResults([])
+            setBuyerLoading(false)
+            return
+        }
+
+        let cancelled = false
+        setBuyerLoading(true)
+        const handle = window.setTimeout(async () => {
+            try {
+                const results = await searchUsers(query)
+                if (!cancelled) {
+                    setBuyerResults(results)
+                }
+            } catch {
+                if (!cancelled) {
+                    setBuyerResults([])
+                }
+            } finally {
+                if (!cancelled) {
+                    setBuyerLoading(false)
+                }
+            }
+        }, 250)
+
+        return () => {
+            cancelled = true
+            window.clearTimeout(handle)
+        }
+    }, [buyerQuery, buyerPickerOpen, requiresBuyerSelection, selectedBuyer])
 
     /* ── Payment math ── */
     const hasSalePrice = Boolean(property?.priceSale && property.priceSale > 0)
@@ -265,26 +377,35 @@ export default function ProposalWizardPage() {
     const remaining = propertyValue - totalAllocated
     const isBalanced = Math.abs(remaining) < 0.01
 
-    function updatePayment(key: string, value: string) {
-        setPayments(prev => ({ ...prev, [key]: { ...prev[key], value } }))
+    function updatePayment(
+        key: keyof typeof payments,
+        value: string,
+    ) {
+        setPayments((prev) => ({
+            ...prev,
+            [key]: {
+                ...prev[key],
+                value: prev[key].unit === 'percent' ? formatPercentInput(value) : formatMoneyInput(value),
+            },
+        }))
     }
 
-    function toggleUnit(key: string) {
-        setPayments(prev => {
+    function toggleUnit(key: keyof typeof payments) {
+        setPayments((prev) => {
             const field = prev[key]
             const amountInReais = toReais(field, propertyValue)
             const newUnit: PaymentUnit = field.unit === 'reais' ? 'percent' : 'reais'
             let newValue = ''
             if (newUnit === 'percent' && propertyValue > 0) {
-                newValue = ((amountInReais / propertyValue) * 100).toFixed(1).replace('.', ',')
+                newValue = formatPercentInput(((amountInReais / propertyValue) * 100).toFixed(2))
             } else {
-                newValue = formatCurrencyInput(amountInReais.toFixed(2).replace('.', ','))
+                newValue = formatMoneyInput(amountInReais.toFixed(2).replace('.', ','))
             }
             return { ...prev, [key]: { value: newValue, unit: newUnit } }
         })
     }
 
-    function autoFillRemaining(targetKey: string) {
+    function autoFillRemaining(targetKey: keyof typeof payments) {
         const otherTotal = Object.entries(payments)
             .filter(([k]) => k !== targetKey)
             .reduce((sum, [, f]) => sum + toReais(f, propertyValue), 0)
@@ -292,16 +413,19 @@ export default function ProposalWizardPage() {
         const field = payments[targetKey]
         let newValue: string
         if (field.unit === 'percent' && propertyValue > 0) {
-            newValue = ((rem / propertyValue) * 100).toFixed(1).replace('.', ',')
+            newValue = formatPercentInput(((rem / propertyValue) * 100).toFixed(2))
         } else {
-            newValue = formatCurrencyInput(rem.toFixed(2).replace('.', ','))
+            newValue = formatMoneyInput(rem.toFixed(2).replace('.', ','))
         }
         setPayments(prev => ({ ...prev, [targetKey]: { ...prev[targetKey], value: newValue } }))
     }
 
     /* ── Validation ── */
     const cpfDigits = clientCpf.replace(/\D/g, '')
-    const isStep1Valid = clientName.trim().length > 0 && isValidCpf(clientCpf)
+    const isStep1Valid =
+        clientName.trim().length > 0 &&
+        isValidCpf(clientCpf) &&
+        (!requiresBuyerSelection || selectedBuyer != null)
     const canSubmit = !isSubmitting && isStep1Valid && isBalanced
 
     /* ── Submit ── */
@@ -322,7 +446,10 @@ export default function ProposalWizardPage() {
                 propertyId: property.id,
                 clientName: clientName.trim(),
                 clientCpf: cpfDigits,
+                dealType: proposalBaseMode,
+                buyerUserId: selectedBuyer?.id,
                 validadeDias,
+                proposalValue: propertyValue,
                 payment: {
                     dinheiro: toReais(payments.dinheiro, propertyValue),
                     permuta: toReais(payments.permuta, propertyValue),
@@ -452,6 +579,15 @@ export default function ProposalWizardPage() {
                     </p>
                 </div>
 
+                {isEditMode && (
+                    <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+                        <p className="text-sm font-semibold text-amber-900">Edição de proposta ativa</p>
+                        <p className="mt-1 text-xs text-amber-800">
+                            Essa proposta ainda não foi assinada. Você pode ajustar os dados e salvar as alterações.
+                        </p>
+                    </div>
+                )}
+
                 {hasBothPriceModes && (
                     <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-4">
                         <p className="text-sm font-medium text-gray-700">Tipo da proposta</p>
@@ -534,6 +670,159 @@ export default function ProposalWizardPage() {
                                         <p className="text-xs text-red-500 mt-1">Informe um CPF válido.</p>
                                     )}
                                 </div>
+
+                                {requiresBuyerSelection && (
+                                    <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-3">
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-900">Comprador da proposta</p>
+                                            <p className="text-xs text-gray-500">
+                                                Selecione a pessoa que vai receber a proposta. Isso é usado quando você anuncia imóveis no painel.
+                                            </p>
+                                        </div>
+
+                                        {selectedBuyer ? (
+                                            <div className="space-y-3">
+                                                <div className="flex items-center justify-between gap-3 rounded-xl border border-primary-200 bg-white px-4 py-3">
+                                                    <div className="min-w-0">
+                                                        <p className="truncate text-sm font-semibold text-gray-900">{selectedBuyer.name}</p>
+                                                        <p className="truncate text-xs text-gray-500">
+                                                            {selectedBuyer.cpf ? `CPF ${selectedBuyer.cpf}` : 'Comprador selecionado'}
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setBuyerPickerOpen((current) => !current)
+                                                                setBuyerQuery(selectedBuyer.name)
+                                                            }}
+                                                            className="text-xs font-semibold text-primary-600 hover:text-primary-700"
+                                                        >
+                                                            Alterar
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setSelectedBuyer(null)
+                                                                setBuyerQuery('')
+                                                                setBuyerPickerOpen(true)
+                                                            }}
+                                                            className="text-xs font-semibold text-gray-500 hover:text-gray-700"
+                                                        >
+                                                            Limpar
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                {buyerPickerOpen && (
+                                                    <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-3">
+                                                        <div className="space-y-1">
+                                                            <label className="text-xs font-medium text-gray-600">Buscar comprador</label>
+                                                            <input
+                                                                type="text"
+                                                                value={buyerQuery}
+                                                                onChange={(event) => setBuyerQuery(event.target.value)}
+                                                                placeholder="Nome, CPF ou e-mail"
+                                                                className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary-500"
+                                                            />
+                                                        </div>
+                                                        <p className="text-xs text-gray-500">
+                                                            Digite ao menos 2 caracteres para localizar um usuário.
+                                                        </p>
+
+                                                        {buyerLoading && (
+                                                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                                Buscando compradores...
+                                                            </div>
+                                                        )}
+
+                                                        {!buyerLoading && buyerQuery.trim().length >= 2 && buyerResults.length === 0 && (
+                                                            <p className="text-sm text-gray-500">Nenhum usuário encontrado.</p>
+                                                        )}
+
+                                                        {buyerResults.length > 0 && (
+                                                            <div className="space-y-2">
+                                                                <div className="flex items-center justify-between">
+                                                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                                                        Resultados
+                                                                    </p>
+                                                                    <p className="text-xs text-gray-400">{buyerResults.length} encontrados</p>
+                                                                </div>
+                                                                {buyerResults.map((user) => (
+                                                                    <button
+                                                                        key={user.id}
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            setSelectedBuyer(user)
+                                                                            setBuyerQuery(user.name)
+                                                                            setBuyerResults([])
+                                                                            setBuyerPickerOpen(false)
+                                                                        }}
+                                                                        className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-left transition-colors hover:border-primary-300 hover:bg-primary-50"
+                                                                    >
+                                                                        <p className="text-sm font-semibold text-gray-900">{user.name}</p>
+                                                                        <p className="text-xs text-gray-500">
+                                                                            {user.cpf ? `CPF ${user.cpf}` : user.email || 'Usuário do sistema'}
+                                                                        </p>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-3">
+                                                <input
+                                                    type="text"
+                                                    value={buyerQuery}
+                                                    onChange={(event) => setBuyerQuery(event.target.value)}
+                                                    placeholder="Buscar por nome, CPF ou e-mail"
+                                                    className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary-500"
+                                                    onFocus={() => setBuyerPickerOpen(true)}
+                                                />
+                                                <p className="text-xs text-gray-500">
+                                                    Digite ao menos 2 caracteres para localizar um usuário.
+                                                </p>
+
+                                                {buyerLoading && (
+                                                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                                        Buscando compradores...
+                                                    </div>
+                                                )}
+
+                                                {!buyerLoading && buyerQuery.trim().length >= 2 && buyerResults.length === 0 && (
+                                                    <p className="text-sm text-gray-500">Nenhum usuário encontrado.</p>
+                                                )}
+
+                                                {buyerResults.length > 0 && (
+                                                    <div className="space-y-2">
+                                                        {buyerResults.map((user) => (
+                                                            <button
+                                                                key={user.id}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setSelectedBuyer(user)
+                                                                    setBuyerQuery(user.name)
+                                                                    setBuyerResults([])
+                                                                    setBuyerPickerOpen(false)
+                                                                }}
+                                                                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-left transition-colors hover:border-primary-300 hover:bg-primary-50"
+                                                            >
+                                                                <p className="text-sm font-semibold text-gray-900">{user.name}</p>
+                                                                <p className="text-xs text-gray-500">
+                                                                    {user.cpf ? `CPF ${user.cpf}` : user.email || 'Usuário do sistema'}
+                                                                </p>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             {userRole === 'broker' && (
@@ -600,11 +889,13 @@ export default function ProposalWizardPage() {
                                                         {field.unit === 'percent' ? '%' : ''}
                                                     </span>
                                                     {field.unit === 'reais' ? (
-                                                        <CurrencyInput
+                                                        <input
+                                                            type="text"
+                                                            inputMode="decimal"
                                                             value={field.value}
-                                                            onChange={(value) => updatePayment(key, value)}
+                                                            onChange={(event) => updatePayment(key, event.target.value)}
                                                             className="w-full rounded-xl border border-gray-200 py-3 pl-10 pr-4 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary-500"
-                                                            placeholder="R$ 0,00"
+                                                            placeholder="0"
                                                         />
                                                     ) : (
                                                         <input

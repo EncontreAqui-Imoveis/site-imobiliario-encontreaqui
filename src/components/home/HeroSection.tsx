@@ -7,7 +7,7 @@ import { usePropertySearch } from '@/hooks/usePropertySearch'
 import { useLocationOptions } from '@/components/search/useLocationOptions'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
 
-const HERO_IMAGE = '/marketing/home-hero.webp'
+const HERO_IMAGE = '/marketing/home-hero.png'
 
 const propertyTypes = [
     { value: '', label: 'Todos os tipos' },

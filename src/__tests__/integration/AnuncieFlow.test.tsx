@@ -1,10 +1,7 @@
 import React from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { ApiError } from '@/lib/api/client'
 
 import AnunciePage from '@/app/anuncie/page'
-import { TEAM_CONTACT_PHONE } from '@/lib/contactLinks'
-import * as userApi from '@/lib/api/user'
 
 const mockRouter = {
     back: jest.fn(),
@@ -114,14 +111,13 @@ jest.mock('@/lib/api/user', () => ({
 
 beforeEach(() => {
     jest.clearAllMocks()
-    ;(userApi.requestSupportContact as jest.Mock).mockResolvedValue(undefined)
     mockUserContextValue = {
         session: mockClientSession,
     }
     Object.defineProperty(window, 'open', {
         configurable: true,
         writable: true,
-        value: jest.fn(),
+        value: jest.fn(() => ({ location: { href: '' }, close: jest.fn() })),
     })
     global.fetch = jest.fn().mockResolvedValue({
         ok: true,
@@ -152,6 +148,20 @@ describe('Anuncie flow', () => {
         expect(screen.queryByRole('heading', { name: 'Como você quer anunciar?' })).not.toBeInTheDocument()
         expect(screen.queryByText('Você é proprietário do imóvel?')).not.toBeInTheDocument()
         expect(screen.queryByText('Sim, continuar')).not.toBeInTheDocument()
+    })
+
+    it('volta da etapa de proprietário para a tela inicial do fluxo', async () => {
+        render(<AnunciePage />)
+
+        fireEvent.click(await screen.findByText('Anunciar você mesmo'))
+        expect(await screen.findByText('Você é proprietário do imóvel?')).toBeInTheDocument()
+
+        fireEvent.click(await screen.findByRole('button', { name: 'Voltar' }))
+
+        expect(await screen.findByRole('heading', { name: 'Como você quer anunciar?' })).toBeInTheDocument()
+        expect(screen.getByText('Anunciar você mesmo')).toBeInTheDocument()
+        expect(screen.queryByText('Você é proprietário do imóvel?')).not.toBeInTheDocument()
+        expect(mockRouter.back).not.toHaveBeenCalled()
     })
 
     it('permite broker pendente seguir como proprietário sem entrar no fluxo profissional', async () => {
@@ -198,18 +208,16 @@ describe('Anuncie flow', () => {
         expect(mockRouter.replace).not.toHaveBeenCalledWith('/onboarding/broker')
     })
 
-    it('inicia o fluxo de corretor aprovado como fluxo profissional', async () => {
+    it('direciona corretor aprovado direto para o cadastro do imóvel', async () => {
         mockUserContextValue = {
             session: mockBrokerApprovedSession,
         }
         render(<AnunciePage />)
 
-        fireEvent.click(await screen.findByText('Anunciar você mesmo'))
-        fireEvent.click(await screen.findByText('Sim, sou proprietário'))
-
         expect(await screen.findByText('Cadastrar imóvel')).toBeInTheDocument()
         expect(screen.getByText('Fluxo de corretor aprovado')).toBeInTheDocument()
-        expect(screen.queryByText('Fluxo de cliente-proprietário')).not.toBeInTheDocument()
+        expect(screen.queryByRole('heading', { name: 'Como você quer anunciar?' })).not.toBeInTheDocument()
+        expect(screen.queryByText('Você é proprietário do imóvel?')).not.toBeInTheDocument()
     })
 
     it('bloqueia visitante e redireciona para login', () => {
@@ -223,7 +231,7 @@ describe('Anuncie flow', () => {
         expect(screen.queryByRole('heading', { name: 'Como você quer anunciar?' })).not.toBeInTheDocument()
     })
 
-    it('mostra aviso quando seleciona "Não, quero anunciar de outra pessoa"', async () => {
+    it('mostra aviso em modal quando seleciona "Não, quero anunciar de outra pessoa"', async () => {
         mockUserContextValue = {
             session: mockBrokerPendingSession,
         }
@@ -233,50 +241,37 @@ describe('Anuncie flow', () => {
         fireEvent.click(await screen.findByText('Não, quero anunciar de outra pessoa'))
 
         expect(await screen.findByText('Não é possível anunciar imóvel de outra pessoa pelo site/app.')).toBeInTheDocument()
-        expect(mockRouter.push).not.toHaveBeenCalledWith('/onboarding/broker')
+        expect(screen.getByText('Use esta tela para voltar e escolher outra opção.')).toBeInTheDocument()
         expect(mockRouter.push).not.toHaveBeenCalled()
     })
 
-    it('permite apenas voltar no fluxo de anúncio de outra pessoa', async () => {
+    it('permite fechar o modal de aviso e manter a tela principal', async () => {
         render(<AnunciePage />)
 
         fireEvent.click(await screen.findByText('Anunciar você mesmo'))
         fireEvent.click(await screen.findByText('Não, quero anunciar de outra pessoa'))
 
-        fireEvent.click(await screen.findByRole('button', { name: 'Voltar' }))
+        fireEvent.click(await screen.findByRole('button', { name: 'Entendi' }))
         expect(screen.getByText('Você é proprietário do imóvel?')).toBeInTheDocument()
         expect(screen.getByText('Sim, sou proprietário')).toBeInTheDocument()
-        expect(screen.queryByRole('button', { name: 'Entrar em contato com a equipe' })).not.toBeInTheDocument()
+        expect(screen.queryByText('Não é possível anunciar imóvel de outra pessoa pelo site/app.')).not.toBeInTheDocument()
     })
 
-    it('abre confirmação e envia solicitação de contato', async () => {
+    it('abre modal de contato e dispara notificação para admins', async () => {
         render(<AnunciePage />)
 
         const contact = await screen.findByText('Entrar em contato com a equipe')
         fireEvent.click(contact)
-        expect(await screen.findByText(/Deseja solicitar atendimento/)).toBeInTheDocument()
+        expect(await screen.findByText('Fale com nossos especialistas')).toBeInTheDocument()
+        const notifyButton = await screen.findByRole('button', { name: 'Notificar administradores' })
+        fireEvent.click(notifyButton)
 
-        fireEvent.click(await screen.findByRole('button', { name: 'Confirmar' }))
-
-        expect(await screen.findByText('Solicitação enviada com sucesso. Nossa equipe vai entrar em contato.')).toBeInTheDocument()
-        expect(screen.getByText(`Telefone de suporte: ${TEAM_CONTACT_PHONE}`)).toBeInTheDocument()
-        expect(userApi.requestSupportContact).toHaveBeenCalledWith({ source: 'anuncie', channel: 'web' })
-        expect(userApi.requestSupportContact).toHaveBeenCalledTimes(1)
-        expect(mockRouter.push).not.toHaveBeenCalled()
-    })
-
-    it('exibe erro amigavel se o envio de contato retornar 429', async () => {
-        ;(userApi.requestSupportContact as jest.Mock).mockRejectedValueOnce(new ApiError(429, 'Too many requests'))
-
-        render(<AnunciePage />)
-
-        fireEvent.click(await screen.findByText('Entrar em contato com a equipe'))
-        fireEvent.click(await screen.findByRole('button', { name: 'Confirmar' }))
-
-        expect(
-            await screen.findByText('Estamos recebendo muitas solicitações no momento. Tente novamente em alguns minutos.'),
-        ).toBeInTheDocument()
-        expect(mockRouter.push).not.toHaveBeenCalled()
+        const { requestSupportContact } = await import('@/lib/api/user')
+        await waitFor(() => {
+            expect(requestSupportContact).toHaveBeenCalledWith({ source: 'anuncie', channel: 'web' })
+        })
+        expect(window.open).not.toHaveBeenCalled()
+        expect(await screen.findByText('Sua solicitação foi enviada para os administradores.')).toBeInTheDocument()
     })
 
     it('garante que as perguntas de escolha não reaparecem após abrir formulário', async () => {
@@ -290,6 +285,17 @@ describe('Anuncie flow', () => {
         })
         expect(screen.queryByRole('heading', { name: 'Como você quer anunciar?' })).not.toBeInTheDocument()
         expect(screen.queryByText('Você é proprietário do imóvel?')).not.toBeInTheDocument()
+    })
+
+    it('permite sair da criação de imóveis pelo botão superior', async () => {
+        render(<AnunciePage />)
+
+        fireEvent.click(await screen.findByText('Anunciar você mesmo'))
+        fireEvent.click(await screen.findByText('Sim, sou proprietário'))
+
+        fireEvent.click(await screen.findByRole('button', { name: 'Sair' }))
+
+        expect(mockRouter.replace).toHaveBeenCalledWith('/meus-imoveis')
     })
 
     it('valida o passo de comodidades com Energia Solar e sem "Planejados"', async () => {

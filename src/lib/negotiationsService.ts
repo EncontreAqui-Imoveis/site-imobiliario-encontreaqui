@@ -62,7 +62,11 @@ export interface CreateProposalPayload {
     clientCpf: string
     validadeDias: number
     idempotencyKey?: string
+    dealType?: string
+    buyerUserId?: number
+    capturingBrokerId?: number
     sellerBrokerId?: number
+    proposalValue: number
     payment: {
         dinheiro: number
         permuta: number
@@ -134,6 +138,15 @@ export interface ApprovedBrokerLookup {
     creci?: string
 }
 
+export interface ProposalUserLookup {
+    id: number
+    name: string
+    email?: string
+    cpf?: string
+    phone?: string
+    role?: string
+}
+
 export async function searchApprovedBrokers(query: string): Promise<ApprovedBrokerLookup[]> {
     const data = await apiClient.get<{ data: ApprovedBrokerLookup[] }>(
         `/brokers/approved?search=${encodeURIComponent(query.trim())}&limit=5`,
@@ -141,6 +154,20 @@ export async function searchApprovedBrokers(query: string): Promise<ApprovedBrok
     return (Array.isArray(data) ? data : (data?.data || [])).filter(
         (broker) => broker.id > 0 && Boolean(broker.name),
     )
+}
+
+export async function searchUsers(query: string): Promise<ProposalUserLookup[]> {
+    const search = query.trim()
+    if (search.length < 2) {
+        return []
+    }
+
+    const data = await apiClient.get<{ data: ProposalUserLookup[] }>(
+        `/users/search?q=${encodeURIComponent(search)}&limit=10`,
+    )
+
+    const items = Array.isArray(data) ? data : (data?.data || [])
+    return items.filter((user) => user.id > 0 && Boolean(user.name))
 }
 
 export async function fetchProposalTargetProperty(propertyId: string): Promise<Property> {

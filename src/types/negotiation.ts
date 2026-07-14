@@ -26,6 +26,8 @@ export interface NegotiationSummary {
     status: NegotiationStatus
     clientName?: string
     clientCpf?: string
+    buyerUserId?: number | null
+    buyerName?: string | null
     createdAt: string
     updatedAt: string
     proposalValidUntil?: string
