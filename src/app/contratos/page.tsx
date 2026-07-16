@@ -19,7 +19,7 @@ export default function MeusContratosPage() {
 
     useEffect(() => {
         if (!authLoading && !session) {
-            router.replace('/auth/login?next=/contratos')
+            router.replace('/auth/login?next=/meus-processos/contratos')
             return
         }
         const gateRoute = resolveOperationalGateRoute(session)

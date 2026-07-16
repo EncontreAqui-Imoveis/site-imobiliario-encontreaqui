@@ -45,7 +45,7 @@ export default function PropostasPage() {
 
     useEffect(() => {
         if (!authLoading && !session) {
-            router.replace('/auth/login?next=/propostas')
+            router.replace('/auth/login?next=/meus-processos/propostas')
             return
         }
         const gateRoute = resolveOperationalGateRoute(session)
@@ -86,18 +86,18 @@ export default function PropostasPage() {
     const resolveNegotiationHref = (negotiation: NegotiationSummary) => {
         const { status, id, propertyId } = negotiation
         if (isProposalPreSignatureStatus(status)) {
-            return `/propostas/${id}/upload-assinada`
+            return `/meus-processos/propostas/${id}/upload-assinada`
         }
         if (isProposalRefusedStatus(status)) {
             if (propertyId > 0) {
                 return `/propostas/nova?propertyId=${propertyId}`
             }
-            return '/documentos?tab=propostas'
+            return '/meus-processos/propostas'
         }
         if (resolveProposalBucket(status) === 'signed') {
-            return '/documentos?tab=contratos'
+            return '/meus-processos/contratos'
         }
-        return '/documentos?tab=propostas'
+        return '/meus-processos/propostas'
     }
 
     const resolveActionLabel = (negotiation: NegotiationSummary) => {

@@ -20,7 +20,7 @@ export default function UploadPropostaAssinadaPage() {
 
     useEffect(() => {
         if (!authLoading && !session) {
-            router.replace(`/auth/login?next=/propostas/${negotiationId}/upload-assinada`)
+            router.replace(`/auth/login?next=/meus-processos/propostas/${negotiationId}/upload-assinada`)
             return
         }
         const gateRoute = resolveOperationalGateRoute(session)
@@ -55,7 +55,7 @@ export default function UploadPropostaAssinadaPage() {
             await uploadSignedProposal(negotiationId, file)
             setSuccess(true)
             window.setTimeout(() => {
-                router.replace('/propostas?signed=1')
+                router.replace('/meus-processos/propostas?signed=1')
             }, 1200)
         } catch (err) {
             const apiErr = err as ApiError

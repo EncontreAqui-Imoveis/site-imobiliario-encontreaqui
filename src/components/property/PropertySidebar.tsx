@@ -156,7 +156,7 @@ export default function PropertySidebar({ property, visitorProposalHref }: Prope
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="space-y-3 pt-4">
+                        <div className="space-y-3 pt-4" role="region" aria-label="Ações do aplicativo">
                             {/* WhatsApp CTA — Primary (always visible, fallback to 6430500118) */}
                             <a
                                 href={whatsappLink}

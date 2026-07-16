@@ -376,6 +376,7 @@ export default function ProposalWizardPage() {
     const totalAllocated = Object.values(payments).reduce((sum, f) => sum + toReais(f, propertyValue), 0)
     const remaining = propertyValue - totalAllocated
     const isBalanced = Math.abs(remaining) < 0.01
+    const paymentEntries = Object.entries(payments) as Array<[keyof typeof payments, PaymentField]>
 
     function updatePayment(
         key: keyof typeof payments,
@@ -872,7 +873,7 @@ export default function ProposalWizardPage() {
 
                             {/* Payment Fields */}
                             <div className="space-y-4">
-                                {Object.entries(payments).map(([key, field]) => {
+                                {paymentEntries.map(([key, field]) => {
                                     const { label } = paymentLabels[key]
                                     const reaisAmount = toReais(field, propertyValue)
                                     const percentAmount = toPercent(field, propertyValue)

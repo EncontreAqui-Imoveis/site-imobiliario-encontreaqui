@@ -155,6 +155,15 @@ export default function Header() {
     const userName = session?.user?.name?.split(' ')[0] || 'Usuário'
     const userInitial = userName.charAt(0).toUpperCase()
     const pendingAction = resolvePendingAction(session)
+    const brokerStatus = session?.broker?.status ?? session?.user?.broker_status ?? null
+    const brokerStatusLabel =
+        brokerStatus === 'pending_verification'
+            ? 'Em análise'
+            : brokerStatus === 'pending_documents'
+                ? 'Docs. pendentes'
+                : brokerStatus === 'rejected'
+                    ? 'Rejeitado'
+                    : null
     const resolvedAuthNavLinks = authNavLinks
     const resolvedUserMenuLinks = userMenuLinks
     const blockMandatoryBrokerNav = pendingAction?.href === '/onboarding/broker' && pathname === '/onboarding/broker'
@@ -266,6 +275,17 @@ export default function Header() {
                                             {isBroker && (
                                                 <span className="inline-block mt-1 px-2 py-0.5 bg-accent-100 text-accent-700 text-[10px] font-bold rounded-full uppercase">
                                                     Corretor
+                                                </span>
+                                            )}
+                                            {brokerStatusLabel && (
+                                                <span className={`inline-block mt-1 ml-1 px-2 py-0.5 text-[10px] font-semibold rounded-full ${
+                                                    brokerStatus === 'pending_verification'
+                                                        ? 'bg-amber-100 text-amber-700'
+                                                        : brokerStatus === 'rejected'
+                                                            ? 'bg-red-100 text-red-700'
+                                                            : 'bg-slate-100 text-slate-600'
+                                                }`}>
+                                                    {brokerStatusLabel}
                                                 </span>
                                             )}
                                         </div>

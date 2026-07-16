@@ -198,8 +198,7 @@ export default function BrokerOnboardingPage() {
         }
 
         if (brokerStatus === 'pending_verification') {
-            setWaitingOutcome('pending-verification')
-            setStep('waiting')
+            router.replace('/perfil')
             return
         }
 
@@ -294,11 +293,10 @@ export default function BrokerOnboardingPage() {
                     persistAuthToken(finalized.token)
                 }
                 setFinalizedSignup(true)
-                setWaitingOutcome('send-later')
-                setStep('waiting')
                 await refresh()
                 clearSignupDraft()
                 clearSelectedDocuments()
+                router.replace('/perfil?banner=documents_pending')
                 return
             }
             await refresh()
@@ -365,21 +363,19 @@ export default function BrokerOnboardingPage() {
                     persistAuthToken(finalized.token)
                 }
                 setFinalizedSignup(true)
-                setWaitingOutcome('documents-sent')
-                setStep('waiting')
                 await refresh()
                 clearSignupDraft()
                 clearSelectedDocuments()
+                router.replace('/perfil?banner=documents_sent')
+                return
             } else {
                 await uploadBrokerDocuments({
                     creciFront,
                     creciBack,
                     selfie,
                 })
-            }
-            setStep('waiting')
-            if (!isSignupMode) {
                 await refresh()
+                router.replace('/perfil?banner=documents_sent')
             }
         } catch (err) {
             setFinalizedSignup(false)

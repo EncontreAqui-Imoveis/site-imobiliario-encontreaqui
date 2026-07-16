@@ -148,7 +148,7 @@ export default function InfinitePropertyResults({
                         disabled={isLoading}
                         className="rounded-xl border border-primary-200 bg-white px-5 py-2.5 text-sm font-semibold text-primary-700 transition hover:bg-primary-50 disabled:opacity-60"
                     >
-                        {isLoading ? 'Carregando...' : 'Ver mais 10 imóveis'}
+                        {isLoading ? 'Carregando...' : `Ver mais ${pageSize} imóveis`}
                     </button>
                 </div>
             )}

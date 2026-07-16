@@ -121,14 +121,15 @@ describe('ContractDetailClient', () => {
         expect(screen.getAllByText('Dados bancários').length).toBeGreaterThan(0)
         expect(screen.getAllByText(/banco\.pdf/i).length).toBeGreaterThan(0)
         expect(screen.queryByText('Outro documento')).not.toBeInTheDocument()
-        expect(screen.queryByText('Documentos do cônjuge')).not.toBeInTheDocument()
+        expect(screen.queryByText('Documento Pessoal (Cônjuge)')).not.toBeInTheDocument()
 
         const sellerForm = screen.getByText('Dados do proprietário').closest('section')
         expect(sellerForm).not.toBeNull()
+        fireEvent.click(within(sellerForm as HTMLElement).getByRole('button', { name: 'Editar dados' }))
         const maritalSelect = within(sellerForm as HTMLElement).getByRole('combobox')
         fireEvent.change(maritalSelect, { target: { value: 'Casado(a)' } })
 
-        expect(screen.getAllByText('Documentos do cônjuge').length).toBeGreaterThan(0)
+        expect(screen.getAllByText('Documento Pessoal (Cônjuge)').length).toBeGreaterThan(0)
         expect(screen.getAllByText('Dados bancários').length).toBeGreaterThan(0)
     })
 
@@ -151,7 +152,8 @@ describe('ContractDetailClient', () => {
             />,
         )
 
-        expect(screen.getAllByText('Salvar dados deste lado').length).toBeGreaterThanOrEqual(2)
+        expect(screen.getAllByText('Editar dados').length).toBeGreaterThanOrEqual(2)
+        expect(screen.queryByText('Salvar dados deste lado')).not.toBeInTheDocument()
         expect(screen.getByText('Documentos do proprietário')).toBeInTheDocument()
         expect(screen.getByText('Documentos do comprador')).toBeInTheDocument()
     })

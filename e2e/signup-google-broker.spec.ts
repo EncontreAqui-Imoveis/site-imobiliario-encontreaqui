@@ -41,12 +41,12 @@ test('cadastro corretor em fluxo Google pendente segue para onboarding de docume
     await page.goto('/auth/cadastro')
 
     await page.getByRole('button', { name: /quero cadastrar como corretor/i }).click()
-    await page.getByRole('button', { name: /^continuar$/i }).click()
 
     await page.getByLabel('Nome completo *').fill('Corretor Google')
     await page.getByLabel(/Telefone/).fill('62999999998')
     await page.getByLabel('CRECI *').fill('12345-F')
-    await page.getByRole('button', { name: /^continuar$/i }).click()
+    await page.getByRole('checkbox').check()
+    await page.getByRole('button', { name: /^criar conta$/i }).click()
 
     await page.getByLabel(/CEP/).fill('74000000')
     await page.getByLabel(/Estado/).selectOption('GO')
@@ -54,7 +54,7 @@ test('cadastro corretor em fluxo Google pendente segue para onboarding de docume
     await page.getByLabel('Bairro').fill('Centro')
     await page.getByLabel('Rua').fill('Rua Broker')
     await page.getByLabel(/Número/).fill('200')
-    await page.getByRole('button', { name: /ir para a página de verificação/i }).click()
+    await page.getByRole('button', { name: /^criar conta$/i }).click()
     await expect(page).toHaveURL(/\/cadastro\/verificar-metodo/)
     await expect(page.getByText(/Seu e-mail já foi (confirmado|verificado)\. Você quer verificar seu telefone\?/i)).toBeVisible()
     await page.getByRole('button', { name: /prosseguir com verificação de corretor/i }).click()
@@ -609,4 +609,3 @@ test('enviar documentos leva para etapa de análise', async ({ page }) => {
     expect(createDraftCalls).toBe(0)
     expect(usersRegisterCalls).toBe(0)
 })
-

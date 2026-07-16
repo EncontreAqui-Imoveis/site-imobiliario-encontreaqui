@@ -20,7 +20,10 @@ export function isBrokerUser(session: UserSession | null | undefined): boolean {
 
 export function isRestrictedBroker(session: UserSession | null | undefined): boolean {
     if (!isBrokerUser(session)) return false
-    return getBrokerStatus(session) !== 'approved'
+    const status = getBrokerStatus(session)
+    // pending_verification means documents were submitted and are under review;
+    // the user has nothing left to do, so they are NOT restricted.
+    return status !== 'approved' && status !== 'pending_verification'
 }
 
 export function isApprovedBroker(session: UserSession | null | undefined): boolean {
@@ -49,7 +52,7 @@ export function resolvePostAuthRoute(
 ): string {
     const safeNext = normalizeNextPath(next)
     if (session.user.role === 'auxiliary_administrative') {
-        return safeNext ?? '/propostas'
+        return safeNext ?? '/meus-processos/propostas'
     }
 
     if (!hasVerifiedContact(session)) {

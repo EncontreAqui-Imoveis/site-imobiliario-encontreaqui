@@ -1,5 +1,11 @@
 import type { ApprovalStatus, ContractStatus } from '@/types/contract'
 
+const CANCELLED_CONTRACT_STATUSES = new Set(['CANCELLED', 'CANCELED', 'CANCELADO', 'CANCELADA'])
+
+export function isCancelledContractStatus(status: unknown): boolean {
+    return CANCELLED_CONTRACT_STATUSES.has(String(status ?? '').trim().toUpperCase())
+}
+
 export const CONTRACT_STATUS_FLOW: ContractStatus[] = [
     'AWAITING_DOCS',
     'IN_DRAFT',

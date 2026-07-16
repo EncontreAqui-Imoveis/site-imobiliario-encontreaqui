@@ -101,9 +101,9 @@ describe('ActiveFilterChips', () => {
 
         render(<ActiveFilterChips />)
 
-        expect(screen.getByText('Área mín.: 2 ha')).toBeInTheDocument()
-        expect(screen.getByText('Área máx.: 5 ha')).toBeInTheDocument()
-        expect(screen.getByText('Unid. área: ha')).toBeInTheDocument()
+        expect(screen.getByText('Área construída mín.: 2 ha')).toBeInTheDocument()
+        expect(screen.getByText('Área construída máx.: 5 ha')).toBeInTheDocument()
+        expect(screen.getByText('Unid. área construída: ha')).toBeInTheDocument()
     })
 
     it('clears all filters when "Limpar todos" is clicked', () => {

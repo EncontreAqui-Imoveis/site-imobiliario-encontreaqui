@@ -3,10 +3,15 @@ import { render, screen, waitFor } from '@testing-library/react'
 import PropertyDetailClient from '@/components/property/PropertyDetailClient'
 import { Property } from '@/types/property'
 import * as propertiesApi from '@/lib/propertiesApi'
+import * as contractsApi from '@/lib/api/contracts'
 
 jest.mock('@/lib/propertiesApi', () => ({
     ...jest.requireActual('@/lib/propertiesApi'),
     fetchPropertyById: jest.fn(),
+}))
+
+jest.mock('@/lib/api/contracts', () => ({
+    getMyContracts: jest.fn(),
 }))
 
 // Mocks
@@ -147,10 +152,13 @@ describe('PropertyDetailClient', () => {
             json: async () => ({}),
         })
         window.fetch = global.fetch
+        ;(propertiesApi.fetchPropertyById as jest.Mock).mockResolvedValue(mockProperty)
+        ;(contractsApi.getMyContracts as jest.Mock).mockResolvedValue([])
     })
 
     afterEach(() => {
         jest.clearAllMocks()
+        ;(contractsApi.getMyContracts as jest.Mock).mockResolvedValue([])
     })
 
     it('renders property details', () => {
@@ -243,6 +251,55 @@ describe('PropertyDetailClient', () => {
         await waitFor(() => {
             expect(screen.getByText('Status da proposta')).toBeInTheDocument()
         })
+        expect(screen.queryByText('Gerar proposta')).not.toBeInTheDocument()
+    })
+
+    it('bloqueia novo ciclo quando existe contrato físico ativo', async () => {
+        mockUserContextValue = {
+            session: { user: { id: 700, role: 'client' } },
+        }
+        ;(contractsApi.getMyContracts as jest.Mock).mockResolvedValue([])
+
+        render(
+            <PropertyDetailClient
+                propertyId="1"
+                initialProperty={{
+                    ...mockProperty,
+                    ownerId: 101,
+                    latestContractId: 'contract-1',
+                    latestContractStatus: 'IN_DRAFT',
+                    negotiation: { id: 'neg-1', status: 'APPROVED' },
+                }}
+            />,
+        )
+
+        await waitFor(() => {
+            expect(screen.queryByText('Criar proposta')).not.toBeInTheDocument()
+        })
+        expect(screen.queryByText('Gerar proposta')).not.toBeInTheDocument()
+    })
+
+    it('mostra contrato autorizado e libera somente a navegação correspondente', async () => {
+        mockUserContextValue = {
+            session: { user: { id: 700, role: 'client' } },
+        }
+        ;(contractsApi.getMyContracts as jest.Mock).mockResolvedValue([
+            { id: 'contract-1' },
+        ])
+
+        render(
+            <PropertyDetailClient
+                propertyId="1"
+                initialProperty={{
+                    ...mockProperty,
+                    latestContractId: 'contract-1',
+                    latestContractStatus: 'IN_DRAFT',
+                }}
+            />,
+        )
+
+        const contractLinks = await screen.findAllByRole('link', { name: /ver contrato/i })
+        expect(contractLinks[0]).toHaveAttribute('href', '/meus-processos/contratos/contract-1')
         expect(screen.queryByText('Gerar proposta')).not.toBeInTheDocument()
     })
 

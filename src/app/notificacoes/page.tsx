@@ -42,15 +42,15 @@ function resolveNotificationHref(notification: Notification): string | null {
         toStringOrNull(metadata.contract_id)
 
     if (contractId) {
-        return `/contratos/${encodeURIComponent(contractId)}`
+        return `/meus-processos/contratos/${encodeURIComponent(contractId)}`
     }
 
     if (negotiationId) {
-        return `/propostas/${encodeURIComponent(negotiationId)}/upload-assinada`
+        return `/meus-processos/propostas/${encodeURIComponent(negotiationId)}/upload-assinada`
     }
 
     if (notification.relatedEntityType === 'negotiation') {
-        return '/documentos?tab=propostas'
+        return '/meus-processos/propostas'
     }
 
     if (notification.relatedEntityType === 'property' && notification.relatedEntityId) {

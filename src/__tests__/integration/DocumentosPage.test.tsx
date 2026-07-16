@@ -69,7 +69,7 @@ jest.mock('@/lib/api/contracts', () => ({
     getMyContracts: jest.fn(),
 }))
 
-describe('Documentos page', () => {
+describe('legacy Documentos route fallback', () => {
     beforeEach(() => {
         jest.clearAllMocks()
         ;(fetchMyNegotiations as jest.Mock).mockResolvedValue([
@@ -93,22 +93,19 @@ describe('Documentos page', () => {
         ])
     })
 
-    it('carrega e exibe propostas por padrão', async () => {
+    it('renderiza a experiência canônica de processos', async () => {
         render(<DocumentosPage />)
 
-        expect(screen.getByText('Documentos')).toBeInTheDocument()
-        expect(await screen.findByText('Casa de Teste')).toBeInTheDocument()
-
-        expect(screen.getByText('Pendente de assinatura')).toBeInTheDocument()
-        expect(screen.getByText('Enviar proposta assinada')).toBeInTheDocument()
+        expect(screen.getByText('Meus Processos')).toBeInTheDocument()
+        expect((await screen.findAllByText('1 em andamento')).length).toBeGreaterThan(0)
     })
 
-    it('carrega e exibe contratos quando tab=contratos', async () => {
+    it('não recria as abas legadas quando recebe uma query antiga', async () => {
         searchParams = new URLSearchParams('tab=contratos')
         render(<DocumentosPage />)
         await waitFor(() => {
-            expect(screen.getByText('Apartamento Contratado')).toBeInTheDocument()
-            expect(screen.getByText('Status: ASSINADO')).toBeInTheDocument()
+            expect(screen.getByText('Meus Processos')).toBeInTheDocument()
+            expect(screen.getAllByText('1 em andamento').length).toBeGreaterThan(0)
         })
     })
 })

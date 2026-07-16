@@ -9,7 +9,9 @@ import type {
     ContractSummary,
     ContractSide,
     ContractApprovalReason,
+    ContractCapabilities,
 } from '@/types/contract'
+import { isCancelledContractStatus } from '@/lib/contractsUi'
 
 function parseCategoryStatus(raw: unknown): ContractDocumentCategoryStatus {
     const s = String(raw ?? 'PENDING').trim().toUpperCase()
@@ -129,6 +131,19 @@ function normalizeDocumentProgress(raw: unknown): ContractDocumentProgressSummar
     }
 }
 
+function normalizeCapabilities(raw: unknown): ContractCapabilities | null {
+    if (!raw || typeof raw !== 'object') return null
+    const item = raw as Record<string, unknown>
+    return {
+        canReadMeta: Boolean(item.canReadMeta ?? item.can_read_meta),
+        canReadSeller: Boolean(item.canReadSeller ?? item.can_read_seller),
+        canEditSeller: Boolean(item.canEditSeller ?? item.can_edit_seller),
+        canReadBuyer: Boolean(item.canReadBuyer ?? item.can_read_buyer),
+        canEditBuyer: Boolean(item.canEditBuyer ?? item.can_edit_buyer),
+        isReadOnly: Boolean(item.isReadOnly ?? item.is_read_only),
+    }
+}
+
 function normalizeContractSummary(raw: unknown): ContractSummary | null {
     if (!raw || typeof raw !== 'object') return null
     const item = raw as Record<string, unknown>
@@ -190,6 +205,7 @@ function normalizeContractSummary(raw: unknown): ContractSummary | null {
         documentRequirements: normalizeDocumentRequirements(
             item.documentRequirements ?? item.document_requirements,
         ),
+        capabilities: normalizeCapabilities(item.capabilities),
     }
 }
 
@@ -337,6 +353,7 @@ export async function getMyContracts(): Promise<ContractSummary[]> {
     return rows
         .map((item) => normalizeContractSummary(item))
         .filter((item): item is ContractSummary => item !== null)
+        .filter((item) => !isCancelledContractStatus(item.status))
 }
 
 export async function getContractById(id: string): Promise<ContractDetail> {
@@ -383,10 +400,11 @@ export async function deleteContractDocument(contractId: string, documentId: num
 
 export async function updateContractData(options: {
     contractId: string
+    side: ContractSide
     sellerInfo?: Record<string, unknown>
     buyerInfo?: Record<string, unknown>
 }): Promise<void> {
-    const payload: Record<string, unknown> = {}
+    const payload: Record<string, unknown> = { side: options.side }
     if (options.sellerInfo && Object.keys(options.sellerInfo).length > 0) {
         payload.sellerInfo = options.sellerInfo
     }

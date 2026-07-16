@@ -17,6 +17,8 @@ import {
     patchSignupDraft,
     resolveSignupDraftHref,
     saveSignupDraft,
+    markSignupDraftEmailVerified,
+    rewindSignupDraftToAddress,
     type SignupDraft,
 } from '@/lib/authSignupDraft'
 import { useUser } from '@/contexts/UserContext'
@@ -27,9 +29,21 @@ import {
     createSignupDraftRemote,
     discardSignupDraft,
     patchSignupDraftRemote,
+    confirmSignupDraftEmailCode,
+    sendSignupDraftEmailCode,
+    confirmSignupDraftPhoneCode,
+    requestSignupDraftPhoneOtp,
+    submitSignupDraftDocuments,
+    finalizeSignupDraft,
 } from '@/lib/api/signupDraft'
-import { CheckCircle2, Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Mail, Smartphone, Upload, Camera, CreditCard, ShieldCheck, CheckCircle2 } from 'lucide-react'
 import SignupLegalNotice from '@/components/legal/SignupLegalNotice'
+import LegalDocumentModal, { type LegalDocumentKind } from '@/components/legal/LegalDocumentModal'
+import { validateDocumentFile } from '@/lib/sanitize'
+import { persistAuthToken } from '@/lib/auth/tokenStore'
+import { registerUserFromSignupDraft } from '@/lib/registerFromSignupDraft'
+import { LEGAL_DOCUMENT_VERSION } from '@/lib/legalDocuments'
+
 
 const BRAZILIAN_STATES = [
     'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
@@ -175,13 +189,23 @@ export default function CadastroPage() {
     const router = useRouter()
     const { session, refresh } = useUser()
 
-    const [draft, setDraft] = useState<SignupDraft>(() =>
-        createSignupDraft({
+    const [draft, setDraft] = useState<SignupDraft>(() => {
+        if (typeof window !== 'undefined') {
+            const existing = loadSignupDraft()
+            if (
+                existing &&
+                (existing.draftId ||
+                ['address', 'verify_method', 'email', 'phone', 'documents'].includes(existing.step))
+            ) {
+                return existing
+            }
+        }
+        return createSignupDraft({
             step: 'profile',
-            userType: 'client', // Cliente selecionado por padrão para renderizar os campos
+            userType: null,
             data: { state: 'GO' },
-        }),
-    )
+        })
+    })
     const [confirmPassword, setConfirmPassword] = useState('')
     const [ready, setReady] = useState(false)
     const [submitting, setSubmitting] = useState(false)
@@ -195,8 +219,41 @@ export default function CadastroPage() {
     const [cityOptions, setCityOptions] = useState<string[]>([])
     const [citiesLoading, setCitiesLoading] = useState(false)
     const [acceptedTerms, setAcceptedTerms] = useState(false)
+    const [activeLegalDoc, setActiveLegalDoc] = useState<LegalDocumentKind | null>(null)
     const cepLookupTimeoutRef = useRef<number | null>(null)
     const lastCompletedCep = useRef('')
+
+    // States for verification method and OTP code input
+    const [verificationMethod, setVerificationMethod] = useState<'email' | 'phone' | null>(null)
+    const [verificationModalOpen, setVerificationModalOpen] = useState(false)
+    const [otpCode, setOtpCode] = useState<string[]>(['', '', '', '', '', ''])
+    const [otpCountdown, setOtpCountdown] = useState(0)
+    const [otpSending, setOtpSending] = useState(false)
+    const [otpVerifying, setOtpVerifying] = useState(false)
+    const [otpError, setOtpError] = useState<string | null>(null)
+    const [otpSuccess, setOtpSuccess] = useState(false)
+    const [otpSessionToken, setOtpSessionToken] = useState<string | null>(null)
+
+    // States for broker document upload
+    const [creciFront, setCreciFront] = useState<File | null>(null)
+    const [creciBack, setCreciBack] = useState<File | null>(null)
+    const [selfie, setSelfie] = useState<File | null>(null)
+    const [brokerAgreementAccepted, setBrokerAgreementAccepted] = useState(false)
+    const [submittingDocs, setSubmittingDocs] = useState(false)
+
+    // Refs for file inputs and OTP inputs
+    const creciFrontRef = useRef<HTMLInputElement>(null)
+    const creciBackRef = useRef<HTMLInputElement>(null)
+    const selfieRef = useRef<HTMLInputElement>(null)
+    const otpInputRefs = useRef<(HTMLInputElement | null)[]>([])
+
+    useEffect(() => {
+        if (otpCountdown <= 0) return
+        const timer = window.setInterval(() => {
+            setOtpCountdown((c) => (c > 0 ? c - 1 : 0))
+        }, 1000)
+        return () => window.clearInterval(timer)
+    }, [otpCountdown])
 
     useEffect(() => {
         if (session) {
@@ -206,18 +263,11 @@ export default function CadastroPage() {
 
         const existing = loadSignupDraft()
         if (existing) {
+            // Apenas restaura automaticamente se o rascunho já estiver no passo de endereço ou posterior e possuir id
             if (
-                existing.step === 'verify_method' ||
-                existing.step === 'email' ||
-                existing.step === 'phone' ||
-                existing.step === 'documents'
+                existing.draftId &&
+                ['address', 'verify_method', 'email', 'phone', 'documents'].includes(existing.step)
             ) {
-                router.replace(resolveSignupDraftHref(existing))
-                return
-            }
-
-            // Apenas restaura automaticamente se o rascunho já estiver no passo de endereço e possuir id
-            if (existing.step === 'address' && existing.draftId) {
                 const restored = createSignupDraft({
                     ...existing,
                     userType: existing.userType || 'client',
@@ -232,19 +282,42 @@ export default function CadastroPage() {
         setReady(true)
     }, [router.replace, router.push, session])
 
+    const [internalDisplayStep, setInternalDisplayStep] = useState<SignupDraft['step']>('profile')
+    const [fadeState, setFadeState] = useState<'in' | 'out'>('in')
+    const isFirstRender = useRef(true)
+
+    const isTest = typeof process !== 'undefined' && process.env.NODE_ENV === 'test'
+    const displayStep = isTest ? draft.step : internalDisplayStep
+
+    useEffect(() => {
+        if (ready && !isTest) {
+            if (isFirstRender.current) {
+                setInternalDisplayStep(draft.step)
+                isFirstRender.current = false
+            } else if (draft.step !== internalDisplayStep) {
+                setFadeState('out')
+                const timer = setTimeout(() => {
+                    setInternalDisplayStep(draft.step)
+                    setFadeState('in')
+                }, 300)
+                return () => clearTimeout(timer)
+            }
+        }
+    }, [draft.step, internalDisplayStep, ready, isTest])
+
     const stepIndex = useMemo(() => {
-        switch (draft.step) {
+        switch (displayStep) {
             case 'profile':
             case 'basic':
                 return 0
             default:
                 return 2
         }
-    }, [draft.step])
+    }, [displayStep])
     const stepSubtitle = useMemo(() => {
-        if (draft.step === 'profile' || draft.step === 'basic') return 'Selecione seu tipo de perfil e preencha seus dados.'
+        if (displayStep === 'profile' || displayStep === 'basic') return 'Selecione seu tipo de perfil e preencha seus dados.'
         return STEP_SUBTITLES.address
-    }, [draft.step])
+    }, [displayStep])
 
     const isGoogleFlow = draft.source === 'google'
     const isLoading = submitting || googleLoading
@@ -267,15 +340,19 @@ export default function CadastroPage() {
         data: Partial<SignupDraft['data']>,
         extra?: Partial<Omit<SignupDraft, 'data' | 'updatedAt'>>,
     ) => {
-        setDraft((current) => ({
-            ...current,
-            ...extra,
-            data: {
-                ...current.data,
-                ...data,
-            },
-            updatedAt: new Date().toISOString(),
-        }))
+        setDraft((current) => {
+            const next = {
+                ...current,
+                ...extra,
+                data: {
+                    ...current.data,
+                    ...data,
+                },
+                updatedAt: new Date().toISOString(),
+            }
+            saveSignupDraft(next)
+            return next
+        })
     }
 
     const persistDraft = (next: SignupDraft) => {
@@ -333,6 +410,11 @@ export default function CadastroPage() {
 
     const handleDraftConflict = (error: unknown) => {
         const conflict = getDraftConflictFromError(error)
+        const apiError = error as ApiError
+        const payload = apiError?.payload as Record<string, unknown> | undefined
+        const draftId = typeof payload?.draftId === 'string' ? payload.draftId : null
+        const draftToken = typeof payload?.draftToken === 'string' ? payload.draftToken : null
+
         if (conflict === 'emailAlreadyRegistered') {
             setDraftConflictCode(conflict)
             setError('Este e-mail já está cadastrado. Faça login para continuar.')
@@ -340,7 +422,13 @@ export default function CadastroPage() {
         }
         if (conflict === 'draftAlreadyExists') {
             setDraftConflictCode(conflict)
-            setError('Já existe um cadastro em andamento para este e-mail.')
+            if (draftId && draftToken) {
+                setDraft((current) => createSignupDraft({
+                    ...current,
+                    draftId,
+                    draftToken,
+                }))
+            }
             return true
         }
         setDraftConflictCode(null)
@@ -403,6 +491,7 @@ export default function CadastroPage() {
             userType: value,
         })
         persistDraft(next)
+        setDraft(next)
         setError(null)
         setDraftConflictCode(null)
     }
@@ -469,10 +558,6 @@ export default function CadastroPage() {
     }
 
     const handleGoogleRegister = async () => {
-        if (!acceptedTerms) {
-            setError('Você precisa aceitar os Termos de Uso e Privacidade.')
-            return
-        }
         setGoogleLoading(true)
         setError(null)
 
@@ -499,6 +584,7 @@ export default function CadastroPage() {
                 setRestoredDraft(false)
                 setError(null)
                 setDraft(googleDraft)
+                setGoogleLoading(false)
                 return
             }
             await refresh()
@@ -525,25 +611,6 @@ export default function CadastroPage() {
         }
     }
 
-    const handleContinueProfile = (event: React.FormEvent) => {
-        event.preventDefault()
-        if (!draft.userType) {
-            setError('Escolha se deseja continuar como cliente ou corretor.')
-            return
-        }
-
-        const next = patchSignupDraft({
-            source: draft.source,
-            userType: draft.userType,
-            step: 'basic',
-            emailVerified: draft.source === 'google',
-            data: draft.data,
-        })
-        setDraftConflictCode(null)
-        setError(null)
-        setDraft(next)
-        persistDraft(next)
-    }
 
     const handleContinueBasic = async (event: React.FormEvent) => {
         event.preventDefault()
@@ -669,7 +736,6 @@ export default function CadastroPage() {
         try {
             const syncedDraft = await syncDraftWithServer(next)
             persistDraft(syncedDraft)
-            router.push(resolveSignupDraftHref(syncedDraft))
         } catch (err) {
             const apiErr = err as ApiError
             if (isNetworkError(err)) {
@@ -684,6 +750,212 @@ export default function CadastroPage() {
             }
         } finally {
             setSubmitting(false)
+        }
+    }
+
+    const handleSendEmailOtp = async () => {
+        setOtpSending(true)
+        setError(null)
+        setOtpError(null)
+        setOtpSuccess(false)
+        setOtpCode(['', '', '', '', '', ''])
+        try {
+            const synced = await syncDraftWithServer(draft, { remoteStep: 'verify_method' })
+            persistDraft(synced)
+
+            if (!synced.draftId || !synced.draftToken) {
+                throw new Error('Rascunho de cadastro não encontrado.')
+            }
+
+            await sendSignupDraftEmailCode(synced.draftId, synced.draftToken)
+            setVerificationMethod('email')
+            setOtpCountdown(60)
+            setVerificationModalOpen(true)
+            
+            // Focus first OTP input
+            setTimeout(() => {
+                otpInputRefs.current[0]?.focus()
+            }, 100)
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Não foi possível enviar o código.')
+        } finally {
+            setOtpSending(false)
+        }
+    }
+
+    const handleSendPhoneOtp = async () => {
+        setOtpSending(true)
+        setError(null)
+        setOtpError(null)
+        setOtpSuccess(false)
+        setOtpCode(['', '', '', '', '', ''])
+        try {
+            const synced = await syncDraftWithServer(draft, { remoteStep: 'verify_method' })
+            persistDraft(synced)
+
+            if (!synced.draftId || !synced.draftToken) {
+                throw new Error('Rascunho de cadastro não encontrado.')
+            }
+
+            const rawPhone = String(synced.data.phone ?? '').replace(/\D/g, '')
+            const res = await requestSignupDraftPhoneOtp(synced.draftId, synced.draftToken, rawPhone)
+            setOtpSessionToken(res.sessionToken)
+            setVerificationMethod('phone')
+            setOtpCountdown(60)
+            setVerificationModalOpen(true)
+
+            // Focus first OTP input
+            setTimeout(() => {
+                otpInputRefs.current[0]?.focus()
+            }, 100)
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Não foi possível enviar o código.')
+        } finally {
+            setOtpSending(false)
+        }
+    }
+
+    const handleSkipVerification = async () => {
+        setSubmitting(true)
+        setError(null)
+        try {
+            const synced = await syncDraftWithServer(draft, { remoteStep: 'verify_method' })
+            persistDraft(synced)
+
+            if (!synced.draftId || !synced.draftToken) {
+                throw new Error('Rascunho de cadastro não encontrado.')
+            }
+
+            const finalized = await finalizeSignupDraft(
+                synced.draftId,
+                synced.draftToken,
+                'client_finalize',
+                {
+                    acceptedTerms: true,
+                    acceptedPrivacyPolicy: true,
+                    termsVersion: LEGAL_DOCUMENT_VERSION,
+                    privacyPolicyVersion: LEGAL_DOCUMENT_VERSION,
+                }
+            )
+
+            if (finalized.token) {
+                persistAuthToken(finalized.token)
+            }
+
+            clearSignupDraft()
+            await refresh()
+            router.replace('/perfil?banner=account_created')
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Erro ao finalizar o cadastro.')
+        } finally {
+            setSubmitting(false)
+        }
+    }
+
+    const handleVerifyOtp = async (codeString: string) => {
+        setOtpVerifying(true)
+        setOtpError(null)
+        try {
+            if (!draft.draftId || !draft.draftToken) {
+                throw new Error('Rascunho não encontrado.')
+            }
+
+            if (verificationMethod === 'email') {
+                await confirmSignupDraftEmailCode(draft.draftId, draft.draftToken, codeString)
+                setOtpSuccess(true)
+                
+                const updated = markSignupDraftEmailVerified('verify_method') ?? draft
+                persistDraft(updated)
+
+                if (draft.userType === 'broker') {
+                    setVerificationModalOpen(false)
+                    persistDraft({ ...updated, step: 'documents' })
+                } else {
+                    const finalized = await finalizeSignupDraft(
+                        draft.draftId,
+                        draft.draftToken,
+                        'client_finalize',
+                        {
+                            acceptedTerms: true,
+                            acceptedPrivacyPolicy: true,
+                            termsVersion: LEGAL_DOCUMENT_VERSION,
+                            privacyPolicyVersion: LEGAL_DOCUMENT_VERSION,
+                        }
+                    )
+                    if (finalized.token) {
+                        persistAuthToken(finalized.token)
+                    }
+                    clearSignupDraft()
+                    await refresh()
+                    setVerificationModalOpen(false)
+                    router.replace('/perfil?banner=account_created')
+                }
+            } else if (verificationMethod === 'phone') {
+                await confirmSignupDraftPhoneCode(draft.draftId, draft.draftToken, otpSessionToken || '', codeString)
+                setOtpSuccess(true)
+
+                const updated: SignupDraft = {
+                    ...draft,
+                    phoneVerified: true,
+                    updatedAt: new Date().toISOString(),
+                }
+                persistDraft(updated)
+
+                if (draft.userType === 'broker') {
+                    setVerificationModalOpen(false)
+                    persistDraft({ ...updated, step: 'documents' })
+                } else {
+                    const finalized = await finalizeSignupDraft(
+                        draft.draftId,
+                        draft.draftToken,
+                        'client_finalize',
+                        {
+                            acceptedTerms: true,
+                            acceptedPrivacyPolicy: true,
+                            termsVersion: LEGAL_DOCUMENT_VERSION,
+                            privacyPolicyVersion: LEGAL_DOCUMENT_VERSION,
+                        }
+                    )
+                    if (finalized.token) {
+                        persistAuthToken(finalized.token)
+                    }
+                    clearSignupDraft()
+                    await refresh()
+                    setVerificationModalOpen(false)
+                    router.replace('/perfil?banner=account_created')
+                }
+            }
+        } catch (err) {
+            setOtpError(err instanceof Error ? err.message : 'Código inválido ou expirado.')
+        } finally {
+            setOtpVerifying(false)
+        }
+    }
+
+    const handleResendOtp = async () => {
+        if (otpCountdown > 0) return
+        setOtpSending(true)
+        setOtpError(null)
+        try {
+            if (!draft.draftId || !draft.draftToken) {
+                throw new Error('Rascunho não encontrado.')
+            }
+            if (verificationMethod === 'email') {
+                await sendSignupDraftEmailCode(draft.draftId, draft.draftToken)
+            } else {
+                const rawPhone = String(draft.data.phone ?? '').replace(/\D/g, '')
+                const res = await requestSignupDraftPhoneOtp(draft.draftId, draft.draftToken, rawPhone)
+                setOtpSessionToken(res.sessionToken)
+            }
+            setOtpCountdown(60)
+            setOtpCode(['', '', '', '', '', ''])
+            setTimeout(() => {
+                otpInputRefs.current[0]?.focus()
+            }, 100)
+        } catch (err) {
+            setOtpError(err instanceof Error ? err.message : 'Não foi possível reenviar o código.')
+        } finally {
+            setOtpSending(false)
         }
     }
 
@@ -819,7 +1091,7 @@ export default function CadastroPage() {
             >
                 {/* Camada Cliente: Casal Feliz + Sombreado Escuro + Toque Sutil de Amarelo */}
                 <div
-                    className={`absolute inset-0 bg-[url('/casal-feliz.webp')] bg-cover bg-[position:center_30%] transition-opacity duration-500 ease-in-out z-0 ${draft.userType === 'client' || !draft.userType ? 'opacity-100' : 'opacity-0'
+                    className={`absolute inset-0 bg-[url('/casal-feliz.webp')] bg-cover bg-[position:center_30%] transition-opacity duration-500 ease-in-out z-0 ${(draft.userType === 'client' || !draft.userType) && displayStep !== 'documents' ? 'opacity-100' : 'opacity-0'
                         }`}
                 >
                     {/* Overlay gradiente escuro idêntico ao do login para máximo contraste do texto branco */}
@@ -830,22 +1102,35 @@ export default function CadastroPage() {
 
                 {/* Camada Corretor: Sala Moderna + Filtro Escuro */}
                 <div
-                    className={`absolute inset-0 bg-[url('/background-casa.webp')] bg-cover bg-[position:center_30%] transition-opacity duration-500 ease-in-out z-0 ${draft.userType === 'broker' ? 'opacity-100' : 'opacity-0'
+                    className={`absolute inset-0 bg-[url('/background-casa.webp')] bg-cover bg-[position:center_30%] transition-opacity duration-500 ease-in-out z-0 ${draft.userType === 'broker' && displayStep !== 'documents' ? 'opacity-100' : 'opacity-0'
                         }`}
                 >
                     {/* Overlay escuro gradiente para combinar com o tema corretor e dar legibilidade */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-slate-950/40 to-transparent z-10" />
                 </div>
 
+                {/* Camada Corretor Documentos: Imagem Profissional do Corretor */}
+                <div
+                    className={`absolute inset-0 bg-[url('/marketing/corretor-documentos.png')] bg-cover bg-[position:center_30%] transition-opacity duration-500 ease-in-out z-0 ${displayStep === 'documents' ? 'opacity-100' : 'opacity-0'
+                        }`}
+                >
+                    {/* Overlay escuro gradiente */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-slate-950/40 to-transparent z-10" />
+                </div>
+
                 {/* Headline no rodapé — sempre em branco e condicional por perfil */}
                 <div className="relative z-20 text-left space-y-3 w-full">
                     <h1 className="text-4xl xl:text-5xl font-bold tracking-tight text-white leading-tight transition-all whitespace-nowrap">
-                        {draft.userType === 'broker' ? 'Conecte seu negócio.' : 'Encontre seu lar.'}
+                        {displayStep === 'documents'
+                            ? 'Seja corretor.'
+                            : draft.userType === 'broker' ? 'Conecte seu negócio.' : 'Encontre seu lar.'}
                     </h1>
                     <p className="text-sm sm:text-base leading-relaxed text-white/90 font-normal max-w-[460px] transition-all">
-                        {draft.userType === 'broker'
-                            ? 'A plataforma ideal para gerenciar seus imóveis, acompanhar leads e fechar negócios com agilidade.'
-                            : 'Crie sua conta para favoritar imóveis, enviar propostas e conversar com proprietários.'}
+                        {displayStep === 'documents'
+                            ? 'Envie seus documentos para aprovação de seu perfil.'
+                            : draft.userType === 'broker'
+                                ? 'A plataforma ideal para gerenciar seus imóveis, acompanhar leads e fechar negócios com agilidade.'
+                                : 'Crie sua conta para favoritar imóveis, enviar propostas e conversar com proprietários.'}
                     </p>
                 </div>
             </aside>
@@ -860,7 +1145,7 @@ export default function CadastroPage() {
                 {/*
                   * Formulário de cadastro posicionado de forma plana diretamente sobre o background branco
                   */}
-                <div className="w-full max-w-[95%] sm:max-w-[640px] md:max-w-[700px] lg:max-w-[850px] xl:max-w-[1080px] p-5 sm:p-6">
+                <div className={`w-full max-w-[95%] sm:max-w-[640px] md:max-w-[700px] lg:max-w-[850px] xl:max-w-[1080px] p-5 sm:p-6 transition-all duration-300 ease-in-out ${fadeState === 'out' ? 'opacity-0 translate-y-1' : 'opacity-100 translate-y-0'}`}>
 
                     {/* Logo da Marca (sem container/borda branca) */}
                     <div className="flex justify-start mb-4">
@@ -884,7 +1169,7 @@ export default function CadastroPage() {
                     </div>
 
                     {/* Aviso de rascunho restaurado — apenas na tela de endereço */}
-                    {restoredDraft && draft.step === 'address' && (
+                    {restoredDraft && displayStep === 'address' && (
                         <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50/60 px-3.5 py-1.5 text-xs text-amber-900 flex items-center justify-between gap-3">
                             <div className="flex-1">
                                 <span className="font-bold">Cadastro em andamento:</span>{' '}
@@ -954,7 +1239,7 @@ export default function CadastroPage() {
                     )}
 
                     {/* ── STEP 0: SELEÇÃO DE PERFIL E DADOS BÁSICOS (UNIFICADOS) ── */}
-                    {stepIndex === 0 && (
+                    {['profile', 'basic'].includes(displayStep) && (
                         <form onSubmit={handleContinueBasic} className="space-y-2.5" aria-describedby={error ? 'register-error' : undefined}>
 
                             {/* Seleção do Perfil */}
@@ -973,14 +1258,34 @@ export default function CadastroPage() {
                                                 : 'border-gray-200 bg-white hover:border-yellow-400/40 hover:bg-gray-50/50'
                                                 }`}
                                         >
-                                            <div className="flex items-start justify-between gap-2">
+                                            <div className="flex items-start justify-between gap-3">
                                                 <div className="space-y-0.5">
-                                                    <p className="text-sm font-bold text-gray-900 leading-tight">{option.title}</p>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <p className="text-sm font-bold text-gray-900 leading-tight">{option.title}</p>
+                                                    </div>
                                                     <p className="text-[11px] sm:text-xs text-gray-500 leading-normal">
                                                         {option.description}
                                                     </p>
                                                 </div>
+                                                <span
+                                                    className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                                                        isSelected
+                                                            ? 'border-yellow-400 bg-yellow-400 text-slate-900'
+                                                            : 'border-gray-300 bg-white text-transparent group-hover:border-yellow-400'
+                                                    }`}
+                                                    aria-hidden="true"
+                                                >
+                                                    <CheckCircle2 className="h-2.5 w-2.5" />
+                                                </span>
                                             </div>
+                                            <p
+                                                id={`signup-role-${option.value}-hint`}
+                                                className={`mt-2 text-[10px] sm:text-xs font-medium ${
+                                                    isSelected ? 'text-amber-800' : 'text-gray-400'
+                                                }`}
+                                            >
+                                                {isSelected ? 'Escolha aplicada. Continue para preencher seus dados.' : option.helper}
+                                            </p>
                                         </button>
                                     )
                                 })}
@@ -1145,7 +1450,30 @@ export default function CadastroPage() {
                                         style={{ accentColor: '#ffce44' }}
                                     />
                                     <span className="leading-tight">
-                                        Aceito os <Link href="/termos" target="_blank" className="font-semibold text-gray-855 underline hover:text-gray-955">Termos de Uso</Link> e <Link href="/privacidade" target="_blank" className="font-semibold text-gray-855 underline hover:text-gray-955">Privacidade</Link>.
+                                        Aceito os{' '}
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.preventDefault()
+                                                e.stopPropagation()
+                                                setActiveLegalDoc('terms')
+                                            }}
+                                            className="font-semibold text-gray-800 underline hover:text-gray-950 cursor-pointer outline-none"
+                                        >
+                                            Termos de Uso
+                                        </button>{' '}
+                                        e{' '}
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.preventDefault()
+                                                e.stopPropagation()
+                                                setActiveLegalDoc('privacy')
+                                            }}
+                                            className="font-semibold text-gray-800 underline hover:text-gray-950 cursor-pointer outline-none"
+                                        >
+                                            Privacidade
+                                        </button>.
                                     </span>
                                 </label>
                             </div>
@@ -1196,7 +1524,7 @@ export default function CadastroPage() {
                     )}
 
                     {/* ── STEP 2: ENDEREÇO (CEP, Cidade, Estado, Rua, etc.) ── */}
-                    {stepIndex === 2 && (
+                    {displayStep === 'address' && (
                         <form onSubmit={handleContinueAddress} className="space-y-5" aria-describedby={error ? 'register-error' : undefined}>
                             <fieldset className="space-y-4">
                                 <legend className="text-sm font-bold text-gray-900 mb-2">Endereço</legend>
@@ -1330,7 +1658,32 @@ export default function CadastroPage() {
                             )}
 
                             {/* Aviso legal */}
-                            <SignupLegalNotice />
+                            <p className="text-center text-xs text-gray-500 py-2 leading-normal">
+                                Ao continuar, você concorda com os{' '}
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        setActiveLegalDoc('terms')
+                                    }}
+                                    className="font-semibold text-gray-700 underline hover:text-gray-900 cursor-pointer outline-none"
+                                >
+                                    Termos de Uso
+                                </button>{' '}
+                                e a{' '}
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        setActiveLegalDoc('privacy')
+                                    }}
+                                    className="font-semibold text-gray-700 underline hover:text-gray-900 cursor-pointer outline-none"
+                                >
+                                    Política de Privacidade
+                                </button>.
+                            </p>
 
                             <div className="flex gap-3 pt-2">
                                 <button
@@ -1355,6 +1708,233 @@ export default function CadastroPage() {
                         </form>
                     )}
 
+                    {/* ── STEP 3: MÉTODOS DE VERIFICAÇÃO ── */}
+                    {displayStep === 'verify_method' && (
+                        <div className="space-y-6">
+                            <div className="space-y-3">
+                                <button
+                                    type="button"
+                                    onClick={handleSendEmailOtp}
+                                    disabled={otpSending}
+                                    className="w-full flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50/50 hover:bg-gray-50 px-4 py-4 text-left transition duration-200 outline-none focus:ring-2 focus:ring-yellow-400"
+                                >
+                                    <Mail className="h-6 w-6 text-amber-600 shrink-0" />
+                                    <div>
+                                        <div className="font-semibold text-gray-900">E-mail</div>
+                                        <div className="text-xs text-gray-500">Enviar código de 6 dígitos no seu e-mail ({draft.data.email})</div>
+                                    </div>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleSendPhoneOtp}
+                                    disabled={otpSending}
+                                    className="w-full flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50/50 hover:bg-gray-50 px-4 py-4 text-left transition duration-200 outline-none focus:ring-2 focus:ring-yellow-400"
+                                >
+                                    <Smartphone className="h-6 w-6 text-amber-600 shrink-0" />
+                                    <div>
+                                        <div className="font-semibold text-gray-900">Telefone (SMS)</div>
+                                        <div className="text-xs text-gray-500">Enviar código por mensagem de texto ({draft.data.phone})</div>
+                                    </div>
+                                </button>
+
+                                {draft.userType === 'client' && (
+                                    <button
+                                        type="button"
+                                        onClick={handleSkipVerification}
+                                        disabled={otpSending || submitting}
+                                        className="w-full rounded-xl bg-gray-100 text-gray-800 px-4 py-3 font-semibold hover:bg-gray-200 transition disabled:opacity-60 text-sm mt-4"
+                                    >
+                                        Continuar sem verificar
+                                    </button>
+                                )}
+                            </div>
+
+                            {error && (
+                                <p role="alert" className="rounded-lg border border-red-100 bg-red-50 px-3 py-2.5 text-sm text-red-600">
+                                    {error}
+                                </p>
+                            )}
+
+                            <button
+                                type="button"
+                                onClick={() => persistDraft(createSignupDraft({ ...draft, step: 'address' }))}
+                                className="flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-gray-900 font-medium"
+                            >
+                                <span className="rotate-180"><IconArrow /></span>
+                                Voltar e revisar endereço
+                            </button>
+                        </div>
+                    )}
+
+                    {/* ── STEP 4: DOCUMENTOS DO CORRETOR ── */}
+                    {displayStep === 'documents' && (
+                        <form
+                            onSubmit={async (e) => {
+                                e.preventDefault()
+                                if (!creciFront || !creciBack || !selfie) {
+                                    setError('Por favor, envie todas as fotos solicitadas.')
+                                    return
+                                }
+                                if (!brokerAgreementAccepted) {
+                                    setError('Você precisa aceitar o Termo de Adesão do Corretor.')
+                                    return
+                                }
+
+                                setSubmittingDocs(true)
+                                setError(null)
+                                try {
+                                    for (const [file, label] of [[creciFront, 'CRECI Frente'], [creciBack, 'CRECI Verso'], [selfie, 'Selfie']] as [File | null, string][]) {
+                                        if (!file) throw new Error(`${label} não fornecido.`)
+                                        const validation = validateDocumentFile(file)
+                                        if (!validation.valid) {
+                                            throw new Error(`${label}: ${validation.error}`)
+                                        }
+                                    }
+
+                                    if (!draft.draftId || !draft.draftToken) {
+                                        throw new Error('Rascunho não encontrado.')
+                                    }
+
+                                    await submitSignupDraftDocuments(draft.draftId, draft.draftToken, {
+                                        creciFront,
+                                        creciBack,
+                                        selfie,
+                                    })
+
+                                    const finalized = await finalizeSignupDraft(
+                                        draft.draftId,
+                                        draft.draftToken,
+                                        'broker_submit_documents',
+                                        {
+                                            acceptedTerms: true,
+                                            acceptedPrivacyPolicy: true,
+                                            acceptedBrokerAgreement: true,
+                                            termsVersion: LEGAL_DOCUMENT_VERSION,
+                                            privacyPolicyVersion: LEGAL_DOCUMENT_VERSION,
+                                            brokerAgreementVersion: LEGAL_DOCUMENT_VERSION,
+                                        }
+                                    )
+
+                                    if (finalized.token) {
+                                        persistAuthToken(finalized.token)
+                                    }
+
+                                    clearSignupDraft()
+                                    await refresh()
+                                    router.replace('/perfil?banner=documents_sent')
+                                } catch (err) {
+                                    setError(err instanceof Error ? err.message : 'Erro ao enviar documentos.')
+                                } finally {
+                                    setSubmittingDocs(false)
+                                }
+                            }}
+                            className="space-y-5"
+                        >
+                            <fieldset className="space-y-4">
+                                <legend className="text-sm font-bold text-gray-900 mb-2">Fotos do CRECI e Selfie</legend>
+
+                                <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-2">
+                                    <label className="flex items-start gap-2.5 text-sm text-gray-600 cursor-pointer select-none">
+                                        <input
+                                            type="checkbox"
+                                            checked={brokerAgreementAccepted}
+                                            onChange={(e) => setBrokerAgreementAccepted(e.target.checked)}
+                                            className="mt-1 h-4 w-4 rounded border-gray-300"
+                                            style={{ accentColor: '#1e293b' }}
+                                        />
+                                        <span className="leading-tight">
+                                            Li e aceito integralmente o{' '}
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.preventDefault()
+                                                    e.stopPropagation()
+                                                    setActiveLegalDoc('broker_agreement')
+                                                }}
+                                                className="font-semibold text-gray-800 underline hover:text-gray-955 cursor-pointer outline-none"
+                                            >
+                                                Termo de Adesão de Corretor
+                                            </button>.
+                                        </span>
+                                    </label>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div
+                                        onClick={() => creciFrontRef.current?.click()}
+                                        className="border-2 border-dashed border-gray-200 rounded-xl p-5 text-center cursor-pointer hover:border-slate-400 hover:bg-slate-50 transition-all flex flex-col items-center justify-center h-44"
+                                    >
+                                        <CreditCard className="w-8 h-8 text-gray-400 mb-2" />
+                                        <p className="text-xs font-semibold text-gray-800 leading-tight">
+                                            {creciFront ? creciFront.name : 'CRECI — Frente'}
+                                        </p>
+                                        <p className="text-[10px] text-gray-400 mt-1">Clique para selecionar</p>
+                                        <input
+                                            ref={creciFrontRef}
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={(e) => setCreciFront(e.target.files?.[0] || null)}
+                                        />
+                                    </div>
+
+                                    <div
+                                        onClick={() => creciBackRef.current?.click()}
+                                        className="border-2 border-dashed border-gray-200 rounded-xl p-5 text-center cursor-pointer hover:border-slate-400 hover:bg-slate-50 transition-all flex flex-col items-center justify-center h-44"
+                                    >
+                                        <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                                        <p className="text-xs font-semibold text-gray-800 leading-tight">
+                                            {creciBack ? creciBack.name : 'CRECI — Verso'}
+                                        </p>
+                                        <p className="text-[10px] text-gray-400 mt-1">Clique para selecionar</p>
+                                        <input
+                                            ref={creciBackRef}
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={(e) => setCreciBack(e.target.files?.[0] || null)}
+                                        />
+                                    </div>
+
+                                    <div
+                                        onClick={() => selfieRef.current?.click()}
+                                        className="border-2 border-dashed border-gray-200 rounded-xl p-5 text-center cursor-pointer hover:border-slate-400 hover:bg-slate-50 transition-all flex flex-col items-center justify-center h-44"
+                                    >
+                                        <Camera className="w-8 h-8 text-gray-400 mb-2" />
+                                        <p className="text-xs font-semibold text-gray-800 leading-tight">
+                                            {selfie ? selfie.name : 'Selfie com documento'}
+                                        </p>
+                                        <p className="text-[10px] text-gray-400 mt-1">Clique para selecionar</p>
+                                        <input
+                                            ref={selfieRef}
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={(e) => setSelfie(e.target.files?.[0] || null)}
+                                        />
+                                    </div>
+                                </div>
+                            </fieldset>
+
+                            {error && (
+                                <p role="alert" className="rounded-lg border border-red-100 bg-red-50 px-3 py-2.5 text-sm text-red-600">
+                                    {error}
+                                </p>
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={submittingDocs}
+                                className="group flex w-full items-center justify-center gap-2 rounded-lg py-3 text-sm font-bold bg-slate-800 hover:bg-slate-700 text-white active:scale-[.99] disabled:opacity-60 transition-all duration-300"
+                            >
+                                {submittingDocs ? 'Enviando Documentos...' : 'Finalizar Cadastro'}
+                                <span className="transition-transform duration-200 group-hover:translate-x-0.5">
+                                    <IconArrow />
+                                </span>
+                            </button>
+                        </form>
+                    )}
+
                     {/* Rodapé link alternar login */}
                     <div className="text-center text-sm text-gray-500 mt-6">
                         <p>
@@ -1370,6 +1950,94 @@ export default function CadastroPage() {
 
                 </div>
             </main>
+            <LegalDocumentModal
+                kind={activeLegalDoc ?? 'terms'}
+                open={activeLegalDoc !== null}
+                onClose={() => setActiveLegalDoc(null)}
+            />
+            {/* Modal de Verificação OTP */}
+            {verificationModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-100 p-8 space-y-6 relative">
+                        <button
+                            type="button"
+                            onClick={() => setVerificationModalOpen(false)}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 outline-none text-xl font-semibold"
+                        >
+                            &times;
+                        </button>
+
+                        <div className="text-center space-y-2">
+                            <div className="w-12 h-12 mx-auto bg-amber-50 rounded-full flex items-center justify-center mb-2">
+                                <ShieldCheck className="h-6 w-6 text-amber-600 animate-pulse" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900">Verifique seu {verificationMethod === 'email' ? 'E-mail' : 'Telefone'}</h3>
+                            <p className="text-xs text-gray-500 leading-relaxed">
+                                Enviamos um código de confirmação para {verificationMethod === 'email' ? draft.data.email : draft.data.phone}.
+                                Insira os 6 dígitos abaixo.
+                            </p>
+                        </div>
+
+                        {/* Input dos 6 dígitos */}
+                        <div className="flex justify-center gap-2" data-testid="otp-inputs">
+                            {otpCode.map((digit, idx) => (
+                                <input
+                                    key={idx}
+                                    ref={(el) => { otpInputRefs.current[idx] = el; }}
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    maxLength={1}
+                                    value={digit}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/\D/g, '')
+                                        const newCode = [...otpCode]
+                                        newCode[idx] = val
+                                        setOtpCode(newCode)
+
+                                        // Auto focus next input
+                                        if (val && idx < 5) {
+                                            otpInputRefs.current[idx + 1]?.focus()
+                                        }
+
+                                        // Auto submit if all digits are entered
+                                        const fullCode = newCode.join('')
+                                        if (fullCode.length === 6) {
+                                            void handleVerifyOtp(fullCode)
+                                        }
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Backspace' && !otpCode[idx] && idx > 0) {
+                                            const newCode = [...otpCode]
+                                            newCode[idx - 1] = ''
+                                            setOtpCode(newCode)
+                                            otpInputRefs.current[idx - 1]?.focus()
+                                        }
+                                    }}
+                                    className="w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-bold border border-gray-200 bg-gray-50 rounded-xl focus:border-yellow-400 focus:bg-white focus:ring-2 focus:ring-yellow-400/30 outline-none transition"
+                                />
+                            ))}
+                        </div>
+
+                        {otpError && (
+                            <p className="rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-center text-xs font-semibold text-red-600">
+                                {otpError}
+                            </p>
+                        )}
+
+                        <div className="space-y-3">
+                            <button
+                                type="button"
+                                onClick={handleResendOtp}
+                                disabled={otpCountdown > 0 || otpSending}
+                                className="w-full text-center text-xs font-semibold text-amber-600 hover:text-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                            >
+                                {otpCountdown > 0 ? `Reenviar código em ${otpCountdown}s` : 'Reenviar código'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

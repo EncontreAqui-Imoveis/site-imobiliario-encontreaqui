@@ -76,6 +76,8 @@ export interface Property {
     promotionStart?: string
     promotionEnd?: string
     negotiationId?: string
+    latestContractId?: string
+    latestContractStatus?: string
     negotiation?: {
         id: string
         status?: string

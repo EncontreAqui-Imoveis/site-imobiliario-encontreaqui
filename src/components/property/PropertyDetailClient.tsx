@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Home, ChevronRight, ChevronLeft, ArrowRight, Edit, FileText, ScrollText } from 'lucide-react'
+import { Home, ChevronRight, ChevronLeft, Edit, FileText, ScrollText } from 'lucide-react'
 import WhatsAppIcon from '@/components/icons/WhatsAppIcon'
 import { capitalizePropertyTitle } from '@/lib/propertyTitleDisplay'
 import {
@@ -14,9 +14,9 @@ import {
 import { Property, formatPrice, getPromoSalePrice, getPromoRentPrice } from '@/types/property'
 import { useUser } from '@/contexts/UserContext'
 import { buildWhatsappLink } from '@/lib/contactLinks'
-import { fetchPropertyById, normalizeProperty } from '@/lib/propertiesApi'
+import { fetchPropertyById } from '@/lib/propertiesApi'
 import { displayStatusLabel } from '@/lib/propertyLabels'
-import { apiClient, API_BASE_URL } from '@/lib/api/client'
+import { getMyContracts } from '@/lib/api/contracts'
 import {
     isProposalPreSignatureStatus,
     isProposalRefusedStatus,
@@ -35,8 +35,9 @@ export default function PropertyDetailClient({
     initialSimilarProperties = [],
 }: PropertyDetailClientProps) {
     const [property, setProperty] = useState(initialProperty)
-    const [similarProperties, setSimilarProperties] = useState<Property[]>(initialSimilarProperties)
+    const [similarProperties] = useState<Property[]>(initialSimilarProperties)
     const [loadError, setLoadError] = useState<string | null>(null)
+    const [authorizedContractId, setAuthorizedContractId] = useState<string | null>(null)
     const { session, loading: authLoading } = useUser()
     const userRole = (session?.user?.role ?? '').toLowerCase()
 
@@ -67,13 +68,16 @@ export default function PropertyDetailClient({
         isOwner && statusLower !== 'pending_approval' && !hasPendingEditRequest
     const negotiationId = property?.negotiationId ?? property?.negotiation?.id
     const negotiationStatus = String(property?.negotiation?.status ?? '').trim().toUpperCase()
+    const latestContractStatus = String(property?.latestContractStatus ?? '').trim().toUpperCase()
+    const hasActivePhysicalContract = Boolean(property?.latestContractId) && latestContractStatus !== 'CANCELLED'
+    const isCancelledNegotiation = ['CANCELLED', 'CANCELED'].includes(negotiationStatus)
     const hasRefusedNegotiation = isProposalRefusedStatus(negotiationStatus)
     const isClientOwner = isOwner && userRole === 'client'
     const canGenerateProposal =
         isOwner &&
         !isClientOwner &&
         statusLower === 'approved' &&
-        (!negotiationId || hasRefusedNegotiation) &&
+        (!negotiationId || hasRefusedNegotiation || isCancelledNegotiation) &&
         !isInAnalysisStatus
 
     useEffect(() => {
@@ -129,6 +133,33 @@ export default function PropertyDetailClient({
         }
     }, [authLoading, isOwner, propertyId, session])
 
+    useEffect(() => {
+        const latestContractId = property?.latestContractId
+        if (!session || !latestContractId) {
+            setAuthorizedContractId(null)
+            return
+        }
+
+        let cancelled = false
+        void getMyContracts()
+            .then((contracts) => {
+                if (!cancelled) {
+                    setAuthorizedContractId(
+                        contracts.some((contract) => contract.id === latestContractId)
+                            ? latestContractId
+                            : null,
+                    )
+                }
+            })
+            .catch(() => {
+                if (!cancelled) setAuthorizedContractId(null)
+            })
+
+        return () => {
+            cancelled = true
+        }
+    }, [property?.latestContractId, session])
+
 
 
     const whatsappMessage =
@@ -141,13 +172,28 @@ export default function PropertyDetailClient({
         if (!isOwner || !property) return null
         if (isInAnalysisStatus) return null
 
-        if (!negotiationId && canGenerateProposal) {
+        if (hasActivePhysicalContract && authorizedContractId) {
             return {
-                title: 'Gerar proposta',
+                title: 'Contrato disponível',
+                description: 'A proposta deste imóvel já avançou para contrato. Continue o processo por lá.',
+                href: `/meus-processos/contratos/${encodeURIComponent(authorizedContractId)}`,
+                tone: 'success' as const,
+                label: 'Ver contrato',
+            }
+        }
+
+        // A contract exists, but the list endpoint did not authorize this
+        // account. Do not fall back to proposal actions or expose an internal
+        // contract identifier in the UI.
+        if (hasActivePhysicalContract) return null
+
+        if ((!negotiationId || isCancelledNegotiation) && canGenerateProposal) {
+            return {
+                title: 'Criar proposta',
                 description: 'Inicie a proposta deste imóvel seguindo o mesmo fluxo principal do app.',
                 href: `/propostas/nova?propertyId=${property.id}`,
                 tone: 'primary' as const,
-                label: 'Gerar proposta',
+                label: 'Criar proposta',
             }
         }
 
@@ -155,7 +201,7 @@ export default function PropertyDetailClient({
             return {
                 title: 'Proposta em andamento',
                 description: 'A proposta já foi iniciada. Continue enviando a versão assinada para análise.',
-                href: `/propostas/${encodeURIComponent(negotiationId)}/upload-assinada`,
+                href: `/meus-processos/propostas/${encodeURIComponent(negotiationId)}/upload-assinada`,
                 tone: 'accent' as const,
                 label: 'Enviar proposta assinada',
             }
@@ -165,7 +211,7 @@ export default function PropertyDetailClient({
             return {
                 title: 'Proposta aprovada',
                 description: 'A negociação avançou. Continue o processo no módulo de contratos.',
-                href: '/documentos?tab=contratos',
+                href: '/meus-processos/contratos',
                 tone: 'success' as const,
                 label: 'Ir para contratos',
             }
@@ -189,7 +235,7 @@ export default function PropertyDetailClient({
             ? {
                 title: 'Acompanhar propostas',
                 description: 'Use a trilha de propostas para acompanhar quando ele segue em análise ou vai para histórico.',
-                href: '/documentos?tab=propostas',
+                href: '/meus-processos/propostas',
                 tone: 'neutral' as const,
                 label: 'Ver propostas',
             }
@@ -217,6 +263,7 @@ export default function PropertyDetailClient({
     }
 
     const blockVisitorProposalDueToDeal =
+        hasActivePhysicalContract ||
         statusLower === 'negociacao' ||
         (negotiationStatus === 'IN_NEGOTIATION' && statusLower === 'negociacao')
     const visitorProposalHref =
@@ -224,7 +271,7 @@ export default function PropertyDetailClient({
         !isOwner &&
         (userRole === 'client' || userRole === 'broker' || userRole === 'auxiliary_administrative') &&
         statusLower === 'approved' &&
-        (!negotiationId || hasRefusedNegotiation) &&
+        (!negotiationId || hasRefusedNegotiation || isCancelledNegotiation) &&
         !blockVisitorProposalDueToDeal
             ? `/propostas/nova?propertyId=${property.id}`
             : null
@@ -397,7 +444,7 @@ export default function PropertyDetailClient({
                                 <>
                                     {/* View Proposals */}
                                     <Link
-                                        href="/documentos?tab=propostas"
+                                        href="/meus-processos/propostas"
                                         className="flex flex-col items-center gap-2 px-4 py-5 hover:bg-gray-50 transition-colors text-center group"
                                     >
                                         <div className="w-10 h-10 rounded-xl bg-indigo-100 group-hover:bg-indigo-200 flex items-center justify-center transition-colors">
@@ -408,7 +455,7 @@ export default function PropertyDetailClient({
 
                                     {/* View Contracts */}
                                     <Link
-                                        href="/documentos?tab=contratos"
+                                        href="/meus-processos/contratos"
                                         className="flex flex-col items-center gap-2 px-4 py-5 hover:bg-gray-50 transition-colors text-center group"
                                     >
                                         <div className="w-10 h-10 rounded-xl bg-slate-100 group-hover:bg-slate-200 flex items-center justify-center transition-colors">
@@ -469,7 +516,7 @@ export default function PropertyDetailClient({
                                             </Link>
                                         </div>
                                     )}
-                                    {!ownerProposalStateLoading && signedProposalStatus && (
+                                {!ownerProposalStateLoading && signedProposalStatus && (
                                         <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                                             <p className="text-sm font-bold text-slate-900">{signedProposalStatus.title}</p>
                                             <p className="mt-1 text-sm text-slate-600">{signedProposalStatus.description}</p>
@@ -501,6 +548,15 @@ export default function PropertyDetailClient({
                                     <div className="rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm text-violet-900">
                                         <strong>Status do contrato:</strong> {buyerContractStatusHint}
                                     </div>
+                                )}
+                                {!isOwner && authorizedContractId && (
+                                    <Link
+                                        href={`/meus-processos/contratos/${encodeURIComponent(authorizedContractId)}`}
+                                        className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
+                                    >
+                                        <FileText className="h-4 w-4" />
+                                        Ver contrato
+                                    </Link>
                                 )}
                                 <PropertySidebar property={property} visitorProposalHref={visitorProposalHref} />
                             </aside>
@@ -581,6 +637,16 @@ export default function PropertyDetailClient({
                             >
                                 <FileText className="h-4 w-4 shrink-0" />
                                 <span>Proposta</span>
+                            </Link>
+                        )}
+
+                        {!isOwner && authorizedContractId && (
+                            <Link
+                                href={`/meus-processos/contratos/${encodeURIComponent(authorizedContractId)}`}
+                                className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-1 rounded-xl bg-emerald-600 px-3 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 sm:max-w-[11rem] sm:flex-initial"
+                            >
+                                <ScrollText className="h-4 w-4 shrink-0" />
+                                <span>Ver contrato</span>
                             </Link>
                         )}
 

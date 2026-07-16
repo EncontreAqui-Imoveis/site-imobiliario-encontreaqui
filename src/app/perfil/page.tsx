@@ -1,19 +1,40 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
 import { resolvePendingAction } from '@/lib/auth/routeResolution'
 import GuestAccessCard from '@/components/auth/GuestAccessCard'
 import { shareOrCopy } from '@/lib/webShare'
 import { formatPhoneInput } from '@/lib/phoneInput'
-import { BadgeCheck, Building2, LogOut, Briefcase, BarChart3, Loader2, Bell, Share2, User, PlusCircle } from 'lucide-react'
+import { BadgeCheck, Building2, LogOut, Briefcase, BarChart3, Loader2, Bell, Share2, User, PlusCircle, Clock, CheckCircle, X } from 'lucide-react'
 
 export default function PerfilPage() {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const { session, loading, isBroker, logout } = useUser()
     const [shareMessage, setShareMessage] = useState<string | null>(null)
+    const [activeBanner, setActiveBanner] = useState<string | null>(null)
+
+    useEffect(() => {
+        const bannerParam = searchParams.get('banner')
+        if (!bannerParam) return
+        const storageKey = `dismissed_banner_${bannerParam}`
+        const alreadyDismissed = localStorage.getItem(storageKey) === '1'
+        if (!alreadyDismissed) {
+            setActiveBanner(bannerParam)
+        }
+        // Clean up URL so query string doesn't stay visible
+        router.replace('/perfil')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
+    const dismissBanner = () => {
+        if (!activeBanner) return
+        localStorage.setItem(`dismissed_banner_${activeBanner}`, '1')
+        setActiveBanner(null)
+    }
 
     const handleLogout = async () => {
         await logout()
@@ -85,7 +106,56 @@ export default function PerfilPage() {
 
     return (
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 pt-24">
-            {/* Profile Header */}
+
+            {activeBanner && (
+                <div
+                    className={`mb-6 flex items-start gap-3 rounded-2xl border px-5 py-4 ${
+                        activeBanner === 'account_created'
+                            ? 'border-green-200 bg-green-50'
+                            : 'border-amber-200 bg-amber-50'
+                    }`}
+                >
+                    <div className="flex-shrink-0 mt-0.5">
+                        {activeBanner === 'account_created' ? (
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                        ) : (
+                            <Clock className="w-5 h-5 text-amber-600" />
+                        )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-semibold ${
+                            activeBanner === 'account_created' ? 'text-green-900' : 'text-amber-900'
+                        }`}>
+                            {activeBanner === 'account_created'
+                                ? 'Bem-vindo ao Encontre Aqui!'
+                                : activeBanner === 'documents_sent'
+                                    ? 'Documentos recebidos'
+                                    : 'Documentação pendente'}
+                        </p>
+                        <p className={`mt-0.5 text-sm ${
+                            activeBanner === 'account_created' ? 'text-green-800' : 'text-amber-800'
+                        }`}>
+                            {activeBanner === 'account_created'
+                                ? 'Sua conta foi criada com sucesso. Explore os imóveis disponíveis!'
+                                : activeBanner === 'documents_sent'
+                                    ? 'Seus documentos foram enviados e serão analisados pela equipe. Você será notificado quando a verificação for concluída.'
+                                    : 'Seu cadastro de corretor foi criado. Envie seus documentos para iniciar a análise.'}
+                        </p>
+                    </div>
+                    <button
+                        onClick={dismissBanner}
+                        aria-label="Fechar aviso"
+                        className={`flex-shrink-0 rounded-lg p-1 transition-colors ${
+                            activeBanner === 'account_created'
+                                ? 'text-green-500 hover:bg-green-100'
+                                : 'text-amber-500 hover:bg-amber-100'
+                        }`}
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
+
             <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 p-6 mb-6">
                 <div className="flex items-start gap-4">
                     <div className="w-16 h-16 rounded-full bg-primary-500 flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
@@ -157,7 +227,6 @@ export default function PerfilPage() {
                 </div>
             )}
 
-            {/* Quick Links */}
             <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 divide-y divide-slate-100">
                 {!isBroker && (
                     <Link
@@ -245,7 +314,7 @@ export default function PerfilPage() {
                 </button>
 
                 <Link
-                    href="/documentos?tab=contratos"
+                    href="/meus-processos/contratos"
                     className="flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors"
                 >
                     <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">

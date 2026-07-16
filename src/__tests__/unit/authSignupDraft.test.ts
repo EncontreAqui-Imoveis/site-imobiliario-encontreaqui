@@ -38,13 +38,13 @@ describe('authSignupDraft', () => {
             draftModule.resolveSignupDraftHref(
                 draftModule.createSignupDraft({ step: 'email' }),
             ),
-        ).toBe('/verificacao?flow=signup')
+        ).toBe('/auth/cadastro')
 
         expect(
             draftModule.resolveSignupDraftHref(
                 draftModule.createSignupDraft({ step: 'phone' }),
             ),
-        ).toBe('/cadastro/verificar-telefone?flow=signup')
+        ).toBe('/auth/cadastro')
     })
 
     it('stores a pending phone update draft', () => {

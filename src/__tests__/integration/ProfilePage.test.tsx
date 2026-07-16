@@ -132,7 +132,7 @@ describe('Profile Page - Integration', () => {
         expect(notificacoes).toHaveAttribute('href', '/notificacoes')
 
         const documentos = screen.getByText('Documentos').closest('a')
-        expect(documentos).toHaveAttribute('href', '/documentos?tab=contratos')
+        expect(documentos).toHaveAttribute('href', '/meus-processos/contratos')
     })
 
     it('renders notification link with description', () => {

@@ -356,6 +356,8 @@ export function normalizeProperty(
         semCep: toBoolean(item.semCep ?? item.sem_cep) ?? false,
         negotiationId: negotiation?.id,
         negotiation,
+        latestContractId: toStringOrUndefined(item.latestContractId ?? item.latest_contract_id),
+        latestContractStatus: toStringOrUndefined(item.latestContractStatus ?? item.latest_contract_status),
         rejectionReason: toStringOrUndefined(
             item.rejectionReason ?? item.rejection_reason,
         ) ?? null,
@@ -628,4 +630,3 @@ export async function fetchSimilarProperties(property: Property): Promise<Proper
     console.log('[fetchSimilarProperties] Result:', result.length, 'properties')
     return result
 }
-

@@ -4,7 +4,7 @@ import { ContractList } from './ContractList'
 import type { ContractSummary } from '@/types/contract'
 
 describe('ContractList', () => {
-    it('mostra resumo de pendencias documentais por categoria', () => {
+    it('mostra a pendência orientada ao lado do usuário e a data do contrato', () => {
         const contracts: ContractSummary[] = [
             {
                 id: 'c-1',
@@ -15,6 +15,7 @@ describe('ContractList', () => {
                 buyerApprovalStatus: 'PENDING',
                 createdAt: '2026-01-01T00:00:00.000Z',
                 propertyTitle: 'Casa teste',
+                viewerSide: 'buyer',
                 documentProgress: {
                     seller: {
                         side: 'seller',
@@ -32,6 +33,7 @@ describe('ContractList', () => {
 
         render(<ContractList contracts={contracts} />)
 
-        expect(screen.getByText('3 categorias pendentes')).toBeInTheDocument()
+        expect(screen.getByText('Faltam 1 documento seu')).toBeInTheDocument()
+        expect(screen.getByText(/\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2}/)).toBeInTheDocument()
     })
 })

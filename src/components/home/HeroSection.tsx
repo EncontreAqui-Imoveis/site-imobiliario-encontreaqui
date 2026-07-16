@@ -1,13 +1,14 @@
 'use client'
 
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import { ChevronDown, Loader2 } from 'lucide-react'
 import { usePropertySearch } from '@/hooks/usePropertySearch'
 import { useLocationOptions } from '@/components/search/useLocationOptions'
 import { CurrencyInput } from '@/components/form/CurrencyInput'
 
-const HERO_IMAGE = '/marketing/home-hero.png'
+const HERO_IMAGE_SALE = '/marketing/home-hero-sale.png'
+const HERO_IMAGE_RENT = '/marketing/home-hero-rent.png'
 
 const propertyTypes = [
     { value: '', label: 'Todos os tipos' },
@@ -29,6 +30,38 @@ type HomeDeal = 'sale' | 'rent'
 
 export default function HeroSection({ initialDeal = 'sale' }: { initialDeal?: HomeDeal }) {
     const { form, setField, handleSearch, isSearching, validationError } = usePropertySearch()
+
+    const [displayTitle, setDisplayTitle] = useState(() => {
+        return initialDeal === 'rent'
+            ? 'Alugue os imóveis mais desejados do Brasil'
+            : 'Encontre os imóveis mais desejados do Brasil'
+    })
+    const [titleFadeState, setTitleFadeState] = useState<'in' | 'out'>('in')
+
+    useEffect(() => {
+        if (!form.purpose) return
+
+        const targetTitle = form.purpose === 'Aluguel'
+            ? 'Alugue os imóveis mais desejados do Brasil'
+            : 'Encontre os imóveis mais desejados do Brasil'
+
+        if (displayTitle === targetTitle) return
+
+        const isTest = typeof process !== 'undefined' && process.env.NODE_ENV === 'test'
+        if (isTest) {
+            setDisplayTitle(targetTitle)
+            return
+        }
+
+        setTitleFadeState('out')
+        const timer = setTimeout(() => {
+            setDisplayTitle(targetTitle)
+            setTitleFadeState('in')
+        }, 200)
+
+        return () => clearTimeout(timer)
+    }, [form.purpose, displayTitle])
+
 
     // Sync purpose to 'Venda' / 'Aluguel' on mount if it's empty
     useEffect(() => {
@@ -95,26 +128,25 @@ export default function HeroSection({ initialDeal = 'sale' }: { initialDeal?: Ho
                             <button
                                 type="button"
                                 onClick={() => setField('purpose', 'Venda')}
-                                className={`relative z-10 py-1.5 text-xs sm:text-sm font-bold text-center rounded-full transition-colors duration-300 ${
-                                    form.purpose === 'Venda' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'
-                                }`}
+                                className={`relative z-10 py-1.5 text-xs sm:text-sm font-bold text-center rounded-full transition-colors duration-300 ${form.purpose === 'Venda' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'
+                                    }`}
                             >
                                 Comprar
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setField('purpose', 'Aluguel')}
-                                className={`relative z-10 py-1.5 text-xs sm:text-sm font-bold text-center rounded-full transition-colors duration-300 ${
-                                    form.purpose === 'Aluguel' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'
-                                }`}
+                                className={`relative z-10 py-1.5 text-xs sm:text-sm font-bold text-center rounded-full transition-colors duration-300 ${form.purpose === 'Aluguel' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'
+                                    }`}
                             >
                                 Alugar
                             </button>
                         </div>
 
                         {/* Título Principal */}
-                        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-[1.25] tracking-tight mb-6 font-sans">
-                            Encontre os imóveis mais desejados do Brasil
+                        <h1 className={`text-2xl sm:text-3xl font-extrabold text-gray-900 leading-[1.25] tracking-tight mb-6 font-sans transition-all duration-200 ease-in-out ${titleFadeState === 'out' ? 'opacity-0 translate-y-1' : 'opacity-100 translate-y-0'
+                            }`}>
+                            {displayTitle}
                         </h1>
 
                         {/* Inputs de Pesquisa */}
@@ -267,13 +299,24 @@ export default function HeroSection({ initialDeal = 'sale' }: { initialDeal?: Ho
                     {/* ══════════════════════════════════════════════════
                         PAINEL DIREITO — Imagem Fusa (Equilibrado 50%)
                     ══════════════════════════════════════════════════ */}
-                    <div className="w-full lg:w-1/2 relative min-h-[300px] lg:min-h-auto">
+                    <div className="w-full lg:w-1/2 relative min-h-[300px] lg:min-h-auto overflow-hidden">
+                        {/* Imagem Venda */}
                         <Image
-                            src={HERO_IMAGE}
-                            alt="Encontre seu imóvel dos sonhos"
+                            src={HERO_IMAGE_SALE}
+                            alt="Imóveis para comprar"
                             fill
                             priority
-                            className="object-cover object-center"
+                            className={`object-cover object-center transition-opacity duration-700 ease-in-out ${form.purpose === 'Aluguel' ? 'opacity-0 pointer-events-none' : 'opacity-100'
+                                }`}
+                            sizes="(max-w-1024px) 100vw, 50vw"
+                        />
+                        {/* Imagem Aluguel */}
+                        <Image
+                            src={HERO_IMAGE_RENT}
+                            alt="Imóveis para alugar"
+                            fill
+                            className={`object-cover object-center transition-opacity duration-700 ease-in-out ${form.purpose === 'Aluguel' ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                                }`}
                             sizes="(max-w-1024px) 100vw, 50vw"
                         />
                     </div>

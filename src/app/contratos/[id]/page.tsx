@@ -8,6 +8,7 @@ import { ContractDetailClient } from '@/components/contracts/ContractDetailClien
 import { useUser } from '@/contexts/UserContext'
 import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { getContractById } from '@/lib/api/contracts'
+import { isCancelledContractStatus } from '@/lib/contractsUi'
 import type { ContractDetail } from '@/types/contract'
 
 export default function ContractDetailPage() {
@@ -21,7 +22,7 @@ export default function ContractDetailPage() {
 
     useEffect(() => {
         if (!authLoading && !session) {
-            router.replace(`/auth/login?next=/contratos/${params.id}`)
+            router.replace(`/auth/login?next=/meus-processos/contratos/${params.id}`)
             return
         }
         const gateRoute = resolveOperationalGateRoute(session)
@@ -40,6 +41,9 @@ export default function ContractDetailPage() {
             setNotFound(false)
             try {
                 const data = await getContractById(params.id)
+                if (isCancelledContractStatus(data.status)) {
+                    throw new Error('Contrato indisponível.')
+                }
                 if (!cancelled) {
                     setContract(data)
                 }

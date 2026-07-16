@@ -1,5 +1,6 @@
 import React from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import '@testing-library/jest-dom'
 
 import CadastroPage from '@/app/auth/cadastro/page'
 import VerificacaoPage from '@/app/verificacao/page'
@@ -359,18 +360,20 @@ describe('signup flow', () => {
             expect(mockCreateSignupDraftRemote).not.toHaveBeenCalled()
         })
 
-        expect(screen.getByRole('button', { name: /quero cadastrar como cliente/i })).toBeInTheDocument()
-        expect(screen.getByRole('button', { name: /quero cadastrar como corretor/i })).toBeInTheDocument()
-        expect(mockSaveSignupDraft).toHaveBeenCalledWith(
-            expect.objectContaining({
-                source: 'google',
-                step: 'profile',
-                userType: null,
-                data: expect.objectContaining({
-                    email: 'corretor-google-test@example.com',
+        await waitFor(() => {
+            expect(screen.getByRole('button', { name: /quero cadastrar como cliente/i })).toBeInTheDocument()
+            expect(screen.getByRole('button', { name: /quero cadastrar como corretor/i })).toBeInTheDocument()
+            expect(mockSaveSignupDraft).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    source: 'google',
+                    step: 'profile',
+                    userType: null,
+                    data: expect.objectContaining({
+                        email: 'corretor-google-test@example.com',
+                    }),
                 }),
-            }),
-        )
+            )
+        })
     })
 
     it('Google de corretor precisa confirmar perfil no fluxo antes de validar CRECI', async () => {
@@ -395,7 +398,7 @@ describe('signup flow', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Continuar com Google' }))
 
         await waitFor(() => {
-            expect(screen.getByRole('button', { name: /quero cadastrar como cliente/i })).toBeInTheDocument()
+            expect(screen.getByLabelText('E-mail *')).toHaveValue('corretor-google-test@example.com')
         })
         fireEvent.click(screen.getByRole('button', { name: /quero cadastrar como corretor/i }))
 
@@ -649,7 +652,7 @@ describe('signup flow', () => {
         expect(screen.queryByLabelText('Progresso do cadastro')).not.toBeInTheDocument()
         expect(screen.queryByRole('list', { name: 'Progresso do cadastro' })).not.toBeInTheDocument()
         expect(
-            screen.getByText('Selecione seu tipo de perfil para avançarmos para o próximo passo.'),
+            screen.getByText('Selecione seu tipo de perfil e preencha seus dados.'),
         ).toBeInTheDocument()
     })
 
@@ -685,7 +688,7 @@ describe('signup flow', () => {
             )
         })
 
-        expect(screen.getByText(/Selecione seu tipo de perfil para avançarmos para o próximo passo/i)).toBeInTheDocument()
+        expect(screen.getByText(/Selecione seu tipo de perfil e preencha seus dados/i)).toBeInTheDocument()
         expect(screen.queryByRole('button', { name: /criar conta/i })).toBeInTheDocument()
     })
 

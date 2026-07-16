@@ -201,11 +201,6 @@ export function rewindSignupDraftToAddress(): SignupDraft | null {
 }
 
 export function resolveSignupDraftHref(draft: SignupDraft | null | undefined) {
-    if (!draft) return '/auth/cadastro'
-    if (draft.step === 'verify_method') return '/cadastro/verificar-metodo'
-    if (draft.step === 'email') return '/verificacao?flow=signup'
-    if (draft.step === 'phone') return '/cadastro/verificar-telefone?flow=signup'
-    if (draft.step === 'documents') return '/onboarding/broker?mode=signup'
     return '/auth/cadastro'
 }
 

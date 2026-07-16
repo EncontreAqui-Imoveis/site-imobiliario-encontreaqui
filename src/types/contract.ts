@@ -11,6 +11,15 @@ export type ApprovalStatus =
     | 'REJECTED'
 
 export type ContractSide = 'seller' | 'buyer'
+
+export interface ContractCapabilities {
+    canReadMeta: boolean
+    canReadSeller: boolean
+    canEditSeller: boolean
+    canReadBuyer: boolean
+    canEditBuyer: boolean
+    isReadOnly: boolean
+}
 export type ContractDocumentCategoryStatus =
     | 'PENDING'
     | 'APPROVED'
@@ -117,6 +126,7 @@ export interface ContractSummary {
     responsibleUserIds?: number[] | null
     documentProgress?: ContractDocumentProgressSummary | null
     documentRequirements?: DocumentRequirementsPayload | null
+    capabilities?: ContractCapabilities | null
 }
 
 export interface ContractDetail extends ContractSummary {

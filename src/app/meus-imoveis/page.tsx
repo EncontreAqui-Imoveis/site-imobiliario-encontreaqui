@@ -37,13 +37,13 @@ function getNegotiationAction(property: PropertySummary) {
     if (!property.negotiationId) return null
     if (status === 'PENDING_PROPOSAL' || status === 'PROPOSAL_DRAFT' || status === 'PROPOSAL_SENT') {
         return {
-            href: `/propostas/${encodeURIComponent(property.negotiationId)}/upload-assinada`,
+            href: `/meus-processos/propostas/${encodeURIComponent(property.negotiationId)}/upload-assinada`,
             label: 'Continuar proposta',
             className: 'text-accent-700 border-accent-200 hover:bg-accent-50',
         }
     }
     return {
-        href: '/documentos?tab=contratos',
+        href: '/meus-processos/contratos',
         label: 'Ir para contratos',
         className: 'text-slate-700 border-slate-200 hover:bg-slate-50',
     }

@@ -1,4 +1,13 @@
-import { normalizeContractDocument, normalizeDocumentRequirements } from './contracts'
+const mockApiGet = jest.fn()
+
+jest.mock('@/lib/api/client', () => ({
+    API_BASE_URL: 'https://api.example.test',
+    apiClient: {
+        get: (...args: unknown[]) => mockApiGet(...args),
+    },
+}))
+
+import { getMyContracts, normalizeContractDocument, normalizeDocumentRequirements } from './contracts'
 
 describe('contracts api normalization', () => {
     it('normaliza reviewReason e validationResult do documento', () => {
@@ -61,5 +70,33 @@ describe('contracts api normalization', () => {
 
     it('documentRequirements vazio retorna null', () => {
         expect(normalizeDocumentRequirements({ seller: [], buyer: [] })).toBeNull()
+    })
+
+    it('remove contratos cancelados da listagem comum, inclusive status legado', async () => {
+        mockApiGet.mockResolvedValueOnce([
+            {
+                id: 'cancelled',
+                negotiationId: 'neg-cancelled',
+                propertyId: 1,
+                status: 'CANCELLED',
+            },
+            {
+                id: 'legacy-cancelled',
+                negotiationId: 'neg-legacy-cancelled',
+                propertyId: 2,
+                status: 'CANCELADO',
+            },
+            {
+                id: 'active',
+                negotiationId: 'neg-active',
+                propertyId: 3,
+                status: 'AWAITING_DOCS',
+            },
+        ])
+
+        await expect(getMyContracts()).resolves.toEqual([
+            expect.objectContaining({ id: 'active' }),
+        ])
+        expect(mockApiGet).toHaveBeenCalledWith('/contracts/me')
     })
 })

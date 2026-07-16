@@ -3,7 +3,7 @@ import Image from 'next/image'
 import { Download, Instagram, MessageCircle } from 'lucide-react'
 import { APP_LINKS } from '@/lib/appLinks'
 import { TEAM_CONTACT_CHANNEL_URL } from '@/lib/contactLinks'
-import { FooterConditionalNav, FooterAccountSection } from '@/components/layout/FooterAuthLinks'
+import { FooterConditionalNav, FooterAccountSection, FooterLegalLinks } from '@/components/layout/FooterAuthLinks'
 
 const INSTAGRAM_URL =
     'https://www.instagram.com/encontre.aquiimoveis?igsh=MXI2N3ZmZzY4a281eQ=='
@@ -114,18 +114,7 @@ export default function Footer() {
                             © {currentYear} Encontre Aqui Imóveis. Todos os direitos reservados.
                         </p>
                         <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-                            <Link
-                                href="/termos-de-uso"
-                                className="inline-flex min-h-[44px] items-center rounded-lg px-3 text-sm text-slate-500 transition-colors hover:bg-slate-800/80 hover:text-slate-200"
-                            >
-                                Termos de Uso
-                            </Link>
-                            <Link
-                                href="/politica-de-privacidade"
-                                className="inline-flex min-h-[44px] items-center rounded-lg px-3 text-sm text-slate-500 transition-colors hover:bg-slate-800/80 hover:text-slate-200"
-                            >
-                                Privacidade
-                            </Link>
+                            <FooterLegalLinks />
                         </div>
                     </div>
                 </div>

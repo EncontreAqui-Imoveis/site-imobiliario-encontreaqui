@@ -72,7 +72,11 @@ jest.mock('@/components/auth/SignupDraftNotice', () => {
 
 jest.mock('@/components/search/SearchFilters', () => {
     return function MockSearchFilters() {
-        return <div data-testid="search-filters">Filters</div>
+        return (
+            <aside aria-label="Filtros de busca" data-testid="search-filters">
+                Filters
+            </aside>
+        )
     }
 })
 
@@ -122,9 +126,9 @@ describe('catalog shell accessibility baseline', () => {
 
         render(<PropertiesPage />)
 
-        expect(
-            screen.getByRole('navigation', { name: /breadcrumb/i })
-        ).toBeInTheDocument()
+        await screen.findByText('Items: 0')
+
+        expect(screen.getByRole('navigation', { name: /breadcrumb/i })).toBeInTheDocument()
         expect(
             screen.getByRole('complementary', { name: /filtros de busca/i })
         ).toBeInTheDocument()
@@ -132,7 +136,7 @@ describe('catalog shell accessibility baseline', () => {
             screen.getByRole('main', { name: /resultados de imóveis/i })
         ).toBeInTheDocument()
         expect(
-            screen.getByRole('heading', { name: /encontre seu imóvel ideal/i })
+            screen.getByRole('heading', { name: /imóveis no brasil/i })
         ).toBeInTheDocument()
     })
 })

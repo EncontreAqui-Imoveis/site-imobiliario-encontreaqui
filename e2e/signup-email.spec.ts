@@ -81,13 +81,14 @@ test('cadastro cliente por e-mail conclui e redireciona para meus imóveis', asy
     await page.goto('/auth/cadastro')
 
     await page.getByRole('button', { name: /quero cadastrar como cliente/i }).click()
-    await page.getByRole('button', { name: /^continuar$/i }).click()
 
     await page.getByLabel('Nome completo *').fill('Cliente E2E')
     await page.getByLabel('E-mail *').fill('cliente-e2e@example.com')
-    await page.getByLabel('Senha *').fill('123456')
+    await page.getByLabel('Senha *', { exact: true }).fill('123456')
+    await page.getByLabel('Confirmar Senha *').fill('123456')
     await page.getByLabel(/Telefone/).fill('62999999999')
-    await page.getByRole('button', { name: /^continuar$/i }).click()
+    await page.getByRole('checkbox').check()
+    await page.getByRole('button', { name: /^criar conta$/i }).click()
 
     await page.getByLabel(/CEP/).fill('74000000')
     await expect(page.getByLabel('Rua')).toHaveValue('Rua Teste')
@@ -98,7 +99,7 @@ test('cadastro cliente por e-mail conclui e redireciona para meus imóveis', asy
 
     await expect.poll(async () => viacepCalls).toBe(1)
 
-    await page.getByRole('button', { name: /ir para a página de verificação/i }).click()
+    await page.getByRole('button', { name: /^criar conta$/i }).click()
 
     await expect(page).toHaveURL(/\/cadastro\/verificar-metodo/)
     await page.getByRole('button', { name: /E-mail/i }).first().click()
@@ -142,13 +143,14 @@ test('cadastro cliente com e-mail já existente é bloqueado na etapa de dados',
     await page.goto('/auth/cadastro')
 
     await page.getByRole('button', { name: /quero cadastrar como cliente/i }).click()
-    await page.getByRole('button', { name: /^continuar$/i }).click()
 
     await page.getByLabel('Nome completo *').fill('Cliente Duplicado')
     await page.getByLabel('E-mail *').fill('duplicado@example.com')
-    await page.getByLabel('Senha *').fill('123456')
+    await page.getByLabel('Senha *', { exact: true }).fill('123456')
+    await page.getByLabel('Confirmar Senha *').fill('123456')
     await page.getByLabel(/Telefone/).fill('62999999999')
-    await page.getByRole('button', { name: /^continuar$/i }).click()
+    await page.getByRole('checkbox').check()
+    await page.getByRole('button', { name: /^criar conta$/i }).click()
 
     await expect(page.getByText('Já existe uma conta com este e-mail.')).toBeVisible()
     await expect(page).toHaveURL('/auth/cadastro')
@@ -158,13 +160,14 @@ test('cadastro cliente conclui endereço sem informar CEP', async ({ page }) => 
     await page.goto('/auth/cadastro')
 
     await page.getByRole('button', { name: /quero cadastrar como cliente/i }).click()
-    await page.getByRole('button', { name: /^continuar$/i }).click()
 
     await page.getByLabel('Nome completo *').fill('Cliente Sem CEP')
     await page.getByLabel('E-mail *').fill('cliente-sem-cep@example.com')
-    await page.getByLabel('Senha *').fill('123456')
+    await page.getByLabel('Senha *', { exact: true }).fill('123456')
+    await page.getByLabel('Confirmar Senha *').fill('123456')
     await page.getByLabel(/Telefone/).fill('62999999999')
-    await page.getByRole('button', { name: /^continuar$/i }).click()
+    await page.getByRole('checkbox').check()
+    await page.getByRole('button', { name: /^criar conta$/i }).click()
 
     await page.getByLabel(/Estado/).selectOption('GO')
     await page.getByLabel('Cidade').fill('Goiânia')
@@ -172,7 +175,7 @@ test('cadastro cliente conclui endereço sem informar CEP', async ({ page }) => 
     await page.getByLabel('Rua').fill('Rua Teste')
     await page.getByLabel(/Número/).fill('100')
 
-    await page.getByRole('button', { name: /ir para a página de verificação/i }).click()
+    await page.getByRole('button', { name: /^criar conta$/i }).click()
     await expect(page).toHaveURL(/\/cadastro\/verificar-metodo/)
 })
 
@@ -195,13 +198,14 @@ test('retorno de 409 com EMAIL_ALREADY_EXISTS direciona para login', async ({ pa
     await page.goto('/auth/cadastro')
 
     await page.getByRole('button', { name: /quero cadastrar como cliente/i }).click()
-    await page.getByRole('button', { name: /^continuar$/i }).click()
 
     await page.getByLabel('Nome completo *').fill('Cliente E2E')
     await page.getByLabel('E-mail *').fill('cliente-conflict@example.com')
-    await page.getByLabel('Senha *').fill('123456')
+    await page.getByLabel('Senha *', { exact: true }).fill('123456')
+    await page.getByLabel('Confirmar Senha *').fill('123456')
     await page.getByLabel(/Telefone/).fill('62999999999')
-    await page.getByRole('button', { name: /^continuar$/i }).click()
+    await page.getByRole('checkbox').check()
+    await page.getByRole('button', { name: /^criar conta$/i }).click()
 
     await expect(page.getByText('Este e-mail já está cadastrado. Faça login para continuar.')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Entrar' }).nth(1)).toBeVisible()
@@ -299,7 +303,7 @@ test('correção no draft existente usa PATCH e não cria novo POST', async ({ p
     await page.getByLabel('Cidade').fill('Goiânia')
     await page.getByLabel(/Estado/).selectOption('GO')
 
-    await page.getByRole('button', { name: /ir para a página de verificação/i }).click()
+    await page.getByRole('button', { name: /^criar conta$/i }).click()
 
     await expect.poll(() => patchCalls).toBe(1)
     await expect.poll(() => postCalls).toBe(0)
