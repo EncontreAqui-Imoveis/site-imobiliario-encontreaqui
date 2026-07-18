@@ -1,4 +1,9 @@
-import { fetchFeaturedProperties, fetchRecentProperties } from '@/lib/propertiesApi'
+import {
+    fetchFeaturedProperties,
+    fetchMostAffordableProperties,
+    fetchMostExpensiveProperties,
+    fetchRecentProperties,
+} from '@/lib/propertiesApi'
 import FeaturedCarousel from '@/components/home/FeaturedCarousel'
 import RecentProperties from '@/components/home/RecentProperties'
 import PropertyCardSkeleton from '@/components/property/PropertyCardSkeleton'
@@ -37,21 +42,55 @@ export function RecentSkeleton() {
 
 type HomeDeal = 'sale' | 'rent'
 
-export async function FeaturedSection({ deal = 'sale' }: { deal?: HomeDeal } = {}) {
-    const properties = await fetchFeaturedProperties(6, deal)
-    const title = deal === 'rent' ? 'Imóveis em Destaque para Aluguel' : 'Imóveis em Destaque para Venda'
-    return <FeaturedCarousel properties={properties} title={title} />
+function homeBrowseHref(deal: HomeDeal, sort: 'created_at:desc' | 'price:desc' | 'price:asc') {
+    const purpose = deal === 'rent' ? 'Aluguel' : 'Venda'
+    return `/imoveis?purpose=${encodeURIComponent(purpose)}&sort=${encodeURIComponent(sort)}`
 }
 
-export async function RecentSection({ deal = 'rent' }: { deal?: HomeDeal } = {}) {
+function dealLabel(deal: HomeDeal) {
+    return deal === 'rent' ? 'Aluguel' : 'Venda'
+}
+
+export async function FeaturedSection({ deal = 'sale' }: { deal?: HomeDeal } = {}) {
+    const properties = await fetchFeaturedProperties(6, deal)
+    const title = `Destaques para ${dealLabel(deal)}`
+    return <FeaturedCarousel properties={properties} title={title} browseHref={homeBrowseHref(deal, 'created_at:desc')} />
+}
+
+export async function RecentSection({ deal = 'sale' }: { deal?: HomeDeal } = {}) {
     const properties = await fetchRecentProperties(8, deal)
-    const title = deal === 'rent' ? 'Imóveis em Destaque para Aluguel' : 'Imóveis em Destaque para Venda'
-    const subtitle = deal === 'rent' ? 'Confira os imóveis em destaque para aluguel' : 'Confira os imóveis em destaque para venda'
+    const title = `Mais recentes para ${dealLabel(deal)}`
+    const subtitle = `Imóveis adicionados recentemente para ${deal === 'rent' ? 'aluguel' : 'venda'}`
     return (
         <RecentProperties
             properties={properties}
             title={title}
             subtitle={subtitle}
+            browseHref={homeBrowseHref(deal, 'created_at:desc')}
+        />
+    )
+}
+
+export async function MostExpensiveSection({ deal = 'sale' }: { deal?: HomeDeal } = {}) {
+    const properties = await fetchMostExpensiveProperties(8, deal)
+    return (
+        <RecentProperties
+            properties={properties}
+            title={`Mais caros para ${dealLabel(deal)}`}
+            subtitle={`Imóveis de maior valor para ${deal === 'rent' ? 'aluguel' : 'venda'}`}
+            browseHref={homeBrowseHref(deal, 'price:desc')}
+        />
+    )
+}
+
+export async function MostAffordableSection({ deal = 'sale' }: { deal?: HomeDeal } = {}) {
+    const properties = await fetchMostAffordableProperties(8, deal)
+    return (
+        <RecentProperties
+            properties={properties}
+            title={`Mais baratos para ${dealLabel(deal)}`}
+            subtitle={`Opções mais acessíveis para ${deal === 'rent' ? 'aluguel' : 'venda'}`}
+            browseHref={homeBrowseHref(deal, 'price:asc')}
         />
     )
 }

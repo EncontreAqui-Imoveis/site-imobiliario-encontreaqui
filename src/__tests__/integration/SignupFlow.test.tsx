@@ -59,7 +59,6 @@ function createDraftValidationError(code: string, options?: { error?: string; fi
 function logDraftValidationError(label: string, error: unknown) {
     if (!error || typeof error !== 'object') return
     const anyError = error as { status?: unknown; payload?: DraftValidationErrorPayload }
-    // eslint-disable-next-line no-console
     console.log(`[POST /auth/register/draft] ${label} 400:`, JSON.stringify({
         status: anyError.status,
         code: anyError.payload?.code,
@@ -74,7 +73,6 @@ function createNetworkFailure() {
 
 function logDraftPayload(label: string, payload: unknown) {
     if (typeof payload === 'object' && payload !== null) {
-        // eslint-disable-next-line no-console
         console.log(`[POST /auth/register/draft] ${label}: ${JSON.stringify(payload)}`)
     }
 }

@@ -5,14 +5,23 @@ import HomePage from '@/app/page'
 import {
     FeaturedSection,
     FeaturedSkeleton,
+    MostAffordableSection,
+    MostExpensiveSection,
     RecentSection,
     RecentSkeleton,
 } from '@/components/home/HomeSections'
-import { fetchFeaturedProperties, fetchRecentProperties } from '@/lib/propertiesApi'
+import {
+    fetchFeaturedProperties,
+    fetchMostAffordableProperties,
+    fetchMostExpensiveProperties,
+    fetchRecentProperties,
+} from '@/lib/propertiesApi'
 import { Property } from '@/types/property'
 
 jest.mock('@/lib/propertiesApi', () => ({
     fetchFeaturedProperties: jest.fn(),
+    fetchMostAffordableProperties: jest.fn(),
+    fetchMostExpensiveProperties: jest.fn(),
     fetchRecentProperties: jest.fn(),
 }))
 
@@ -88,7 +97,7 @@ describe('HomePage integration', () => {
         const fragment = page as ReactElement<{ children: ReactNode }>
         const children = Children.toArray(fragment.props.children)
 
-        expect(children).toHaveLength(4)
+        expect(children).toHaveLength(6)
     })
 
     it('loads featured properties through the server section', async () => {
@@ -105,8 +114,23 @@ describe('HomePage integration', () => {
 
         render(await RecentSection())
 
-        expect(fetchRecentProperties).toHaveBeenCalledWith(8, 'rent')
+        expect(fetchRecentProperties).toHaveBeenCalledWith(8, 'sale')
         expect(screen.getByTestId('recent-properties')).toHaveTextContent('Recent: 1')
+    })
+
+    it('loads price shelves with the active deal filter', async () => {
+        ; (fetchMostExpensiveProperties as jest.Mock).mockResolvedValue([createProperty(4)])
+        ; (fetchMostAffordableProperties as jest.Mock).mockResolvedValue([createProperty(5)])
+
+        render(
+            <>
+                {await MostExpensiveSection({ deal: 'rent' })}
+                {await MostAffordableSection({ deal: 'rent' })}
+            </>,
+        )
+
+        expect(fetchMostExpensiveProperties).toHaveBeenCalledWith(8, 'rent')
+        expect(fetchMostAffordableProperties).toHaveBeenCalledWith(8, 'rent')
     })
 
     it('renders skeleton fallbacks without relying on suspense resolution in jsdom', () => {

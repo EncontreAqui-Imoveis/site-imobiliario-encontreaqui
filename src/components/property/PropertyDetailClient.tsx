@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { Home, ChevronRight, ChevronLeft, Edit, FileText, ScrollText } from 'lucide-react'
 import WhatsAppIcon from '@/components/icons/WhatsAppIcon'
 import { capitalizePropertyTitle } from '@/lib/propertyTitleDisplay'
@@ -39,6 +40,7 @@ export default function PropertyDetailClient({
     const [loadError, setLoadError] = useState<string | null>(null)
     const [authorizedContractId, setAuthorizedContractId] = useState<string | null>(null)
     const { session, loading: authLoading } = useUser()
+    const searchParams = useSearchParams()
     const userRole = (session?.user?.role ?? '').toLowerCase()
 
     // Owner / broker detection
@@ -79,6 +81,17 @@ export default function PropertyDetailClient({
         statusLower === 'approved' &&
         (!negotiationId || hasRefusedNegotiation || isCancelledNegotiation) &&
         !isInAnalysisStatus
+
+    const requestedDeal = searchParams.get('deal')
+    const activeDeal =
+        requestedDeal === 'rent' && Number(property?.priceRent) > 0
+            ? 'rent'
+            : Number(property?.priceSale) > 0
+                ? 'sale'
+                : 'rent'
+    const proposalHref = property
+        ? `/propostas/nova?propertyId=${encodeURIComponent(String(property.id))}&dealType=${activeDeal}`
+        : null
 
     useEffect(() => {
         if (property || authLoading || !session) return
@@ -169,7 +182,7 @@ export default function PropertyDetailClient({
     const whatsappLink = property ? buildWhatsappLink('6430500118', whatsappMessage) : null
 
     const proposalAction = (() => {
-        if (!isOwner || !property) return null
+        if (!property) return null
         if (isInAnalysisStatus) return null
 
         if (hasActivePhysicalContract && authorizedContractId) {
@@ -187,11 +200,13 @@ export default function PropertyDetailClient({
         // contract identifier in the UI.
         if (hasActivePhysicalContract) return null
 
+        if (!isOwner) return null
+
         if ((!negotiationId || isCancelledNegotiation) && canGenerateProposal) {
             return {
                 title: 'Criar proposta',
                 description: 'Inicie a proposta deste imóvel seguindo o mesmo fluxo principal do app.',
-                href: `/propostas/nova?propertyId=${property.id}`,
+                href: proposalHref ?? `/propostas/nova?propertyId=${property.id}`,
                 tone: 'primary' as const,
                 label: 'Criar proposta',
             }
@@ -225,7 +240,7 @@ export default function PropertyDetailClient({
             return {
                 title: 'Proposta recusada',
                 description: 'A última proposta foi recusada. Você pode iniciar um novo ciclo para este imóvel.',
-                href: `/propostas/nova?propertyId=${property.id}`,
+                href: proposalHref ?? `/propostas/nova?propertyId=${property.id}`,
                 tone: 'primary' as const,
                 label: 'Gerar nova proposta',
             }
@@ -273,7 +288,7 @@ export default function PropertyDetailClient({
         statusLower === 'approved' &&
         (!negotiationId || hasRefusedNegotiation || isCancelledNegotiation) &&
         !blockVisitorProposalDueToDeal
-            ? `/propostas/nova?propertyId=${property.id}`
+            ? proposalHref
             : null
 
     const buyerContractStatusHint = (() => {

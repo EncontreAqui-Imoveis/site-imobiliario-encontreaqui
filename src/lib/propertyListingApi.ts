@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '@/lib/api/client'
-import { areaInputToSquareMeters, normalizeAreaUnidade } from '@/lib/areaUnits'
+import { normalizeAreaUnidade } from '@/lib/areaUnits'
 import { normalizeProperty } from '@/lib/propertiesApi'
 import type { Property } from '@/types/property'
 

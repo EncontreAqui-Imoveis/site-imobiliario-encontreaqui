@@ -112,6 +112,7 @@ export default function ProposalWizardPage() {
     const searchParams = useSearchParams()
     const propertyId = searchParams.get('propertyId')
     const negotiationId = searchParams.get('negotiationId')
+    const requestedDealType = searchParams.get('dealType')
     const { session, loading: authLoading, isBroker, isAuxiliaryAdministrative } = useUser()
 
     /* ── State ── */
@@ -133,6 +134,17 @@ export default function ProposalWizardPage() {
     // Step 1: Client data
     const [clientName, setClientName] = useState('')
     const [clientCpf, setClientCpf] = useState('')
+
+    // Step 2 for rentals: commercial lease terms, not a sale payment split.
+    const [rentalMonthlyRent, setRentalMonthlyRent] = useState('')
+    const [rentalGuaranteeType, setRentalGuaranteeType] = useState('')
+    const [rentalGuaranteeAmount, setRentalGuaranteeAmount] = useState('')
+    const [rentalLeaseTermMonths, setRentalLeaseTermMonths] = useState('')
+    const [rentalExpectedStartDate, setRentalExpectedStartDate] = useState('')
+    const [rentalMonthlyDueDay, setRentalMonthlyDueDay] = useState('')
+    const [rentalCondominiumResponsibility, setRentalCondominiumResponsibility] = useState('')
+    const [rentalPropertyTaxResponsibility, setRentalPropertyTaxResponsibility] = useState('')
+    const [rentalObservations, setRentalObservations] = useState('')
 
     // Step 2: Total proposal value composition
     const [payments, setPayments] = useState<Record<'dinheiro' | 'permuta' | 'financiamento' | 'outros', PaymentField>>({
@@ -182,7 +194,7 @@ export default function ProposalWizardPage() {
         const hasSalePrice = Number(property.priceSale) > 0
         const hasRentPrice = Number(property.priceRent) > 0
         if (hasSalePrice && hasRentPrice) {
-            setProposalBaseMode('sale')
+            setProposalBaseMode(requestedDealType === 'rent' ? 'rent' : 'sale')
             return
         }
         if (hasRentPrice) {
@@ -190,7 +202,15 @@ export default function ProposalWizardPage() {
             return
         }
         setProposalBaseMode('sale')
-    }, [property])
+    }, [property, requestedDealType])
+
+    useEffect(() => {
+        if (!property || rentalMonthlyRent) return
+        const listedRent = Number(property.priceRent)
+        if (listedRent > 0) {
+            setRentalMonthlyRent(formatMoneyInput(listedRent.toFixed(2).replace('.', ',')))
+        }
+    }, [property, rentalMonthlyRent])
 
     const userRole = String(session?.user?.role ?? '').trim().toLowerCase()
     const isClientUser = userRole === 'client'
@@ -240,6 +260,7 @@ export default function ProposalWizardPage() {
         const negotiationIdValue = String(negotiationId ?? '').trim()
         if (!negotiationIdValue) return
         const currentPropertyId = property.id
+        const currentPropertyRent = Number(property.priceRent ?? 0)
         let cancelled = false
         async function loadEditData() {
             setIsPrefillLoading(true)
@@ -261,6 +282,23 @@ export default function ProposalWizardPage() {
 
                 setClientName(existing.clientName?.trim() || String(session?.user?.name ?? '').trim())
                 setClientCpf(existing.clientCpf ?? '')
+                if (existing.dealType === 'rent') {
+                    setProposalBaseMode('rent')
+                    const terms = existing.rentalTerms
+                    setRentalMonthlyRent(
+                        formatMoneyInput(
+                            String(terms?.monthlyRent ?? existing.proposalValue ?? (currentPropertyRent > 0 ? currentPropertyRent : '')),
+                        ),
+                    )
+                    setRentalGuaranteeType(terms?.guaranteeType ?? '')
+                    setRentalGuaranteeAmount(formatMoneyInput(String(terms?.guaranteeAmount ?? '')))
+                    setRentalLeaseTermMonths(String(terms?.leaseTermMonths ?? ''))
+                    setRentalExpectedStartDate(terms?.expectedStartDate ?? '')
+                    setRentalMonthlyDueDay(String(terms?.monthlyDueDay ?? ''))
+                    setRentalCondominiumResponsibility(terms?.condominiumResponsibility ?? '')
+                    setRentalPropertyTaxResponsibility(terms?.propertyTaxResponsibility ?? '')
+                    setRentalObservations(terms?.observations ?? '')
+                }
                 if (Number.isInteger(existing.validadeDias) && Number(existing.validadeDias) > 0) {
                     setValidadeDias(Number(existing.validadeDias))
                 }
@@ -376,6 +414,8 @@ export default function ProposalWizardPage() {
     const totalAllocated = Object.values(payments).reduce((sum, f) => sum + toReais(f, propertyValue), 0)
     const remaining = propertyValue - totalAllocated
     const isBalanced = Math.abs(remaining) < 0.01
+    const monthlyRentValue = parseLocalized(rentalMonthlyRent)
+    const proposalValue = proposalBaseMode === 'rent' ? monthlyRentValue : propertyValue
     const paymentEntries = Object.entries(payments) as Array<[keyof typeof payments, PaymentField]>
 
     function updatePayment(
@@ -427,7 +467,7 @@ export default function ProposalWizardPage() {
         clientName.trim().length > 0 &&
         isValidCpf(clientCpf) &&
         (!requiresBuyerSelection || selectedBuyer != null)
-    const canSubmit = !isSubmitting && isStep1Valid && isBalanced
+    const canSubmit = !isSubmitting && isStep1Valid && (proposalBaseMode === 'rent' ? monthlyRentValue > 0 : isBalanced)
 
     /* ── Submit ── */
     async function handleSubmit() {
@@ -450,13 +490,26 @@ export default function ProposalWizardPage() {
                 dealType: proposalBaseMode,
                 buyerUserId: selectedBuyer?.id,
                 validadeDias,
-                proposalValue: propertyValue,
+                proposalValue,
                 payment: {
-                    dinheiro: toReais(payments.dinheiro, propertyValue),
-                    permuta: toReais(payments.permuta, propertyValue),
-                    financiamento: toReais(payments.financiamento, propertyValue),
-                    outros: toReais(payments.outros, propertyValue),
+                    dinheiro: proposalBaseMode === 'rent' ? 0 : toReais(payments.dinheiro, propertyValue),
+                    permuta: proposalBaseMode === 'rent' ? 0 : toReais(payments.permuta, propertyValue),
+                    financiamento: proposalBaseMode === 'rent' ? 0 : toReais(payments.financiamento, propertyValue),
+                    outros: proposalBaseMode === 'rent' ? 0 : toReais(payments.outros, propertyValue),
                 },
+                rentalTerms: proposalBaseMode === 'rent'
+                    ? {
+                        monthlyRent: monthlyRentValue,
+                        guaranteeType: rentalGuaranteeType || undefined,
+                        guaranteeAmount: parseLocalized(rentalGuaranteeAmount) || undefined,
+                        leaseTermMonths: Number(rentalLeaseTermMonths) || undefined,
+                        expectedStartDate: rentalExpectedStartDate || undefined,
+                        monthlyDueDay: Number(rentalMonthlyDueDay) || undefined,
+                        condominiumResponsibility: rentalCondominiumResponsibility || undefined,
+                        propertyTaxResponsibility: rentalPropertyTaxResponsibility || undefined,
+                        observations: rentalObservations.trim() || undefined,
+                    }
+                    : undefined,
             }
 
             if (isEditMode && negotiationId) {
@@ -576,7 +629,7 @@ export default function ProposalWizardPage() {
                         </h1>
                     </div>
                     <p className="text-sm text-gray-500">
-                        {property.title} — {formatPrice(propertyValue)}
+                        {property.title} — {formatPrice(proposalValue || propertyValue)}
                     </p>
                 </div>
 
@@ -615,7 +668,7 @@ export default function ProposalWizardPage() {
                             </button>
                         </div>
                         <p className="mt-2 text-xs text-gray-500">
-                            Valor base selecionado: {formatPrice(propertyValue)}
+                            Valor base selecionado: {formatPrice(proposalBaseMode === 'rent' ? Number(property.priceRent) : propertyValue)}
                         </p>
                     </div>
                 )}
@@ -846,6 +899,66 @@ export default function ProposalWizardPage() {
                                 Valor Total da Proposta
                             </div>
 
+                            {proposalBaseMode === 'rent' ? (
+                                <div className="space-y-5">
+                                    <div className="rounded-xl border border-sky-100 bg-sky-50 p-4">
+                                        <p className="text-sm font-semibold text-sky-950">Condições da locação</p>
+                                        <p className="mt-1 text-xs text-sky-800">Informe as condições comerciais que irão compor a minuta de aluguel.</p>
+                                    </div>
+                                    <div>
+                                        <label className="mb-1 block text-sm font-medium text-gray-700">Aluguel mensal *</label>
+                                        <input
+                                            type="text"
+                                            inputMode="decimal"
+                                            value={rentalMonthlyRent}
+                                            onChange={(event) => setRentalMonthlyRent(formatMoneyInput(event.target.value))}
+                                            className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary-500"
+                                            placeholder="0"
+                                        />
+                                    </div>
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        <div>
+                                            <label className="mb-1 block text-sm font-medium text-gray-700">Garantia</label>
+                                            <select value={rentalGuaranteeType} onChange={(event) => setRentalGuaranteeType(event.target.value)} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500">
+                                                <option value="">A definir</option>
+                                                <option value="Caução">Caução</option>
+                                                <option value="Fiador">Fiador</option>
+                                                <option value="Seguro-fiança">Seguro-fiança</option>
+                                                <option value="Título de capitalização">Título de capitalização</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="mb-1 block text-sm font-medium text-gray-700">Valor da garantia</label>
+                                            <input type="text" inputMode="decimal" value={rentalGuaranteeAmount} onChange={(event) => setRentalGuaranteeAmount(formatMoneyInput(event.target.value))} className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500" placeholder="Opcional" />
+                                        </div>
+                                        <div>
+                                            <label className="mb-1 block text-sm font-medium text-gray-700">Prazo da locação (meses)</label>
+                                            <input type="number" min="1" value={rentalLeaseTermMonths} onChange={(event) => setRentalLeaseTermMonths(event.target.value)} className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500" placeholder="Ex.: 30" />
+                                        </div>
+                                        <div>
+                                            <label className="mb-1 block text-sm font-medium text-gray-700">Início previsto</label>
+                                            <input type="date" value={rentalExpectedStartDate} onChange={(event) => setRentalExpectedStartDate(event.target.value)} className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500" />
+                                        </div>
+                                        <div>
+                                            <label className="mb-1 block text-sm font-medium text-gray-700">Vencimento mensal</label>
+                                            <input type="number" min="1" max="31" value={rentalMonthlyDueDay} onChange={(event) => setRentalMonthlyDueDay(event.target.value)} className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500" placeholder="Dia do mês" />
+                                        </div>
+                                        <div>
+                                            <label className="mb-1 block text-sm font-medium text-gray-700">Responsável pelo condomínio</label>
+                                            <input type="text" value={rentalCondominiumResponsibility} onChange={(event) => setRentalCondominiumResponsibility(event.target.value)} className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500" placeholder="Ex.: Locatário" />
+                                        </div>
+                                        <div className="sm:col-span-2">
+                                            <label className="mb-1 block text-sm font-medium text-gray-700">Responsável pelo IPTU</label>
+                                            <input type="text" value={rentalPropertyTaxResponsibility} onChange={(event) => setRentalPropertyTaxResponsibility(event.target.value)} className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500" placeholder="Ex.: Proprietário" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="mb-1 block text-sm font-medium text-gray-700">Observações</label>
+                                        <textarea value={rentalObservations} onChange={(event) => setRentalObservations(event.target.value)} className="min-h-24 w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500" maxLength={1000} placeholder="Informações adicionais da locação" />
+                                    </div>
+                                </div>
+                            ) : (
+                                <>
                             {/* Summary */}
                             <div className="space-y-2 rounded-xl border border-gray-100 bg-gray-50 p-4">
                                 <div className="flex justify-between text-sm">
@@ -933,6 +1046,8 @@ export default function ProposalWizardPage() {
                                     )
                                 })}
                             </div>
+                                </>
+                            )}
 
                             {submitError && (
                                 <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">

@@ -27,8 +27,7 @@ export default function PerfilPage() {
         }
         // Clean up URL so query string doesn't stay visible
         router.replace('/perfil')
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    }, [router, searchParams])
 
     const dismissBanner = () => {
         if (!activeBanner) return

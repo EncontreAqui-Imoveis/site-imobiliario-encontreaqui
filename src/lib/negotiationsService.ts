@@ -79,6 +79,17 @@ export interface CreateProposalPayload {
         financiamento: number
         outros: number
     }
+    rentalTerms?: {
+        monthlyRent: number
+        guaranteeType?: string
+        guaranteeAmount?: number
+        leaseTermMonths?: number
+        expectedStartDate?: string
+        monthlyDueDay?: number
+        condominiumResponsibility?: string
+        propertyTaxResponsibility?: string
+        observations?: string
+    }
 }
 
 export async function createProposal(payload: CreateProposalPayload): Promise<void> {

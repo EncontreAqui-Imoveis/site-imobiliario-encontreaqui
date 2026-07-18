@@ -11,11 +11,13 @@ import { Property } from '@/types/property'
 interface FeaturedCarouselProps {
     properties: Property[]
     title?: string
+    browseHref?: string
 }
 
 export default function FeaturedCarousel({
     properties,
-    title = 'Imóveis em destaque'
+    title = 'Imóveis em destaque',
+    browseHref = '/imoveis?sort=created_at:desc',
 }: FeaturedCarouselProps) {
     const [emblaRef, emblaApi] = useEmblaCarousel(
         {
@@ -76,7 +78,7 @@ export default function FeaturedCarousel({
 
                     <div className="hidden items-center gap-2 sm:flex">
                         <Link
-                            href="/imoveis?sort=created_at:desc"
+                            href={browseHref}
                             className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-semibold transition-colors group"
                         >
                             Ver todos os imóveis
@@ -135,7 +137,7 @@ export default function FeaturedCarousel({
 
                 <div className="mt-10 text-center sm:hidden">
                     <Link
-                        href="/imoveis?sort=created_at:desc"
+                        href={browseHref}
                         className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl shadow-lg transition-all"
                     >
                         Ver todos os imóveis

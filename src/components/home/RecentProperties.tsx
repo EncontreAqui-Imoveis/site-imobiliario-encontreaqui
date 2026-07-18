@@ -12,13 +12,15 @@ interface RecentPropertiesProps {
     title?: string
     subtitle?: string
     showViewAll?: boolean
+    browseHref?: string
 }
 
 export default function RecentProperties({
     properties,
     title = 'Imóveis recentes',
     subtitle = 'Confira os imóveis adicionados recentemente',
-    showViewAll = true
+    showViewAll = true,
+    browseHref = '/imoveis?sort=created_at:desc',
 }: RecentPropertiesProps) {
     const [emblaRef, emblaApi] = useEmblaCarousel({ align: 'start', loop: false, slidesToScroll: 1 })
     const [selectedIndex, setSelectedIndex] = useState(0)
@@ -69,7 +71,7 @@ export default function RecentProperties({
                     <div className="hidden items-center gap-2 sm:flex">
                         {showViewAll && (
                             <Link
-                                href="/imoveis?sort=created_at:desc"
+                                href={browseHref}
                                 className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-semibold transition-colors group"
                             >
                                 Ver todos os imóveis
@@ -124,7 +126,7 @@ export default function RecentProperties({
                 {showViewAll && (
                     <div className="mt-10 text-center sm:hidden">
                         <Link
-                            href="/imoveis?sort=created_at:desc"
+                            href={browseHref}
                             className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl shadow-lg transition-all"
                         >
                             Ver todos os imóveis

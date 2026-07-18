@@ -9,10 +9,10 @@ import {
     getPromoSalePrice,
     Property,
 } from '@/types/property'
-import { Info, Smartphone, Phone, FileText, Bed, Bath, Car, Maximize, Hammer } from 'lucide-react'
+import { Info, Smartphone, FileText, Bed, Bath, Car, Maximize, Hammer } from 'lucide-react'
 import WhatsAppIcon from '@/components/icons/WhatsAppIcon'
 import { buildAppDeepLink, getStoreUrlClient } from '@/lib/appLinks'
-import { buildPhoneLink, buildWhatsappLink } from '@/lib/contactLinks'
+import { buildWhatsappLink } from '@/lib/contactLinks'
 import { areaUnitLabel, normalizeAreaUnidade, squareMetersToAreaInput } from '@/lib/areaUnits'
 import { formatUnit } from '@/lib/propertyLabels'
 
@@ -51,8 +51,6 @@ export default function PropertySidebar({ property, visitorProposalHref }: Prope
     const whatsappMessage =
         `Olá! Vi o imóvel "${property.title}"${publicReference ? ` (Referência: ${publicReference})` : ''} no Encontre Aqui Imóveis e gostaria de mais informações.`
     const whatsappLink = buildWhatsappLink('6430500118', whatsappMessage)!
-    const phoneLink = buildPhoneLink(property.brokerPhone)
-
     return (
         <aside className="lg:col-span-1" aria-label="Resumo e ações do imóvel">
             <div className="sticky top-24 space-y-6">

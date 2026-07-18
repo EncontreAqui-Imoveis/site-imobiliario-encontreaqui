@@ -1,18 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { formatPrice, Property } from '@/types/property'
+import { Property } from '@/types/property'
 import { capitalizePropertyTitle } from '@/lib/propertyTitleDisplay'
 import {
-    MapPin, Bed, Bath, Car, Maximize, Hammer,
+    MapPin,
     Wifi, Waves, Sun, Cpu, Wind, Sofa, Building2, type LucideIcon,
-    Hash, Share2, CheckCircle,
-    Map, Phone, Globe, Mail,
+    Share2, CheckCircle,
+    Phone, Globe, Mail,
     Droplet, ArrowUpDown, Dumbbell, Flame, PartyPopper, Trophy, ShieldCheck, PawPrint, Camera, Thermometer
 } from 'lucide-react'
 import { shareOrCopy } from '@/lib/webShare'
-import { displayStatusLabel, formatUnit } from '@/lib/propertyLabels'
-import { areaUnitLabel, normalizeAreaUnidade, squareMetersToAreaInput } from '@/lib/areaUnits'
+import { displayStatusLabel } from '@/lib/propertyLabels'
 import { PROPERTY_CANONICAL_AMENITIES, PropertyAmenity } from '@/lib/propertyCreate'
 
 interface PropertyInfoProps {
@@ -74,16 +73,6 @@ function toSentenceCase(value: string): string {
         .join(' ')
 }
 
-function normalizeAmenityLabel(value: string): string {
-    return value
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .replace(/[^a-z0-9\s]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim()
-}
-
 function formatDate(date?: string): string {
     if (!date) return ''
     return new Date(date).toLocaleDateString('pt-BR', {
@@ -98,16 +87,6 @@ function getAmenityLabel(amenity: PropertyAmenity): string {
 }
 
 export default function PropertyInfo({ property }: PropertyInfoProps) {
-    const formatArea = (valueInM2?: number, unitRaw?: string | null) => {
-        if (valueInM2 == null || valueInM2 <= 0) return '0 m²'
-        const unit = normalizeAreaUnidade(unitRaw)
-        const converted = squareMetersToAreaInput(valueInM2, unit)
-        const asNumber = Number(converted)
-        const formatted = Number.isFinite(asNumber)
-            ? asNumber.toLocaleString('pt-BR', { maximumFractionDigits: 2 })
-            : converted
-        return `${formatted} ${areaUnitLabel(unit)}`
-    }
     const statusInfo = statusColors[property.status?.toLowerCase()] || statusColors.pending
     const statusLabel = displayStatusLabel(property.status, property.purpose)
     const isPurposeBadgeDuplicate = statusLabel.trim().toLowerCase() === (property.purpose ?? '').trim().toLowerCase()
@@ -139,11 +118,6 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
         return { icon: CheckCircle, label: amenity, active: true }
     })
     const groupedGenericAmenities: string[] = []
-
-    // Build additional characteristics
-    const additionalInfo = [
-        property.valorCondominio ? { icon: Building2, label: 'Condomínio', value: formatPrice(property.valorCondominio) } : null,
-    ].filter(Boolean) as { icon: LucideIcon; label: string; value: string }[]
 
     const handleShare = async () => {
         const url = window.location.href

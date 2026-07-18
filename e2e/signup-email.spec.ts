@@ -1,12 +1,5 @@
 import { test, expect } from '@playwright/test'
 
-async function fillSixDigitCode(page: import('@playwright/test').Page) {
-    const inputs = page.locator('input[inputmode="numeric"]')
-    for (let index = 0; index < 6; index += 1) {
-        await inputs.nth(index).fill(String(index + 1))
-    }
-}
-
 test('cadastro cliente por e-mail conclui e redireciona para meus imóveis', async ({ page }) => {
     let authRegisterCalls = 0
     let usersRegisterCalls = 0
@@ -99,16 +92,9 @@ test('cadastro cliente por e-mail conclui e redireciona para meus imóveis', asy
 
     await expect.poll(async () => viacepCalls).toBe(1)
 
-    await page.getByRole('button', { name: /^criar conta$/i }).click()
+    await page.getByRole('button', { name: /^ir para a verificação$/i }).click()
 
-    await expect(page).toHaveURL(/\/cadastro\/verificar-metodo/)
-    await page.getByRole('button', { name: /E-mail/i }).first().click()
-
-    await expect(page).toHaveURL(/\/verificacao\?flow=signup/)
-    await page.locator('input[inputmode="numeric"]').first().waitFor()
-    await fillSixDigitCode(page)
-
-    await page.getByRole('button', { name: /não, continuar sem verificar/i }).click()
+    await page.getByRole('button', { name: 'Continuar sem verificar' }).click()
     await expect(page).toHaveURL(/\/meus-imoveis/)
     await expect(page.getByRole('heading', { name: /meus imóveis/i })).toBeVisible()
 
@@ -175,8 +161,8 @@ test('cadastro cliente conclui endereço sem informar CEP', async ({ page }) => 
     await page.getByLabel('Rua').fill('Rua Teste')
     await page.getByLabel(/Número/).fill('100')
 
-    await page.getByRole('button', { name: /^criar conta$/i }).click()
-    await expect(page).toHaveURL(/\/cadastro\/verificar-metodo/)
+    await page.getByRole('button', { name: /^ir para a verificação$/i }).click()
+    await expect(page.getByRole('button', { name: 'Continuar sem verificar' })).toBeVisible()
 })
 
 test('retorno de 409 com EMAIL_ALREADY_EXISTS direciona para login', async ({ page }) => {
@@ -208,7 +194,7 @@ test('retorno de 409 com EMAIL_ALREADY_EXISTS direciona para login', async ({ pa
     await page.getByRole('button', { name: /^criar conta$/i }).click()
 
     await expect(page.getByText('Este e-mail já está cadastrado. Faça login para continuar.')).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Entrar' }).nth(1)).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Entrar' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Descartar cadastro' })).toBeVisible()
 })
 
@@ -303,7 +289,7 @@ test('correção no draft existente usa PATCH e não cria novo POST', async ({ p
     await page.getByLabel('Cidade').fill('Goiânia')
     await page.getByLabel(/Estado/).selectOption('GO')
 
-    await page.getByRole('button', { name: /^criar conta$/i }).click()
+    await page.getByRole('button', { name: /^ir para a verificação$/i }).click()
 
     await expect.poll(() => patchCalls).toBe(1)
     await expect.poll(() => postCalls).toBe(0)

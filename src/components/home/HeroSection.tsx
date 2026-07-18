@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { ChevronDown, Loader2 } from 'lucide-react'
 import { usePropertySearch } from '@/hooks/usePropertySearch'
 import { useLocationOptions } from '@/components/search/useLocationOptions'
@@ -30,6 +31,7 @@ type HomeDeal = 'sale' | 'rent'
 
 export default function HeroSection({ initialDeal = 'sale' }: { initialDeal?: HomeDeal }) {
     const { form, setField, handleSearch, isSearching, validationError } = usePropertySearch()
+    const router = useRouter()
 
     const [displayTitle, setDisplayTitle] = useState(() => {
         return initialDeal === 'rent'
@@ -70,13 +72,17 @@ export default function HeroSection({ initialDeal = 'sale' }: { initialDeal?: Ho
         }
     }, [form.purpose, setField, initialDeal])
 
+    function selectDeal(deal: HomeDeal) {
+        setField('purpose', deal === 'rent' ? 'Aluguel' : 'Venda')
+        router.replace(`/?deal=${deal}`, { scroll: false })
+    }
+
     // Load locations using useLocationOptions hook
     const {
         cities,
         bairros,
         isLoadingCities,
         isLoadingBairros,
-        selectedCity,
         hasSelectedCity,
     } = useLocationOptions(form.city)
 
@@ -127,7 +133,7 @@ export default function HeroSection({ initialDeal = 'sale' }: { initialDeal?: Ho
                             />
                             <button
                                 type="button"
-                                onClick={() => setField('purpose', 'Venda')}
+                                onClick={() => selectDeal('sale')}
                                 className={`relative z-10 py-1.5 text-xs sm:text-sm font-bold text-center rounded-full transition-colors duration-300 ${form.purpose === 'Venda' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'
                                     }`}
                             >
@@ -135,7 +141,7 @@ export default function HeroSection({ initialDeal = 'sale' }: { initialDeal?: Ho
                             </button>
                             <button
                                 type="button"
-                                onClick={() => setField('purpose', 'Aluguel')}
+                                onClick={() => selectDeal('rent')}
                                 className={`relative z-10 py-1.5 text-xs sm:text-sm font-bold text-center rounded-full transition-colors duration-300 ${form.purpose === 'Aluguel' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'
                                     }`}
                             >

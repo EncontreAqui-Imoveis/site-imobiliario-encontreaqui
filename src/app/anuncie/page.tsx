@@ -312,6 +312,9 @@ export default function AnunciePage() {
   };
 
   const isBrokerPendingOrRestricted = isRestrictedBroker(session);
+  const isBrokerAwaitingReview =
+    session?.user.role === "broker" &&
+    session.user.broker_status === "pending_verification";
   const isBrokerApproved =
     isApprovedBroker(session) && !isBrokerPendingOrRestricted;
   const saleEnabled = useMemo(() => supportsSale(form.purpose), [form.purpose]);
@@ -339,7 +342,8 @@ export default function AnunciePage() {
     const skipBrokerOnboardingGate =
       isBrokerPendingOrRestricted && gateRoute === "/onboarding/broker";
     const skipAllBrokerGatesOnAnnounce =
-      isBrokerPendingOrRestricted && session?.user.role === "broker";
+      (isBrokerPendingOrRestricted || isBrokerAwaitingReview) &&
+      session?.user.role === "broker";
     if (
       !authLoading &&
       gateRoute &&
@@ -349,7 +353,7 @@ export default function AnunciePage() {
       router.replace(gateRoute);
       return;
     }
-  }, [authLoading, session, isBrokerPendingOrRestricted, router]);
+  }, [authLoading, session, isBrokerPendingOrRestricted, isBrokerAwaitingReview, router]);
 
   useEffect(() => {
     if (authLoading) return;

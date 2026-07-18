@@ -201,6 +201,7 @@ export function rewindSignupDraftToAddress(): SignupDraft | null {
 }
 
 export function resolveSignupDraftHref(draft: SignupDraft | null | undefined) {
+    void draft
     return '/auth/cadastro'
 }
 

@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import PropertyDetailClient from '@/components/property/PropertyDetailClient'
 import { fetchPropertyById, fetchSimilarProperties } from '@/lib/propertiesApi'
+import type { Property } from '@/types/property'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
     const { id } = await params
@@ -46,7 +47,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
     const { id } = await params
     const property = await fetchPropertyById(id)
     
-    let similarProperties: any[] = []
+    let similarProperties: Property[] = []
     if (property) {
         similarProperties = await fetchSimilarProperties(property)
     }

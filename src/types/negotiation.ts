@@ -36,6 +36,18 @@ export interface NegotiationSummary {
     hasSignedProposal?: boolean
     validadeDias?: number
     proposalValue?: number | null
+    dealType?: 'sale' | 'rent' | null
+    rentalTerms?: {
+        monthlyRent?: number | null
+        guaranteeType?: string | null
+        guaranteeAmount?: number | null
+        leaseTermMonths?: number | null
+        expectedStartDate?: string | null
+        monthlyDueDay?: number | null
+        condominiumResponsibility?: string | null
+        propertyTaxResponsibility?: string | null
+        observations?: string | null
+    } | null
     paymentBreakdown?: {
         dinheiro: number
         permuta: number

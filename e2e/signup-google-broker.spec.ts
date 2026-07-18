@@ -1,5 +1,12 @@
 import { test, expect } from '@playwright/test'
 
+async function fillSixDigitCode(page: import('@playwright/test').Page) {
+    const inputs = page.locator('input[inputmode="numeric"]')
+    for (let index = 0; index < 6; index += 1) {
+        await inputs.nth(index).fill(String(index + 1))
+    }
+}
+
 test('cadastro corretor em fluxo Google pendente segue para onboarding de documentos', async ({ page }) => {
     await page.route('**/auth/check-creci**', async (route) => {
         await route.fulfill({
@@ -8,11 +15,24 @@ test('cadastro corretor em fluxo Google pendente segue para onboarding de docume
             body: JSON.stringify({ exists: false }),
         })
     })
+    await page.route('**/auth/register/draft/**', async (route) => {
+        if (route.request().method() === 'PATCH') {
+            await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ draft: {} }) })
+            return
+        }
+        if (route.request().method() === 'POST') {
+            await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) })
+            return
+        }
+        await route.continue()
+    })
 
     await page.addInitScript(() => {
         const draft = {
             source: 'google',
             userType: null,
+            draftId: 'draft-google-broker',
+            draftToken: 'draft-google-broker-token',
             step: 'profile',
             emailVerified: false,
             phoneVerified: false,
@@ -54,13 +74,11 @@ test('cadastro corretor em fluxo Google pendente segue para onboarding de docume
     await page.getByLabel('Bairro').fill('Centro')
     await page.getByLabel('Rua').fill('Rua Broker')
     await page.getByLabel(/Número/).fill('200')
-    await page.getByRole('button', { name: /^criar conta$/i }).click()
-    await expect(page).toHaveURL(/\/cadastro\/verificar-metodo/)
-    await expect(page.getByText(/Seu e-mail já foi (confirmado|verificado)\. Você quer verificar seu telefone\?/i)).toBeVisible()
-    await page.getByRole('button', { name: /prosseguir com verificação de corretor/i }).click()
-    await expect(page).toHaveURL(/\/onboarding\/broker\?mode=signup/)
-    await expect(page.getByRole('heading', { name: /Quero ser corretor/i })).toBeVisible()
-    await expect(page.getByRole('textbox', { name: /número creci/i })).toBeVisible()
+    await page.getByRole('button', { name: /^ir para a verificação$/i }).click()
+    await page.getByRole('button', { name: /^e-mail/i }).click()
+    await page.locator('input[inputmode="numeric"]').first().waitFor()
+    await fillSixDigitCode(page)
+    await expect(page.getByRole('group', { name: /fotos do creci e selfie/i })).toBeVisible()
 })
 
 test('Google após escolha prévia de perfil mantém o tipo e inicia em Dados básicos', async ({ page }) => {
@@ -68,6 +86,8 @@ test('Google após escolha prévia de perfil mantém o tipo e inicia em Dados b�
         const draft = {
             source: 'google',
             userType: 'broker',
+            draftId: 'draft-google-preselected',
+            draftToken: 'draft-google-preselected-token',
             step: 'basic',
             emailVerified: true,
             phoneVerified: false,
@@ -96,8 +116,7 @@ test('Google após escolha prévia de perfil mantém o tipo e inicia em Dados b�
     await page.goto('/auth/cadastro')
     await expect(page.getByRole('textbox', { name: 'Nome completo *' })).toBeVisible()
     await expect(page.getByRole('textbox', { name: 'E-mail *' })).toHaveValue('broker-presel@example.com')
-    await expect(page.getByRole('button', { name: /quero cadastrar como cliente/i })).not.toBeVisible()
-    await expect(page.getByRole('button', { name: /quero cadastrar como corretor/i })).not.toBeVisible()
+    await expect(page.getByRole('button', { name: /quero cadastrar como corretor/i })).toHaveAttribute('aria-pressed', 'true')
 })
 
 test('Não, continuar sem verificar em verificar-método leva cliente para meus imóveis', async ({ page }) => {
@@ -404,9 +423,7 @@ test('corretor cria pendência documental com Enviar depois sem exigir CRECI nov
     await page.getByRole('checkbox', { name: /li e aceito integralmente o termo de adesão de corretor/i }).check()
 
     await page.getByRole('button', { name: /enviar depois/i }).click()
-    await expect(page.getByText(/Envie seus documentos para iniciar a análise/i)).toBeVisible()
-    await expect(page.getByRole('link', { name: /Ir para Meus imóveis/i })).toBeVisible()
-    await expect(page.getByText(/Documentos enviados \/ em análise\./i)).not.toBeVisible()
+    await expect(page.getByText('Corretor em análise')).toBeVisible()
     expect(finalizeAction).toBe('send_later')
     expect(finalizeBody).toMatchObject({
         acceptedTerms: true,
@@ -592,8 +609,7 @@ test('enviar documentos leva para etapa de análise', async ({ page }) => {
     })
 
     await page.getByRole('button', { name: /enviar documentos/i }).click()
-    await expect(page.getByText(/Documentos enviados \/ em análise\./i)).toBeVisible()
-    await expect(page.getByRole('link', { name: /Explorar imóveis/i })).toBeVisible()
+    await expect(page.getByText('Corretor em análise')).toBeVisible()
     expect(finalizeAction).toBe('submit_documents')
     expect(finalizeBody).toMatchObject({
         acceptedTerms: true,

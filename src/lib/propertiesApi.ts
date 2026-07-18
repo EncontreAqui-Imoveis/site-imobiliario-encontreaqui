@@ -475,14 +475,30 @@ export async function fetchFeaturedProperties(limit = 6, deal: HomeDeal = 'sale'
 }
 
 export async function fetchRecentProperties(limit = 8, deal: HomeDeal = 'sale'): Promise<Property[]> {
+    return fetchHomePropertiesBySort(limit, deal, 'created_at:desc')
+}
+
+async function fetchHomePropertiesBySort(
+    limit: number,
+    deal: HomeDeal,
+    sort: 'created_at:desc' | 'price:desc' | 'price:asc',
+): Promise<Property[]> {
     const params = new URLSearchParams()
     params.set('status', 'approved')
     params.set('limit', String(limit))
-    params.set('sort', 'created_at:desc')
+    params.set('sort', sort)
     params.set('purpose', deal === 'rent' ? 'Aluguel' : 'Venda')
 
     const properties = await fetchProperties(params)
     return properties.slice(0, limit)
+}
+
+export async function fetchMostExpensiveProperties(limit = 8, deal: HomeDeal = 'sale'): Promise<Property[]> {
+    return fetchHomePropertiesBySort(limit, deal, 'price:desc')
+}
+
+export async function fetchMostAffordableProperties(limit = 8, deal: HomeDeal = 'sale'): Promise<Property[]> {
+    return fetchHomePropertiesBySort(limit, deal, 'price:asc')
 }
 
 async function fetchPrivatePropertyByIdentifier(normalizedId: string): Promise<Property | null> {

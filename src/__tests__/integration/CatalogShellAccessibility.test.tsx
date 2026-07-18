@@ -53,6 +53,12 @@ jest.mock('@/components/home/HomeSections', () => ({
     RecentSection: function MockRecentSection() {
         return <section aria-label="Recentes" data-testid="recent-section">Recent</section>
     },
+    MostExpensiveSection: function MockMostExpensiveSection() {
+        return <section aria-label="Mais caros" data-testid="most-expensive-section">Most expensive</section>
+    },
+    MostAffordableSection: function MockMostAffordableSection() {
+        return <section aria-label="Mais baratos" data-testid="most-affordable-section">Most affordable</section>
+    },
     RecentSkeleton: function MockRecentSkeleton() {
         return <div data-testid="recent-skeleton">Loading recent</div>
     },

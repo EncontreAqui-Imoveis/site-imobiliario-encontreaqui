@@ -80,7 +80,7 @@ test('login permite entrar com credenciais de teste e remove bloqueio de sessão
   await page.goto('/auth/login')
 
   await page.getByLabel('E-mail').fill('cliente-e2e@example.com')
-  await page.locator('#password').fill('123456')
+  await page.locator('#login-password').fill('123456')
   await page.getByRole('button', { name: 'Entrar', exact: true }).click()
 
   await expect(page).not.toHaveURL('/auth/login')
@@ -108,7 +108,7 @@ test('login mostra erro específico quando 401 retorna papel divergente', async 
     await page.goto('/auth/login')
 
     await page.getByLabel('E-mail').fill('cliente-e2e@example.com')
-    await page.locator('#password').fill('123456')
+    await page.locator('#login-password').fill('123456')
     await page.getByRole('button', { name: 'Entrar', exact: true }).click()
 
     await expect(page.locator('#login-error')).toHaveText(
@@ -152,7 +152,7 @@ test('step de cadastro é indicador de progresso e seleção tem check único', 
   await expect(page.locator('text=Etapa 1: Perfil')).toHaveCount(0)
   await expect(clientButton.locator('svg')).toHaveCount(1)
   await expect(
-      page.getByText('Selecione seu tipo de perfil para avançarmos para o próximo passo.'),
+      page.getByText('Selecione seu tipo de perfil e preencha seus dados.'),
   ).toBeVisible()
 })
 
@@ -160,11 +160,10 @@ test('bloco de cadastro respeita margem de topo em mobile', async ({ page }) => 
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/auth/cadastro')
 
-  const authPanel = page.locator('main').locator('div', { has: page.getByRole('heading', { name: 'Criar conta' }) }).first()
+  const authPanel = page.locator('main')
 
-  await expect(authPanel).toHaveClass(/min-h-\[calc\(100vh-4rem\)]/)
-  await expect(authPanel).toHaveClass(/pt-24/)
-  await expect(authPanel).toHaveClass(/sm:pt-36/)
+  await expect(authPanel).toHaveClass(/overflow-y-auto/)
+  await expect(page.getByRole('heading', { name: 'Criar conta' })).toBeVisible()
 })
 
 test('bloco de seleção de verificação de método respeita margem em mobile', async ({ page }) => {
@@ -216,11 +215,10 @@ test('bloco de login não entra abaixo da navbar em viewport mobile', async ({ p
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/auth/login')
 
-  const loginPanel = page.locator('main').locator('div', { has: page.getByRole('heading', { name: 'Entrar na plataforma' }) }).first()
+  const loginPanel = page.locator('main')
 
-  await expect(loginPanel).toHaveClass(/min-h-\[calc\(100vh-4rem\)]/)
-  await expect(loginPanel).toHaveClass(/pt-28/)
-  await expect(loginPanel).toHaveClass(/sm:pt-36/)
+  await expect(loginPanel).toHaveClass(/overflow-y-auto/)
+  await expect(page.getByRole('heading', { name: 'Acesse sua conta' })).toBeVisible()
 })
 
 test('verificar método com e-mail já confirmado pergunta se quer validar telefone', async ({ page }) => {

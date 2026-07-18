@@ -18,7 +18,6 @@ import {
     resolveSignupDraftHref,
     saveSignupDraft,
     markSignupDraftEmailVerified,
-    rewindSignupDraftToAddress,
     type SignupDraft,
 } from '@/lib/authSignupDraft'
 import { useUser } from '@/contexts/UserContext'
@@ -37,11 +36,9 @@ import {
     finalizeSignupDraft,
 } from '@/lib/api/signupDraft'
 import { Eye, EyeOff, Mail, Smartphone, Upload, Camera, CreditCard, ShieldCheck, CheckCircle2 } from 'lucide-react'
-import SignupLegalNotice from '@/components/legal/SignupLegalNotice'
 import LegalDocumentModal, { type LegalDocumentKind } from '@/components/legal/LegalDocumentModal'
 import { validateDocumentFile } from '@/lib/sanitize'
 import { persistAuthToken } from '@/lib/auth/tokenStore'
-import { registerUserFromSignupDraft } from '@/lib/registerFromSignupDraft'
 import { LEGAL_DOCUMENT_VERSION } from '@/lib/legalDocuments'
 
 
@@ -229,9 +226,9 @@ export default function CadastroPage() {
     const [otpCode, setOtpCode] = useState<string[]>(['', '', '', '', '', ''])
     const [otpCountdown, setOtpCountdown] = useState(0)
     const [otpSending, setOtpSending] = useState(false)
-    const [otpVerifying, setOtpVerifying] = useState(false)
+    const [, setOtpVerifying] = useState(false)
     const [otpError, setOtpError] = useState<string | null>(null)
-    const [otpSuccess, setOtpSuccess] = useState(false)
+    const [, setOtpSuccess] = useState(false)
     const [otpSessionToken, setOtpSessionToken] = useState<string | null>(null)
 
     // States for broker document upload
@@ -305,15 +302,6 @@ export default function CadastroPage() {
         }
     }, [draft.step, internalDisplayStep, ready, isTest])
 
-    const stepIndex = useMemo(() => {
-        switch (displayStep) {
-            case 'profile':
-            case 'basic':
-                return 0
-            default:
-                return 2
-        }
-    }, [displayStep])
     const stepSubtitle = useMemo(() => {
         if (displayStep === 'profile' || displayStep === 'basic') return 'Selecione seu tipo de perfil e preencha seus dados.'
         return STEP_SUBTITLES.address
@@ -736,6 +724,7 @@ export default function CadastroPage() {
         try {
             const syncedDraft = await syncDraftWithServer(next)
             persistDraft(syncedDraft)
+            setDraft(syncedDraft)
         } catch (err) {
             const apiErr = err as ApiError
             if (isNetworkError(err)) {
@@ -869,7 +858,9 @@ export default function CadastroPage() {
 
                 if (draft.userType === 'broker') {
                     setVerificationModalOpen(false)
-                    persistDraft({ ...updated, step: 'documents' })
+                    const documentsDraft = createSignupDraft({ ...updated, step: 'documents' })
+                    persistDraft(documentsDraft)
+                    setDraft(documentsDraft)
                 } else {
                     const finalized = await finalizeSignupDraft(
                         draft.draftId,
@@ -903,7 +894,9 @@ export default function CadastroPage() {
 
                 if (draft.userType === 'broker') {
                     setVerificationModalOpen(false)
-                    persistDraft({ ...updated, step: 'documents' })
+                    const documentsDraft = createSignupDraft({ ...updated, step: 'documents' })
+                    persistDraft(documentsDraft)
+                    setDraft(documentsDraft)
                 } else {
                     const finalized = await finalizeSignupDraft(
                         draft.draftId,

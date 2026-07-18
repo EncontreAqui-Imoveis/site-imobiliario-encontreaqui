@@ -7,12 +7,10 @@ import { Bed, Bath, Car, Maximize, MapPin, ChevronLeft, ChevronRight, Hammer } f
 import {
     Property,
     formatPrice,
-    formatPromotionPeriodLabel,
     getPromoSalePrice,
     getPromoRentPrice,
 } from '@/types/property'
 import { capitalizePropertyTitle } from '@/lib/propertyTitleDisplay'
-import { formatUnit } from '@/lib/propertyLabels'
 import { areaUnitLabel, normalizeAreaUnidade, squareMetersToAreaInput } from '@/lib/areaUnits'
 import { buildPublicPropertyUrl } from '@/lib/propertyLinks'
 import FavoriteButton from '@/components/property/FavoriteButton'
@@ -39,28 +37,12 @@ export default function PropertyCard({ property, variant = 'default' }: Property
     const images = property.images?.length ? property.images : ['/logo_circular.png']
     const hasMultipleImages = images.length > 1
     const isFeatured = variant === 'featured'
-    const statusMeta = property.status === 'pending_approval'
-        ? { label: 'Em análise', className: 'bg-amber-100 text-amber-800' }
-        : property.status === 'sold'
-            ? { label: 'Vendido', className: 'bg-blue-100 text-blue-800' }
-            : property.status === 'rented'
-                ? { label: 'Alugado', className: 'bg-indigo-100 text-indigo-800' }
-                : property.status === 'rejected'
-                    ? { label: 'Rejeitado', className: 'bg-red-100 text-red-800' }
-                    : { label: 'Disponível', className: 'bg-slate-100 text-slate-700' }
-    const purposeBadge = property.purpose.toLowerCase().includes('alug')
-        ? { label: 'Aluguel', className: isFeatured ? 'rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-bold text-slate-700' : 'badge-gold' }
-        : { label: 'Venda', className: 'badge-teal' }
-
     const promoSale = getPromoSalePrice(property)
     const promoRent = getPromoRentPrice(property)
     const hasSale = property.priceSale != null && property.priceSale > 0
     const hasRent = property.priceRent != null && property.priceRent > 0
     const effectivePromo = promoSale ?? promoRent
     const basePrice = property.priceSale ?? property.priceRent ?? property.price
-    const promoPeriodLabel =
-        effectivePromo != null ? formatPromotionPeriodLabel(property.promotionStart, property.promotionEnd) : null
-
     const goToPrevious = (e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
