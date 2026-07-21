@@ -18,6 +18,9 @@ export interface ContractCapabilities {
     canEditSeller: boolean
     canReadBuyer: boolean
     canEditBuyer: boolean
+    canReadDocumentStatus: boolean
+    canReadDocumentFiles: boolean
+    canMutateDocuments: boolean
     isReadOnly: boolean
 }
 export type ContractDocumentCategoryStatus =

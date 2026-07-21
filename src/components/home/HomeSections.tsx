@@ -47,20 +47,16 @@ function homeBrowseHref(deal: HomeDeal, sort: 'created_at:desc' | 'price:desc' |
     return `/imoveis?purpose=${encodeURIComponent(purpose)}&sort=${encodeURIComponent(sort)}`
 }
 
-function dealLabel(deal: HomeDeal) {
-    return deal === 'rent' ? 'Aluguel' : 'Venda'
-}
-
 export async function FeaturedSection({ deal = 'sale' }: { deal?: HomeDeal } = {}) {
     const properties = await fetchFeaturedProperties(6, deal)
-    const title = `Destaques para ${dealLabel(deal)}`
+    const title = 'Imóveis em Destaque'
     return <FeaturedCarousel properties={properties} title={title} browseHref={homeBrowseHref(deal, 'created_at:desc')} />
 }
 
 export async function RecentSection({ deal = 'sale' }: { deal?: HomeDeal } = {}) {
     const properties = await fetchRecentProperties(8, deal)
-    const title = `Mais recentes para ${dealLabel(deal)}`
-    const subtitle = `Imóveis adicionados recentemente para ${deal === 'rent' ? 'aluguel' : 'venda'}`
+    const title = 'Acabou de chegar'
+    const subtitle = 'Novidades publicadas recentemente.'
     return (
         <RecentProperties
             properties={properties}
@@ -76,8 +72,8 @@ export async function MostExpensiveSection({ deal = 'sale' }: { deal?: HomeDeal 
     return (
         <RecentProperties
             properties={properties}
-            title={`Mais caros para ${dealLabel(deal)}`}
-            subtitle={`Imóveis de maior valor para ${deal === 'rent' ? 'aluguel' : 'venda'}`}
+            title="Para o seu conforto"
+            subtitle="Imóveis com mais espaço, acabamento e comodidades."
             browseHref={homeBrowseHref(deal, 'price:desc')}
         />
     )
@@ -88,8 +84,8 @@ export async function MostAffordableSection({ deal = 'sale' }: { deal?: HomeDeal
     return (
         <RecentProperties
             properties={properties}
-            title={`Mais baratos para ${dealLabel(deal)}`}
-            subtitle={`Opções mais acessíveis para ${deal === 'rent' ? 'aluguel' : 'venda'}`}
+            title="Para economizar"
+            subtitle="Boas oportunidades para o seu planejamento."
             browseHref={homeBrowseHref(deal, 'price:asc')}
         />
     )

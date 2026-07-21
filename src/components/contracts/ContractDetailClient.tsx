@@ -646,6 +646,9 @@ export function ContractDetailClient({ contract }: Props) {
     }
 
     const renderUploadField = (entry: ChecklistEntry, currentDoc: ContractDocument | null) => {
+        if (currentContract.capabilities?.canMutateDocuments === false) {
+            return <p className="text-xs text-slate-500">Consulta de status nesta etapa.</p>
+        }
         const { side } = entry
         const locked =
             side == null ? false : isSideLocked(currentContract, side)
@@ -681,9 +684,10 @@ export function ContractDetailClient({ contract }: Props) {
         )
     }
 
-    const sharedDocs = filterSharedDocs(documents)
-    const sellerDocs = filterDocsBySide(documents, 'seller')
-    const buyerDocs = filterDocsBySide(documents, 'buyer')
+    const canReadDocumentFiles = currentContract.capabilities?.canReadDocumentFiles ?? true
+    const sharedDocs = canReadDocumentFiles ? filterSharedDocs(documents) : []
+    const sellerDocs = canReadDocumentFiles ? filterDocsBySide(documents, 'seller') : []
+    const buyerDocs = canReadDocumentFiles ? filterDocsBySide(documents, 'buyer') : []
     const statusMeta = getContractStatusMeta(currentContract.status)
     const sellerMeta = getApprovalStatusMeta(currentContract.sellerApprovalStatus)
     const buyerMeta = getApprovalStatusMeta(currentContract.buyerApprovalStatus)
@@ -734,10 +738,10 @@ export function ContractDetailClient({ contract }: Props) {
         currentContract.responsibleUserIds.includes(currentUserId)
     const canEditSellerSide = (currentContract.capabilities?.canEditSeller ?? (
         isAwaitingDocs && (isCaptadorViewer || isOwnerViewer || isResponsibleViewer)
-    )) && !sellerLocked
+    )) && currentContract.capabilities?.canMutateDocuments !== false && !sellerLocked
     const canEditBuyerSide = (currentContract.capabilities?.canEditBuyer ?? (
         isAwaitingDocs && (isCaptadorViewer || isBuyerViewer || isResponsibleViewer)
-    )) && !buyerLocked
+    )) && currentContract.capabilities?.canMutateDocuments !== false && !buyerLocked
 
     const isSellerViewer =
         isCaptadorViewer || isOwnerViewer || isResponsibleViewer
@@ -756,7 +760,8 @@ export function ContractDetailClient({ contract }: Props) {
     })()
     const canViewSellerDocuments = currentContract.capabilities?.canReadSeller ?? (viewerSide === 'seller' || viewerSide === 'both')
     const canViewBuyerDocuments = currentContract.capabilities?.canReadBuyer ?? (viewerSide === 'buyer' || viewerSide === 'both')
-    const canViewDetailedDocuments = canViewSellerDocuments || canViewBuyerDocuments
+    const canReadDocumentStatus = currentContract.capabilities?.canReadDocumentStatus ?? true
+    const canViewDetailedDocuments = canReadDocumentStatus && (canViewSellerDocuments || canViewBuyerDocuments)
     const participantSide = viewerSide === 'seller' || viewerSide === 'buyer' ? viewerSide : null
     const ownProgress = participantSide ? currentContract.documentProgress?.[participantSide] : null
     const counterpartSide = participantSide === 'seller' ? 'buyer' : participantSide === 'buyer' ? 'seller' : null
@@ -1169,6 +1174,11 @@ export function ContractDetailClient({ contract }: Props) {
 
             {canViewDetailedDocuments ? (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {!canReadDocumentFiles && (
+                    <section className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 md:col-span-2">
+                        Consulta de status: os arquivos e os dados das partes ficam indisponíveis nesta etapa do contrato.
+                    </section>
+                )}
                 {sharedDocs.length > 0 && (
                     <section className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm space-y-3 md:col-span-2" aria-labelledby="shared-documents">
                         <div className="flex items-center justify-between">

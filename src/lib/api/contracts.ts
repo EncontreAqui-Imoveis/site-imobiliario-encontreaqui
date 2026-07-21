@@ -134,13 +134,25 @@ function normalizeDocumentProgress(raw: unknown): ContractDocumentProgressSummar
 function normalizeCapabilities(raw: unknown): ContractCapabilities | null {
     if (!raw || typeof raw !== 'object') return null
     const item = raw as Record<string, unknown>
+    const canEditSeller = Boolean(item.canEditSeller ?? item.can_edit_seller)
+    const canEditBuyer = Boolean(item.canEditBuyer ?? item.can_edit_buyer)
+    const isReadOnly = Boolean(item.isReadOnly ?? item.is_read_only)
     return {
         canReadMeta: Boolean(item.canReadMeta ?? item.can_read_meta),
         canReadSeller: Boolean(item.canReadSeller ?? item.can_read_seller),
-        canEditSeller: Boolean(item.canEditSeller ?? item.can_edit_seller),
+        canEditSeller,
         canReadBuyer: Boolean(item.canReadBuyer ?? item.can_read_buyer),
-        canEditBuyer: Boolean(item.canEditBuyer ?? item.can_edit_buyer),
-        isReadOnly: Boolean(item.isReadOnly ?? item.is_read_only),
+        canEditBuyer,
+        canReadDocumentStatus: item.canReadDocumentStatus == null && item.can_read_document_status == null
+            ? true
+            : Boolean(item.canReadDocumentStatus ?? item.can_read_document_status),
+        canReadDocumentFiles: item.canReadDocumentFiles == null && item.can_read_document_files == null
+            ? true
+            : Boolean(item.canReadDocumentFiles ?? item.can_read_document_files),
+        canMutateDocuments: item.canMutateDocuments == null && item.can_mutate_documents == null
+            ? !isReadOnly && (canEditSeller || canEditBuyer)
+            : Boolean(item.canMutateDocuments ?? item.can_mutate_documents),
+        isReadOnly,
     }
 }
 
