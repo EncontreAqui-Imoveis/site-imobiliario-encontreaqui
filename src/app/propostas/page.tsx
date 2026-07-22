@@ -25,6 +25,7 @@ export default function PropostasPage() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [filter, setFilter] = useState<'sent' | 'signed' | 'refused'>('sent')
+    const [searchQuery, setSearchQuery] = useState('')
     const [busyActionId, setBusyActionId] = useState<string | null>(null)
 
     const getFriendlyProposalStatusLabel = (status: string) => {
@@ -72,9 +73,15 @@ export default function PropostasPage() {
         }
     }
 
-    const filtered = negotiations.filter(n => {
+    const filtered = negotiations.filter((n) => {
         const bucket = resolveProposalBucket(n.status)
-        return bucket === filter
+        if (bucket !== filter) return false
+        if (!searchQuery.trim()) return true
+        const q = searchQuery.trim().toLowerCase()
+        const title = (n.propertyTitle ?? '').toLowerCase()
+        const code = String(n.propertyId ?? '').toLowerCase()
+        const id = String(n.id).toLowerCase()
+        return title.includes(q) || code.includes(q) || id.includes(q)
     })
 
     const statusSummary = {

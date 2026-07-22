@@ -22,8 +22,9 @@ export default function RecentProperties({
     showViewAll = true,
     browseHref = '/imoveis?sort=created_at:desc',
 }: RecentPropertiesProps) {
-    const [emblaRef, emblaApi] = useEmblaCarousel({ align: 'start', loop: false, slidesToScroll: 1 })
+    const [emblaRef, emblaApi] = useEmblaCarousel({ align: 'start', loop: false, slidesToScroll: 3 })
     const [selectedIndex, setSelectedIndex] = useState(0)
+    const [scrollSnaps, setScrollSnaps] = useState<number[]>([])
     const [canScrollPrev, setCanScrollPrev] = useState(false)
     const [canScrollNext, setCanScrollNext] = useState(false)
 
@@ -37,9 +38,12 @@ export default function RecentProperties({
     useEffect(() => {
         if (!emblaApi) return
         onSelect()
+        setScrollSnaps(emblaApi.scrollSnapList())
         emblaApi.on('select', onSelect)
+        emblaApi.on('reInit', onSelect)
         return () => {
             emblaApi.off('select', onSelect)
+            emblaApi.off('reInit', onSelect)
         }
     }, [emblaApi, onSelect])
 
@@ -108,7 +112,7 @@ export default function RecentProperties({
                 </div>
 
                 <div className="mt-6 flex justify-center gap-2">
-                    {properties.map((_, idx) => (
+                    {(scrollSnaps.length > 0 ? scrollSnaps : properties).map((_, idx) => (
                         <button
                             key={idx}
                             onClick={() => emblaApi?.scrollTo(idx)}

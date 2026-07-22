@@ -18,7 +18,7 @@ Status
     do participante e manter operações administrativas no painel.
 [x] Passo 6 - Notificações e navegação: metadata.route com allowlist,
     fallback Schema V1 e tratamento 403/404.
-[ ] Passo 7 - Comissão: consolidar o uso de contract_commission_allocations
+[x] Passo 7 - Comissão: consolidar o uso de contract_commission_allocations
     nos relatórios e decidir se haverá trilha de pagamento/comprovante.
 [ ] Passo 8 - Homologação E2E completa: venda e locação, PIN, cinco
     responsáveis, PDFs/imagens, documentos, minuta, congelamento e comissão.
@@ -83,6 +83,17 @@ Regra de comissão vigente
 Locação registra comissão única sobre o primeiro aluguel: 10% captador, 50%
 corretor vendedor e 40% EncontreAqui. Não existe recorrência mensal. A
 alocação é administrativa/rastreável; pagamento bancário não é automatizado.
+
+Passo 7 - Entrega concluída
+- A finalização e correções administrativas sincronizam
+  contract_commission_allocations na mesma transação do contrato.
+- Relatórios de corretores já consultam exclusivamente as alocações RECORDED
+  de contratos FINALIZED.
+- O relatório administrativo passou a usar as alocações CAPTURING e SELLING
+  como fonte de valores e nomes dos corretores, preservando commission_data
+  somente como fallback de leitura para contratos históricos sem projeção.
+- Não há ciclo de pagamento, baixa financeira ou comprovante automatizado:
+  a comissão é uma projeção administrativa rastreável, não uma ordem bancária.
 
 Validação por etapa
 - lint, testes unitários e build do site;

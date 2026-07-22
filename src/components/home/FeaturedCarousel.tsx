@@ -23,7 +23,7 @@ export default function FeaturedCarousel({
         {
             loop: true,
             align: 'start',
-            slidesToScroll: 1,
+            slidesToScroll: 3,
         },
         [Autoplay({ delay: 5000, stopOnInteraction: true })]
     )
@@ -31,6 +31,7 @@ export default function FeaturedCarousel({
     const [canScrollPrev, setCanScrollPrev] = useState(false)
     const [canScrollNext, setCanScrollNext] = useState(false)
     const [selectedIndex, setSelectedIndex] = useState(0)
+    const [scrollSnaps, setScrollSnaps] = useState<number[]>([])
 
     const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi])
     const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi])
@@ -45,9 +46,12 @@ export default function FeaturedCarousel({
     useEffect(() => {
         if (!emblaApi) return
         onSelect()
+        setScrollSnaps(emblaApi.scrollSnapList())
         emblaApi.on('select', onSelect)
+        emblaApi.on('reInit', onSelect)
         return () => {
             emblaApi.off('select', onSelect)
+            emblaApi.off('reInit', onSelect)
         }
     }, [emblaApi, onSelect])
 
@@ -120,7 +124,7 @@ export default function FeaturedCarousel({
 
                 {/* Dots */}
                 <div className="flex justify-center gap-2 mt-6">
-                    {properties.map((_, idx) => (
+                    {(scrollSnaps.length > 0 ? scrollSnaps : properties).map((_, idx) => (
                         <button
                             key={idx}
                             onClick={() => emblaApi?.scrollTo(idx)}

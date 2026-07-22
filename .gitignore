@@ -9,7 +9,7 @@ coverage/
 !.env.example
 bfg-1.15.0.jar
 site-imobiliario-threat-model.md
-.gitignore
 stitch_home_encontreaqui_estilo_quintoandar/
 test-results/
 e2e/
+docs/contract-ecosystem-site-plan.txt

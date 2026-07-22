@@ -35,7 +35,7 @@ import {
     submitSignupDraftDocuments,
     finalizeSignupDraft,
 } from '@/lib/api/signupDraft'
-import { Eye, EyeOff, Mail, Smartphone, Upload, Camera, CreditCard, ShieldCheck, CheckCircle2 } from 'lucide-react'
+import { Eye, EyeOff, Mail, Smartphone, Upload, Camera, CreditCard, ShieldCheck, CheckCircle2, Check } from 'lucide-react'
 import LegalDocumentModal, { type LegalDocumentKind } from '@/components/legal/LegalDocumentModal'
 import { validateDocumentFile } from '@/lib/sanitize'
 import { persistAuthToken } from '@/lib/auth/tokenStore'
@@ -1236,7 +1236,7 @@ export default function CadastroPage() {
                         <form onSubmit={handleContinueBasic} className="space-y-2.5" aria-describedby={error ? 'register-error' : undefined}>
 
                             {/* Seleção do Perfil */}
-                            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 {selectionCards.map((option) => {
                                     const isSelected = draft.userType === option.value
                                     return (
@@ -1246,35 +1246,33 @@ export default function CadastroPage() {
                                             aria-pressed={isSelected}
                                             aria-describedby={`signup-role-${option.value}-hint`}
                                             onClick={() => handleSelectProfile(option.value)}
-                                            className={`group relative cursor-pointer rounded-xl border py-2.5 px-3.5 text-left transition-all outline-none ${isSelected
-                                                ? 'border-yellow-400 bg-yellow-50/20 ring-2 ring-yellow-400/30'
-                                                : 'border-gray-200 bg-white hover:border-yellow-400/40 hover:bg-gray-50/50'
+                                            className={`group relative cursor-pointer rounded-2xl border p-4 text-left transition-all outline-none ${isSelected
+                                                ? 'border-2 border-yellow-400 bg-white'
+                                                : 'border border-gray-200 bg-white hover:border-gray-300'
                                                 }`}
                                         >
                                             <div className="flex items-start justify-between gap-3">
-                                                <div className="space-y-0.5">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <p className="text-sm font-bold text-gray-900 leading-tight">{option.title}</p>
-                                                    </div>
-                                                    <p className="text-[11px] sm:text-xs text-gray-500 leading-normal">
+                                                <div className="space-y-1">
+                                                    <p className="text-sm font-bold text-gray-900 leading-tight">{option.title}</p>
+                                                    <p className="text-xs text-gray-500 leading-normal">
                                                         {option.description}
                                                     </p>
                                                 </div>
                                                 <span
-                                                    className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                                                    className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-colors ${
                                                         isSelected
-                                                            ? 'border-yellow-400 bg-yellow-400 text-slate-900'
-                                                            : 'border-gray-300 bg-white text-transparent group-hover:border-yellow-400'
+                                                            ? 'bg-yellow-400 text-slate-900'
+                                                            : 'border border-gray-300 bg-white'
                                                     }`}
                                                     aria-hidden="true"
                                                 >
-                                                    <CheckCircle2 className="h-2.5 w-2.5" />
+                                                    {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
                                                 </span>
                                             </div>
                                             <p
                                                 id={`signup-role-${option.value}-hint`}
-                                                className={`mt-2 text-[10px] sm:text-xs font-medium ${
-                                                    isSelected ? 'text-amber-800' : 'text-gray-400'
+                                                className={`mt-3 text-xs ${
+                                                    isSelected ? 'font-bold text-amber-800' : 'font-normal text-gray-400'
                                                 }`}
                                             >
                                                 {isSelected ? 'Escolha aplicada. Continue para preencher seus dados.' : option.helper}
