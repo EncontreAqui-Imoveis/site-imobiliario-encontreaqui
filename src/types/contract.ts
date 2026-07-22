@@ -12,6 +12,10 @@ export type ApprovalStatus =
 
 export type ContractSide = 'seller' | 'buyer'
 
+export type ContractDealType = 'sale' | 'rent'
+
+export type ContractHandshakeStatus = 'PENDING' | 'VERIFIED' | 'REJECTED'
+
 export interface ContractCapabilities {
     canReadMeta: boolean
     canReadSeller: boolean
@@ -22,6 +26,7 @@ export interface ContractCapabilities {
     canReadDocumentFiles: boolean
     canMutateDocuments: boolean
     isReadOnly: boolean
+    requiresHandshakeVerification?: boolean
 }
 export type ContractDocumentCategoryStatus =
     | 'PENDING'
@@ -49,16 +54,22 @@ export type ContractDocumentCategory =
     | 'estado_civil'
     | 'conjuge_documentos'
     | 'comprovante_renda'
+    | 'seguro_incendio'
     | 'dados_bancarios'
-    | 'docs_imovel'
+    | 'certidao_inteiro_teor_escritura'
+    | 'certidao_onus_acoes'
+    | 'outro'
 
 export type ContractDocumentType =
     | 'doc_identidade'
+    | 'doc_identidade_conjuge'
     | 'comprovante_endereco'
     | 'certidao_casamento_nascimento'
     | 'certidao_inteiro_teor'
     | 'certidao_onus_acoes'
     | 'comprovante_renda'
+    | 'seguro_incendio'
+    | 'dados_bancarios'
     | 'contrato_minuta'
     | 'contrato_assinado'
     | 'comprovante_pagamento'
@@ -125,11 +136,20 @@ export interface ContractSummary {
     propertyTitle?: string | null
     propertyCode?: string | null
     propertyPurpose?: string | null
+    dealType?: ContractDealType | null
     viewerSide?: ContractSide | 'both' | 'none' | null
     responsibleUserIds?: number[] | null
     documentProgress?: ContractDocumentProgressSummary | null
     documentRequirements?: DocumentRequirementsPayload | null
     capabilities?: ContractCapabilities | null
+    workflow?: {
+        status: ContractStatus
+        isReadOnly: boolean
+    } | null
+    handshake?: {
+        status: ContractHandshakeStatus | null
+        requiresVerification: boolean
+    } | null
 }
 
 export interface ContractDetail extends ContractSummary {
@@ -138,6 +158,10 @@ export interface ContractDetail extends ContractSummary {
     buyerInfo?: unknown
     commissionData?: unknown
     workflowMetadata?: Record<string, unknown> | null
+    identityCapabilities?: {
+        seller: { canEditName: boolean; canEditCpf: boolean }
+        buyer: { canEditName: boolean; canEditCpf: boolean }
+    } | null
     sellerApprovalReason?: ContractApprovalReason | null
     ownerApprovalReason?: ContractApprovalReason | null
     buyerApprovalReason?: ContractApprovalReason | null

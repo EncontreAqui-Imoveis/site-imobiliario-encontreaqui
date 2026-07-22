@@ -15,7 +15,7 @@ import {
     Bell, Building2, Users, FileText, CheckCheck, Loader2,
     Trash2, X, AlertTriangle, Megaphone
 } from 'lucide-react'
-import { buildPublicPropertyUrl } from '@/lib/propertyLinks'
+import { resolveNotificationHref } from '@/lib/notificationNavigation'
 
 const entityIcons: Record<string, typeof Bell> = {
     property: Building2,
@@ -26,54 +26,6 @@ const entityIcons: Record<string, typeof Bell> = {
 }
 
 const MESSAGE_PREVIEW_LIMIT = 200
-
-function toStringOrNull(value: unknown): string | null {
-    const normalized = String(value ?? '').trim()
-    return normalized.length > 0 ? normalized : null
-}
-
-function resolveNotificationHref(notification: Notification): string | null {
-    const metadata = notification.metadataJson ?? {}
-    const negotiationId =
-        toStringOrNull(metadata.negotiationId) ??
-        toStringOrNull(metadata.negotiation_id)
-    const contractId =
-        toStringOrNull(metadata.contractId) ??
-        toStringOrNull(metadata.contract_id)
-
-    if (contractId) {
-        return `/meus-processos/contratos/${encodeURIComponent(contractId)}`
-    }
-
-    if (negotiationId) {
-        return `/meus-processos/propostas/${encodeURIComponent(negotiationId)}/upload-assinada`
-    }
-
-    if (notification.relatedEntityType === 'negotiation') {
-        return '/meus-processos/propostas'
-    }
-
-    if (notification.relatedEntityType === 'property' && notification.relatedEntityId) {
-        const propertyPublicRef =
-            toStringOrNull(metadata.publicCode) ??
-            toStringOrNull(metadata.public_code) ??
-            toStringOrNull(metadata.publicCodeSlug) ??
-            toStringOrNull(metadata.slug)
-        return propertyPublicRef
-            ? buildPublicPropertyUrl({ id: notification.relatedEntityId, slug: propertyPublicRef })
-            : '/imoveis'
-    }
-
-    if (notification.relatedEntityType === 'broker' || notification.relatedEntityType === 'user') {
-        return '/perfil'
-    }
-
-    if (notification.relatedEntityType === 'announcement') {
-        return '/anuncie'
-    }
-
-    return null
-}
 
 function formatDate(dateStr: string) {
     const date = new Date(dateStr)

@@ -16,6 +16,22 @@ export type NegotiationStatus =
     | 'RENTED'
     | 'CANCELLED'
 
+export interface NegotiationCapabilities {
+    canRead?: boolean
+    canEditProposal?: boolean
+    canDeleteProposal?: boolean
+    canDownloadDraft?: boolean
+    canUploadSignedProposal?: boolean
+    canManageBuyerData?: boolean
+    canManageSellerData?: boolean
+    canOpenContract?: boolean
+}
+
+export interface NegotiationContractReference {
+    id: string
+    status?: string | null
+}
+
 export interface NegotiationSummary {
     id: string
     propertyId: number
@@ -26,12 +42,12 @@ export interface NegotiationSummary {
     status: NegotiationStatus
     clientName?: string
     clientCpf?: string
+    buyerEmail?: string | null
     buyerUserId?: number | null
     buyerName?: string | null
     createdAt: string
     updatedAt: string
     proposalValidUntil?: string
-    canEditProposal?: boolean
     secondsUntilEditAllowed?: number
     hasSignedProposal?: boolean
     validadeDias?: number
@@ -56,8 +72,10 @@ export interface NegotiationSummary {
     } | null
     propertyBrokerId?: number | null
     sellerBrokerId?: number | null
-    contractId?: string
-    contractStatus?: string
+    contract?: NegotiationContractReference | null
+    contractId?: string | null
+    contractStatus?: string | null
+    capabilities?: NegotiationCapabilities
     buyerApprovalStatus?: string
     sellerApprovalStatus?: string
 }

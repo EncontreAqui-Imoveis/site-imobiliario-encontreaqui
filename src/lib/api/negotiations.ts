@@ -37,8 +37,9 @@ export interface Negotiation {
 export interface CreateProposalPayload {
     propertyId: number
     payment: PaymentDetails
-    clientName?: string
-    clientCpf?: string
+    clientName: string
+    clientCpf: string
+    buyerEmail: string
     validadeDias: number
     idempotencyKey?: string
 }
@@ -54,6 +55,7 @@ export async function createProposal(payload: CreateProposalPayload): Promise<Cr
         payment: payload.payment,
         clientName: payload.clientName,
         clientCpf: payload.clientCpf,
+        buyerEmail: payload.buyerEmail,
         validadeDias: payload.validadeDias,
         idempotency_key: idempotencyKey,
     })

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@/contexts/UserContext'
 import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
-import { deleteProposal, fetchMyNegotiations } from '@/lib/negotiationsService'
+import { deleteProposal, downloadProposalDraft, fetchMyNegotiations } from '@/lib/negotiationsService'
 import type { NegotiationSummary } from '@/types/negotiation'
 import {
     getStatusColor,
@@ -83,56 +83,43 @@ export default function PropostasPage() {
         refused: negotiations.filter((n) => resolveProposalBucket(n.status) === 'refused').length,
     }
 
+    const can = (negotiation: NegotiationSummary, capability: keyof NonNullable<NegotiationSummary['capabilities']>) =>
+        negotiation.capabilities?.[capability] === true
+
+    const contractIdFor = (negotiation: NegotiationSummary) => {
+        const id = String(negotiation.contract?.id ?? '').trim()
+        return id || null
+    }
+
     const resolveNegotiationHref = (negotiation: NegotiationSummary) => {
-        const { status, id, propertyId } = negotiation
-        if (isProposalPreSignatureStatus(status)) {
-            return `/meus-processos/propostas/${id}/upload-assinada`
+        const contractId = contractIdFor(negotiation)
+        if (can(negotiation, 'canOpenContract') && contractId) {
+            return `/meus-processos/contratos/${encodeURIComponent(contractId)}`
         }
-        if (isProposalRefusedStatus(status)) {
-            if (propertyId > 0) {
-                return `/propostas/nova?propertyId=${propertyId}`
-            }
-            return '/meus-processos/propostas'
-        }
-        if (resolveProposalBucket(status) === 'signed') {
-            return '/meus-processos/contratos'
+        if (can(negotiation, 'canUploadSignedProposal')) {
+            return `/meus-processos/propostas/${encodeURIComponent(negotiation.id)}/upload-assinada`
         }
         return '/meus-processos/propostas'
     }
 
     const resolveActionLabel = (negotiation: NegotiationSummary) => {
-        const { status, propertyId } = negotiation
-        if (isProposalPreSignatureStatus(status)) {
+        if (can(negotiation, 'canOpenContract') && contractIdFor(negotiation)) {
+            return 'Abrir contrato'
+        }
+        if (can(negotiation, 'canUploadSignedProposal')) {
             return 'Enviar proposta assinada'
         }
-        if (status === 'PROPOSAL_SIGNED') {
+        if (can(negotiation, 'canDownloadDraft')) {
+            return 'Minuta disponível para download'
+        }
+        if (negotiation.status === 'PROPOSAL_SIGNED') {
             return 'Proposta assinada enviada'
         }
-        if (isProposalRefusedStatus(status)) {
-            return propertyId > 0 ? 'Iniciar novo ciclo de proposta' : 'Proposta recusada'
-        }
-        if (status === 'DOCUMENTATION_PHASE') {
-            return 'Acompanhar documentação'
-        }
-        if (status === 'CONTRACT_DRAFTING') {
-            return 'Acompanhar minuta'
-        }
-        if (status === 'AWAITING_SIGNATURES') {
-            return 'Acompanhar assinaturas'
-        }
-        if (status === 'IN_NEGOTIATION') {
-            return 'Acompanhar negociação'
-        }
-        return 'Abrir contratos'
+        return 'Acompanhe o andamento da proposta'
     }
 
-    const canEditByStatus = (negotiation: NegotiationSummary) => {
-        if (typeof negotiation.canEditProposal === 'boolean') {
-            return negotiation.canEditProposal
-        }
-        return isProposalPreSignatureStatus(negotiation.status)
-    }
-    const canDeleteByStatus = (negotiation: NegotiationSummary) => canEditByStatus(negotiation)
+    const canEditByStatus = (negotiation: NegotiationSummary) => can(negotiation, 'canEditProposal')
+    const canDeleteByStatus = (negotiation: NegotiationSummary) => can(negotiation, 'canDeleteProposal')
     const handleEdit = (negotiation: NegotiationSummary) => {
         if (!canEditByStatus(negotiation) || negotiation.propertyId <= 0) {
             return
@@ -156,6 +143,18 @@ export default function PropostasPage() {
             await loadNegotiations()
         } catch {
             setError('Não foi possível excluir a proposta. Tente novamente.')
+        } finally {
+            setBusyActionId(null)
+        }
+    }
+
+    const handleDownloadDraft = async (negotiation: NegotiationSummary) => {
+        if (!can(negotiation, 'canDownloadDraft')) return
+        setBusyActionId(negotiation.id)
+        try {
+            await downloadProposalDraft(negotiation.id)
+        } catch {
+            setError('Não foi possível baixar a minuta. Tente novamente.')
         } finally {
             setBusyActionId(null)
         }
@@ -324,16 +323,12 @@ export default function PropostasPage() {
                                         event.stopPropagation()
                                     }}
                                 >
-                                    {isProposalPreSignatureStatus(neg.status) ? (
-                                        <>
+                                    <>
+                                        {canEditByStatus(neg) && (
                                             <button
                                                 type="button"
-                                                disabled={!canEditByStatus(neg) || busyActionId === neg.id}
-                                                title={
-                                                    canEditByStatus(neg)
-                                                        ? 'Editar proposta'
-                                                        : 'Edição bloqueada após assinatura'
-                                                }
+                                                disabled={busyActionId === neg.id}
+                                                title="Editar proposta"
                                                 onClick={() => handleEdit(neg)}
                                                 aria-label="Editar proposta"
                                                 className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-500 disabled:cursor-not-allowed disabled:opacity-60"
@@ -341,14 +336,12 @@ export default function PropostasPage() {
                                                 <Pencil className="h-3.5 w-3.5" />
                                                 Editar
                                             </button>
+                                        )}
+                                        {canDeleteByStatus(neg) && (
                                             <button
                                                 type="button"
-                                                disabled={!canDeleteByStatus(neg) || busyActionId === neg.id}
-                                                title={
-                                                    canDeleteByStatus(neg)
-                                                        ? 'Excluir proposta'
-                                                        : 'Exclusão bloqueada após assinatura'
-                                                }
+                                                disabled={busyActionId === neg.id}
+                                                title="Excluir proposta"
                                                 onClick={() => void handleDelete(neg)}
                                                 aria-label="Excluir proposta"
                                                 className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
@@ -356,12 +349,26 @@ export default function PropostasPage() {
                                                 <Trash2 className="h-3.5 w-3.5" />
                                                 Excluir
                                             </button>
-                                        </>
-                                    ) : (
+                                        )}
+                                        {can(neg, 'canDownloadDraft') && (
+                                            <button
+                                                type="button"
+                                                disabled={busyActionId === neg.id}
+                                                title="Baixar minuta"
+                                                onClick={() => void handleDownloadDraft(neg)}
+                                                aria-label="Baixar minuta"
+                                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-500 disabled:cursor-not-allowed disabled:opacity-60"
+                                            >
+                                                <FileText className="h-3.5 w-3.5" />
+                                                Baixar minuta
+                                            </button>
+                                        )}
+                                        {!canEditByStatus(neg) && !canDeleteByStatus(neg) && !can(neg, 'canDownloadDraft') && (
                                         <span className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-500">
                                             Sem ações de edição
                                         </span>
-                                    )}
+                                        )}
+                                    </>
                                 </div>
                             </div>
                         </Link>

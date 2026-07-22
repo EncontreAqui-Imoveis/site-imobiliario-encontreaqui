@@ -8,6 +8,8 @@ jest.mock('@/lib/api/client', () => ({
     apiClient: {
         get: jest.fn(),
         post: jest.fn(),
+        delete: jest.fn(),
+        put: jest.fn(),
     },
 }))
 
@@ -21,10 +23,12 @@ describe('negotiations service', () => {
         const { fetchMyNegotiations } = await import('@/lib/negotiationsService')
         ;(apiClient.get as jest.Mock)
             .mockRejectedValueOnce({ status: 404 })
+            .mockRejectedValueOnce({ status: 404 })
             .mockResolvedValueOnce([])
 
         await fetchMyNegotiations()
 
+        expect(apiClient.get).toHaveBeenCalledWith('/negotiations/mine')
         expect(apiClient.get).toHaveBeenCalledWith('/negotiations/me')
         expect(apiClient.get).toHaveBeenCalledWith('/me/negotiations')
     })
@@ -38,6 +42,7 @@ describe('negotiations service', () => {
             propertyId: 10,
             clientName: 'Cliente',
             clientCpf: '12345678900',
+            buyerEmail: 'cliente@example.com',
             validadeDias: 10,
             payment: {
                 dinheiro: 10,

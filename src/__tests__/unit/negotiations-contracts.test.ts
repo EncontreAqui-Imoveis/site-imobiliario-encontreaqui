@@ -31,6 +31,7 @@ describe('negotiations API', () => {
             clientName: 'Test',
             validadeDias: 10,
             clientCpf: '12345678900',
+            buyerEmail: 'test@example.com',
         })
 
         expect(result.negotiation.id).toBe('neg-123')
@@ -39,6 +40,7 @@ describe('negotiations API', () => {
         expect(init.method).toBe('POST')
         const requestBody = JSON.parse(init.body as string) as Record<string, unknown>
         expect(requestBody.validadeDias).toBe(10)
+        expect(requestBody.buyerEmail).toBe('test@example.com')
         expect(requestBody.idempotency_key).toEqual(expect.any(String))
     })
 

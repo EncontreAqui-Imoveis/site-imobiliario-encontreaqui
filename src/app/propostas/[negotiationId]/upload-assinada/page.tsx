@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { useUser } from '@/contexts/UserContext'
 import { resolveOperationalGateRoute } from '@/lib/auth/routeResolution'
 import { uploadSignedProposal } from '@/lib/api/negotiations'
+import { fetchMyNegotiationById } from '@/lib/negotiationsService'
 import type { ApiError } from '@/lib/api/client'
 
 export default function UploadPropostaAssinadaPage() {
@@ -17,6 +18,7 @@ export default function UploadPropostaAssinadaPage() {
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
+    const [authorized, setAuthorized] = useState(false)
 
     useEffect(() => {
         if (!authLoading && !session) {
@@ -28,6 +30,26 @@ export default function UploadPropostaAssinadaPage() {
             router.replace(gateRoute)
         }
     }, [authLoading, negotiationId, router, session])
+
+    useEffect(() => {
+        if (!session || !negotiationId) return
+        let cancelled = false
+        void fetchMyNegotiationById(negotiationId)
+            .then((negotiation) => {
+                if (cancelled) return
+                if (negotiation?.capabilities?.canUploadSignedProposal !== true) {
+                    setError('O envio da proposta assinada não está disponível para esta negociação.')
+                    return
+                }
+                setAuthorized(true)
+            })
+            .catch(() => {
+                if (!cancelled) setError('Não foi possível validar o acesso à proposta.')
+            })
+        return () => {
+            cancelled = true
+        }
+    }, [negotiationId, session])
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const selected = event.target.files?.[0]
@@ -45,7 +67,7 @@ export default function UploadPropostaAssinadaPage() {
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault()
-        if (!file || !negotiationId) return
+        if (!file || !negotiationId || !authorized) return
 
         setSubmitting(true)
         setError(null)
@@ -141,7 +163,7 @@ export default function UploadPropostaAssinadaPage() {
                         </button>
                         <button
                             type="submit"
-                            disabled={!file || submitting}
+                            disabled={!file || submitting || !authorized}
                             className="inline-flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 disabled:bg-primary-300 text-white text-sm font-semibold px-4 py-2.5 shadow-md shadow-primary-500/20 transition-colors"
                         >
                             {submitting ? 'Enviando...' : 'Enviar proposta assinada'}

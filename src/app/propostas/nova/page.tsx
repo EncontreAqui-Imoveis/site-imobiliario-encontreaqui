@@ -13,7 +13,6 @@ import {
     updateProposalDraft,
     type ProposalUserLookup,
 } from '@/lib/negotiationsService'
-import { isProposalPreSignatureStatus } from '@/types/negotiation'
 import { Property, formatPrice } from '@/types/property'
 import {
     ArrowLeft, ArrowRight, Loader2, FileText, User, CreditCard,
@@ -93,6 +92,10 @@ function formatMoneyInput(raw: string): string {
     return `${integerPart},${decimalPart.slice(0, 2)}`
 }
 
+function isValidEmail(value: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+}
+
 function toPercent(field: PaymentField, propertyValue: number): number {
     const raw = parseLocalized(field.value)
     if (field.unit === 'reais' && propertyValue > 0) return (raw / propertyValue) * 100
@@ -134,6 +137,7 @@ export default function ProposalWizardPage() {
     // Step 1: Client data
     const [clientName, setClientName] = useState('')
     const [clientCpf, setClientCpf] = useState('')
+    const [buyerEmail, setBuyerEmail] = useState('')
 
     // Step 2 for rentals: commercial lease terms, not a sale payment split.
     const [rentalMonthlyRent, setRentalMonthlyRent] = useState('')
@@ -250,6 +254,12 @@ export default function ProposalWizardPage() {
     }, [isEditMode, session?.user?.name])
 
     useEffect(() => {
+        const profileEmail = String(session?.user?.email ?? '').trim()
+        if (!profileEmail || isEditMode || requiresBuyerSelection) return
+        setBuyerEmail((current) => (current.trim().length > 0 ? current : profileEmail))
+    }, [isEditMode, requiresBuyerSelection, session?.user?.email])
+
+    useEffect(() => {
         if (!property) return
         if (canGenerateForProperty) return
         router.replace(`${buildPublicPropertyUrl(property)}?proposalBlocked=1`)
@@ -270,8 +280,8 @@ export default function ProposalWizardPage() {
                     setLoadError('Proposta não encontrada para edição.')
                     return
                 }
-                if (!isProposalPreSignatureStatus(existing.status)) {
-                    setLoadError('Esta proposta já foi assinada e não pode mais ser editada.')
+                if (existing.capabilities?.canEditProposal !== true) {
+                    setLoadError('Esta proposta não está autorizada para edição.')
                     return
                 }
                 if (existing.propertyId !== currentPropertyId) {
@@ -282,6 +292,7 @@ export default function ProposalWizardPage() {
 
                 setClientName(existing.clientName?.trim() || String(session?.user?.name ?? '').trim())
                 setClientCpf(existing.clientCpf ?? '')
+                setBuyerEmail(existing.buyerEmail?.trim() || String(session?.user?.email ?? '').trim())
                 if (existing.dealType === 'rent') {
                     setProposalBaseMode('rent')
                     const terms = existing.rentalTerms
@@ -308,6 +319,7 @@ export default function ProposalWizardPage() {
                         id: existing.buyerUserId,
                         name: existing.buyerName?.trim() || existing.clientName?.trim() || 'Comprador selecionado',
                         cpf: existing.clientCpf?.trim() || undefined,
+                        email: existing.buyerEmail?.trim() || undefined,
                     })
                     setBuyerQuery(existing.buyerName?.trim() || existing.clientName?.trim() || '')
                     setBuyerPickerOpen(false)
@@ -466,6 +478,7 @@ export default function ProposalWizardPage() {
     const isStep1Valid =
         clientName.trim().length > 0 &&
         isValidCpf(clientCpf) &&
+        isValidEmail(buyerEmail) &&
         (!requiresBuyerSelection || selectedBuyer != null)
     const canSubmit = !isSubmitting && isStep1Valid && (proposalBaseMode === 'rent' ? monthlyRentValue > 0 : isBalanced)
 
@@ -487,6 +500,7 @@ export default function ProposalWizardPage() {
                 propertyId: property.id,
                 clientName: clientName.trim(),
                 clientCpf: cpfDigits,
+                buyerEmail: buyerEmail.trim().toLowerCase(),
                 dealType: proposalBaseMode,
                 buyerUserId: selectedBuyer?.id,
                 validadeDias,
@@ -711,6 +725,22 @@ export default function ProposalWizardPage() {
                                 </div>
 
                                 <div>
+                                    <label htmlFor="proposal-buyer-email" className="mb-1 block text-sm font-medium text-gray-700">E-mail do comprador *</label>
+                                    <input
+                                        id="proposal-buyer-email"
+                                        type="email"
+                                        value={buyerEmail}
+                                        onChange={(event) => setBuyerEmail(event.target.value)}
+                                        className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary-500"
+                                        placeholder="comprador@email.com"
+                                        autoComplete="email"
+                                    />
+                                    {buyerEmail && !isValidEmail(buyerEmail) && (
+                                        <p className="mt-1 text-xs text-red-500">Informe um e-mail válido.</p>
+                                    )}
+                                </div>
+
+                                <div>
                                     <label className="mb-1 block text-sm font-medium text-gray-700">CPF *</label>
                                     <input
                                         type="text"
@@ -810,6 +840,7 @@ export default function ProposalWizardPage() {
                                                                         onClick={() => {
                                                                             setSelectedBuyer(user)
                                                                             setBuyerQuery(user.name)
+                                                                            setBuyerEmail(user.email ?? '')
                                                                             setBuyerResults([])
                                                                             setBuyerPickerOpen(false)
                                                                         }}
@@ -857,9 +888,10 @@ export default function ProposalWizardPage() {
                                                             <button
                                                                 key={user.id}
                                                                 type="button"
-                                                                onClick={() => {
-                                                                    setSelectedBuyer(user)
-                                                                    setBuyerQuery(user.name)
+                                                            onClick={() => {
+                                                                setSelectedBuyer(user)
+                                                                setBuyerQuery(user.name)
+                                                                setBuyerEmail(user.email ?? '')
                                                                     setBuyerResults([])
                                                                     setBuyerPickerOpen(false)
                                                                 }}

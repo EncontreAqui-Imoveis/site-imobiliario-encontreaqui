@@ -14,13 +14,13 @@ import {
     buildNegotiationDocumentDownloadUrl,
     deleteContractDocument,
     getContractById,
-    setContractSignatureMethod,
+    rejectContractHandshakeAssociation,
     updateContractData,
     uploadContractDocument,
+    verifyContractHandshakePin,
 } from '@/lib/api/contracts'
 import type { ApiError } from '@/lib/api/client'
 import { CONTRACT_STATUS_FLOW, getApprovalStatusMeta, getContractStatusMeta } from '@/lib/contractsUi'
-import { useUser } from '@/contexts/UserContext'
 
 interface Props {
     contract: ContractDetail
@@ -85,11 +85,14 @@ function filterSharedDocs(docs: ContractDocument[]): ContractDocument[] {
 
 const DOCUMENT_LABELS: Record<string, string> = {
     doc_identidade: 'Documento pessoal',
+    doc_identidade_conjuge: 'Documento Pessoal (Cônjuge)',
     comprovante_endereco: 'Comprovante de endereço',
     certidao_casamento_nascimento: 'Certidão de casamento/nascimento',
     certidao_inteiro_teor: 'Certidão de inteiro teor',
     certidao_onus_acoes: 'Certidão de ônus e ações',
     comprovante_renda: 'Comprovante de renda',
+    seguro_incendio: 'Apólice/Comprovante de Seguro Incêndio',
+    dados_bancarios: 'Dados bancários',
     contrato_minuta: 'Minuta do contrato',
     contrato_assinado: 'Contrato assinado',
     comprovante_pagamento: 'Comprovante de pagamento',
@@ -97,13 +100,13 @@ const DOCUMENT_LABELS: Record<string, string> = {
     cliente_cnh: 'CNH do cliente',
     cliente_identidade: 'Identidade (RG/CNH) do cliente',
     cliente_outros: 'Outros documentos do cliente',
+    outro: 'Outro',
 }
 
 const OPTIONAL_DOC_TYPES = new Set<ContractDocumentType>(['cliente_outros'])
 
-function isRentalPurpose(purpose: string | null | undefined): boolean {
-    const normalized = String(purpose ?? '').trim().toLowerCase()
-    return normalized.includes('alug') || normalized.includes('rent')
+function isRentalContract(contract: ContractDetail): boolean {
+    return contract.dealType === 'rent'
 }
 
 function documentLabel(documentType: ContractDocumentType | null | undefined): string {
@@ -120,8 +123,11 @@ const CATEGORY_LABELS: Record<ContractDocumentCategory, string> = {
     estado_civil: 'Estado civil',
     conjuge_documentos: 'Documento Pessoal (Cônjuge)',
     comprovante_renda: 'Comprovante de renda',
+    seguro_incendio: 'Apólice/Comprovante de Seguro Incêndio',
     dados_bancarios: 'Dados bancários',
-    docs_imovel: 'Documentos do imóvel',
+    certidao_inteiro_teor_escritura: 'Certidão de Inteiro Teor/Escritura',
+    certidao_onus_acoes: 'Certidão de Ônus/Ações',
+    outro: 'Outro',
 }
 
 function stripDiacritics(value: string): string {
@@ -169,7 +175,9 @@ function buildFallbackRequirementRows(
             { category: 'comprovante_endereco', applicability: 'required', required: true, reasonCode: 'ENDERECO_REQUIRED' },
             { category: 'estado_civil', applicability: 'required', required: true, reasonCode: 'ESTADO_CIVIL_REQUIRED' },
             spouseRow,
-            { category: 'docs_imovel', applicability: 'required', required: true, reasonCode: 'DOCS_IMOVEL_REQUIRED' },
+            { category: 'certidao_inteiro_teor_escritura', applicability: 'required', required: true, reasonCode: 'CERTIDAO_INTEIRO_TEOR_REQUIRED_SALE' },
+            { category: 'certidao_onus_acoes', applicability: 'required', required: true, reasonCode: 'CERTIDAO_ONUS_ACOES_REQUIRED_SALE' },
+            { category: 'outro', applicability: 'optional', required: false, reasonCode: 'OUTRO_OPTIONAL' },
         ]
     }
 
@@ -179,6 +187,7 @@ function buildFallbackRequirementRows(
         { category: 'estado_civil', applicability: 'required', required: true, reasonCode: 'ESTADO_CIVIL_REQUIRED' },
         spouseRow,
         { category: 'comprovante_renda', applicability: 'required', required: true, reasonCode: 'COMPROVANTE_RENDA_REQUIRED' },
+        { category: 'outro', applicability: 'optional', required: false, reasonCode: 'OUTRO_OPTIONAL' },
     ]
 }
 
@@ -206,21 +215,29 @@ function expandRequirementRows(
     for (const row of rows) {
         if (row.applicability === 'not_applicable') continue
         switch (row.category) {
-            case 'docs_imovel':
-                entries.push(
-                    {
-                        documentType: 'certidao_inteiro_teor',
-                        side,
-                        documentCategory: row.category,
-                        label: documentLabel('certidao_inteiro_teor'),
-                    },
-                    {
-                        documentType: 'certidao_onus_acoes',
-                        side,
-                        documentCategory: row.category,
-                        label: documentLabel('certidao_onus_acoes'),
-                    },
-                )
+            case 'certidao_inteiro_teor_escritura':
+                entries.push({
+                    documentType: 'certidao_inteiro_teor',
+                    side,
+                    documentCategory: row.category,
+                    label: CATEGORY_LABELS.certidao_inteiro_teor_escritura,
+                })
+                break
+            case 'certidao_onus_acoes':
+                entries.push({
+                    documentType: 'certidao_onus_acoes',
+                    side,
+                    documentCategory: row.category,
+                    label: CATEGORY_LABELS.certidao_onus_acoes,
+                })
+                break
+            case 'seguro_incendio':
+                entries.push({
+                    documentType: 'seguro_incendio',
+                    side,
+                    documentCategory: row.category,
+                    label: CATEGORY_LABELS.seguro_incendio,
+                })
                 break
             case 'identidade':
                 entries.push({
@@ -232,7 +249,7 @@ function expandRequirementRows(
                 break
             case 'dados_bancarios':
                 entries.push({
-                    documentType: 'outro',
+                    documentType: 'dados_bancarios',
                     side,
                     documentCategory: row.category,
                     label: CATEGORY_LABELS.dados_bancarios,
@@ -240,7 +257,7 @@ function expandRequirementRows(
                 break
             case 'conjuge_documentos':
                 entries.push({
-                    documentType: 'outro',
+                    documentType: 'doc_identidade_conjuge',
                     side,
                     documentCategory: row.category,
                     label: CATEGORY_LABELS.conjuge_documentos,
@@ -270,17 +287,17 @@ function expandRequirementRows(
                     label: documentLabel('comprovante_renda'),
                 })
                 break
+            case 'outro':
+                entries.push({
+                    documentType: 'outro',
+                    side,
+                    documentCategory: row.category,
+                    label: CATEGORY_LABELS.outro,
+                    optional: true,
+                    allowMultiple: true,
+                })
+                break
         }
-    }
-
-    if (side === 'buyer') {
-        entries.push({
-            documentType: 'cliente_outros',
-            side,
-            label: documentLabel('cliente_outros'),
-            optional: true,
-            allowMultiple: true,
-        })
     }
 
     return entries
@@ -290,8 +307,12 @@ function resolveCategoryByDocumentType(documentType: ContractDocumentType): Cont
     if (documentType === 'comprovante_endereco') return 'comprovante_endereco'
     if (documentType === 'certidao_casamento_nascimento') return 'estado_civil'
     if (documentType === 'comprovante_renda') return 'comprovante_renda'
-    if (documentType === 'certidao_inteiro_teor' || documentType === 'certidao_onus_acoes') return 'docs_imovel'
-    if (documentType === 'cliente_outros') return 'identidade'
+    if (documentType === 'certidao_inteiro_teor') return 'certidao_inteiro_teor_escritura'
+    if (documentType === 'certidao_onus_acoes') return 'certidao_onus_acoes'
+    if (documentType === 'seguro_incendio') return 'seguro_incendio'
+    if (documentType === 'dados_bancarios') return 'dados_bancarios'
+    if (documentType === 'doc_identidade_conjuge') return 'conjuge_documentos'
+    if (documentType === 'outro' || documentType === 'cliente_outros') return 'outro'
     return 'identidade'
 }
 
@@ -345,17 +366,6 @@ function uploadedDocumentLabel(doc: ContractDocument): string {
     return documentLabel(documentType as ContractDocumentType)
 }
 
-function renderChecklistStatus(doc: ContractDocument | null) {
-    if (!doc) return 'Pendente'
-    const status = String(doc.categoryStatus ?? '').trim().toUpperCase()
-    if (status === 'PENDING') return 'Pendente'
-    if (status === 'APPROVED') return 'Aprovado'
-    if (status === 'APPROVED_WITH_RES') return 'Aprovado com ressalvas'
-    if (status === 'REJECTED') return 'Rejeitado'
-    if (status === 'NOT_APPLICABLE') return 'Não se aplica'
-    return 'Pendente'
-}
-
 function renderChecklistHint(doc: ContractDocument | null): string | null {
     if (!doc) return null
     const status = String(doc.categoryStatus ?? '').trim().toUpperCase()
@@ -374,11 +384,6 @@ function renderDocumentProgressStatus(status: string | null | undefined) {
     if (normalized === 'REJECTED') return 'Rejeitado'
     if (normalized === 'NOT_APPLICABLE') return 'Não se aplica'
     return normalized || 'Pendente'
-}
-
-function resolveSignatureMethod(contract: ContractDetail): string | null {
-    const raw = String(contract.workflowMetadata?.signatureMethod ?? '').trim().toLowerCase()
-    return raw || null
 }
 
 const MARITAL_STATUS_OPTIONS = [
@@ -432,17 +437,18 @@ function buildBuyerFormState(contract: ContractDetail): ContractFormState {
 }
 
 export function ContractDetailClient({ contract }: Props) {
-    const { session } = useUser()
     const [currentContract, setCurrentContract] = useState<ContractDetail>(contract)
     const [documents, setDocuments] = useState<ContractDocument[]>(contract.documents)
     const [uploadingKey, setUploadingKey] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
     const [refreshingContract, setRefreshingContract] = useState(false)
-    const [settingSignatureMethod, setSettingSignatureMethod] = useState(false)
     const [sellerForm, setSellerForm] = useState<ContractFormState>(() => buildSellerFormState(contract))
     const [buyerForm, setBuyerForm] = useState<ContractFormState>(() => buildBuyerFormState(contract))
     const [savingSide, setSavingSide] = useState<ContractSide | null>(null)
     const [editingSide, setEditingSide] = useState<ContractSide | null>(null)
+    const [handshakePin, setHandshakePin] = useState('')
+    const [verifyingHandshake, setVerifyingHandshake] = useState(false)
+    const [rejectingHandshake, setRejectingHandshake] = useState(false)
 
     useEffect(() => {
         setCurrentContract(contract)
@@ -485,9 +491,8 @@ export function ContractDetailClient({ contract }: Props) {
             profissao: buyerForm.profession.trim(),
             email: buyerForm.email.trim(),
             telefone: buyerForm.phone.trim(),
-            dados_bancarios: buyerForm.bankDetails.trim(),
         }
-        if (isRentalPurpose(currentContract.propertyPurpose)) {
+        if (isRentalContract(currentContract)) {
             buyerInfo.garantia_locacao = buyerForm.guaranteeType.trim()
         }
         return buyerInfo
@@ -581,21 +586,34 @@ export function ContractDetailClient({ contract }: Props) {
         }
     }
 
-    const handleInPersonSignature = async () => {
+    const handleVerifyHandshake = async () => {
         setError(null)
-        setSettingSignatureMethod(true)
+        setVerifyingHandshake(true)
         try {
-            await setContractSignatureMethod(currentContract.id, 'in_person')
-            await refreshContract()
+            const nextContract = await verifyContractHandshakePin(currentContract.id, handshakePin)
+            setCurrentContract(nextContract)
+            setDocuments(nextContract.documents)
+            setSellerForm(buildSellerFormState(nextContract))
+            setBuyerForm(buildBuyerFormState(nextContract))
+            setHandshakePin('')
         } catch (err) {
             const apiErr = err as ApiError
-            if ('status' in apiErr) {
-                setError(apiErr.message || 'Não foi possível registrar a assinatura presencial.')
-            } else {
-                setError('Não foi possível registrar a assinatura presencial.')
-            }
+            setError(('message' in apiErr && apiErr.message) || 'Não foi possível confirmar o PIN.')
         } finally {
-            setSettingSignatureMethod(false)
+            setVerifyingHandshake(false)
+        }
+    }
+
+    const handleRejectHandshake = async () => {
+        setError(null)
+        setRejectingHandshake(true)
+        try {
+            await rejectContractHandshakeAssociation(currentContract.id)
+            window.location.assign('/meus-processos/contratos')
+        } catch (err) {
+            const apiErr = err as ApiError
+            setError(('message' in apiErr && apiErr.message) || 'Não foi possível recusar a associação.')
+            setRejectingHandshake(false)
         }
     }
 
@@ -684,7 +702,7 @@ export function ContractDetailClient({ contract }: Props) {
         )
     }
 
-    const canReadDocumentFiles = currentContract.capabilities?.canReadDocumentFiles ?? true
+    const canReadDocumentFiles = currentContract.capabilities?.canReadDocumentFiles === true
     const sharedDocs = canReadDocumentFiles ? filterSharedDocs(documents) : []
     const sellerDocs = canReadDocumentFiles ? filterDocsBySide(documents, 'seller') : []
     const buyerDocs = canReadDocumentFiles ? filterDocsBySide(documents, 'buyer') : []
@@ -710,57 +728,19 @@ export function ContractDetailClient({ contract }: Props) {
             effectiveRequirementRows(currentContract, 'buyer', buyerForm.maritalStatus),
         )
     const draftDocument = findLatestDoc(sharedDocs, { documentType: 'contrato_minuta' })
-    const signedContractDocument = findLatestDoc(sharedDocs, { documentType: 'contrato_assinado' })
-    const signatureMethod = resolveSignatureMethod(currentContract)
-    const hasAgencyReceivedSignedContract = Boolean(
-        String(currentContract.workflowMetadata?.agencySignedContractReceivedAt ?? '').trim(),
-    )
     const isAwaitingDocs = currentContract.status === 'AWAITING_DOCS'
     const isInDraft = currentContract.status === 'IN_DRAFT'
     const isAwaitingSignatures = currentContract.status === 'AWAITING_SIGNATURES'
-    const currentUserId = Number(session?.user?.id ?? 0)
-    const isCaptadorViewer =
-        Number.isFinite(currentUserId) &&
-        currentUserId > 0 &&
-        currentContract.capturingBrokerId === currentUserId
-    const isOwnerViewer =
-        Number.isFinite(currentUserId) &&
-        currentUserId > 0 &&
-        currentContract.ownerId === currentUserId
-    const isBuyerViewer =
-        Number.isFinite(currentUserId) &&
-        currentUserId > 0 &&
-        currentContract.buyerClientId === currentUserId
-    const isResponsibleViewer =
-        Number.isFinite(currentUserId) &&
-        currentUserId > 0 &&
-        Array.isArray(currentContract.responsibleUserIds) &&
-        currentContract.responsibleUserIds.includes(currentUserId)
-    const canEditSellerSide = (currentContract.capabilities?.canEditSeller ?? (
-        isAwaitingDocs && (isCaptadorViewer || isOwnerViewer || isResponsibleViewer)
-    )) && currentContract.capabilities?.canMutateDocuments !== false && !sellerLocked
-    const canEditBuyerSide = (currentContract.capabilities?.canEditBuyer ?? (
-        isAwaitingDocs && (isCaptadorViewer || isBuyerViewer || isResponsibleViewer)
-    )) && currentContract.capabilities?.canMutateDocuments !== false && !buyerLocked
-
-    const isSellerViewer =
-        isCaptadorViewer || isOwnerViewer || isResponsibleViewer
-    const isBuyerSideViewer =
-        isBuyerViewer || isResponsibleViewer
-    const viewerSide = (() => {
-        if (currentContract.viewerSide === 'seller' || currentContract.viewerSide === 'buyer' || currentContract.viewerSide === 'both' || currentContract.viewerSide === 'none') {
-            return currentContract.viewerSide
-        }
-        if (isResponsibleViewer) return 'both'
-        if (isSellerViewer && isBuyerViewer) return 'both'
-        if (isSellerViewer && isBuyerSideViewer) return 'both'
-        if (isSellerViewer) return 'seller'
-        if (isBuyerSideViewer) return 'buyer'
-        return 'none'
-    })()
-    const canViewSellerDocuments = currentContract.capabilities?.canReadSeller ?? (viewerSide === 'seller' || viewerSide === 'both')
-    const canViewBuyerDocuments = currentContract.capabilities?.canReadBuyer ?? (viewerSide === 'buyer' || viewerSide === 'both')
-    const canReadDocumentStatus = currentContract.capabilities?.canReadDocumentStatus ?? true
+    const canEditSellerSide = currentContract.capabilities?.canEditSeller === true
+        && currentContract.capabilities?.canMutateDocuments === true
+        && !sellerLocked
+    const canEditBuyerSide = currentContract.capabilities?.canEditBuyer === true
+        && currentContract.capabilities?.canMutateDocuments === true
+        && !buyerLocked
+    const viewerSide = currentContract.viewerSide ?? 'none'
+    const canViewSellerDocuments = currentContract.capabilities?.canReadSeller === true
+    const canViewBuyerDocuments = currentContract.capabilities?.canReadBuyer === true
+    const canReadDocumentStatus = currentContract.capabilities?.canReadDocumentStatus === true
     const canViewDetailedDocuments = canReadDocumentStatus && (canViewSellerDocuments || canViewBuyerDocuments)
     const participantSide = viewerSide === 'seller' || viewerSide === 'buyer' ? viewerSide : null
     const ownProgress = participantSide ? currentContract.documentProgress?.[participantSide] : null
@@ -853,7 +833,8 @@ export function ContractDetailClient({ contract }: Props) {
                             className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 disabled:border-slate-100 disabled:bg-white disabled:text-slate-700"
                         />
                     </label>
-                <label className="space-y-1 text-xs text-slate-600 md:col-span-2">
+                {side === 'seller' && (
+                    <label className="space-y-1 text-xs text-slate-600 md:col-span-2">
                         <span>Dados bancários</span>
                         <textarea
                             rows={3}
@@ -862,8 +843,9 @@ export function ContractDetailClient({ contract }: Props) {
                             disabled={!canChange}
                             className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 disabled:border-slate-100 disabled:bg-white disabled:text-slate-700"
                         ></textarea>
-                </label>
-                {side === 'buyer' && isRentalPurpose(currentContract.propertyPurpose) && (
+                    </label>
+                )}
+                {side === 'buyer' && isRentalContract(currentContract) && (
                     <label className="space-y-1 text-xs text-slate-600 md:col-span-2">
                         <span>Garantia de locação</span>
                         <select
@@ -933,6 +915,64 @@ export function ContractDetailClient({ contract }: Props) {
                         </li>
                     ))}
                 </ul>
+            </section>
+        )
+    }
+
+    const requiresHandshakeVerification =
+        currentContract.handshake?.requiresVerification === true ||
+        currentContract.capabilities?.requiresHandshakeVerification === true
+
+    if (requiresHandshakeVerification) {
+        return (
+            <section
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="handshake-title"
+                className="mx-auto max-w-lg rounded-2xl border border-primary-100 bg-white px-5 py-6 shadow-lg"
+            >
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary-700">Confirmação de acesso</p>
+                <h1 id="handshake-title" className="mt-2 text-xl font-semibold text-slate-900">
+                    Confirme o PIN da proposta
+                </h1>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                    Para proteger os dados das partes, informe o PIN de quatro dígitos recebido para liberar esta proposta.
+                </p>
+                <label className="mt-5 block space-y-1 text-sm font-medium text-slate-700">
+                    PIN de acesso
+                    <input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={4}
+                        autoComplete="one-time-code"
+                        value={handshakePin}
+                        onChange={(event) => setHandshakePin(event.target.value.replace(/\D/g, '').slice(0, 4))}
+                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-center text-lg tracking-[0.35em] text-slate-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                    />
+                </label>
+                {error && (
+                    <p role="alert" className="mt-3 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
+                        {error}
+                    </p>
+                )}
+                <div className="mt-5 flex flex-wrap gap-3">
+                    <button
+                        type="button"
+                        onClick={() => void handleVerifyHandshake()}
+                        disabled={verifyingHandshake || handshakePin.length !== 4}
+                        className="rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        {verifyingHandshake ? 'Confirmando...' : 'Acessar proposta'}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => void handleRejectHandshake()}
+                        disabled={rejectingHandshake}
+                        className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        {rejectingHandshake ? 'Enviando...' : 'Não sou eu'}
+                    </button>
+                </div>
             </section>
         )
     }
@@ -1065,9 +1105,9 @@ export function ContractDetailClient({ contract }: Props) {
             {isAwaitingSignatures && (
                 <section className="rounded-2xl border border-violet-100 bg-violet-50 px-4 py-4 shadow-sm space-y-4">
                     <div className="space-y-1">
-                        <h2 className="text-sm font-semibold text-violet-900">Assinaturas do contrato</h2>
+                        <h2 className="text-sm font-semibold text-violet-900">Assinatura presencial</h2>
                         <p className="text-sm text-violet-800">
-                            Revise a minuta, escolha como a assinatura será entregue e acompanhe os documentos finais desta etapa.
+                            A assinatura deste contrato acontece presencialmente. A imobiliária coordena a entrega e registra os documentos finais.
                         </p>
                     </div>
 
@@ -1085,62 +1125,8 @@ export function ContractDetailClient({ contract }: Props) {
                             A minuta ainda não foi anexada pela administração.
                         </p>
                     )}
-
-                    {signatureMethod === 'in_person' ? (
-                        <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                            Assinatura presencial informada. {hasAgencyReceivedSignedContract
-                                ? 'A imobiliária já registrou o recebimento do contrato assinado.'
-                                : 'Leve o contrato assinado até a imobiliária para concluir esta etapa.'}
-                        </div>
-                    ) : signedContractDocument ? (
-                        <div className="rounded-xl border border-green-100 bg-green-50 px-4 py-3 text-sm text-green-900">
-                            O contrato assinado já foi enviado online. Aguarde a conferência da administração.
-                        </div>
-                    ) : (
-                        <div className="flex flex-col gap-3 sm:flex-row">
-                            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-                                <p className="font-semibold text-slate-900">Envio online</p>
-                                <p className="mt-1">Envie o contrato assinado para continuar o fluxo digital.</p>
-                                <div className="mt-3">{renderUploadField({ documentType: 'contrato_assinado', label: 'contrato assinado' }, signedContractDocument)}</div>
-                            </div>
-                            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-                                <p className="font-semibold text-slate-900">Entrega presencial</p>
-                                <p className="mt-1">Se a assinatura acontecer presencialmente, registre isso para a administração.</p>
-                                <button
-                                    type="button"
-                                    onClick={() => void handleInPersonSignature()}
-                                    disabled={settingSignatureMethod}
-                                    className="mt-3 inline-flex items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
-                                >
-                                    {settingSignatureMethod ? 'Registrando...' : 'Assinar presencialmente'}
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="grid gap-3 md:grid-cols-3">
-                        {[ 'contrato_assinado', 'comprovante_pagamento', 'boleto_vistoria' ].map((documentType) => {
-                            const normalizedType = documentType as ContractDocumentType
-                            const currentDoc = findLatestDoc(sharedDocs, { documentType: normalizedType })
-                            const isOptional = normalizedType === 'boleto_vistoria'
-
-                            return (
-                                <div key={documentType} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
-                                    <p className="font-semibold text-slate-900">
-                                        {documentLabel(normalizedType)} {isOptional ? '(opcional)' : ''}
-                                    </p>
-                                    <p className={`mt-1 text-xs ${currentDoc ? 'text-emerald-700' : 'text-slate-500'}`}>
-                                        {renderChecklistStatus(currentDoc)}
-                                    </p>
-                                    {latestFileName(currentDoc) && (
-                                        <p className="mt-1 text-[11px] text-slate-500">
-                                            Último arquivo: {latestFileName(currentDoc)}
-                                        </p>
-                                    )}
-                                    <div className="mt-3">{renderUploadField({ documentType: normalizedType, label: documentLabel(normalizedType) }, currentDoc)}</div>
-                                </div>
-                            )
-                        })}
+                    <div className="rounded-xl border border-violet-100 bg-white px-4 py-3 text-sm text-slate-700">
+                        Não é necessário enviar uma assinatura pelo site. Após a assinatura física, os arquivos registrados pela imobiliária ficam disponíveis em “Documentos do contrato”.
                     </div>
                 </section>
             )}

@@ -6,6 +6,7 @@ import {
     FeaturedSkeleton,
     MostAffordableSection,
     MostExpensiveSection,
+    OppositeDealSection,
     RecentSection,
     RecentSkeleton,
 } from '@/components/home/HomeSections'
@@ -43,6 +44,9 @@ export default async function HomePage({
             </Suspense>
             <Suspense fallback={<RecentSkeleton />}>
                 <MostAffordableSection deal={deal} />
+            </Suspense>
+            <Suspense fallback={<RecentSkeleton />}>
+                <OppositeDealSection deal={deal} />
             </Suspense>
             <AboutSection />
         </>

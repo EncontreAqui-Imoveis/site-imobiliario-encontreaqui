@@ -1,0 +1,90 @@
+PLANO ATUAL - PARIDADE SITE / CONTRATOS
+
+Objetivo
+Concluir a equivalência segura do site-imobiliario com o fluxo já consolidado
+no backend e mobile, preservando autorização por capabilities e contratos de
+venda e locação.
+
+Status
+[x] Passo 1 - Rate limit do backend: limite maior por IP, limite menor por
+    conta/e-mail e apenas falhas contam contra a conta.
+[x] Passo 2 - Home do site: quarta vitrine principal mais a vitrine da
+    finalidade oposta. Compra mostra "Imóveis para alugar"; aluguel mostra
+    "Imóveis à venda". Cobertura unitária e E2E público aprovada.
+[x] Passo 3 - Propostas web alinhadas à API.
+[x] Passo 4 - Paridade de contratos no site: handshake PIN, documentos,
+    capacidades, locação e read-only.
+[x] Passo 5 - Assinatura presencial: remover controles de assinatura online
+    do participante e manter operações administrativas no painel.
+[x] Passo 6 - Notificações e navegação: metadata.route com allowlist,
+    fallback Schema V1 e tratamento 403/404.
+[ ] Passo 7 - Comissão: consolidar o uso de contract_commission_allocations
+    nos relatórios e decidir se haverá trilha de pagamento/comprovante.
+[ ] Passo 8 - Homologação E2E completa: venda e locação, PIN, cinco
+    responsáveis, PDFs/imagens, documentos, minuta, congelamento e comissão.
+
+Passo 3 - Escopo
+1. Proposta nova exige e valida o e-mail do comprador e envia buyerEmail.
+2. Tipar capabilities completas no modelo de negociação.
+3. Exibir editar, excluir, enviar assinada, baixar minuta e abrir contrato
+   somente quando a capability retornada permitir.
+4. canOpenContract exige contract.id físico; sem inferência por status,
+   captador, CPF, buyer_client_id ou IDs legados.
+5. Aplicar o mesmo comportamento para venda e locação e adicionar testes.
+
+Passo 3 - Entrega concluída
+- E-mail do comprador obrigatório no site e no validador compartilhado do backend.
+- GET /negotiations/mine retorna buyerEmail persistido para edição segura.
+- Actions do site dependem exclusivamente de capabilities; ausência da flag nega a ação.
+- Contrato só abre com capabilities.canOpenContract e contract.id físico.
+- Upload da assinada valida a capability novamente antes de habilitar o formulário.
+- Testes focados, lint, builds e E2E isolado do upload aprovados.
+
+Passo 4 - Entrega concluída
+- Tipos e normalização agora preservam workflow, handshake, dealType e
+  identityCapabilities retornados pelo backend.
+- Contrato com handshake pendente fica protegido por uma barreira de PIN; o
+  conteúdo bilateral não é renderizado antes da confirmação.
+- Edição, upload, remoção e leitura de cada lado dependem exclusivamente das
+  capabilities retornadas, sem inferência por IDs ou status no navegador.
+- A matriz documental do site reconhece locação, seguro-incêndio, certidões,
+  dados bancários do vendedor, cônjuge e "Outro" de ambos os lados.
+- Dados bancários ficam apenas no formulário do vendedor; garantia de locação
+  aparece apenas para comprador quando dealType é rent.
+
+Passo 5 - Entrega concluída
+- O site não chama mais a rota administrativa signature-method.
+- Participantes não recebem controles para registrar assinatura nem enviar
+  contrato assinado pelo site.
+- Em AWAITING_SIGNATURES, a tela mostra apenas a orientação de assinatura
+  presencial e a minuta quando ela estiver liberada pelo backend.
+
+Passo 6 - Entrega concluída
+- Backend já emite Schema V1 centralizado e somente IDs/rotas internas no
+  payload FCM e metadata persistida.
+- Flutter aceita o Schema V1 e metadata legada apenas por aliases conhecidos;
+  ignora chaves extras, rejeita targets desconhecidos e URLs externas.
+- A fila de deep links agora usa o listener real do StreamController, evitando
+  perda do clique antes da TabsScreen e da autenticação ficarem prontas.
+- Notificações internas do site passaram a priorizar metadata.route e usar a
+  mesma allowlist para contratos, propostas e imóveis; metadata legada segue
+  compatível.
+- Falhas 403/404 continuam na tela atual com mensagem de indisponibilidade,
+  sem inferir acesso pelo cliente.
+- Smoke Android: APK debug instalado e aberto no emulador, com o serviço FCM
+  inicializado e sem exceção Flutter. Um push real, emitido com as credenciais
+  Firebase de staging para o token Android local, chegou ao dispositivo com o
+  payload canônico contracts_tab. A reinstalação havia apagado a sessão do app:
+  ao tocar, ele abriu o login e reteve o deep link até a autenticação, como
+  previsto pela guarda de navegação. Falta apenas repetir o toque com uma conta
+  autenticada para observar a aba de contratos em tela.
+
+Regra de comissão vigente
+Locação registra comissão única sobre o primeiro aluguel: 10% captador, 50%
+corretor vendedor e 40% EncontreAqui. Não existe recorrência mensal. A
+alocação é administrativa/rastreável; pagamento bancário não é automatizado.
+
+Validação por etapa
+- lint, testes unitários e build do site;
+- E2E específico da etapa com mock isolado;
+- no passo 8, E2E transacional real de venda e locação.

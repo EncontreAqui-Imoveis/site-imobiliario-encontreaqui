@@ -6,7 +6,7 @@ import type { NegotiationSummary } from '@/types/negotiation'
 import type { Property } from '@/types/property'
 import { normalizeProperty } from '@/lib/propertiesApi'
 
-const NEGOTIATIONS_LIST_ENDPOINTS = ['/negotiations/me', '/me/negotiations'] as const
+const NEGOTIATIONS_LIST_ENDPOINTS = ['/negotiations/mine', '/negotiations/me', '/me/negotiations'] as const
 
 function isNegotiationsListUnavailable(error: unknown): boolean {
     const status =
@@ -60,6 +60,7 @@ export interface CreateProposalPayload {
     propertyId: number
     clientName: string
     clientCpf: string
+    buyerEmail: string
     validadeDias: number
     idempotencyKey?: string
     dealType?: string
@@ -139,6 +140,34 @@ export async function deleteProposal(negotiationId: string): Promise<void> {
         throw new Error('Negociação inválida para exclusão.')
     }
     await apiClient.delete(`/negotiations/${encodeURIComponent(id)}`)
+}
+
+export async function downloadProposalDraft(negotiationId: string): Promise<void> {
+    const id = String(negotiationId ?? '').trim()
+    if (!id) {
+        throw new Error('Negociação inválida para baixar a minuta.')
+    }
+
+    const response = await apiClient.get<Response>(
+        `/negotiations/${encodeURIComponent(id)}/proposals/download`,
+        { rawResponse: true },
+    )
+    if (!response.ok) {
+        throw new Error('Não foi possível baixar a minuta da proposta.')
+    }
+
+    const blob = await response.blob()
+    const contentDisposition = response.headers.get('content-disposition') ?? ''
+    const filenameMatch = /filename\*?=(?:UTF-8''|\")?([^;\"]+)/i.exec(contentDisposition)
+    const filename = decodeURIComponent(filenameMatch?.[1]?.trim() || 'proposta_minuta.pdf')
+    const objectUrl = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = objectUrl
+    anchor.download = filename
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(objectUrl)
 }
 
 export interface ApprovedBrokerLookup {

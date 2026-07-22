@@ -7,6 +7,7 @@ import {
     FeaturedSkeleton,
     MostAffordableSection,
     MostExpensiveSection,
+    OppositeDealSection,
     RecentSection,
     RecentSkeleton,
 } from '@/components/home/HomeSections'
@@ -38,8 +39,20 @@ jest.mock('@/components/home/FeaturedCarousel', () => {
 })
 
 jest.mock('@/components/home/RecentProperties', () => {
-    return function MockRecentProperties({ properties }: { properties: Property[] }) {
-        return <div data-testid="recent-properties">Recent: {properties.length}</div>
+    return function MockRecentProperties({
+        properties,
+        title,
+        browseHref,
+    }: {
+        properties: Property[]
+        title?: string
+        browseHref?: string
+    }) {
+        return (
+            <div data-testid="recent-properties" data-browse-href={browseHref}>
+                {title}: {properties.length}
+            </div>
+        )
     }
 })
 
@@ -97,7 +110,7 @@ describe('HomePage integration', () => {
         const fragment = page as ReactElement<{ children: ReactNode }>
         const children = Children.toArray(fragment.props.children)
 
-        expect(children).toHaveLength(6)
+        expect(children).toHaveLength(7)
     })
 
     it('loads featured properties through the server section', async () => {
@@ -115,7 +128,7 @@ describe('HomePage integration', () => {
         render(await RecentSection())
 
         expect(fetchRecentProperties).toHaveBeenCalledWith(8, 'sale')
-        expect(screen.getByTestId('recent-properties')).toHaveTextContent('Recent: 1')
+        expect(screen.getByTestId('recent-properties')).toHaveTextContent('Acabou de chegar: 1')
     })
 
     it('loads price shelves with the active deal filter', async () => {
@@ -131,6 +144,28 @@ describe('HomePage integration', () => {
 
         expect(fetchMostExpensiveProperties).toHaveBeenCalledWith(8, 'rent')
         expect(fetchMostAffordableProperties).toHaveBeenCalledWith(8, 'rent')
+    })
+
+    it('loads the opposite-purpose shelf with its filtered browse link', async () => {
+        ; (fetchRecentProperties as jest.Mock).mockResolvedValue([createProperty(6)])
+
+        render(await OppositeDealSection({ deal: 'sale' }))
+
+        expect(fetchRecentProperties).toHaveBeenCalledWith(8, 'rent')
+        expect(screen.getByTestId('recent-properties')).toHaveTextContent('Imóveis para alugar: 1')
+        expect(screen.getByTestId('recent-properties')).toHaveAttribute(
+            'data-browse-href',
+            expect.stringContaining('purpose=Aluguel'),
+        )
+    })
+
+    it('shows sale properties as the opposite shelf when rental is selected', async () => {
+        ; (fetchRecentProperties as jest.Mock).mockResolvedValue([createProperty(7)])
+
+        render(await OppositeDealSection({ deal: 'rent' }))
+
+        expect(fetchRecentProperties).toHaveBeenCalledWith(8, 'sale')
+        expect(screen.getByTestId('recent-properties')).toHaveTextContent('Imóveis à venda: 1')
     })
 
     it('renders skeleton fallbacks without relying on suspense resolution in jsdom', () => {
@@ -157,6 +192,6 @@ describe('HomePage integration', () => {
         )
 
         expect(screen.getByTestId('featured-carousel')).toHaveTextContent('Featured: 0')
-        expect(screen.getByTestId('recent-properties')).toHaveTextContent('Recent: 0')
+        expect(screen.getByTestId('recent-properties')).toHaveTextContent('Acabou de chegar: 0')
     })
 })

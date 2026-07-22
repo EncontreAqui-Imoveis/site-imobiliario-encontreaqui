@@ -38,6 +38,8 @@ jest.mock('@/contexts/UserContext', () => ({
 }))
 
 jest.mock('@/lib/negotiationsService', () => ({
+    deleteProposal: jest.fn(),
+    downloadProposalDraft: jest.fn(),
     fetchMyNegotiations: jest.fn().mockResolvedValue([
         {
             id: 'neg-1',
@@ -48,6 +50,13 @@ jest.mock('@/lib/negotiationsService', () => ({
             createdAt: '2026-03-01T10:00:00.000Z',
             updatedAt: '2026-03-01T10:00:00.000Z',
             proposalValidUntil: '2026-03-11T10:00:00.000Z',
+            capabilities: {
+                canEditProposal: true,
+                canDeleteProposal: true,
+                canDownloadDraft: true,
+                canUploadSignedProposal: true,
+                canOpenContract: false,
+            },
         },
         {
             id: 'neg-2',
@@ -57,6 +66,22 @@ jest.mock('@/lib/negotiationsService', () => ({
             clientName: 'Cliente 2',
             createdAt: '2026-03-02T10:00:00.000Z',
             updatedAt: '2026-03-02T10:00:00.000Z',
+            capabilities: {
+                canEditProposal: false,
+                canDeleteProposal: false,
+                canDownloadDraft: false,
+                canUploadSignedProposal: false,
+                canOpenContract: false,
+            },
+        },
+        {
+            id: 'neg-3',
+            propertyId: 103,
+            propertyTitle: 'Casa sem capability',
+            status: 'PROPOSAL_SENT',
+            clientName: 'Cliente sem ação',
+            createdAt: '2026-03-03T10:00:00.000Z',
+            updatedAt: '2026-03-03T10:00:00.000Z',
         },
     ]),
 }))
@@ -71,14 +96,16 @@ describe('PropostasPage', () => {
         ).toBeInTheDocument()
 
         await expect(screen.findByText(/Enviar proposta assinada/i)).resolves.toBeInTheDocument()
-        expect(screen.getByText('Pendente de assinatura')).toBeInTheDocument()
-        expect(screen.getByText('Aguardando assinatura.')).toBeInTheDocument()
+        expect(screen.getAllByText('Pendente de assinatura')).toHaveLength(2)
+        expect(screen.getAllByText('Aguardando assinatura.')).toHaveLength(2)
         expect(screen.getByLabelText('Editar proposta')).toBeInTheDocument()
         expect(screen.getByLabelText('Excluir proposta')).toBeInTheDocument()
+        expect(screen.getByLabelText('Baixar minuta')).toBeInTheDocument()
+        expect(screen.getAllByLabelText('Editar proposta')).toHaveLength(1)
 
         fireEvent.click(screen.getByRole('button', { name: 'Assinadas' }))
         await expect(screen.findByText('Em análise documental')).resolves.toBeInTheDocument()
-        await expect(screen.findByText('Acompanhar documentação')).resolves.toBeInTheDocument()
+        await expect(screen.findByText('Acompanhe o andamento da proposta')).resolves.toBeInTheDocument()
         expect(screen.queryByLabelText('Editar proposta')).not.toBeInTheDocument()
         expect(screen.queryByLabelText('Excluir proposta')).not.toBeInTheDocument()
     })

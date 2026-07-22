@@ -10,6 +10,8 @@ import type {
     ContractSide,
     ContractApprovalReason,
     ContractCapabilities,
+    ContractDealType,
+    ContractHandshakeStatus,
 } from '@/types/contract'
 import { isCancelledContractStatus } from '@/lib/contractsUi'
 
@@ -153,7 +155,55 @@ function normalizeCapabilities(raw: unknown): ContractCapabilities | null {
             ? !isReadOnly && (canEditSeller || canEditBuyer)
             : Boolean(item.canMutateDocuments ?? item.can_mutate_documents),
         isReadOnly,
+        requiresHandshakeVerification: Boolean(
+            item.requiresHandshakeVerification ?? item.requires_handshake_verification,
+        ),
     }
+}
+
+function normalizeDealType(raw: unknown): ContractDealType | null {
+    const value = String(raw ?? '').trim().toLowerCase()
+    return value === 'sale' || value === 'rent' ? value : null
+}
+
+function normalizeHandshake(raw: unknown): ContractSummary['handshake'] {
+    if (!raw || typeof raw !== 'object') return null
+    const item = raw as Record<string, unknown>
+    const rawStatus = String(item.status ?? '').trim().toUpperCase()
+    const status: ContractHandshakeStatus | null =
+        rawStatus === 'PENDING' || rawStatus === 'VERIFIED' || rawStatus === 'REJECTED'
+            ? rawStatus
+            : null
+    return {
+        status,
+        requiresVerification: Boolean(
+            item.requiresVerification ?? item.requires_verification,
+        ),
+    }
+}
+
+function normalizeWorkflow(raw: unknown, fallbackStatus: ContractSummary['status']): ContractSummary['workflow'] {
+    if (!raw || typeof raw !== 'object') return null
+    const item = raw as Record<string, unknown>
+    return {
+        status: String(item.status ?? fallbackStatus).trim() as ContractSummary['status'],
+        isReadOnly: Boolean(item.isReadOnly ?? item.is_read_only),
+    }
+}
+
+function normalizeIdentityCapabilities(raw: unknown): ContractDetail['identityCapabilities'] {
+    if (!raw || typeof raw !== 'object') return null
+    const root = raw as Record<string, unknown>
+    const side = (key: 'seller' | 'buyer') => {
+        const item = root[key]
+        if (!item || typeof item !== 'object') return { canEditName: true, canEditCpf: true }
+        const values = item as Record<string, unknown>
+        return {
+            canEditName: values.canEditName !== false,
+            canEditCpf: values.canEditCpf !== false,
+        }
+    }
+    return { seller: side('seller'), buyer: side('buyer') }
 }
 
 function normalizeContractSummary(raw: unknown): ContractSummary | null {
@@ -211,6 +261,7 @@ function normalizeContractSummary(raw: unknown): ContractSummary | null {
             : typeof item.property_purpose === 'string'
                 ? item.property_purpose
                 : null,
+        dealType: normalizeDealType(item.dealType ?? item.deal_type),
         viewerSide,
         responsibleUserIds,
         documentProgress: normalizeDocumentProgress(item.documentProgress ?? item.document_progress),
@@ -218,6 +269,8 @@ function normalizeContractSummary(raw: unknown): ContractSummary | null {
             item.documentRequirements ?? item.document_requirements,
         ),
         capabilities: normalizeCapabilities(item.capabilities),
+        workflow: normalizeWorkflow(item.workflow, status),
+        handshake: normalizeHandshake(item.handshake),
     }
 }
 
@@ -284,6 +337,9 @@ function normalizeContractDetail(raw: unknown): ContractDetail {
                 : item.workflow_metadata && typeof item.workflow_metadata === 'object'
                     ? item.workflow_metadata as Record<string, unknown>
                     : null,
+        identityCapabilities: normalizeIdentityCapabilities(
+            item.identityCapabilities ?? item.identity_capabilities,
+        ),
         sellerApprovalReason:
             item.ownerApprovalReason && typeof item.ownerApprovalReason === 'object'
                 ? item.ownerApprovalReason as ContractApprovalReason
@@ -373,6 +429,21 @@ export async function getContractById(id: string): Promise<ContractDetail> {
     return normalizeContractDetail(response)
 }
 
+export async function verifyContractHandshakePin(
+    contractId: string,
+    pin: string,
+): Promise<ContractDetail> {
+    const response = await apiClient.post<unknown>(
+        `/contracts/${encodeURIComponent(contractId)}/verify-pin`,
+        { pin },
+    )
+    return normalizeContractDetail(response)
+}
+
+export async function rejectContractHandshakeAssociation(contractId: string): Promise<void> {
+    await apiClient.post(`/contracts/${encodeURIComponent(contractId)}/reject-association`)
+}
+
 export async function uploadContractDocument(options: {
     contractId: string
     documentType: ContractDocumentType
@@ -393,15 +464,6 @@ export async function uploadContractDocument(options: {
     }
 
     await apiClient.post(`/contracts/${encodeURIComponent(options.contractId)}/documents`, formData)
-}
-
-export async function setContractSignatureMethod(
-    contractId: string,
-    method: 'in_person',
-): Promise<void> {
-    await apiClient.post(`/contracts/${encodeURIComponent(contractId)}/signature-method`, {
-        method,
-    })
 }
 
 export async function deleteContractDocument(contractId: string, documentId: number): Promise<void> {

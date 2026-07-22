@@ -90,3 +90,24 @@ export async function MostAffordableSection({ deal = 'sale' }: { deal?: HomeDeal
         />
     )
 }
+
+/**
+ * Mantém a descoberta útil depois que a pessoa escolhe uma finalidade, sem
+ * misturar os resultados das vitrines principais com a finalidade oposta.
+ */
+export async function OppositeDealSection({ deal = 'sale' }: { deal?: HomeDeal } = {}) {
+    const oppositeDeal: HomeDeal = deal === 'sale' ? 'rent' : 'sale'
+    const properties = await fetchRecentProperties(8, oppositeDeal)
+    const isRentalShelf = oppositeDeal === 'rent'
+
+    return (
+        <RecentProperties
+            properties={properties}
+            title={isRentalShelf ? 'Imóveis para alugar' : 'Imóveis à venda'}
+            subtitle={isRentalShelf
+                ? 'Opções de locação que acabaram de chegar.'
+                : 'Opções de compra que acabaram de chegar.'}
+            browseHref={homeBrowseHref(oppositeDeal, 'created_at:desc')}
+        />
+    )
+}

@@ -64,6 +64,7 @@ const mockSession = {
         id: 1,
         role: 'client',
         name: 'Cliente Teste',
+        email: 'cliente@example.com',
     },
 }
 
@@ -116,6 +117,7 @@ describe('ProposalWizardPage', () => {
             propertyId: 10,
             clientName: 'Cliente Alterado',
             clientCpf: '52998224725',
+            buyerEmail: 'cliente@example.com',
             validadeDias: 10,
             dealType: 'rent',
             proposalValue: 2000,

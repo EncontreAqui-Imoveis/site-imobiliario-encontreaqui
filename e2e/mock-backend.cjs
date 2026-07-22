@@ -17,7 +17,7 @@ const properties = Array.from({ length: 25 }, (_, index) => {
     description: 'Imóvel usado para validar o fluxo ponta a ponta.',
     type: index % 3 === 0 ? 'Casa' : 'Apartamento',
     status: 'approved',
-    purpose: 'Venda',
+    purpose: index % 2 === 0 ? 'Venda' : 'Aluguel',
     price: 300000 + index * 5000,
     price_sale: 300000 + index * 5000,
     address: `Rua Teste ${id}`,
@@ -201,11 +201,13 @@ const server = http.createServer(async (req, res) => {
     const page = Math.max(Number(url.searchParams.get('page') || 1), 1);
     const limit = Math.max(Number(url.searchParams.get('limit') || 10), 1);
     const status = String(url.searchParams.get('status') || '').trim().toLowerCase();
+    const purpose = String(url.searchParams.get('purpose') || '').trim().toLowerCase();
     const filtered = properties.filter((item) => {
       if (search && !item.title.toLowerCase().includes(search)) return false;
       if (city && item.city.toLowerCase() !== city) return false;
       if (bairro && item.bairro.toLowerCase() !== bairro) return false;
       if (status && item.status.toLowerCase() !== status) return false;
+      if (purpose && item.purpose.toLowerCase() !== purpose) return false;
       return true;
     });
     const start = (page - 1) * limit;
@@ -213,6 +215,15 @@ const server = http.createServer(async (req, res) => {
     const total = filtered.length;
     const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
     json(res, 200, { properties: pageItems, data: pageItems, total, page, totalPages }, origin);
+    return;
+  }
+
+  if (req.method === 'GET' && url.pathname === '/properties/featured') {
+    const scope = String(url.searchParams.get('scope') || 'sale').trim().toLowerCase();
+    const purpose = scope === 'rent' ? 'Aluguel' : 'Venda';
+    const limit = Math.max(Number(url.searchParams.get('limit') || 6), 1);
+    const rows = properties.filter((item) => item.purpose === purpose).slice(0, limit);
+    json(res, 200, { properties: rows, data: rows }, origin);
     return;
   }
 
@@ -630,11 +641,19 @@ const server = http.createServer(async (req, res) => {
             id: 'neg-1',
             propertyId: 101,
             propertyTitle: 'Casa E2E',
-            status: 'PROPOSAL_SIGNED',
+            status: 'PROPOSAL_SENT',
             clientName: 'Cliente E2E',
             createdAt,
             updatedAt,
             proposalValidUntil: '2026-04-17T10:00:00.000Z',
+            capabilities: {
+              canRead: true,
+              canEditProposal: true,
+              canDeleteProposal: true,
+              canDownloadDraft: true,
+              canUploadSignedProposal: true,
+              canOpenContract: false,
+            },
           },
         ],
       },
