@@ -17,6 +17,7 @@ import {
     PROPERTY_PURPOSES,
     normalizeDecimalInput,
     requiresLotFields,
+    supportsSale,
 } from '@/lib/propertyCreate'
 import {
     normalizeAreaUnidade,
@@ -117,7 +118,7 @@ export default function EditPropertyPage() {
 
     // Form state
     const [form, setForm] = useState({
-        title: '', description: '', type: 'Casa', purpose: 'Venda',
+        title: '', description: '', type: 'Casa', purpose: 'Venda', marketStage: 'STANDARD' as 'STANDARD' | 'LAUNCH',
         priceSale: '', priceRent: '',
         address: '', numero: '', quadra: '', lote: '', bairro: '',
         complemento: '', city: '', state: 'GO', cep: '', semCep: false,
@@ -186,6 +187,7 @@ export default function EditPropertyPage() {
                 description: p.description || '',
                 type: p.type || 'Casa',
                 purpose: p.purpose || 'Venda',
+                marketStage: p.marketStage === 'LAUNCH' ? 'LAUNCH' : 'STANDARD',
                 priceSale: p.priceSale ? formatCurrencyInput(String(p.priceSale)) : '',
                 priceRent: p.priceRent ? formatCurrencyInput(String(p.priceRent)) : '',
                 address: p.address || '',
@@ -290,6 +292,7 @@ export default function EditPropertyPage() {
                 description: form.description.trim(),
                 type: form.type,
                 purpose: form.purpose,
+                market_stage: form.marketStage,
                 priceSale: parseCurrencyInput(form.priceSale) || 0,
                 priceRent: parseCurrencyInput(form.priceRent) || 0,
                 address: form.address.trim(),
@@ -462,11 +465,29 @@ export default function EditPropertyPage() {
                             </div>
                             <div>
                                 <label className={labelClass}>Finalidade</label>
-                                <select value={form.purpose} onChange={e => updateField('purpose', e.target.value)} className={inputClass}>
+                                <select value={form.purpose} onChange={e => {
+                                    const purpose = e.target.value
+                                    setForm(previous => ({
+                                        ...previous,
+                                        purpose,
+                                        marketStage: supportsSale(purpose) ? previous.marketStage : 'STANDARD',
+                                    }))
+                                }} className={inputClass}>
                                     {PROPERTY_PURPOSES.map(p => <option key={p} value={p}>{p}</option>)}
                                 </select>
                             </div>
                         </div>
+                        {supportsSale(form.purpose) && (
+                            <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-700">
+                                <input
+                                    type="checkbox"
+                                    checked={form.marketStage === 'LAUNCH'}
+                                    onChange={event => updateField('marketStage', event.target.checked ? 'LAUNCH' : 'STANDARD')}
+                                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                                />
+                                Este imóvel é um lançamento
+                            </label>
+                        )}
                     </section>
 
                     {/* Pricing */}

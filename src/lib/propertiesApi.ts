@@ -298,6 +298,9 @@ export function normalizeProperty(
         type: normalizeType(item.type),
         status: normalizeStatus(item.status),
         purpose: normalizePurpose(item.purpose),
+        marketStage: String(item.marketStage ?? item.market_stage ?? 'STANDARD').trim().toUpperCase() === 'LAUNCH'
+            ? 'LAUNCH'
+            : 'STANDARD',
         price: toNumber(item.price) ?? 0,
         priceSale: toNumber(item.priceSale ?? item.price_sale ?? item.sale_value),
         priceRent: toNumber(item.priceRent ?? item.price_rent),
@@ -476,6 +479,17 @@ export async function fetchFeaturedProperties(limit = 6, deal: HomeDeal = 'sale'
 
 export async function fetchRecentProperties(limit = 8, deal: HomeDeal = 'sale'): Promise<Property[]> {
     return fetchHomePropertiesBySort(limit, deal, 'created_at:desc')
+}
+
+/** Lançamentos são uma classificação independente e exclusiva de venda. */
+export async function fetchLaunchProperties(limit = 8): Promise<Property[]> {
+    const params = new URLSearchParams()
+    params.set('status', 'approved')
+    params.set('limit', String(limit))
+    params.set('sort', 'created_at:desc')
+    params.set('purpose', 'Venda')
+    params.set('market_stage', 'LAUNCH')
+    return (await fetchProperties(params)).slice(0, limit)
 }
 
 async function fetchHomePropertiesBySort(

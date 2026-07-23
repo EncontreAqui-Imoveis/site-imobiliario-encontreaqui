@@ -25,7 +25,7 @@ export default function PropostasPage() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [filter, setFilter] = useState<'sent' | 'signed' | 'refused'>('sent')
-    const [searchQuery, setSearchQuery] = useState('')
+    const [searchQuery] = useState('')
     const [busyActionId, setBusyActionId] = useState<string | null>(null)
 
     const getFriendlyProposalStatusLabel = (status: string) => {

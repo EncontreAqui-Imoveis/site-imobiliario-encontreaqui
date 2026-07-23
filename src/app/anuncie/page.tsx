@@ -102,6 +102,7 @@ const INITIAL: CreatePropertyDraftData = {
   actorMode: null,
   propertyType: "",
   purpose: "",
+  marketStage: "STANDARD",
   title: "",
   description: "",
   ownerName: "",
@@ -1301,7 +1302,16 @@ export default function AnunciePage() {
                 <label className={LABEL}>Finalidade *</label>
                 <select
                   value={form.purpose}
-                  onChange={(e) => updateField("purpose", e.target.value)}
+                  onChange={(e) => {
+                    const purpose = e.target.value;
+                    setForm((current) => ({
+                      ...current,
+                      purpose,
+                      marketStage: supportsSale(purpose)
+                        ? current.marketStage
+                        : "STANDARD",
+                    }));
+                  }}
                   className={INPUT}
                 >
                   <option value="">Selecionar</option>
@@ -1313,6 +1323,19 @@ export default function AnunciePage() {
                 </select>
               </div>
             </div>
+            {saleEnabled && (
+              <label className="mt-3 flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-800">
+                <input
+                  type="checkbox"
+                  checked={form.marketStage === "LAUNCH"}
+                  onChange={(e) =>
+                    updateField("marketStage", e.target.checked ? "LAUNCH" : "STANDARD")
+                  }
+                  className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                />
+                Este imóvel é um lançamento
+              </label>
+            )}
             <div>
               <label className={LABEL}>Título *</label>
               <input
@@ -1921,6 +1944,12 @@ export default function AnunciePage() {
                   <p className={REVIEW_SECTION_TITLE}>Finalidade</p>
                   <p className={REVIEW_VALUE}>{form.purpose || "—"}</p>
                 </div>
+                {form.marketStage === "LAUNCH" && (
+                  <div className={REVIEW_CARD}>
+                    <p className={REVIEW_SECTION_TITLE}>Classificação</p>
+                    <p className={REVIEW_VALUE}>Lançamento</p>
+                  </div>
+                )}
               </div>
 
               <div className={REVIEW_CARD}>

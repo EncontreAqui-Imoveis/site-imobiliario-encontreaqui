@@ -934,8 +934,8 @@ export default function ProposalWizardPage() {
                             {proposalBaseMode === 'rent' ? (
                                 <div className="space-y-5">
                                     <div className="rounded-xl border border-sky-100 bg-sky-50 p-4">
-                                        <p className="text-sm font-semibold text-sky-950">Condições da locação</p>
-                                        <p className="mt-1 text-xs text-sky-800">Informe as condições comerciais que irão compor a minuta de aluguel.</p>
+                                        <p className="text-sm font-semibold text-sky-950">Dados da locação</p>
+                                        <p className="mt-1 text-xs text-sky-800">Informe os dados de pagamento e vigência da proposta de aluguel.</p>
                                     </div>
                                     <div>
                                         <label className="mb-1 block text-sm font-medium text-gray-700">Aluguel mensal *</label>

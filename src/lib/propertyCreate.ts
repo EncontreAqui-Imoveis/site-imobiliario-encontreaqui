@@ -105,6 +105,7 @@ export type CreatePropertyDraftData = {
     actorMode: CreatePropertyActor | null
     propertyType: string
     purpose: string
+    marketStage: 'STANDARD' | 'LAUNCH'
     title: string
     description: string
     ownerName: string
@@ -280,6 +281,7 @@ export function buildCreatePropertyFormData(payload: CreatePropertyPayload): For
     formData.append('description', normalizeText(payload.description))
     formData.append('type', payload.propertyType)
     formData.append('purpose', payload.purpose)
+    formData.append('market_stage', payload.marketStage)
     formData.append('price', String(basePrice))
 
     appendIfPresent(formData, 'price_sale', saleEnabled ? salePrice : null)

@@ -1,5 +1,6 @@
 import {
     fetchFeaturedProperties,
+    fetchLaunchProperties,
     fetchMostAffordableProperties,
     fetchMostExpensiveProperties,
     fetchRecentProperties,
@@ -51,6 +52,19 @@ export async function FeaturedSection({ deal = 'sale' }: { deal?: HomeDeal } = {
     const properties = await fetchFeaturedProperties(6, deal)
     const title = 'Imóveis em Destaque'
     return <FeaturedCarousel properties={properties} title={title} browseHref={homeBrowseHref(deal, 'created_at:desc')} />
+}
+
+export async function LaunchSection({ deal = 'sale' }: { deal?: HomeDeal } = {}) {
+    if (deal !== 'sale') return null
+    const properties = await fetchLaunchProperties(8)
+    return (
+        <RecentProperties
+            properties={properties}
+            title="Lançamentos"
+            subtitle="Imóveis novos e oportunidades que acabaram de entrar no mercado."
+            browseHref="/imoveis?purpose=Venda&market_stage=LAUNCH&sort=created_at%3Adesc"
+        />
+    )
 }
 
 export async function RecentSection({ deal = 'sale' }: { deal?: HomeDeal } = {}) {

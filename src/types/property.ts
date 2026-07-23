@@ -7,6 +7,7 @@ export interface Property {
     /** Motivo informado pelo admin em caso de rejeição */
     rejectionReason?: string | null,
     purpose: 'Venda' | 'Aluguel' | 'Venda e Aluguel'
+    marketStage?: 'STANDARD' | 'LAUNCH'
     price: number
     priceSale?: number
     priceRent?: number

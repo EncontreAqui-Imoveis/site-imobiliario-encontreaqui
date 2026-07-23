@@ -35,7 +35,7 @@ import {
     submitSignupDraftDocuments,
     finalizeSignupDraft,
 } from '@/lib/api/signupDraft'
-import { Eye, EyeOff, Mail, Smartphone, Upload, Camera, CreditCard, ShieldCheck, CheckCircle2, Check } from 'lucide-react'
+import { Eye, EyeOff, Mail, Smartphone, Upload, Camera, CreditCard, ShieldCheck, Check } from 'lucide-react'
 import LegalDocumentModal, { type LegalDocumentKind } from '@/components/legal/LegalDocumentModal'
 import { validateDocumentFile } from '@/lib/sanitize'
 import { persistAuthToken } from '@/lib/auth/tokenStore'
