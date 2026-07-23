@@ -424,10 +424,13 @@ async function logFailedResponse(context: string, response: Response): Promise<v
     })
 }
 
-async function fetchProperties(params: URLSearchParams): Promise<Property[]> {
+async function fetchProperties(
+    params: URLSearchParams,
+    { revalidate = 60 }: { revalidate?: number } = {},
+): Promise<Property[]> {
     try {
         const response = await fetch(`${API_BASE_URL}/properties?${params.toString()}`, {
-            next: { revalidate: 60 },
+            next: { revalidate },
         })
 
         if (!response.ok) {
@@ -489,7 +492,9 @@ export async function fetchLaunchProperties(limit = 8): Promise<Property[]> {
     params.set('sort', 'created_at:desc')
     params.set('purpose', 'Venda')
     params.set('market_stage', 'LAUNCH')
-    return (await fetchProperties(params)).slice(0, limit)
+    // A aprovação de um lançamento deve refletir na vitrine sem esperar a
+    // revalidação das demais seções da página inicial.
+    return (await fetchProperties(params, { revalidate: 0 })).slice(0, limit)
 }
 
 async function fetchHomePropertiesBySort(
