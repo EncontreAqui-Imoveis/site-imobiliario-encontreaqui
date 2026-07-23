@@ -288,25 +288,6 @@ export default function PropertyInfo({ property }: PropertyInfoProps) {
                     <p className="mt-4 text-sm text-gray-500">Nenhuma outra comodidade informada.</p>
                 )}
             </div>
-
-
-
-            {/* Video Section */}
-            {property.videoUrl && (
-                <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100">
-                    <h2 className="font-display text-xl font-bold text-gray-900 mb-4">Vídeo do Imóvel</h2>
-                    <div className="aspect-video rounded-xl overflow-hidden bg-black relative group cursor-pointer">
-                        <video
-                            controls
-                            className="w-full h-full"
-                            poster={property.images?.[0]}
-                        >
-                            <source src={property.videoUrl} type="video/mp4" />
-                            Seu navegador não suporta vídeos.
-                        </video>
-                    </div>
-                </div>
-            )}
         </div>
     )
 }
