@@ -91,6 +91,7 @@ export default function SearchFilters() {
         search: searchParams.get('search') || '',
         type: searchParams.get('type') || '',
         purpose: searchParams.get('purpose') || '',
+        market_stage: searchParams.get('market_stage') || '',
         city: searchParams.get('city') || '',
         bedrooms: searchParams.get('bedrooms') || '',
         bathrooms: searchParams.get('bathrooms') || '',
@@ -134,6 +135,7 @@ export default function SearchFilters() {
             search: searchParams.get('search') || '',
             type: searchParams.get('type') || '',
             purpose: searchParams.get('purpose') || '',
+            market_stage: searchParams.get('market_stage') || '',
             city: searchParams.get('city') || '',
             bedrooms: searchParams.get('bedrooms') || '',
             bathrooms: searchParams.get('bathrooms') || '',
@@ -254,7 +256,7 @@ export default function SearchFilters() {
 
     const clearFilters = () => {
         setFilters({
-            search: '', type: '', purpose: '', city: '', bedrooms: '',
+            search: '', type: '', purpose: '', market_stage: '', city: '', bedrooms: '',
             bathrooms: '', garage_spots: '', bairro: '', minPrice: '', maxPrice: '',
             minArea: '', maxArea: '', areaUnit: '',
             minAreaTerreno: '', maxAreaTerreno: '', areaTerrenoUnit: '',
@@ -481,6 +483,18 @@ export default function SearchFilters() {
                                             </button>
                                         ))}
                                     </div>
+                                </div>
+                                <div>
+                                    <label htmlFor="market-stage" className="block text-xs font-semibold text-gray-500 mb-1.5">Classificação</label>
+                                    <select
+                                        id="market-stage"
+                                        value={filters.market_stage}
+                                        onChange={(e) => handleChange('market_stage', e.target.value)}
+                                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 font-medium text-gray-800"
+                                    >
+                                        <option value="">Todas</option>
+                                        <option value="LAUNCH">Lançamentos</option>
+                                    </select>
                                 </div>
                                 <div>
                                     <label htmlFor="modal-code" className="block text-xs font-semibold text-gray-500 mb-1.5">Código de Referência</label>

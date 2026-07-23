@@ -110,7 +110,7 @@ describe('HomePage integration', () => {
         const fragment = page as ReactElement<{ children: ReactNode }>
         const children = Children.toArray(fragment.props.children)
 
-        expect(children).toHaveLength(7)
+        expect(children).toHaveLength(8)
     })
 
     it('loads featured properties through the server section', async () => {

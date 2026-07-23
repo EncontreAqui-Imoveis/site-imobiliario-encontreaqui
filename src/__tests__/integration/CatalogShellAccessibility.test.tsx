@@ -50,6 +50,9 @@ jest.mock('@/components/home/HomeSections', () => ({
     FeaturedSkeleton: function MockFeaturedSkeleton() {
         return <div data-testid="featured-skeleton">Loading featured</div>
     },
+    LaunchSection: function MockLaunchSection() {
+        return <section aria-label="Lançamentos" data-testid="launch-section">Launches</section>
+    },
     RecentSection: function MockRecentSection() {
         return <section aria-label="Recentes" data-testid="recent-section">Recent</section>
     },
@@ -58,6 +61,9 @@ jest.mock('@/components/home/HomeSections', () => ({
     },
     MostAffordableSection: function MockMostAffordableSection() {
         return <section aria-label="Mais baratos" data-testid="most-affordable-section">Most affordable</section>
+    },
+    OppositeDealSection: function MockOppositeDealSection() {
+        return <section aria-label="Outro tipo de negócio" data-testid="opposite-deal-section">Opposite deal</section>
     },
     RecentSkeleton: function MockRecentSkeleton() {
         return <div data-testid="recent-skeleton">Loading recent</div>
@@ -119,6 +125,7 @@ describe('catalog shell accessibility baseline', () => {
 
         expect(screen.getByTestId('hero-section')).toBeInTheDocument()
         expect(screen.getByTestId('featured-section')).toBeInTheDocument()
+        expect(screen.getByTestId('launch-section')).toBeInTheDocument()
         expect(screen.getByTestId('recent-section')).toBeInTheDocument()
         expect(screen.getByTestId('about-section')).toBeInTheDocument()
     })

@@ -110,6 +110,12 @@ export default function PropertyCard({ property, variant = 'default' }: Property
                 )}
 
                 <div className="absolute left-3 top-3 z-10 flex max-w-[calc(100%-1.5rem)] flex-wrap gap-2 sm:left-4 sm:top-4">
+                    {property.marketStage === 'LAUNCH' && (
+                        <div className="inline-flex items-center gap-1 rounded-full bg-violet-600 px-3 py-1.5 text-[11px] font-bold text-white shadow-lg backdrop-blur-sm">
+                            <Hammer className="h-3.5 w-3.5" />
+                            Lançamento
+                        </div>
+                    )}
                     {effectivePromo != null && (
                         <div className="rounded-full bg-amber-500 px-3 py-1.5 text-[11px] font-bold text-white shadow-lg backdrop-blur-sm bg-opacity-95">
                             Promoção

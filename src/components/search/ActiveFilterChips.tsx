@@ -8,6 +8,7 @@ const FILTER_LABELS: Record<string, string> = {
     search: 'Busca',
     type: 'Tipo',
     purpose: 'Finalidade',
+    market_stage: 'Classificação',
     city: 'Cidade',
     bairro: 'Bairro',
     bedrooms: 'Quartos',
@@ -74,6 +75,7 @@ function formatValue(key: string, value: string, searchParams: URLSearchParams):
     }
     if (key === 'areaTerrenoUnit') return areaUnitLabel(normalizeAreaUnidade(value))
     if (key === 'sort') return SORT_TRANSLATIONS[value] || value
+    if (key === 'market_stage' && value === 'LAUNCH') return 'Lançamentos'
     if (key === 'bedrooms' || key === 'bathrooms' || key === 'garage_spots') return `${value}+`
     if (key === 'amenities') {
         const upper = value.toUpperCase()

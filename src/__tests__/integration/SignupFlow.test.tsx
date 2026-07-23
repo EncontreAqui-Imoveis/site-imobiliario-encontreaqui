@@ -269,7 +269,7 @@ describe('signup flow', () => {
         expect(clientButton).toHaveAttribute('aria-pressed', 'true')
         expect(screen.getByText('Escolha aplicada. Continue para preencher seus dados.')).toBeInTheDocument()
         expect(screen.queryByText('Selecionado')).not.toBeInTheDocument()
-        const selectedIcons = within(clientButton).getAllByTestId('icon-checkcircle2')
+        const selectedIcons = within(clientButton).getAllByTestId('icon-check')
         expect(selectedIcons).toHaveLength(1)
     })
 

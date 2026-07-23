@@ -17,9 +17,12 @@ export default function PropertiesPage() {
     const purpose = searchParams.get('purpose')
     const city = searchParams.get('city')
     const bairro = searchParams.get('bairro')
+    const marketStage = searchParams.get('market_stage')
 
     let titleText = 'Imóveis'
-    if (purpose === 'Venda') {
+    if (marketStage === 'LAUNCH') {
+        titleText = 'Lançamentos'
+    } else if (purpose === 'Venda') {
         titleText = 'Imóveis à venda'
     } else if (purpose === 'Aluguel') {
         titleText = 'Imóveis para alugar'
