@@ -62,6 +62,7 @@ export async function LaunchSection({ deal = 'sale' }: { deal?: HomeDeal } = {})
             properties={properties}
             title="Lançamentos"
             subtitle="Imóveis novos e oportunidades que acabaram de entrar no mercado."
+            emptyMessage="Sem imóveis em lançamento ainda."
             browseHref="/imoveis?purpose=Venda&market_stage=LAUNCH&sort=created_at%3Adesc"
         />
     )

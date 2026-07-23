@@ -11,6 +11,7 @@ interface RecentPropertiesProps {
     properties: Property[]
     title?: string
     subtitle?: string
+    emptyMessage?: string
     showViewAll?: boolean
     browseHref?: string
 }
@@ -19,6 +20,7 @@ export default function RecentProperties({
     properties,
     title = 'Imóveis recentes',
     subtitle = 'Confira os imóveis adicionados recentemente',
+    emptyMessage = 'Nenhum imóvel recente encontrado. Novos imóveis são adicionados diariamente.',
     showViewAll = true,
     browseHref = '/imoveis?sort=created_at:desc',
 }: RecentPropertiesProps) {
@@ -52,7 +54,7 @@ export default function RecentProperties({
             <section className="py-16 lg:py-24 bg-transparent">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">{title}</h2>
-                    <p className="text-gray-400">Nenhum imóvel recente encontrado. Novos imóveis são adicionados diariamente.</p>
+                    <p className="text-gray-400">{emptyMessage}</p>
                 </div>
             </section>
         )
