@@ -314,13 +314,11 @@ export default function CadastroPage() {
             value: 'client' as const,
             title: 'Quero cadastrar como cliente',
             description: 'Para favoritar imóveis, gerar propostas e acompanhar contratos.',
-            helper: 'Acesso focado em busca, proposta e acompanhamento.',
         },
         {
             value: 'broker' as const,
             title: 'Quero cadastrar como corretor',
             description: 'Para anunciar imóveis, gerar propostas e operar a carteira.',
-            helper: 'Acesso para operação comercial e gestão da carteira.',
         },
     ]
 
@@ -1244,7 +1242,6 @@ export default function CadastroPage() {
                                             key={option.value}
                                             type="button"
                                             aria-pressed={isSelected}
-                                            aria-describedby={`signup-role-${option.value}-hint`}
                                             onClick={() => handleSelectProfile(option.value)}
                                             className={`group relative cursor-pointer rounded-2xl border p-4 text-left transition-all outline-none ${isSelected
                                                 ? 'border-2 border-yellow-400 bg-white'
@@ -1269,14 +1266,6 @@ export default function CadastroPage() {
                                                     {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
                                                 </span>
                                             </div>
-                                            <p
-                                                id={`signup-role-${option.value}-hint`}
-                                                className={`mt-3 text-xs ${
-                                                    isSelected ? 'font-bold text-amber-800' : 'font-normal text-gray-400'
-                                                }`}
-                                            >
-                                                {isSelected ? 'Escolha aplicada. Continue para preencher seus dados.' : option.helper}
-                                            </p>
                                         </button>
                                     )
                                 })}
