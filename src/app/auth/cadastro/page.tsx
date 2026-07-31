@@ -40,6 +40,7 @@ import LegalDocumentModal, { type LegalDocumentKind } from '@/components/legal/L
 import { validateDocumentFile } from '@/lib/sanitize'
 import { persistAuthToken } from '@/lib/auth/tokenStore'
 import { LEGAL_DOCUMENT_VERSION } from '@/lib/legalDocuments'
+import { PASSWORD_MAX_LENGTH, USER_PASSWORD_MIN_LENGTH, validateNewPassword } from '@/lib/passwordPolicy'
 
 
 const BRAZILIAN_STATES = [
@@ -619,8 +620,9 @@ export default function CadastroPage() {
             setSubmitting(false)
             return
         }
-        if (!isGoogleFlow && password.trim().length < 6) {
-            setError('A senha precisa ter pelo menos 6 caracteres.')
+        const passwordError = isGoogleFlow ? null : validateNewPassword(password)
+        if (passwordError) {
+            setError(passwordError)
             setSubmitting(false)
             return
         }
@@ -1348,8 +1350,8 @@ export default function CadastroPage() {
                                                 type={showPassword ? 'text' : 'password'}
                                                 autoComplete="new-password"
                                                 required
-                                                minLength={6}
-                                                maxLength={256}
+                                                minLength={USER_PASSWORD_MIN_LENGTH}
+                                                maxLength={PASSWORD_MAX_LENGTH}
                                                 value={draft.data.password}
                                                 onChange={(e) => updateDraft({ password: e.target.value })}
                                                 placeholder="••••••••"
@@ -1364,6 +1366,11 @@ export default function CadastroPage() {
                                                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                             </button>
                                         </div>
+                                        <p className={`text-xs ${draft.data.password.length > 0 && draft.data.password.length < USER_PASSWORD_MIN_LENGTH ? 'text-red-600' : 'text-gray-500'}`} aria-live="polite">
+                                            {draft.data.password.length > 0 && draft.data.password.length < USER_PASSWORD_MIN_LENGTH
+                                                ? `Faltam ${USER_PASSWORD_MIN_LENGTH - draft.data.password.length} caracteres para o mínimo.`
+                                                : `Use entre ${USER_PASSWORD_MIN_LENGTH} e ${PASSWORD_MAX_LENGTH} caracteres.`}
+                                        </p>
                                     </div>
                                 )}
 

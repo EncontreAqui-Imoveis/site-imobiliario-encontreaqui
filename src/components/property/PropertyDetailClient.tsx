@@ -70,8 +70,7 @@ export default function PropertyDetailClient({
         isOwner && statusLower !== 'pending_approval' && !hasPendingEditRequest
     const negotiationId = property?.negotiationId ?? property?.negotiation?.id
     const negotiationStatus = String(property?.negotiation?.status ?? '').trim().toUpperCase()
-    const latestContractStatus = String(property?.latestContractStatus ?? '').trim().toUpperCase()
-    const hasActivePhysicalContract = Boolean(property?.latestContractId) && latestContractStatus !== 'CANCELLED'
+    const hasActivePhysicalContract = authorizedContractId != null
     const isCancelledNegotiation = ['CANCELLED', 'CANCELED'].includes(negotiationStatus)
     const hasRefusedNegotiation = isProposalRefusedStatus(negotiationStatus)
     const isClientOwner = isOwner && userRole === 'client'
@@ -147,8 +146,7 @@ export default function PropertyDetailClient({
     }, [authLoading, isOwner, propertyId, session])
 
     useEffect(() => {
-        const latestContractId = property?.latestContractId
-        if (!session || !latestContractId) {
+        if (!session || property?.id == null) {
             setAuthorizedContractId(null)
             return
         }
@@ -157,11 +155,8 @@ export default function PropertyDetailClient({
         void getMyContracts()
             .then((contracts) => {
                 if (!cancelled) {
-                    setAuthorizedContractId(
-                        contracts.some((contract) => contract.id === latestContractId)
-                            ? latestContractId
-                            : null,
-                    )
+                    const contract = contracts.find((item) => item.propertyId === property.id)
+                    setAuthorizedContractId(contract?.id ?? null)
                 }
             })
             .catch(() => {
@@ -171,7 +166,7 @@ export default function PropertyDetailClient({
         return () => {
             cancelled = true
         }
-    }, [property?.latestContractId, session])
+    }, [property?.id, session])
 
 
 

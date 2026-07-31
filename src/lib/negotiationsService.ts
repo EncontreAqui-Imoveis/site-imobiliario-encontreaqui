@@ -182,9 +182,6 @@ export interface ProposalUserLookup {
     id: number
     name: string
     email?: string
-    cpf?: string
-    phone?: string
-    role?: string
 }
 
 export async function searchApprovedBrokers(query: string): Promise<ApprovedBrokerLookup[]> {
@@ -198,7 +195,7 @@ export async function searchApprovedBrokers(query: string): Promise<ApprovedBrok
 
 export async function searchUsers(query: string): Promise<ProposalUserLookup[]> {
     const search = query.trim()
-    if (search.length < 2) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(search)) {
         return []
     }
 

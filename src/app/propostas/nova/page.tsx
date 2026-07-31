@@ -318,7 +318,6 @@ export default function ProposalWizardPage() {
                     setSelectedBuyer({
                         id: existing.buyerUserId,
                         name: existing.buyerName?.trim() || existing.clientName?.trim() || 'Comprador selecionado',
-                        cpf: existing.clientCpf?.trim() || undefined,
                         email: existing.buyerEmail?.trim() || undefined,
                     })
                     setBuyerQuery(existing.buyerName?.trim() || existing.clientName?.trim() || '')
@@ -375,7 +374,7 @@ export default function ProposalWizardPage() {
         }
 
         const query = buyerQuery.trim()
-        if (query.length < 2) {
+        if (!isValidEmail(query)) {
             setBuyerResults([])
             setBuyerLoading(false)
             return
@@ -770,7 +769,7 @@ export default function ProposalWizardPage() {
                                                     <div className="min-w-0">
                                                         <p className="truncate text-sm font-semibold text-gray-900">{selectedBuyer.name}</p>
                                                         <p className="truncate text-xs text-gray-500">
-                                                            {selectedBuyer.cpf ? `CPF ${selectedBuyer.cpf}` : 'Comprador selecionado'}
+                                                            {selectedBuyer.email ?? 'Comprador selecionado'}
                                                         </p>
                                                     </div>
                                                     <div className="flex items-center gap-2">
@@ -778,7 +777,7 @@ export default function ProposalWizardPage() {
                                                             type="button"
                                                             onClick={() => {
                                                                 setBuyerPickerOpen((current) => !current)
-                                                                setBuyerQuery(selectedBuyer.name)
+                                                                setBuyerQuery(selectedBuyer.email ?? '')
                                                             }}
                                                             className="text-xs font-semibold text-primary-600 hover:text-primary-700"
                                                         >
@@ -801,17 +800,17 @@ export default function ProposalWizardPage() {
                                                 {buyerPickerOpen && (
                                                     <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-3">
                                                         <div className="space-y-1">
-                                                            <label className="text-xs font-medium text-gray-600">Buscar comprador</label>
+                                                            <label className="text-xs font-medium text-gray-600">E-mail da conta do comprador</label>
                                                             <input
                                                                 type="text"
                                                                 value={buyerQuery}
                                                                 onChange={(event) => setBuyerQuery(event.target.value)}
-                                                                placeholder="Nome, CPF ou e-mail"
+                                                                placeholder="comprador@email.com"
                                                                 className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary-500"
                                                             />
                                                         </div>
                                                         <p className="text-xs text-gray-500">
-                                                            Digite ao menos 2 caracteres para localizar um usuário.
+                                                            Digite o e-mail completo para localizar a conta.
                                                         </p>
 
                                                         {buyerLoading && (
@@ -821,7 +820,7 @@ export default function ProposalWizardPage() {
                                                             </div>
                                                         )}
 
-                                                        {!buyerLoading && buyerQuery.trim().length >= 2 && buyerResults.length === 0 && (
+                                                        {!buyerLoading && isValidEmail(buyerQuery.trim()) && buyerResults.length === 0 && (
                                                             <p className="text-sm text-gray-500">Nenhum usuário encontrado.</p>
                                                         )}
 
@@ -839,7 +838,7 @@ export default function ProposalWizardPage() {
                                                                         type="button"
                                                                         onClick={() => {
                                                                             setSelectedBuyer(user)
-                                                                            setBuyerQuery(user.name)
+                                                                            setBuyerQuery(user.email ?? '')
                                                                             setBuyerEmail(user.email ?? '')
                                                                             setBuyerResults([])
                                                                             setBuyerPickerOpen(false)
@@ -848,7 +847,7 @@ export default function ProposalWizardPage() {
                                                                     >
                                                                         <p className="text-sm font-semibold text-gray-900">{user.name}</p>
                                                                         <p className="text-xs text-gray-500">
-                                                                            {user.cpf ? `CPF ${user.cpf}` : user.email || 'Usuário do sistema'}
+                                                                            {user.email || 'Usuário do sistema'}
                                                                         </p>
                                                                     </button>
                                                                 ))}
@@ -899,7 +898,7 @@ export default function ProposalWizardPage() {
                                                             >
                                                                 <p className="text-sm font-semibold text-gray-900">{user.name}</p>
                                                                 <p className="text-xs text-gray-500">
-                                                                    {user.cpf ? `CPF ${user.cpf}` : user.email || 'Usuário do sistema'}
+                                                                            {user.email || 'Usuário do sistema'}
                                                                 </p>
                                                             </button>
                                                         ))}

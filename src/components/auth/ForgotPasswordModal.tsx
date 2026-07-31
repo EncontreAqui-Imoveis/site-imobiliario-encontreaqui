@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { PASSWORD_MAX_LENGTH, USER_PASSWORD_MIN_LENGTH, validateNewPassword } from '@/lib/passwordPolicy'
 
 type Step = 'request' | 'code' | 'password' | 'success'
 
@@ -211,8 +212,9 @@ export default function ForgotPasswordModal({
     /* ──── Step 3: Definição de Nova Senha ──── */
     const handlePasswordSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (newPassword.trim().length < 6) {
-            setInnerError('A nova senha deve ter ao menos 6 caracteres.')
+        const passwordError = validateNewPassword(newPassword)
+        if (passwordError) {
+            setInnerError(passwordError)
             return
         }
         if (newPassword !== confirmPassword) {
@@ -408,11 +410,18 @@ export default function ForgotPasswordModal({
                                     id="new-password"
                                     type="password"
                                     required
+                                    minLength={USER_PASSWORD_MIN_LENGTH}
+                                    maxLength={PASSWORD_MAX_LENGTH}
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
                                     placeholder="••••••••"
                                     className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2.5 px-4 text-sm text-gray-900 outline-none transition focus:border-yellow-400 focus:bg-white focus:ring-2 focus:ring-yellow-400/30"
                                 />
+                                <p className={`text-xs ${newPassword.length > 0 && newPassword.length < USER_PASSWORD_MIN_LENGTH ? 'text-red-600' : 'text-gray-500'}`} aria-live="polite">
+                                    {newPassword.length > 0 && newPassword.length < USER_PASSWORD_MIN_LENGTH
+                                        ? `Faltam ${USER_PASSWORD_MIN_LENGTH - newPassword.length} caracteres para o mínimo.`
+                                        : `Use entre ${USER_PASSWORD_MIN_LENGTH} e ${PASSWORD_MAX_LENGTH} caracteres.`}
+                                </p>
                             </div>
 
                             <div className="space-y-1.5">

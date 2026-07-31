@@ -220,7 +220,7 @@ describe('signup flow', () => {
             data: {
                 name: 'João',
                 email: 'joao@example.com',
-                password: '123456',
+                password: 'SenhaMuitoSegura123',
                 phone: '62999998888',
                 street: 'Rua A',
                 number: '10',
@@ -267,7 +267,6 @@ describe('signup flow', () => {
         fireEvent.click(clientButton)
 
         expect(clientButton).toHaveAttribute('aria-pressed', 'true')
-        expect(screen.getByText('Escolha aplicada. Continue para preencher seus dados.')).toBeInTheDocument()
         expect(screen.queryByText('Selecionado')).not.toBeInTheDocument()
         const selectedIcons = within(clientButton).getAllByTestId('icon-check')
         expect(selectedIcons).toHaveLength(1)
@@ -286,10 +285,10 @@ describe('signup flow', () => {
             target: { value: 'conflito@example.com' },
         })
         fireEvent.change(screen.getByLabelText('Senha *'), {
-            target: { value: '123456' },
+            target: { value: 'SenhaMuitoSegura123' },
         })
         fireEvent.change(screen.getByLabelText('Confirmar Senha *'), {
-            target: { value: '123456' },
+            target: { value: 'SenhaMuitoSegura123' },
         })
         fireEvent.change(screen.getByLabelText(/Telefone/), {
             target: { value: '(62) 98888-8888' },
@@ -318,10 +317,10 @@ describe('signup flow', () => {
             target: { value: 'conflito2@example.com' },
         })
         fireEvent.change(screen.getByLabelText('Senha *'), {
-            target: { value: '123456' },
+            target: { value: 'SenhaMuitoSegura123' },
         })
         fireEvent.change(screen.getByLabelText('Confirmar Senha *'), {
-            target: { value: '123456' },
+            target: { value: 'SenhaMuitoSegura123' },
         })
         fireEvent.change(screen.getByLabelText(/Telefone/), {
             target: { value: '(62) 97777-7777' },
@@ -427,10 +426,10 @@ describe('signup flow', () => {
             target: { value: 'cliente-sem-endereco@example.com' },
         })
         fireEvent.change(screen.getByLabelText('Senha *'), {
-            target: { value: '123456' },
+            target: { value: 'SenhaMuitoSegura123' },
         })
         fireEvent.change(screen.getByLabelText('Confirmar Senha *'), {
-            target: { value: '123456' },
+            target: { value: 'SenhaMuitoSegura123' },
         })
         fireEvent.change(screen.getByLabelText(/Telefone/), {
             target: { value: '(62) 98888-8888' },
@@ -477,10 +476,10 @@ describe('signup flow', () => {
             target: { value: 'cliente-sem-conexao@example.com' },
         })
         fireEvent.change(screen.getByLabelText('Senha *'), {
-            target: { value: '123456' },
+            target: { value: 'SenhaMuitoSegura123' },
         })
         fireEvent.change(screen.getByLabelText('Confirmar Senha *'), {
-            target: { value: '123456' },
+            target: { value: 'SenhaMuitoSegura123' },
         })
         fireEvent.change(screen.getByLabelText(/Telefone/), {
             target: { value: '(62) 98888-9999' },
@@ -519,7 +518,7 @@ describe('signup flow', () => {
             data: {
                 name: 'Cliente Conflito',
                 email: 'conflito3@example.com',
-                password: '123456',
+                password: 'SenhaMuitoSegura123',
                 phone: '(62) 97777-7777',
                 street: 'Rua A',
                 number: '100',
@@ -548,7 +547,7 @@ describe('signup flow', () => {
             data: {
                 name: 'Cliente Conflito',
                 email: 'conflito3@example.com',
-                password: '123456',
+                password: 'SenhaMuitoSegura123',
                 phone: '(62) 97777-7777',
                 street: '',
                 number: '',
@@ -577,10 +576,10 @@ describe('signup flow', () => {
             target: { value: 'conflito3@example.com' },
         })
         fireEvent.change(screen.getByLabelText('Senha *'), {
-            target: { value: '123456' },
+            target: { value: 'SenhaMuitoSegura123' },
         })
         fireEvent.change(screen.getByLabelText('Confirmar Senha *'), {
-            target: { value: '123456' },
+            target: { value: 'SenhaMuitoSegura123' },
         })
         fireEvent.change(screen.getByLabelText(/Telefone/), {
             target: { value: '(62) 97777-7777' },
@@ -703,10 +702,10 @@ describe('signup flow', () => {
             target: { value: 'bloqueado@example.com' },
         })
         fireEvent.change(screen.getByLabelText('Senha *'), {
-            target: { value: '123456' },
+            target: { value: 'SenhaMuitoSegura123' },
         })
         fireEvent.change(screen.getByLabelText('Confirmar Senha *'), {
-            target: { value: '123456' },
+            target: { value: 'SenhaMuitoSegura123' },
         })
         fireEvent.change(screen.getByLabelText('Telefone'), {
             target: { value: '(62) 99999-9999' },
@@ -740,10 +739,10 @@ describe('signup flow', () => {
             target: { value: 'cliente-address@example.com' },
         })
         fireEvent.change(screen.getByLabelText('Senha *'), {
-            target: { value: '123456' },
+            target: { value: 'SenhaMuitoSegura123' },
         })
         fireEvent.change(screen.getByLabelText('Confirmar Senha *'), {
-            target: { value: '123456' },
+            target: { value: 'SenhaMuitoSegura123' },
         })
         fireEvent.change(screen.getByLabelText('Telefone'), {
             target: { value: '(62) 98888-7777' },
@@ -798,7 +797,7 @@ describe('signup flow', () => {
             data: {
                 name: 'João',
                 email: 'joao@example.com',
-                password: '123456',
+                password: 'SenhaMuitoSegura123',
                 phone: '62999998888',
                 street: 'Rua A',
                 number: '10',

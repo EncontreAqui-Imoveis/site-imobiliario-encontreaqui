@@ -284,7 +284,7 @@ describe('PropertyDetailClient', () => {
             session: { user: { id: 700, role: 'client' } },
         }
         ;(contractsApi.getMyContracts as jest.Mock).mockResolvedValue([
-            { id: 'contract-1' },
+            { id: 'contract-1', propertyId: 1, status: 'IN_DRAFT' },
         ])
 
         render(
