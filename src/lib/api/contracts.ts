@@ -12,6 +12,7 @@ import type {
     ContractCapabilities,
     ContractDealType,
     ContractHandshakeStatus,
+    ContractDraftReview,
 } from '@/types/contract'
 import { isCancelledContractStatus } from '@/lib/contractsUi'
 
@@ -204,6 +205,22 @@ function normalizeIdentityCapabilities(raw: unknown): ContractDetail['identityCa
         }
     }
     return { seller: side('seller'), buyer: side('buyer') }
+}
+
+function normalizeDraftReview(raw: unknown): ContractDraftReview | null {
+    if (!raw || typeof raw !== 'object') return null
+    const item = raw as Record<string, unknown>
+    const decision = String(item.viewerDecision ?? item.viewer_decision ?? '').trim().toUpperCase()
+    return {
+        revisionId: Number(item.revisionId ?? item.revision_id ?? 0) || null,
+        revisionNumber: Number(item.revisionNumber ?? item.revision_number ?? 0) || 0,
+        documentId: Number(item.documentId ?? item.document_id ?? 0) || null,
+        originalFileName: String(item.originalFileName ?? item.original_file_name ?? '').trim() || null,
+        canReview: Boolean(item.canReview ?? item.can_review),
+        viewerDecision: decision === 'CONSENTED' || decision === 'CHANGES_REQUESTED' ? decision : null,
+        viewerReason: String(item.viewerReason ?? item.viewer_reason ?? '').trim() || null,
+        allConsented: Boolean(item.allConsented ?? item.all_consented),
+    }
 }
 
 function normalizeContractSummary(raw: unknown): ContractSummary | null {
@@ -407,7 +424,8 @@ function normalizeContractDetail(raw: unknown): ContractDetail {
                 ? item.agencyAddress
                 : typeof item.agency_address === 'string'
                     ? item.agency_address
-                    : null,
+                : null,
+        draftReview: normalizeDraftReview(item.draftReview ?? item.draft_review),
         documents,
     }
 }
@@ -442,6 +460,21 @@ export async function verifyContractHandshakePin(
 
 export async function rejectContractHandshakeAssociation(contractId: string): Promise<void> {
     await apiClient.post(`/contracts/${encodeURIComponent(contractId)}/reject-association`)
+}
+
+export async function reviewContractDraft(options: {
+    contractId: string
+    decision: 'CONSENTED' | 'CHANGES_REQUESTED'
+    reason?: string
+}): Promise<ContractDetail> {
+    const response = await apiClient.post<unknown>(
+        `/contracts/${encodeURIComponent(options.contractId)}/draft-review`,
+        {
+            decision: options.decision,
+            ...(options.reason?.trim() ? { reason: options.reason.trim() } : {}),
+        },
+    )
+    return normalizeContractDetail(response)
 }
 
 export async function uploadContractDocument(options: {

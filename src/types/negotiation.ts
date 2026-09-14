@@ -56,12 +56,8 @@ export interface NegotiationSummary {
     rentalTerms?: {
         monthlyRent?: number | null
         guaranteeType?: string | null
-        guaranteeAmount?: number | null
         leaseTermMonths?: number | null
-        expectedStartDate?: string | null
         monthlyDueDay?: number | null
-        condominiumResponsibility?: string | null
-        propertyTaxResponsibility?: string | null
         observations?: string | null
     } | null
     paymentBreakdown?: {

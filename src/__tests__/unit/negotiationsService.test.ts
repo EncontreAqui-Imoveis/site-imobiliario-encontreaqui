@@ -57,11 +57,18 @@ describe('negotiations service', () => {
         expect(apiClient.post).toHaveBeenCalledWith(
             '/negotiations/proposal',
             expect.objectContaining({
-                ...payload,
+                propertyId: payload.propertyId,
+                clientName: payload.clientName,
+                clientCpf: payload.clientCpf,
+                buyerEmail: payload.buyerEmail,
+                validadeDias: payload.validadeDias,
+                pagamento: payload.payment,
                 idempotency_key: expect.any(String),
             }),
         )
-        expect((apiClient.post as jest.Mock).mock.calls[0][1]).not.toHaveProperty('idempotencyKey')
+        const requestPayload = (apiClient.post as jest.Mock).mock.calls[0][1]
+        expect(requestPayload).not.toHaveProperty('idempotencyKey')
+        expect(requestPayload).not.toHaveProperty('payment')
     })
 
     it('searchApprovedBrokers() normalizes the payload and filters invalid brokers', async () => {

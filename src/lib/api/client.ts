@@ -1,8 +1,10 @@
 import { reportObservedError } from '@/lib/observability'
-import { readAuthTokenFromBrowser, readAuthTokenFromServer } from '@/lib/auth/tokenStore'
+import { readAuthTokenFromServer } from '@/lib/auth/tokenStore'
 
 const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL || 'https://backend-production-6acc.up.railway.app'
+    typeof window !== 'undefined'
+        ? '/api/backend'
+        : (process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://backend-production-6acc.up.railway.app')
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
@@ -52,15 +54,23 @@ interface RequestOptions {
 }
 
 async function resolveAuthToken(): Promise<string | null> {
-    if (typeof window !== 'undefined') {
-        return readAuthTokenFromBrowser()
-    }
+    if (typeof window !== 'undefined') return null
 
     try {
         return await readAuthTokenFromServer()
     } catch {
         return null
     }
+}
+
+function readCsrfToken(): string | null {
+    if (typeof document === 'undefined') return null
+    const value = document.cookie
+        .split(';')
+        .map((entry) => entry.trim())
+        .find((entry) => entry.startsWith('ea_csrf='))
+        ?.split('=')[1]
+    return value ? decodeURIComponent(value).trim() || null : null
 }
 
 async function request<T = unknown>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -92,6 +102,10 @@ async function request<T = unknown>(path: string, options: RequestOptions = {}):
     const authToken = await resolveAuthToken()
     if (authToken && !baseHeaders.has('Authorization')) {
         baseHeaders.set('Authorization', `Bearer ${authToken}`)
+    }
+    if (typeof window !== 'undefined' && !['GET'].includes(method)) {
+        const csrfToken = readCsrfToken()
+        if (csrfToken) baseHeaders.set('x-csrf-token', csrfToken)
     }
 
     const init: RequestInit = {

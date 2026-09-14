@@ -51,6 +51,10 @@ function formatPercentInput(raw: string): string {
     const normalized = raw.replace(/[^\d,.\-]/g, '').trim()
     if (!normalized) return ''
 
+    // Keep the decimal separator while the user is still typing (e.g. "55,").
+    // Otherwise React rewrites the value to "55" and makes decimal input impossible.
+    const hasTrailingDecimalSeparator = /[,.]$/.test(normalized)
+
     let parsed = normalized
     const lastComma = parsed.lastIndexOf(',')
     const lastDot = parsed.lastIndexOf('.')
@@ -63,6 +67,7 @@ function formatPercentInput(raw: string): string {
     const value = Number.parseFloat(parsed)
     if (!Number.isFinite(value)) return ''
     const clamped = Math.min(100, Math.max(0, value))
+    if (hasTrailingDecimalSeparator) return `${Math.trunc(clamped)},`
     const rounded = Math.round(clamped * 100) / 100
     return rounded.toLocaleString('pt-BR', {
         minimumFractionDigits: rounded % 1 === 0 ? 0 : 2,
@@ -73,6 +78,10 @@ function formatPercentInput(raw: string): string {
 function formatMoneyInput(raw: string): string {
     const normalized = raw.replace(/[^\d,.\-]/g, '').trim()
     if (!normalized) return ''
+
+    // Preserve a trailing separator so values such as "1.250,50" can be typed
+    // naturally instead of losing the comma after every keystroke.
+    const hasTrailingDecimalSeparator = /[,.]$/.test(normalized)
 
     let parsed = normalized
     const lastComma = parsed.lastIndexOf(',')
@@ -87,9 +96,28 @@ function formatMoneyInput(raw: string): string {
     if (!Number.isFinite(numeric)) return ''
 
     const clamped = Math.max(0, numeric)
+    if (hasTrailingDecimalSeparator) return `${Math.trunc(clamped)},`
     const [integerPart, decimalPart = ''] = clamped.toString().split('.')
     if (!decimalPart) return integerPart
     return `${integerPart},${decimalPart.slice(0, 2)}`
+}
+
+/**
+ * Keeps a controlled input editable: no locale formatting while the caret is
+ * active, otherwise React moves the caret and prevents backspace/decimals.
+ */
+function sanitizeDecimalInput(raw: string, fractionDigits = 2): string {
+    const normalized = raw.replace(/[^\d,.]/g, '')
+    if (!normalized) return ''
+
+    const lastComma = normalized.lastIndexOf(',')
+    const lastDot = normalized.lastIndexOf('.')
+    const separatorIndex = Math.max(lastComma, lastDot)
+    if (separatorIndex < 0) return normalized.replace(/\D/g, '')
+
+    const integerPart = normalized.slice(0, separatorIndex).replace(/\D/g, '')
+    const decimalPart = normalized.slice(separatorIndex + 1).replace(/\D/g, '')
+    return `${integerPart || '0'},${decimalPart.slice(0, fractionDigits)}`
 }
 
 function isValidEmail(value: string): boolean {
@@ -142,12 +170,8 @@ export default function ProposalWizardPage() {
     // Step 2 for rentals: commercial lease terms, not a sale payment split.
     const [rentalMonthlyRent, setRentalMonthlyRent] = useState('')
     const [rentalGuaranteeType, setRentalGuaranteeType] = useState('')
-    const [rentalGuaranteeAmount, setRentalGuaranteeAmount] = useState('')
     const [rentalLeaseTermMonths, setRentalLeaseTermMonths] = useState('')
-    const [rentalExpectedStartDate, setRentalExpectedStartDate] = useState('')
     const [rentalMonthlyDueDay, setRentalMonthlyDueDay] = useState('')
-    const [rentalCondominiumResponsibility, setRentalCondominiumResponsibility] = useState('')
-    const [rentalPropertyTaxResponsibility, setRentalPropertyTaxResponsibility] = useState('')
     const [rentalObservations, setRentalObservations] = useState('')
 
     // Step 2: Total proposal value composition
@@ -302,12 +326,8 @@ export default function ProposalWizardPage() {
                         ),
                     )
                     setRentalGuaranteeType(terms?.guaranteeType ?? '')
-                    setRentalGuaranteeAmount(formatMoneyInput(String(terms?.guaranteeAmount ?? '')))
                     setRentalLeaseTermMonths(String(terms?.leaseTermMonths ?? ''))
-                    setRentalExpectedStartDate(terms?.expectedStartDate ?? '')
                     setRentalMonthlyDueDay(String(terms?.monthlyDueDay ?? ''))
-                    setRentalCondominiumResponsibility(terms?.condominiumResponsibility ?? '')
-                    setRentalPropertyTaxResponsibility(terms?.propertyTaxResponsibility ?? '')
                     setRentalObservations(terms?.observations ?? '')
                 }
                 if (Number.isInteger(existing.validadeDias) && Number(existing.validadeDias) > 0) {
@@ -437,9 +457,19 @@ export default function ProposalWizardPage() {
             ...prev,
             [key]: {
                 ...prev[key],
-                value: prev[key].unit === 'percent' ? formatPercentInput(value) : formatMoneyInput(value),
+                value: sanitizeDecimalInput(value),
             },
         }))
+    }
+
+    function normalizePaymentOnBlur(key: keyof typeof payments) {
+        setPayments((prev) => {
+            const field = prev[key]
+            const value = field.unit === 'percent'
+                ? formatPercentInput(field.value)
+                : formatMoneyInput(field.value)
+            return { ...prev, [key]: { ...field, value } }
+        })
     }
 
     function toggleUnit(key: keyof typeof payments) {
@@ -514,12 +544,8 @@ export default function ProposalWizardPage() {
                     ? {
                         monthlyRent: monthlyRentValue,
                         guaranteeType: rentalGuaranteeType || undefined,
-                        guaranteeAmount: parseLocalized(rentalGuaranteeAmount) || undefined,
                         leaseTermMonths: Number(rentalLeaseTermMonths) || undefined,
-                        expectedStartDate: rentalExpectedStartDate || undefined,
                         monthlyDueDay: Number(rentalMonthlyDueDay) || undefined,
-                        condominiumResponsibility: rentalCondominiumResponsibility || undefined,
-                        propertyTaxResponsibility: rentalPropertyTaxResponsibility || undefined,
                         observations: rentalObservations.trim() || undefined,
                     }
                     : undefined,
@@ -942,45 +968,29 @@ export default function ProposalWizardPage() {
                                             type="text"
                                             inputMode="decimal"
                                             value={rentalMonthlyRent}
-                                            onChange={(event) => setRentalMonthlyRent(formatMoneyInput(event.target.value))}
+                                            onChange={(event) => setRentalMonthlyRent(sanitizeDecimalInput(event.target.value))}
+                                            onBlur={() => setRentalMonthlyRent((value) => formatMoneyInput(value))}
                                             className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary-500"
                                             placeholder="0"
                                         />
                                     </div>
                                     <div className="grid gap-4 sm:grid-cols-2">
-                                        <div>
-                                            <label className="mb-1 block text-sm font-medium text-gray-700">Garantia</label>
-                                            <select value={rentalGuaranteeType} onChange={(event) => setRentalGuaranteeType(event.target.value)} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500">
-                                                <option value="">A definir</option>
-                                                <option value="Caução">Caução</option>
-                                                <option value="Fiador">Fiador</option>
-                                                <option value="Seguro-fiança">Seguro-fiança</option>
-                                                <option value="Título de capitalização">Título de capitalização</option>
+                                        <div className="sm:col-span-2">
+                                            <label className="mb-1 block text-sm font-medium text-gray-700">Garantia locatícia</label>
+                                            <select value={rentalGuaranteeType} onChange={(event) => setRentalGuaranteeType(event.target.value)} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 outline-none focus:ring-2 focus:ring-primary-500">
+                                                <option className="bg-white text-gray-900" value="">A definir</option>
+                                                <option className="bg-white text-gray-900" value="Caução">Caução</option>
+                                                <option className="bg-white text-gray-900" value="Fiador">Fiador</option>
+                                                <option className="bg-white text-gray-900" value="Seguro-fiança">Seguro-fiança</option>
                                             </select>
-                                        </div>
-                                        <div>
-                                            <label className="mb-1 block text-sm font-medium text-gray-700">Valor da garantia</label>
-                                            <input type="text" inputMode="decimal" value={rentalGuaranteeAmount} onChange={(event) => setRentalGuaranteeAmount(formatMoneyInput(event.target.value))} className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500" placeholder="Opcional" />
                                         </div>
                                         <div>
                                             <label className="mb-1 block text-sm font-medium text-gray-700">Prazo da locação (meses)</label>
                                             <input type="number" min="1" value={rentalLeaseTermMonths} onChange={(event) => setRentalLeaseTermMonths(event.target.value)} className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500" placeholder="Ex.: 30" />
                                         </div>
                                         <div>
-                                            <label className="mb-1 block text-sm font-medium text-gray-700">Início previsto</label>
-                                            <input type="date" value={rentalExpectedStartDate} onChange={(event) => setRentalExpectedStartDate(event.target.value)} className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500" />
-                                        </div>
-                                        <div>
                                             <label className="mb-1 block text-sm font-medium text-gray-700">Vencimento mensal</label>
                                             <input type="number" min="1" max="31" value={rentalMonthlyDueDay} onChange={(event) => setRentalMonthlyDueDay(event.target.value)} className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500" placeholder="Dia do mês" />
-                                        </div>
-                                        <div>
-                                            <label className="mb-1 block text-sm font-medium text-gray-700">Responsável pelo condomínio</label>
-                                            <input type="text" value={rentalCondominiumResponsibility} onChange={(event) => setRentalCondominiumResponsibility(event.target.value)} className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500" placeholder="Ex.: Locatário" />
-                                        </div>
-                                        <div className="sm:col-span-2">
-                                            <label className="mb-1 block text-sm font-medium text-gray-700">Responsável pelo IPTU</label>
-                                            <input type="text" value={rentalPropertyTaxResponsibility} onChange={(event) => setRentalPropertyTaxResponsibility(event.target.value)} className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500" placeholder="Ex.: Proprietário" />
                                         </div>
                                     </div>
                                     <div>
@@ -1039,6 +1049,7 @@ export default function ProposalWizardPage() {
                                                             inputMode="decimal"
                                                             value={field.value}
                                                             onChange={(event) => updatePayment(key, event.target.value)}
+                                                            onBlur={() => normalizePaymentOnBlur(key)}
                                                             className="w-full rounded-xl border border-gray-200 py-3 pl-10 pr-4 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary-500"
                                                             placeholder="0"
                                                         />
@@ -1047,6 +1058,7 @@ export default function ProposalWizardPage() {
                                                             type="text"
                                                             value={field.value}
                                                             onChange={e => updatePayment(key, e.target.value)}
+                                                            onBlur={() => normalizePaymentOnBlur(key)}
                                                             className="w-full rounded-xl border border-gray-200 py-3 pl-10 pr-4 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary-500"
                                                             placeholder="0,00"
                                                             inputMode="decimal"

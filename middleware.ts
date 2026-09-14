@@ -22,7 +22,7 @@ const protectedRoutePrefixes = [
 ]
 
 const authRoutePrefixes = ['/auth/login', '/auth/cadastro']
-const authTokenCookieName = 'ea_auth_token'
+const authTokenCookieName = 'ea_session'
 
 function matchesPrefix(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`)

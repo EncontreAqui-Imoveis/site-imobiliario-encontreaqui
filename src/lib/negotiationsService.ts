@@ -83,25 +83,22 @@ export interface CreateProposalPayload {
     rentalTerms?: {
         monthlyRent: number
         guaranteeType?: string
-        guaranteeAmount?: number
         leaseTermMonths?: number
-        expectedStartDate?: string
         monthlyDueDay?: number
-        condominiumResponsibility?: string
-        propertyTaxResponsibility?: string
         observations?: string
     }
 }
 
 export async function createProposal(payload: CreateProposalPayload): Promise<void> {
-    const { idempotencyKey, ...restPayload } = payload
+    const { idempotencyKey, payment, pagamento, ...restPayload } = payload
     const generatedIdempotencyKey = idempotencyKey ?? generateIdempotencyKey()
-    const paymentPayload = restPayload.payment ?? restPayload.pagamento
+    // The API contract uses the Portuguese `pagamento` key. Keep the public
+    // TypeScript alias `payment` only for callers that still use it.
+    const paymentPayload = pagamento ?? payment
     try {
         await apiClient.post('/negotiations/proposal', {
             ...restPayload,
-            payment: paymentPayload,
-            pagamento: undefined,
+            pagamento: paymentPayload,
             idempotency_key: generatedIdempotencyKey,
         })
     } catch (error) {
@@ -127,10 +124,10 @@ export async function updateProposalDraft(
     if (!id) {
         throw new Error('Negociação inválida para edição.')
     }
+    const { payment, pagamento, ...restPayload } = payload
     await apiClient.put(`/negotiations/${encodeURIComponent(id)}/draft`, {
-        ...payload,
-        payment: payload.payment ?? payload.pagamento,
-        pagamento: undefined,
+        ...restPayload,
+        pagamento: pagamento ?? payment,
     })
 }
 

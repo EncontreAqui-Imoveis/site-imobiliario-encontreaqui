@@ -13,6 +13,7 @@ import {
     getMyContracts,
     normalizeContractDocument,
     normalizeDocumentRequirements,
+    reviewContractDraft,
     verifyContractHandshakePin,
 } from './contracts'
 
@@ -142,5 +143,41 @@ describe('contracts api normalization', () => {
             }),
         )
         expect(mockApiPost).toHaveBeenCalledWith('/contracts/contract-verified/verify-pin', { pin: '1234' })
+    })
+
+    it('envia a conferência da minuta e normaliza a decisão do lado atual', async () => {
+        mockApiPost.mockResolvedValueOnce({
+            contract: {
+                id: 'contract-review',
+                negotiationId: 'neg-review',
+                propertyId: 5,
+                status: 'AWAITING_MINUTE_REVIEW',
+                draftReview: {
+                    revisionId: 91,
+                    revisionNumber: 2,
+                    documentId: 16,
+                    originalFileName: 'minuta-v2.pdf',
+                    canReview: false,
+                    viewerDecision: 'CONSENTED',
+                    viewerReason: null,
+                    allConsented: false,
+                },
+            },
+            documents: [],
+        })
+
+        await expect(reviewContractDraft({
+            contractId: 'contract-review',
+            decision: 'CONSENTED',
+        })).resolves.toEqual(expect.objectContaining({
+            status: 'AWAITING_MINUTE_REVIEW',
+            draftReview: expect.objectContaining({
+                revisionId: 91,
+                viewerDecision: 'CONSENTED',
+            }),
+        }))
+        expect(mockApiPost).toHaveBeenCalledWith('/contracts/contract-review/draft-review', {
+            decision: 'CONSENTED',
+        })
     })
 })

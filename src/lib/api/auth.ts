@@ -1,10 +1,5 @@
 import { apiClient, ApiError } from '@/lib/api/client'
-import {
-    clearAuthToken,
-    hasAuthTokenInBrowser,
-    hasAuthTokenInServer,
-    persistAuthToken,
-} from '@/lib/auth/tokenStore'
+import { clearAuthToken, hasAuthTokenInServer, persistAuthToken } from '@/lib/auth/tokenStore'
 import type { Broker, BrokerDocuments, User } from '@/types/user'
 
 export interface UserSession {
@@ -191,7 +186,7 @@ export function isGooglePendingAuthResult(
 
 export async function fetchCurrentSession(): Promise<UserSession | null> {
     const tokenAvailable =
-        typeof window !== 'undefined' ? hasAuthTokenInBrowser() : await hasAuthTokenInServer()
+        typeof window !== 'undefined' ? true : await hasAuthTokenInServer()
 
     if (!tokenAvailable) {
         return null
@@ -341,4 +336,3 @@ export async function logout(): Promise<void> {
         clearAuthToken()
     }
 }
-

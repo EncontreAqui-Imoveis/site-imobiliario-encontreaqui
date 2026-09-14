@@ -15,6 +15,7 @@ import {
     deleteContractDocument,
     getContractById,
     rejectContractHandshakeAssociation,
+    reviewContractDraft,
     updateContractData,
     uploadContractDocument,
     verifyContractHandshakePin,
@@ -449,12 +450,19 @@ export function ContractDetailClient({ contract }: Props) {
     const [handshakePin, setHandshakePin] = useState('')
     const [verifyingHandshake, setVerifyingHandshake] = useState(false)
     const [rejectingHandshake, setRejectingHandshake] = useState(false)
+    const [isReviewingDraft, setIsReviewingDraft] = useState(false)
+    const [openedDraftRevisionId, setOpenedDraftRevisionId] = useState<number | null>(null)
+    const [showDraftCorrectionForm, setShowDraftCorrectionForm] = useState(false)
+    const [draftCorrectionReason, setDraftCorrectionReason] = useState('')
 
     useEffect(() => {
         setCurrentContract(contract)
         setDocuments(contract.documents)
         setSellerForm(buildSellerFormState(contract))
         setBuyerForm(buildBuyerFormState(contract))
+        setOpenedDraftRevisionId(null)
+        setShowDraftCorrectionForm(false)
+        setDraftCorrectionReason('')
     }, [contract])
 
     const refreshContract = async () => {
@@ -617,6 +625,38 @@ export function ContractDetailClient({ contract }: Props) {
         }
     }
 
+    const applyReviewedContract = (nextContract: ContractDetail) => {
+        setCurrentContract(nextContract)
+        setDocuments(nextContract.documents)
+        setSellerForm(buildSellerFormState(nextContract))
+        setBuyerForm(buildBuyerFormState(nextContract))
+    }
+
+    const handleDraftReview = async (decision: 'CONSENTED' | 'CHANGES_REQUESTED') => {
+        const reason = draftCorrectionReason.trim()
+        if (decision === 'CHANGES_REQUESTED' && !reason) {
+            setError('Informe o motivo da solicitação de correção.')
+            return
+        }
+        setError(null)
+        setIsReviewingDraft(true)
+        try {
+            const nextContract = await reviewContractDraft({
+                contractId: currentContract.id,
+                decision,
+                ...(decision === 'CHANGES_REQUESTED' ? { reason } : {}),
+            })
+            applyReviewedContract(nextContract)
+            setShowDraftCorrectionForm(false)
+            setDraftCorrectionReason('')
+        } catch (err) {
+            const apiErr = err as ApiError
+            setError(('message' in apiErr && apiErr.message) || 'Não foi possível registrar a conferência da minuta.')
+        } finally {
+            setIsReviewingDraft(false)
+        }
+    }
+
     const handleSaveSide = async (side: ContractSide) => {
         setError(null)
         setSavingSide(side)
@@ -730,6 +770,7 @@ export function ContractDetailClient({ contract }: Props) {
     const draftDocument = findLatestDoc(sharedDocs, { documentType: 'contrato_minuta' })
     const isAwaitingDocs = currentContract.status === 'AWAITING_DOCS'
     const isInDraft = currentContract.status === 'IN_DRAFT'
+    const isAwaitingMinuteReview = currentContract.status === 'AWAITING_MINUTE_REVIEW'
     const isAwaitingSignatures = currentContract.status === 'AWAITING_SIGNATURES'
     const canEditSellerSide = currentContract.capabilities?.canEditSeller === true
         && currentContract.capabilities?.canMutateDocuments === true
@@ -1099,6 +1140,82 @@ export function ContractDetailClient({ contract }: Props) {
                     <p className="text-sm text-sky-800">
                         A administração está preparando a minuta. Assim que o PDF estiver disponível, ele aparecerá abaixo e o fluxo seguirá para assinaturas.
                     </p>
+                </section>
+            )}
+
+            {isAwaitingMinuteReview && (
+                <section className="rounded-2xl border border-cyan-100 bg-cyan-50 px-4 py-4 shadow-sm space-y-4">
+                    <div className="space-y-1">
+                        <h2 className="text-sm font-semibold text-cyan-950">Conferir minuta</h2>
+                        <p className="text-sm text-cyan-900">
+                            Leia a versão atual da minuta. O aceite registra somente a conferência; a assinatura continua presencial.
+                        </p>
+                    </div>
+
+                    {draftDocument ? (
+                        <a
+                            href={buildNegotiationDocumentDownloadUrl(draftDocument.negotiationId, draftDocument.id)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => setOpenedDraftRevisionId(currentContract.draftReview?.revisionId ?? null)}
+                            className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-cyan-800 shadow-sm ring-1 ring-cyan-200 hover:bg-cyan-100"
+                        >
+                            Abrir minuta para conferência
+                        </a>
+                    ) : (
+                        <p className="text-sm text-cyan-900">A minuta ainda não está disponível.</p>
+                    )}
+
+                    {currentContract.draftReview?.viewerDecision === 'CONSENTED' ? (
+                        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                            Sua conferência foi registrada. Aguarde a outra parte.
+                        </p>
+                    ) : currentContract.draftReview?.viewerDecision === 'CHANGES_REQUESTED' ? (
+                        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                            Sua solicitação de correção foi enviada à administração.
+                        </p>
+                    ) : currentContract.draftReview?.canReview ? (
+                        <div className="space-y-3">
+                            <button
+                                type="button"
+                                disabled={isReviewingDraft || openedDraftRevisionId !== currentContract.draftReview.revisionId}
+                                onClick={() => void handleDraftReview('CONSENTED')}
+                                className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                {openedDraftRevisionId === currentContract.draftReview.revisionId ? 'Li e estou de acordo' : 'Abra a minuta para confirmar'}
+                            </button>
+                            {!showDraftCorrectionForm ? (
+                                <button
+                                    type="button"
+                                    disabled={isReviewingDraft}
+                                    onClick={() => setShowDraftCorrectionForm(true)}
+                                    className="ml-2 inline-flex items-center justify-center rounded-xl border border-cyan-300 bg-white px-4 py-3 text-sm font-semibold text-cyan-900 hover:bg-cyan-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    Solicitar correção
+                                </button>
+                            ) : (
+                                <div className="rounded-xl border border-cyan-200 bg-white p-3 space-y-2">
+                                    <label htmlFor="draft-correction-reason" className="block text-sm font-medium text-slate-800">Motivo da correção</label>
+                                    <textarea
+                                        id="draft-correction-reason"
+                                        value={draftCorrectionReason}
+                                        maxLength={2000}
+                                        rows={3}
+                                        onChange={(event) => setDraftCorrectionReason(event.target.value)}
+                                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
+                                    />
+                                    <div className="flex flex-wrap gap-2">
+                                        <button type="button" disabled={isReviewingDraft} onClick={() => void handleDraftReview('CHANGES_REQUESTED')} className="rounded-lg bg-amber-600 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50">Enviar correção</button>
+                                        <button type="button" disabled={isReviewingDraft} onClick={() => { setShowDraftCorrectionForm(false); setDraftCorrectionReason('') }} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancelar</button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <p className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                            A conferência desta minuta está aguardando a parte responsável.
+                        </p>
+                    )}
                 </section>
             )}
 

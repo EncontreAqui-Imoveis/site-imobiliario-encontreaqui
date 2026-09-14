@@ -9,6 +9,7 @@ export function isCancelledContractStatus(status: unknown): boolean {
 export const CONTRACT_STATUS_FLOW: ContractStatus[] = [
     'AWAITING_DOCS',
     'IN_DRAFT',
+    'AWAITING_MINUTE_REVIEW',
     'AWAITING_SIGNATURES',
     'FINALIZED',
 ]
@@ -28,6 +29,13 @@ export function getContractStatusMeta(status: ContractStatus) {
                 chipClass: 'bg-blue-50 text-blue-700',
                 description: 'A documentação base está em andamento e a minuta contratual está sendo preparada.',
                 nextAction: 'Acompanhar a confecção e a revisão da minuta.',
+            }
+        case 'AWAITING_MINUTE_REVIEW':
+            return {
+                label: 'Conferência da minuta',
+                chipClass: 'bg-cyan-50 text-cyan-700',
+                description: 'Comprador e vendedor devem conferir a versão atual da minuta antes das assinaturas presenciais.',
+                nextAction: 'Abra a minuta e registre sua conferência.',
             }
         case 'AWAITING_SIGNATURES':
             return {

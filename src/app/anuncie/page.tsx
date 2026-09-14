@@ -1011,7 +1011,7 @@ export default function AnunciePage() {
       <div className="relative min-h-screen bg-white">
         <button
           type="button"
-          onClick={() => setShowOwnershipQuestion(false)}
+          onClick={() => router.push("/imoveis")}
           className="fixed left-4 top-4 z-20 inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white/95 px-4 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur transition hover:bg-slate-50"
         >
           <ArrowLeft className="h-4 w-4" />

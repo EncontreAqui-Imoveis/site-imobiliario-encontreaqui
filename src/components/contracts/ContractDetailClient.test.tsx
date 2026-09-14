@@ -1,10 +1,11 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 import { ContractDetailClient } from './ContractDetailClient'
 import type { ContractDetail } from '@/types/contract'
 
 const mockVerifyContractHandshakePin = jest.fn()
 const mockRejectContractHandshakeAssociation = jest.fn()
+const mockReviewContractDraft = jest.fn()
 
 let mockSessionUser = {
     id: 1,
@@ -25,6 +26,7 @@ jest.mock('@/lib/api/contracts', () => ({
     deleteContractDocument: jest.fn(),
     getContractById: jest.fn(),
     rejectContractHandshakeAssociation: (...args: unknown[]) => mockRejectContractHandshakeAssociation(...args),
+    reviewContractDraft: (...args: unknown[]) => mockReviewContractDraft(...args),
     updateContractData: jest.fn(),
     uploadContractDocument: jest.fn(),
     verifyContractHandshakePin: (...args: unknown[]) => mockVerifyContractHandshakePin(...args),
@@ -129,6 +131,7 @@ describe('ContractDetailClient', () => {
     beforeEach(() => {
         mockVerifyContractHandshakePin.mockReset()
         mockRejectContractHandshakeAssociation.mockReset()
+        mockReviewContractDraft.mockReset()
         mockSessionUser = {
             id: 1,
             email: 'broker@test.com',
@@ -287,5 +290,64 @@ describe('ContractDetailClient', () => {
         expect(screen.getByText(/Não é necessário enviar uma assinatura pelo site/i)).toBeInTheDocument()
         expect(screen.queryByText('Envio online')).not.toBeInTheDocument()
         expect(screen.queryByRole('button', { name: 'Assinar presencialmente' })).not.toBeInTheDocument()
+    })
+
+    it('exige a abertura da minuta antes de registrar a conferência do lado atual', async () => {
+        const minuteDocument = {
+            id: 99,
+            negotiationId: 'neg-1',
+            type: 'contract' as const,
+            documentType: 'contrato_minuta' as const,
+            categoryStatus: 'APPROVED' as const,
+            createdAt: '2026-01-02T00:00:00.000Z',
+            originalFileName: 'minuta.pdf',
+        }
+        mockReviewContractDraft.mockResolvedValueOnce({
+            ...buildContract(),
+            status: 'AWAITING_MINUTE_REVIEW',
+            documents: [minuteDocument],
+            draftReview: {
+                revisionId: 501,
+                revisionNumber: 1,
+                documentId: 99,
+                originalFileName: 'minuta.pdf',
+                canReview: false,
+                viewerDecision: 'CONSENTED',
+                viewerReason: null,
+                allConsented: false,
+            },
+        })
+
+        render(
+            <ContractDetailClient
+                contract={{
+                    ...buildContract(),
+                    status: 'AWAITING_MINUTE_REVIEW',
+                    documents: [minuteDocument],
+                    draftReview: {
+                        revisionId: 501,
+                        revisionNumber: 1,
+                        documentId: 99,
+                        originalFileName: 'minuta.pdf',
+                        canReview: true,
+                        viewerDecision: null,
+                        viewerReason: null,
+                        allConsented: false,
+                    },
+                }}
+            />,
+        )
+
+        expect(screen.getByRole('button', { name: 'Abra a minuta para confirmar' })).toBeDisabled()
+        fireEvent.click(screen.getByRole('link', { name: 'Abrir minuta para conferência' }))
+        fireEvent.click(screen.getByRole('button', { name: 'Li e estou de acordo' }))
+
+        await waitFor(() => {
+            expect(mockReviewContractDraft).toHaveBeenCalledWith({
+                contractId: 'contract-1',
+                decision: 'CONSENTED',
+            })
+        })
+        expect(await screen.findByText('Sua conferência foi registrada. Aguarde a outra parte.')).toBeInTheDocument()
     })
 })

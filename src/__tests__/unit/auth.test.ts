@@ -30,7 +30,8 @@ describe('auth API', () => {
     beforeEach(async () => {
         jest.resetModules()
         window.localStorage.clear()
-        document.cookie = 'ea_auth_token=; Path=/; Max-Age=0'
+        document.cookie = 'ea_session=; Path=/; Max-Age=0'
+        document.cookie = 'ea_csrf=; Path=/; Max-Age=0'
         auth = await import('@/lib/api/auth')
     })
 
@@ -57,7 +58,7 @@ describe('auth API', () => {
             requiresBrokerDocuments: false,
         })
         expect(window.localStorage.getItem('ea_auth_token')).toBeNull()
-        expect(document.cookie).toContain('ea_auth_token=token-123')
+        expect(document.cookie).not.toContain('ea_auth_token=token-123')
     })
 
     it('register() sends POST with full payload', async () => {
@@ -87,7 +88,7 @@ describe('auth API', () => {
         expect(body.city).toBe('SP')
         expect(result.profileStatus).toBe('incomplete')
         expect(window.localStorage.getItem('ea_auth_token')).toBeNull()
-        expect(document.cookie).toContain('ea_auth_token=token-xyz')
+        expect(document.cookie).not.toContain('ea_auth_token=token-xyz')
     })
 
     it('register() on 409 retries via login híbrido (POST /auth/login)', async () => {
@@ -111,7 +112,7 @@ describe('auth API', () => {
         expect(String(mockFetch.mock.calls[0][0])).toContain('/auth/register')
         expect(String(mockFetch.mock.calls[1][0])).toContain('/auth/login')
         expect(result.user.id).toBe(2)
-        expect(document.cookie).toContain('ea_auth_token=token-after-409')
+        expect(document.cookie).not.toContain('ea_auth_token=token-after-409')
     })
 
     it('loginWithGoogle() sends idToken in body', async () => {
@@ -129,7 +130,7 @@ describe('auth API', () => {
         expect(body.idToken).toBe('google-token-123')
         expect(result.isBroker).toBe(false)
         expect(window.localStorage.getItem('ea_auth_token')).toBeNull()
-        expect(document.cookie).toContain('ea_auth_token=google-token-session')
+        expect(document.cookie).not.toContain('ea_auth_token=google-token-session')
     })
 
     it('loginWithGoogle() returns a pending payload when Google still needs profile choice', async () => {
@@ -167,7 +168,6 @@ describe('auth API', () => {
     })
 
     it('fetchCurrentSession() returns null on 401', async () => {
-        document.cookie = 'ea_auth_token=token-401; Path=/'
         mockFetch.mockResolvedValueOnce(errorResponse(401, 'Unauthorized'))
 
         const session = await auth.fetchCurrentSession()
@@ -176,19 +176,12 @@ describe('auth API', () => {
     })
 
     it('fetchCurrentSession() propagates non-401/403 errors', async () => {
-        document.cookie = 'ea_auth_token=token-500; Path=/'
         mockFetch.mockResolvedValueOnce(errorResponse(500, 'Server error'))
 
         await expect(auth.fetchCurrentSession()).rejects.toThrow()
     })
 
-    it('fetchCurrentSession() skips the request when there is no auth token', async () => {
-        const session = await auth.fetchCurrentSession()
-        expect(session).toBeNull()
-        expect(mockFetch).not.toHaveBeenCalled()
-    })
-
-    it('migrates legacy localStorage token to cookie on browser read', async () => {
+    it('does not migrate a legacy browser token into a script-readable cookie', async () => {
         window.localStorage.setItem('ea_auth_token', 'legacy-token')
         mockFetch.mockResolvedValueOnce(
             okResponse({
@@ -199,8 +192,8 @@ describe('auth API', () => {
 
         await auth.fetchCurrentSession()
 
-        expect(window.localStorage.getItem('ea_auth_token')).toBeNull()
-        expect(document.cookie).toContain('ea_auth_token=legacy-token')
+        expect(window.localStorage.getItem('ea_auth_token')).toBe('legacy-token')
+        expect(document.cookie).not.toContain('ea_auth_token=legacy-token')
     })
 
     it('logout() does not throw even on failure', async () => {

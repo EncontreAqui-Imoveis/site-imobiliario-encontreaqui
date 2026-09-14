@@ -26,7 +26,8 @@ beforeEach(() => {
         captureException: sentryCaptureMock,
     }
     window.localStorage.clear()
-    document.cookie = 'ea_auth_token=; Path=/; Max-Age=0'
+    document.cookie = 'ea_session=; Path=/; Max-Age=0'
+    document.cookie = 'ea_csrf=; Path=/; Max-Age=0'
     mockFetch.mockReset()
     sentryCaptureMock.mockReset()
 })
@@ -88,7 +89,7 @@ describe('apiClient request behavior', () => {
         expect(calledInit.credentials).toBe('include')
     })
 
-    it('injects Authorization header when auth token exists in browser storage', async () => {
+    it('never injects Authorization from browser storage', async () => {
         window.localStorage.setItem('ea_auth_token', 'token-storage-123')
         mockFetch.mockResolvedValueOnce({
             ok: true,
@@ -100,7 +101,22 @@ describe('apiClient request behavior', () => {
 
         const calledInit = mockFetch.mock.calls[0][1]
         const headers = calledInit.headers as Headers
-        expect(headers.get('Authorization')).toBe('Bearer token-storage-123')
+        expect(headers.get('Authorization')).toBeNull()
+    })
+
+    it('sends the double-submit CSRF header on mutations', async () => {
+        document.cookie = 'ea_csrf=test-csrf-token; Path=/'
+        mockFetch.mockResolvedValueOnce({
+            ok: true,
+            headers: new Headers({ 'Content-Type': 'application/json' }),
+            json: () => Promise.resolve({}),
+        })
+
+        await apiClient.post('/contracts/1/data', { profession: 'Analista' })
+
+        const calledInit = mockFetch.mock.calls[0][1]
+        const headers = calledInit.headers as Headers
+        expect(headers.get('x-csrf-token')).toBe('test-csrf-token')
     })
 
     it('throws ApiError on 400 response', async () => {

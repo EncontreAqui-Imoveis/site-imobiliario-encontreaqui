@@ -1,72 +1,25 @@
-const AUTH_TOKEN_COOKIE = 'ea_auth_token'
-const AUTH_TOKEN_STORAGE_KEY = 'ea_auth_token'
-
-function buildCookieValue(token: string): string {
-    const encodedToken = encodeURIComponent(token)
-    const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:'
-    const secureFlag = isHttps ? '; Secure' : ''
-    return `${AUTH_TOKEN_COOKIE}=${encodedToken}; Path=/; SameSite=Lax${secureFlag}`
-}
+const AUTH_TOKEN_COOKIE = 'ea_session'
 
 export function persistAuthToken(token: string): void {
-    if (typeof window === 'undefined') return
-    window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY)
-    document.cookie = buildCookieValue(token)
+    // The BFF stores the bearer token in an HttpOnly cookie. Intentionally no-op.
+    void token
 }
 
 export function clearAuthToken(): void {
-    if (typeof window === 'undefined') return
-    window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY)
-    document.cookie = `${AUTH_TOKEN_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`
+    // Cookie clearing happens in POST /api/backend/auth/logout.
 }
 
 export function readAuthTokenFromBrowser(): string | null {
-    if (typeof window === 'undefined') return null
-
-    const cookieMatch = document.cookie
-        .split(';')
-        .map((entry) => entry.trim())
-        .find((entry) => entry.startsWith(`${AUTH_TOKEN_COOKIE}=`))
-
-    if (cookieMatch) {
-        const [, value = ''] = cookieMatch.split('=')
-        const decoded = decodeURIComponent(value).trim()
-        if (decoded) {
-            return decoded
-        }
-    }
-
-    const fromStorage = window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY)?.trim()
-    if (!fromStorage) return null
-
-    document.cookie = buildCookieValue(fromStorage)
-    window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY)
-    return fromStorage
+    return null
 }
 
 export function hasAuthTokenInBrowser(): boolean {
-    return Boolean(readAuthTokenFromBrowser())
+    // Browser JavaScript cannot inspect the HttpOnly session by design.
+    return true
 }
 
 export function syncAuthTokenCookieFromStorage(): void {
-    if (typeof window === 'undefined') return
-
-    const fromStorage = window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY)?.trim()
-    if (!fromStorage) return
-
-    const cookieMatch = document.cookie
-        .split(';')
-        .map((entry) => entry.trim())
-        .find((entry) => entry.startsWith(`${AUTH_TOKEN_COOKIE}=`))
-
-    const cookieValue = cookieMatch ? decodeURIComponent(cookieMatch.split('=')[1] ?? '').trim() : ''
-    if (cookieValue === fromStorage) {
-        window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY)
-        return
-    }
-
-    document.cookie = buildCookieValue(fromStorage)
-    window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY)
+    // Legacy browser tokens are not migrated; users reauthenticate into an HttpOnly session.
 }
 
 export async function readAuthTokenFromServer(): Promise<string | null> {

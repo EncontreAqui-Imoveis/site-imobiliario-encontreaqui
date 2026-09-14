@@ -1,6 +1,7 @@
 export type ContractStatus =
     | 'AWAITING_DOCS'
     | 'IN_DRAFT'
+    | 'AWAITING_MINUTE_REVIEW'
     | 'AWAITING_SIGNATURES'
     | 'FINALIZED'
 
@@ -152,6 +153,21 @@ export interface ContractSummary {
     } | null
 }
 
+/**
+ * Operational acknowledgement of one immutable draft revision. This is not
+ * an electronic signature: the contract remains signed in person.
+ */
+export interface ContractDraftReview {
+    revisionId: number | null
+    revisionNumber: number
+    documentId: number | null
+    originalFileName: string | null
+    canReview: boolean
+    viewerDecision: 'CONSENTED' | 'CHANGES_REQUESTED' | null
+    viewerReason: string | null
+    allConsented: boolean
+}
+
 export interface ContractDetail extends ContractSummary {
     sellerInfo?: unknown
     ownerInfo?: unknown
@@ -172,6 +188,7 @@ export interface ContractDetail extends ContractSummary {
     capturingBrokerName?: string | null
     agencyName?: string | null
     agencyAddress?: string | null
+    draftReview?: ContractDraftReview | null
     documents: ContractDocument[]
 }
 
