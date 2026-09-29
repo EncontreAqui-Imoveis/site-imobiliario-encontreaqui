@@ -1,0 +1,16 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "4A7N87G2CS.com.encontreaqui.imoveis.app"
+        ],
+        "components": [
+          {
+            "/": "/property/*"
+          }
+        ]
+      }
+    ]
+  }
+}
