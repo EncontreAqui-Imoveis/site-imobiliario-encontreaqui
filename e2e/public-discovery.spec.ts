@@ -12,6 +12,11 @@ test('home, busca e detalhe público carregam com backend mockado', async ({ pag
     await page.goto('/imoveis/101')
     await expect(page.getByRole('heading', { name: /imóvel e2e 101/i })).toBeVisible()
     await expect(page.getByRole('complementary', { name: /resumo e ações do imóvel/i })).toBeVisible()
+
+    await page.goto('/property/101')
+    await expect(page).toHaveURL(/\/property\/101$/)
+    await expect(page.getByRole('heading', { name: /imóvel e2e 101/i })).toBeVisible()
+    await expect(page.getByRole('complementary', { name: /resumo e ações do imóvel/i })).toBeVisible()
 })
 
 test('a home mostra a vitrine da finalidade oposta para compra e locação', async ({ page }) => {
